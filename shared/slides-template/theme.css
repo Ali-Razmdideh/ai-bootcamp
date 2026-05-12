@@ -34,6 +34,7 @@
 
 .reveal .slides section {
   text-align: left;
+  padding: 0.4em 0.2em;
 }
 
 .reveal h1, .reveal h2, .reveal h3, .reveal h4 {
@@ -42,12 +43,13 @@
   color: var(--bc-ink);
   font-weight: 700;
   line-height: 1.15;
+  margin-bottom: 0.5em;
 }
 
-.reveal h1 { font-size: 2.6em; letter-spacing: -0.025em; }
-.reveal h2 { font-size: 1.9em; }
-.reveal h3 { font-size: 1.25em; color: var(--bc-accent); margin-bottom: 0.4em; }
-.reveal h4 { font-size: 1.0em; color: var(--bc-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+.reveal h1 { font-size: 2.3em; letter-spacing: -0.025em; }
+.reveal h2 { font-size: 1.5em; margin-top: 0; }
+.reveal h3 { font-size: 1.15em; color: var(--bc-accent); margin-bottom: 0.4em; }
+.reveal h4 { font-size: 0.9em; color: var(--bc-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
 
 .reveal p, .reveal li { color: var(--bc-ink-soft); }
 .reveal strong { color: var(--bc-ink); font-weight: 600; }
@@ -80,26 +82,37 @@
   font-family: var(--bc-mono);
   font-feature-settings: "ss01", "ss02", "ss03", "cv01", "cv02";
 }
+/* Inline code in body text: subtle tinted background, no border. */
 .reveal :not(pre) > code {
-  background: var(--bc-panel);
-  padding: 0.08em 0.35em;
+  background: rgba(37, 99, 235, 0.08);
+  padding: 0.05em 0.3em;
   border-radius: 4px;
-  font-size: 0.85em;
-  color: var(--bc-ink);
-  border: 1px solid var(--bc-line);
+  font-size: 0.88em;
+  color: var(--bc-accent-deep);
+}
+/* Inline code inside headings: no background, just mono + color. */
+.reveal h1 code, .reveal h2 code, .reveal h3 code, .reveal h4 code {
+  background: transparent;
+  padding: 0;
+  color: var(--bc-accent);
+  font-size: 0.9em;
+  font-weight: 600;
 }
 .reveal pre {
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.10);
   border-radius: 10px;
-  margin: 0.6em 0;
-  font-size: 0.55em;
+  margin: 0.5em 0;
+  font-size: 0.42em;
   width: 100%;
+  overflow: hidden;
 }
 .reveal pre code {
-  padding: 1.1em 1.3em;
-  line-height: 1.45;
+  padding: 0.9em 1.1em;
+  line-height: 1.5;
   border-radius: 10px;
-  max-height: 460px;
+  max-height: 52vh;
+  overflow: auto;
+  display: block;
 }
 
 /* ---------- callouts ---------- */
