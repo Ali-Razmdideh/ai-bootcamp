@@ -194,6 +194,10 @@
   margin: 0.4em auto;
   max-width: 95%;
   max-height: 60vh;
+  /* SVG <text> without an explicit font-size attribute inherits this. Without
+     it, Reveal's slide-scaled body font (~40px+) leaks in and blows up every
+     unsized label. Per-text attributes like font-size="16" still win. */
+  font-size: 13px;
 }
 .reveal svg.diagram text {
   font-family: var(--bc-sans);
