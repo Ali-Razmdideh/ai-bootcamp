@@ -7,136 +7,345 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/monokai.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
 </head>
 <body>
 <div class="reveal"><div class="slides">
 
-<section>
+<!-- =================================================================== -->
+<!-- TITLE                                                                -->
+<!-- =================================================================== -->
+<section class="title-slide">
+  <span class="kicker">Week 1 · Course 3 · 1.5 hours</span>
   <h1>Visualization &amp; the Math Bridge</h1>
-  <h3>Matplotlib &middot; Seaborn &middot; SciPy</h3>
-  <p class="muted">Week 1 &middot; Course 3 &middot; 1.5 hours</p>
+  <p class="muted" style="font-size:1.1em;">Matplotlib · Seaborn · SciPy</p>
   <aside class="notes">
-    The hidden goal of this session is to demystify "training." After today
-    students should be able to say: a model fits parameters by calling an
-    optimizer on a loss function. They will have seen the whole thing in
-    SciPy first, before any sklearn or PyTorch.
+    The hidden goal of this session: demystify "training." Students should
+    leave able to say — "a model fits parameters by calling an optimizer on a
+    loss function." They will have seen that whole loop in three lines of
+    SciPy, before any sklearn or PyTorch.
   </aside>
 </section>
 
 <section>
-  <h2>Roadmap</h2>
-  <ul>
-    <li>0:00 &mdash; Matplotlib + Seaborn</li>
-    <li>0:45 &mdash; SciPy: <code>stats</code> &amp; <code>optimize</code></li>
-    <li>1:15 &mdash; Grand Finale: clean, transform, plot</li>
-  </ul>
+  <span class="kicker">Roadmap</span>
+  <h2>Where we are heading</h2>
+  <div class="three-col">
+    <div class="card"><h4>0:00 · 0:45</h4><strong>Matplotlib + Seaborn</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Lines, scatters, heatmaps, KDEs.</p></div>
+    <div class="card"><h4>0:45 · 1:15</h4><strong>SciPy</strong>
+      <p class="muted" style="margin:0.3em 0 0;">stats · optimize</p></div>
+    <div class="card"><h4>1:15 · 1:30</h4><strong>Grand Finale</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Load → clean → transform → plot.</p></div>
+  </div>
 </section>
 
-<!-- ============================== PART 1 ============================== -->
+<!-- =================================================================== -->
+<!-- PART 1 — MATPLOTLIB/SEABORN                                          -->
+<!-- =================================================================== -->
 <section>
-  <section>
-    <h2>Part 1 &mdash; Matplotlib &amp; Seaborn</h2>
-    <p class="muted">0:00 &ndash; 0:45</p>
+  <section class="title-slide">
+    <span class="kicker">Part 1 · 0:00 – 0:45</span>
+    <h1>Matplotlib &amp; Seaborn</h1>
+    <p class="muted">make the data visible</p>
   </section>
 
   <section>
-    <h3>Matplotlib: the anatomy of a plot</h3>
+    <h2>The anatomy of a plot</h2>
+    <svg class="diagram" viewBox="0 0 760 380" xmlns="http://www.w3.org/2000/svg">
+      <!-- figure -->
+      <rect x="20"  y="20"  width="720" height="340" fill="none" stroke="#2563eb" stroke-dasharray="6 4"/>
+      <text x="30" y="40" font-size="12" fill="#2563eb" font-weight="600">Figure</text>
+      <!-- axes -->
+      <rect x="120" y="80"  width="560" height="220" fill="#f8fafc" stroke="#1e293b"/>
+      <text x="120" y="72" font-size="12" fill="#1e293b" font-weight="600">Axes</text>
+      <!-- y axis -->
+      <line x1="120" y1="80" x2="120" y2="300" stroke="#1e293b" stroke-width="2"/>
+      <text x="60" y="195" font-size="13" font-weight="600">loss</text>
+      <text x="80" y="100" font-size="11" fill="#475569" text-anchor="end">1.0</text>
+      <text x="80" y="200" font-size="11" fill="#475569" text-anchor="end">0.5</text>
+      <text x="80" y="295" font-size="11" fill="#475569" text-anchor="end">0.0</text>
+      <!-- x axis -->
+      <line x1="120" y1="300" x2="680" y2="300" stroke="#1e293b" stroke-width="2"/>
+      <text x="395" y="335" font-size="13" font-weight="600" text-anchor="middle">epoch</text>
+      <!-- curves -->
+      <path d="M120 130 C 200 200, 320 250, 680 280" stroke="#2563eb" stroke-width="2.5" fill="none"/>
+      <path d="M120 110 C 220 180, 380 220, 680 250" stroke="#b45309" stroke-width="2.5" fill="none"/>
+      <!-- legend -->
+      <rect x="540" y="100" width="120" height="50" fill="#fff" stroke="#cbd5e1"/>
+      <line x1="552" y1="118" x2="582" y2="118" stroke="#2563eb" stroke-width="2.5"/>
+      <text x="588" y="122" font-size="11">train</text>
+      <line x1="552" y1="138" x2="582" y2="138" stroke="#b45309" stroke-width="2.5"/>
+      <text x="588" y="142" font-size="11">val</text>
+      <!-- annotations -->
+      <text x="700" y="100" font-size="11" fill="#2563eb">Figure = canvas</text>
+      <text x="700" y="120" font-size="11" fill="#1e293b">Axes = a plot</text>
+    </svg>
+    <p class="muted" style="font-size:0.78em;">One Figure can hold many Axes; one Axes can hold many Lines. Always work with <code>(fig, ax)</code>, not the stateful <code>plt</code> shortcuts.</p>
+  </section>
+
+  <section>
+    <h2>The object-oriented API</h2>
     <pre><code class="language-python">fig, ax = plt.subplots(figsize=(6, 4))
-ax.plot(x, y, label='train')
-ax.set_xlabel('epoch'); ax.set_ylabel('loss')
-ax.set_title('Loss curve'); ax.legend()</code></pre>
-    <p>Always use the <em>object-oriented</em> API (<code>fig, ax</code>). Avoids
-    surprises when you have multiple subplots.</p>
+ax.plot(epochs, train_loss, label='train')
+ax.plot(epochs, val_loss,   label='val')
+ax.set_xlabel('epoch')
+ax.set_ylabel('loss')
+ax.set_title('Loss curves')
+ax.legend()
+ax.grid(alpha=0.3)</code></pre>
+    <div class="callout"><code>plt.plot(...)</code> works but uses an invisible "current axes." That breaks the moment you want subplots. Start with <code>fig, ax = plt.subplots()</code> and never look back.</div>
   </section>
 
   <section>
-    <h3>The two charts you'll draw most</h3>
-    <ul>
-      <li><strong>Line plot</strong> &mdash; loss curves, time series.</li>
-      <li><strong>Scatter</strong> &mdash; clusters, predictions vs. truth.</li>
-    </ul>
-    <pre><code class="language-python">ax.plot(epochs, train_loss, label='train')
-ax.plot(epochs, val_loss,  label='val')
+    <h2>Subplots</h2>
+    <pre><code class="language-python">fig, axes = plt.subplots(2, 3, figsize=(12, 6), sharex=True)
+# axes is shape (2, 3) — index like a NumPy array
 
-ax.scatter(X[:, 0], X[:, 1], c=labels, cmap='viridis')</code></pre>
+axes[0, 0].plot(...)
+axes[1, 2].scatter(...)
+fig.suptitle('Diagnostics')
+fig.tight_layout()</code></pre>
+    <p class="muted" style="font-size:0.78em;">Reuse the NumPy axis vocabulary you already know.</p>
   </section>
 
   <section>
-    <h3>Seaborn: stats plots in one line</h3>
-    <pre><code class="language-python">sns.heatmap(df.corr(), annot=True, cmap='coolwarm')
+    <h2>The two charts you'll draw most</h2>
+    <div class="two-col">
+      <div class="card">
+        <h4>line — losses, time series</h4>
+        <pre><code class="language-python">ax.plot(epochs, train, label='train')
+ax.plot(epochs, val,   label='val')</code></pre>
+      </div>
+      <div class="card">
+        <h4>scatter — clusters, preds-vs-truth</h4>
+        <pre><code class="language-python">ax.scatter(X[:, 0], X[:, 1],
+           c=labels, cmap='viridis',
+           s=20, alpha=0.7)</code></pre>
+      </div>
+    </div>
+    <div class="tip">For a "predicted vs. actual" diagnostic, always add <code>ax.axline((0, 0), slope=1, ls='--')</code> — the y=x reference line.</div>
+  </section>
+
+  <section>
+    <h2>Seaborn — stats plots in one line</h2>
+    <pre><code class="language-python">sns.set_theme(style='whitegrid')
+
+sns.heatmap(df.corr(numeric_only=True), annot=True, cmap='coolwarm', center=0)
+
 sns.kdeplot(data=df, x='bill_length_mm', hue='species', fill=True)
-sns.pairplot(df, hue='species')</code></pre>
-    <p class="callout">Heatmap of correlations is the fastest way to spot
-    redundant features. Use it before any modeling.</p>
+
+sns.boxplot(data=df, x='species', y='body_mass_g')
+sns.violinplot(data=df, x='species', y='body_mass_g')
+
+sns.pairplot(df, hue='species')                  # the "first look" tool</code></pre>
+    <div class="callout">Correlation heatmap is the fastest way to spot redundant features. Run it on any new dataset before modeling.</div>
+  </section>
+
+  <section>
+    <h2>Choosing the right chart</h2>
+    <table>
+      <thead><tr><th>question</th><th>chart</th></tr></thead>
+      <tbody>
+        <tr><td>How does X evolve over time?</td><td>line</td></tr>
+        <tr><td>Do two variables correlate?</td><td>scatter (+ regression line)</td></tr>
+        <tr><td>What does the distribution of X look like?</td><td>hist · kde · boxplot · violin</td></tr>
+        <tr><td>How does X differ across groups?</td><td>boxplot · violin · strip + swarm</td></tr>
+        <tr><td>What's the relationship between many features?</td><td>heatmap · pairplot</td></tr>
+        <tr><td>Where are the missing values?</td><td><code>sns.heatmap(df.isna())</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Common viz mistakes</h2>
+    <div class="mistake"><strong>Forgetting axis labels.</strong> A plot without labels is decoration, not information.</div>
+    <div class="mistake"><strong>Default colormap on categorical data.</strong> <code>viridis</code> is ordinal; use a categorical palette for unordered classes.</div>
+    <div class="mistake"><strong>Overlapping markers in dense scatters.</strong> Use <code>alpha</code> or a hexbin.</div>
+    <div class="mistake"><strong>Wrong axis scale.</strong> Losses often need log y-scale: <code>ax.set_yscale('log')</code>.</div>
   </section>
 </section>
 
-<!-- ============================== PART 2 ============================== -->
+<!-- =================================================================== -->
+<!-- PART 2 — SCIPY                                                       -->
+<!-- =================================================================== -->
 <section>
-  <section>
-    <h2>Part 2 &mdash; SciPy</h2>
-    <p class="muted">0:45 &ndash; 1:15</p>
+  <section class="title-slide">
+    <span class="kicker">Part 2 · 0:45 – 1:15</span>
+    <h1>SciPy</h1>
+    <p class="muted">probability and optimization</p>
   </section>
 
   <section>
-    <h3><code>scipy.stats</code></h3>
+    <h2><code>scipy.stats</code> — every distribution speaks the same dialect</h2>
     <pre><code class="language-python">from scipy import stats
-stats.norm.pdf(x, loc=0, scale=1)          # PDF
-stats.norm.rvs(loc=0, scale=1, size=1000)  # samples
-stats.norm.fit(data)                       # fit parameters
 
+# Continuous
+stats.norm.pdf(x, loc=0, scale=1)              # PDF
+stats.norm.cdf(x)                              # cumulative
+stats.norm.rvs(size=1000)                      # samples
+stats.norm.fit(data)                           # MLE parameters
+
+# Discrete
 stats.binom.pmf(k=5, n=10, p=0.5)
-stats.ttest_ind(group_a, group_b)</code></pre>
+
+# Hypothesis testing
+stats.ttest_ind(group_a, group_b)
+stats.pearsonr(x, y)</code></pre>
+    <p class="muted" style="font-size:0.78em;">Every distribution: <code>.pdf</code> / <code>.cdf</code> / <code>.rvs</code> / <code>.fit</code>. Learn the verbs once, get 80+ distributions free.</p>
   </section>
 
   <section>
-    <h3>The optimizer demo &mdash; what models actually do</h3>
+    <h2>A 1-D loss landscape</h2>
+    <svg class="diagram" viewBox="0 0 800 320" xmlns="http://www.w3.org/2000/svg">
+      <!-- axes -->
+      <line x1="60" y1="280" x2="760" y2="280" stroke="#1e293b" stroke-width="2"/>
+      <line x1="60" y1="40"  x2="60"  y2="280" stroke="#1e293b" stroke-width="2"/>
+      <text x="395" y="305" text-anchor="middle" font-size="13" font-weight="600">x (parameter)</text>
+      <text x="20" y="160" font-size="13" font-weight="600" transform="rotate(-90 20 160)">loss</text>
+      <!-- bumpy curve: (x-3)^2 + sin(5x), rendered as polyline -->
+      <polyline fill="none" stroke="#2563eb" stroke-width="2.5"
+        points="60,80 90,110 120,140 150,150 180,135 210,150 240,180 270,210 300,235 330,250 360,245 390,235 420,225 450,215 480,205 510,195 540,210 570,225 600,210 630,180 660,150 690,120 720,90 750,60"/>
+      <!-- starting point -->
+      <circle cx="120" cy="140" r="6" fill="#b91c1c"/>
+      <text x="120" y="125" text-anchor="middle" font-size="11" fill="#b91c1c">x0 = 0</text>
+      <!-- optimizer steps (dots) -->
+      <g fill="#047857">
+        <circle cx="160" cy="155" r="4"/>
+        <circle cx="200" cy="170" r="4"/>
+        <circle cx="240" cy="195" r="4"/>
+        <circle cx="280" cy="220" r="4"/>
+        <circle cx="320" cy="240" r="4"/>
+        <circle cx="340" cy="250" r="5"/>
+      </g>
+      <text x="340" y="268" text-anchor="middle" font-size="11" fill="#047857" font-weight="700">argmin ≈ 2.95</text>
+      <text x="700" y="265" font-size="11" fill="#475569">f(x) = (x − 3)² + sin(5x)</text>
+    </svg>
+    <p class="muted" style="font-size:0.78em;">The optimizer takes downhill steps until the gradient is ~0. <em>This is the whole story of supervised learning.</em></p>
+  </section>
+
+  <section>
+    <h2><code>scipy.optimize</code> — what models actually do</h2>
     <pre><code class="language-python">from scipy import optimize
 
 f = lambda x: (x - 3)**2 + np.sin(5 * x)
 res = optimize.minimize(f, x0=0.0)
-print(res.x)   # ≈ argmin</code></pre>
-    <p class="callout">Every supervised model: define a loss
-    <code>L(parameters)</code>, then ask an optimizer to minimize it. That's it.</p>
+
+print(res.x)     # ≈ argmin
+print(res.fun)   # min value
+print(res.nit)   # iterations</code></pre>
+    <div class="callout">Every supervised model: define a loss <code>L(parameters)</code>, then ask an optimizer to minimize it. <code>fit</code> in sklearn, <code>backward()</code> in PyTorch — all the same idea.</div>
   </section>
 
   <section>
-    <h3>Local minima &mdash; why initialization matters</h3>
-    <p>Try <code>x0 = 0</code> vs <code>x0 = 10</code> on the same bumpy
-    function and you'll get different answers. This is the conceptual seed of
-    every "different random seed -&gt; different model" conversation later.</p>
+    <h2>Local minima — why initialization matters</h2>
+    <pre><code class="language-python">optimize.minimize(f, x0=0.0).x      # ≈ 2.95
+optimize.minimize(f, x0=10.0).x     # ≈ 6.21   different local min!</code></pre>
+    <div class="warn">Bumpy loss surfaces are <em>everywhere</em> in neural nets. This is why "different random seed → different model" is a real conversation, not folklore.</div>
+    <p class="muted" style="font-size:0.78em;">For multi-modal landscapes try global solvers: <code>differential_evolution</code>, <code>basinhopping</code>, <code>dual_annealing</code>.</p>
+  </section>
+
+  <section>
+    <h2>The optimization API at a glance</h2>
+    <table>
+      <thead><tr><th>need</th><th>function</th></tr></thead>
+      <tbody>
+        <tr><td>minimize a scalar function</td><td><code>optimize.minimize_scalar</code></td></tr>
+        <tr><td>minimize over many vars</td><td><code>optimize.minimize</code></td></tr>
+        <tr><td>nonlinear least-squares fit</td><td><code>optimize.curve_fit</code></td></tr>
+        <tr><td>find roots</td><td><code>optimize.root</code></td></tr>
+        <tr><td>global optimum (no gradient)</td><td><code>optimize.differential_evolution</code></td></tr>
+        <tr><td>linear programming</td><td><code>optimize.linprog</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Worked example: fit a Gaussian</h2>
+    <pre><code class="language-python">samples = rng.normal(loc=2.0, scale=1.5, size=1000)
+mu_hat, sigma_hat = stats.norm.fit(samples)        # MLE
+
+xs = np.linspace(samples.min(), samples.max(), 200)
+fig, ax = plt.subplots()
+ax.hist(samples, bins=30, density=True, alpha=0.5)
+ax.plot(xs, stats.norm.pdf(xs, mu_hat, sigma_hat), lw=2, label='fitted')
+ax.legend()</code></pre>
+    <p class="muted" style="font-size:0.78em;">This is exactly what a one-parameter "model" does — fit, then plot fit vs. data. Now scale it up to millions of parameters and you have deep learning.</p>
   </section>
 </section>
 
-<!-- ============================== PART 3 ============================== -->
+<!-- =================================================================== -->
+<!-- PART 3 — GRAND FINALE                                                -->
+<!-- =================================================================== -->
 <section>
-  <section>
-    <h2>Grand Finale &mdash; 15 minutes</h2>
-    <p class="muted">1:15 &ndash; 1:30</p>
+  <section class="title-slide">
+    <span class="kicker">Part 3 · 1:15 – 1:30</span>
+    <h1>Grand Finale</h1>
+    <p class="muted">15 minutes · the whole week in one notebook</p>
   </section>
 
   <section>
-    <h3>The mission</h3>
+    <h2>The mission</h2>
     <ol>
-      <li>Load a messy stock-prices CSV (with <code>shared.data_utils</code>).</li>
-      <li>Forward-fill NaNs with pandas.</li>
-      <li>Compute a 7-day moving average with NumPy (no Python loop).</li>
-      <li>Plot price + MA on the same axes.</li>
+      <li class="fragment fade-up"><strong>Load</strong> a messy stock-prices CSV (<code>shared.data_utils</code>).</li>
+      <li class="fragment fade-up"><strong>Clean</strong> NaNs with Pandas (forward-fill).</li>
+      <li class="fragment fade-up"><strong>Transform</strong> with NumPy — 7-day moving average, no Python loop.</li>
+      <li class="fragment fade-up"><strong>Plot</strong> price + MA on the same axes with Matplotlib.</li>
     </ol>
-    <p class="callout">This is the whole week-1 pipeline in one notebook. If
-    students can finish it, they own the foundations.</p>
+    <p class="callout fragment fade-up">If a student finishes this, they own week 1.</p>
+  </section>
+
+  <section>
+    <h2>The pipeline, visually</h2>
+    <svg class="diagram" viewBox="0 0 800 240" xmlns="http://www.w3.org/2000/svg">
+      <g font-family="Inter" font-weight="600" font-size="13">
+        <rect x="20"  y="60"  width="150" height="80" fill="#dbeafe" stroke="#2563eb" rx="8"/>
+        <text x="95" y="95" text-anchor="middle">load_dataset</text>
+        <text x="95" y="115" text-anchor="middle" font-size="11" font-weight="400">(Pandas)</text>
+        <rect x="220" y="60"  width="150" height="80" fill="#dbeafe" stroke="#2563eb" rx="8"/>
+        <text x="295" y="95" text-anchor="middle">forward-fill</text>
+        <text x="295" y="115" text-anchor="middle" font-size="11" font-weight="400">(Pandas)</text>
+        <rect x="420" y="60"  width="150" height="80" fill="#dbeafe" stroke="#2563eb" rx="8"/>
+        <text x="495" y="95" text-anchor="middle">moving avg</text>
+        <text x="495" y="115" text-anchor="middle" font-size="11" font-weight="400">(NumPy)</text>
+        <rect x="620" y="60"  width="150" height="80" fill="#d1fae5" stroke="#047857" rx="8"/>
+        <text x="695" y="95" text-anchor="middle">price + MA plot</text>
+        <text x="695" y="115" text-anchor="middle" font-size="11" font-weight="400">(Matplotlib)</text>
+      </g>
+      <g stroke="#475569" stroke-width="2" fill="none" marker-end="url(#a3)">
+        <path d="M170 100 L 220 100"/>
+        <path d="M370 100 L 420 100"/>
+        <path d="M570 100 L 620 100"/>
+      </g>
+      <defs>
+        <marker id="a3" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+          <path d="M0,0 L8,4 L0,8 Z" fill="#475569"/>
+        </marker>
+      </defs>
+      <text x="395" y="180" text-anchor="middle" font-size="13" fill="#475569">All three libraries from Week 1, in one pipeline.</text>
+    </svg>
   </section>
 
   <section>
     <h2>Where this leads</h2>
-    <ul>
-      <li>NumPy &rarr; tensors in PyTorch.</li>
-      <li>Pandas &rarr; data pipelines for every model.</li>
-      <li>SciPy <code>optimize</code> &rarr; gradient descent in neural nets.</li>
-    </ul>
-    <p>You now have the entire ML mental model. Everything else is detail.</p>
+    <table>
+      <thead><tr><th>Today</th><th>Next</th></tr></thead>
+      <tbody>
+        <tr><td>NumPy ndarrays</td><td>PyTorch tensors</td></tr>
+        <tr><td>Pandas pipelines</td><td>Feature engineering for ML</td></tr>
+        <tr><td><code>scipy.optimize</code></td><td>Gradient descent in neural nets</td></tr>
+        <tr><td>Loss curves</td><td>Train/val diagnostics for every model</td></tr>
+        <tr><td>Heatmaps &amp; KDEs</td><td>Confusion matrices &amp; embeddings</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="title-slide">
+    <span class="kicker">Week 1 · complete</span>
+    <h2>You now have the entire ML mental model</h2>
+    <p>Arrays. Pipelines. Optimizers.</p>
+    <p class="muted">Everything from here is detail.</p>
   </section>
 </section>
 
@@ -146,8 +355,16 @@ print(res.x)   # ≈ argmin</code></pre>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
 <script>
-  Reveal.initialize({ hash: true, slideNumber: 'c/t', transition: 'slide',
-                      plugins: [ RevealNotes, RevealHighlight ] });
+  Reveal.initialize({
+    hash: true,
+    slideNumber: 'c/t',
+    transition: 'slide',
+    transitionSpeed: 'fast',
+    backgroundTransition: 'fade',
+    width: 1280, height: 760,
+    margin: 0.06,
+    plugins: [ RevealNotes, RevealHighlight ],
+  });
 </script>
 </body>
 </html>

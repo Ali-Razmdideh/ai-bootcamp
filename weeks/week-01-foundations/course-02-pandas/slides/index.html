@@ -7,163 +7,467 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/monokai.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
 </head>
 <body>
 <div class="reveal"><div class="slides">
 
-<section>
+<!-- =================================================================== -->
+<!-- TITLE                                                                -->
+<!-- =================================================================== -->
+<section class="title-slide">
+  <span class="kicker">Week 1 · Course 2 · 1.5 hours</span>
   <h1>Pandas</h1>
-  <h3>Treat your data like a database</h3>
-  <p class="muted">Week 1 &middot; Course 2 &middot; 1.5 hours</p>
+  <p class="muted" style="font-size:1.1em;">Treat your data like a database — load, filter, clean, group.</p>
   <aside class="notes">
-    Frame Pandas as "NumPy with column names and a brain about missing data."
-    Students who already know SQL should think of a DataFrame as a typed table
-    they can query in Python.
+    The big shift here is mental: a DataFrame is NumPy with column names and
+    a brain about missing data. Anchor every method back to the underlying
+    array story from Course 1.
   </aside>
 </section>
 
 <section>
-  <h2>Roadmap</h2>
-  <ul>
-    <li>0:00 &mdash; DataFrames &amp; Loading</li>
-    <li>0:30 &mdash; Selection &amp; Filtering</li>
-    <li>1:00 &mdash; Cleaning &amp; Grouping</li>
-  </ul>
-  <p class="callout">If your model is bad, 9 times out of 10 the problem is in
-    the data pipeline &mdash; not the model.</p>
+  <span class="kicker">Roadmap</span>
+  <h2>Where we are heading</h2>
+  <div class="three-col">
+    <div class="card"><h4>0:00 · 0:30</h4><strong>DataFrames &amp; Loading</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Index, columns, dtypes.</p></div>
+    <div class="card"><h4>0:30 · 1:00</h4><strong>Selection &amp; Filtering</strong>
+      <p class="muted" style="margin:0.3em 0 0;">.loc, .iloc, boolean masks.</p></div>
+    <div class="card"><h4>1:00 · 1:30</h4><strong>Cleaning &amp; Grouping</strong>
+      <p class="muted" style="margin:0.3em 0 0;">NaNs, groupby, feature engineering.</p></div>
+  </div>
+  <p class="callout" style="margin-top:1.2em;">If your model is bad, 9 times out of 10 the problem is in the data pipeline — not the model.</p>
 </section>
 
-<!-- ============================== PART 1 ============================== -->
+<!-- =================================================================== -->
+<!-- PART 1                                                               -->
+<!-- =================================================================== -->
 <section>
-  <section><h2>Part 1 &mdash; DataFrames &amp; Loading</h2>
-    <p class="muted">0:00 &ndash; 0:30</p></section>
-
-  <section>
-    <h3>What is a DataFrame?</h3>
-    <ul>
-      <li>A 2-D table of columns. Each column is a typed <code>Series</code>.</li>
-      <li>Two axes: a row <em>index</em> and a <em>columns</em> label.</li>
-      <li>Underneath: NumPy arrays + a label-to-position lookup.</li>
-    </ul>
+  <section class="title-slide">
+    <span class="kicker">Part 1 · 0:00 – 0:30</span>
+    <h1>DataFrames &amp; Loading</h1>
+    <p class="muted">the anatomy of a table</p>
   </section>
 
   <section>
-    <h3>Loading data</h3>
+    <h2>The anatomy of a DataFrame</h2>
+    <svg class="diagram" viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg">
+      <!-- column labels -->
+      <g font-family="Inter" font-weight="600" font-size="13">
+        <rect x="120" y="40" width="140" height="34" fill="#dbeafe" stroke="#2563eb"/>
+        <rect x="260" y="40" width="140" height="34" fill="#dbeafe" stroke="#2563eb"/>
+        <rect x="400" y="40" width="140" height="34" fill="#dbeafe" stroke="#2563eb"/>
+        <rect x="540" y="40" width="140" height="34" fill="#dbeafe" stroke="#2563eb"/>
+        <text x="190" y="62" text-anchor="middle">species</text>
+        <text x="330" y="62" text-anchor="middle">bill_length_mm</text>
+        <text x="470" y="62" text-anchor="middle">body_mass_g</text>
+        <text x="610" y="62" text-anchor="middle">sex</text>
+      </g>
+      <!-- index labels -->
+      <g font-family="JetBrains Mono" font-size="12" font-weight="600">
+        <rect x="40"  y="74" width="80" height="48" fill="#fef3c7" stroke="#b45309"/>
+        <rect x="40" y="122" width="80" height="48" fill="#fef3c7" stroke="#b45309"/>
+        <rect x="40" y="170" width="80" height="48" fill="#fef3c7" stroke="#b45309"/>
+        <rect x="40" y="218" width="80" height="48" fill="#fef3c7" stroke="#b45309"/>
+        <text x="80"  y="103" text-anchor="middle">0</text>
+        <text x="80" y="151" text-anchor="middle">1</text>
+        <text x="80" y="199" text-anchor="middle">2</text>
+        <text x="80" y="247" text-anchor="middle">3</text>
+      </g>
+      <!-- data cells -->
+      <g font-family="JetBrains Mono" font-size="12">
+        <g fill="#fff" stroke="#cbd5e1">
+          <rect x="120" y="74"  width="140" height="48"/>
+          <rect x="260" y="74"  width="140" height="48"/>
+          <rect x="400" y="74"  width="140" height="48"/>
+          <rect x="540" y="74"  width="140" height="48"/>
+          <rect x="120" y="122" width="140" height="48"/>
+          <rect x="260" y="122" width="140" height="48"/>
+          <rect x="400" y="122" width="140" height="48"/>
+          <rect x="540" y="122" width="140" height="48"/>
+          <rect x="120" y="170" width="140" height="48"/>
+          <rect x="260" y="170" width="140" height="48"/>
+          <rect x="400" y="170" width="140" height="48"/>
+          <rect x="540" y="170" width="140" height="48"/>
+          <rect x="120" y="218" width="140" height="48"/>
+          <rect x="260" y="218" width="140" height="48"/>
+          <rect x="400" y="218" width="140" height="48"/>
+          <rect x="540" y="218" width="140" height="48"/>
+        </g>
+        <text x="190" y="103" text-anchor="middle">Adelie</text>
+        <text x="330" y="103" text-anchor="middle">39.1</text>
+        <text x="470" y="103" text-anchor="middle">3750</text>
+        <text x="610" y="103" text-anchor="middle">male</text>
+        <text x="190" y="151" text-anchor="middle">Adelie</text>
+        <text x="330" y="151" text-anchor="middle">39.5</text>
+        <text x="470" y="151" text-anchor="middle">3800</text>
+        <text x="610" y="151" text-anchor="middle">female</text>
+        <text x="190" y="199" text-anchor="middle">Gentoo</text>
+        <text x="330" y="199" text-anchor="middle" fill="#b91c1c">NaN</text>
+        <text x="470" y="199" text-anchor="middle">5050</text>
+        <text x="610" y="199" text-anchor="middle">male</text>
+        <text x="190" y="247" text-anchor="middle">Chinstrap</text>
+        <text x="330" y="247" text-anchor="middle">46.5</text>
+        <text x="470" y="247" text-anchor="middle">3500</text>
+        <text x="610" y="247" text-anchor="middle">female</text>
+      </g>
+      <!-- annotations -->
+      <text x="80" y="32" text-anchor="middle" font-size="12" fill="#475569">index</text>
+      <text x="400" y="22" text-anchor="middle" font-size="12" fill="#475569">columns (each is a typed Series)</text>
+      <text x="650" y="295" text-anchor="end" font-size="11" fill="#b91c1c">NaN = missing value</text>
+    </svg>
+    <p class="muted" style="font-size:0.78em;">Underneath: NumPy arrays + a label→position lookup for both axes.</p>
+  </section>
+
+  <section>
+    <h2>Loading data</h2>
     <pre><code class="language-python">import pandas as pd
 
-df = pd.read_csv("penguins.csv")
+df = pd.read_csv("file.csv")
 df = pd.read_excel("file.xlsx")
 df = pd.read_parquet("file.parquet")
-df = pd.read_sql("SELECT * FROM t", conn)</code></pre>
-    <p class="muted">In this bootcamp we use <code>shared.data_utils.load_dataset</code>
-    so URLs aren't hard-coded in every notebook.</p>
+df = pd.read_sql("SELECT * FROM t", conn)
+df = pd.read_json("file.json")</code></pre>
+    <div class="tip">In this bootcamp we use <code>shared.data_utils.load_dataset(name)</code> so URLs aren't hard-coded in every notebook.</div>
+    <div class="warn"><code>read_csv</code> has 50+ parameters. The ones you'll actually use: <code>sep</code>, <code>header</code>, <code>names</code>, <code>na_values</code>, <code>parse_dates</code>, <code>dtype</code>, <code>nrows</code>.</div>
   </section>
 
   <section>
-    <h3>The first three things you always do</h3>
+    <h2>The first three things you always do</h2>
     <pre><code class="language-python">df.head()        # eyeball it
-df.info()        # types + non-null counts
+df.info()        # types + non-null counts + memory
 df.describe()    # 5-number summary of numeric columns</code></pre>
-    <p class="callout">Skip these and you'll waste 30 minutes debugging a
-    string column you thought was a float.</p>
+    <div class="mistake">Skip these and you'll waste 30 minutes debugging a string column you assumed was a float, or a join on the wrong dtype.</div>
+    <p class="muted" style="font-size:0.78em;">Bonus: <code>df.describe(include='all')</code> covers categorical columns too.</p>
   </section>
 
   <section>
-    <h3>Index vs. columns</h3>
-    <pre><code class="language-python">df.index        # row labels
-df.columns      # column labels
-df.set_index("penguin_id")
-df.reset_index()</code></pre>
-    <p>The index is not just row numbers &mdash; it's a real lookup. Time series
-    almost always use a <code>DatetimeIndex</code>.</p>
+    <h2>Index vs. columns</h2>
+    <pre><code class="language-python">df.index           # row labels (often a RangeIndex)
+df.columns         # column labels
+
+df.set_index("penguin_id")    # promote a column → index
+df.reset_index()              # demote index → column
+df.rename(columns={"old": "new"})</code></pre>
+    <div class="callout">The index isn't just row numbers — it's a <em>real lookup</em>. Time series almost always use a <code>DatetimeIndex</code>; multi-key joins use a <code>MultiIndex</code>.</div>
+  </section>
+
+  <section>
+    <h2>Series — the building block</h2>
+    <pre><code class="language-python">s = df["bill_length_mm"]        # one column → Series
+type(s)                          # pandas.Series
+s.values                         # underlying NumPy array
+s.mean(), s.median(), s.std()
+s.value_counts()                 # frequency table</code></pre>
+    <p class="muted" style="font-size:0.78em;">A DataFrame is a dict of Series sharing the same index. Internalize that and half of Pandas falls into place.</p>
   </section>
 </section>
 
-<!-- ============================== PART 2 ============================== -->
+<!-- =================================================================== -->
+<!-- PART 2                                                               -->
+<!-- =================================================================== -->
 <section>
-  <section><h2>Part 2 &mdash; Selection &amp; Filtering</h2>
-    <p class="muted">0:30 &ndash; 1:00</p></section>
+  <section class="title-slide">
+    <span class="kicker">Part 2 · 0:30 – 1:00</span>
+    <h1>Selection &amp; Filtering</h1>
+    <p class="muted">labels, positions, masks</p>
+  </section>
 
   <section>
-    <h3>Three ways to pick rows</h3>
+    <h2>Three ways to pick rows</h2>
     <table>
-      <thead><tr><th>tool</th><th>uses</th><th>example</th></tr></thead>
+      <thead><tr><th>tool</th><th>uses</th><th>example</th><th>end</th></tr></thead>
       <tbody>
-        <tr><td><code>.loc</code></td><td>labels</td><td><code>df.loc[3:7, ['col']]</code></td></tr>
-        <tr><td><code>.iloc</code></td><td>positions</td><td><code>df.iloc[3:7, 0:2]</code></td></tr>
-        <tr><td>boolean</td><td>masks</td><td><code>df[df['age'] &gt; 25]</code></td></tr>
+        <tr><td><code>.loc</code></td><td>labels</td><td><code>df.loc[3:7, ['col']]</code></td><td>inclusive</td></tr>
+        <tr><td><code>.iloc</code></td><td>positions</td><td><code>df.iloc[3:7, 0:2]</code></td><td>exclusive</td></tr>
+        <tr><td>boolean</td><td>masks</td><td><code>df[df['age'] > 25]</code></td><td>—</td></tr>
       </tbody>
     </table>
-    <p class="muted"><code>.loc</code> end is inclusive; <code>.iloc</code> end is exclusive. Memorize this.</p>
+    <div class="mistake"><strong>The most common bug:</strong> <code>.loc[0:3]</code> returns rows 0, 1, 2, <em>and</em> 3 (4 rows). <code>.iloc[0:3]</code> returns 3 rows. Memorize this.</div>
   </section>
 
   <section>
-    <h3>Boolean indexing &mdash; the workhorse</h3>
+    <h2>.loc and .iloc — visual</h2>
+    <svg class="diagram" viewBox="0 0 760 240" xmlns="http://www.w3.org/2000/svg">
+      <!-- header -->
+      <g font-family="JetBrains Mono" font-weight="600" font-size="13">
+        <rect x="80"  y="20" width="80" height="32" fill="#dbeafe" stroke="#2563eb"/>
+        <rect x="160" y="20" width="80" height="32" fill="#dbeafe" stroke="#2563eb"/>
+        <rect x="240" y="20" width="80" height="32" fill="#dbeafe" stroke="#2563eb"/>
+        <rect x="320" y="20" width="80" height="32" fill="#dbeafe" stroke="#2563eb"/>
+        <text x="120" y="40" text-anchor="middle">"a"</text>
+        <text x="200" y="40" text-anchor="middle">"b"</text>
+        <text x="280" y="40" text-anchor="middle">"c"</text>
+        <text x="360" y="40" text-anchor="middle">"d"</text>
+      </g>
+      <!-- left col positions -->
+      <g font-family="JetBrains Mono" font-size="12" fill="#475569">
+        <text x="55" y="40"  text-anchor="end">pos →</text>
+        <text x="55" y="73"  text-anchor="end">0</text>
+        <text x="55" y="105" text-anchor="end">1</text>
+        <text x="55" y="137" text-anchor="end">2</text>
+        <text x="55" y="169" text-anchor="end">3</text>
+        <text x="55" y="201" text-anchor="end">4</text>
+      </g>
+      <g font-family="JetBrains Mono" font-weight="600" font-size="13">
+        <rect x="0"  y="52"  width="80" height="32" fill="#fef3c7" stroke="#b45309"/>
+        <rect x="0"  y="84"  width="80" height="32" fill="#fef3c7" stroke="#b45309"/>
+        <rect x="0"  y="116" width="80" height="32" fill="#fef3c7" stroke="#b45309"/>
+        <rect x="0"  y="148" width="80" height="32" fill="#fef3c7" stroke="#b45309"/>
+        <rect x="0"  y="180" width="80" height="32" fill="#fef3c7" stroke="#b45309"/>
+        <text x="40" y="73"  text-anchor="middle">"p0"</text>
+        <text x="40" y="105" text-anchor="middle">"p1"</text>
+        <text x="40" y="137" text-anchor="middle">"p2"</text>
+        <text x="40" y="169" text-anchor="middle">"p3"</text>
+        <text x="40" y="201" text-anchor="middle">"p4"</text>
+      </g>
+      <!-- data grid -->
+      <g fill="#fff" stroke="#cbd5e1">
+        <rect x="80"  y="52"  width="320" height="32"/>
+        <rect x="80"  y="84"  width="320" height="32"/>
+        <rect x="80"  y="116" width="320" height="32"/>
+        <rect x="80"  y="148" width="320" height="32"/>
+        <rect x="80"  y="180" width="320" height="32"/>
+      </g>
+      <!-- highlights -->
+      <rect x="0" y="84" width="400" height="64" fill="#2563eb" fill-opacity="0.10"/>
+      <rect x="0" y="84" width="400" height="64" fill="none" stroke="#2563eb" stroke-dasharray="4 3"/>
+      <text x="440" y="115" font-size="13" fill="#2563eb"><tspan font-weight="700">df.loc["p1":"p2"]</tspan> → 2 rows (inclusive)</text>
+
+      <rect x="0" y="84" width="400" height="64" fill="none"/>
+      <rect x="0" y="148" width="400" height="32" fill="none"/>
+      <rect x="0" y="84" width="400" height="64" fill="none"/>
+      <rect x="0" y="84" width="400" height="64" fill="none"/>
+
+      <rect x="0" y="84" width="400" height="96" fill="#b45309" fill-opacity="0.0"/>
+      <rect x="0" y="84" width="400" height="96" fill="none" stroke="#b45309" stroke-dasharray="2 4"/>
+      <text x="440" y="155" font-size="13" fill="#b45309"><tspan font-weight="700">df.iloc[1:3]</tspan> → 2 rows (exclusive end)</text>
+    </svg>
+  </section>
+
+  <section>
+    <h2>Boolean indexing — the workhorse</h2>
     <pre><code class="language-python">df[df['species'] == 'Adelie']
-df[(df['species'] == 'Adelie') &amp; (df['bill_length_mm'] &gt; 40)]
 
-# Same with .query
-df.query('species == "Adelie" and bill_length_mm &gt; 40')</code></pre>
-    <p>Parens around each clause matter &mdash; <code>&amp;</code> has higher
-    precedence than <code>==</code>.</p>
+# Multiple conditions: parentheses + bitwise operators
+df[(df['species'] == 'Adelie') &amp; (df['bill_length_mm'] > 40)]
+df[(df['species'] == 'Adelie') | (df['species'] == 'Gentoo')]
+df[~df['sex'].isna()]                  #  ~  is "not"</code></pre>
+    <div class="mistake"><strong>Don't write <code>and</code> / <code>or</code> / <code>not</code></strong> with Series — they raise. Use <code>&amp;</code>, <code>|</code>, <code>~</code> and wrap each comparison in parentheses.</div>
   </section>
 
   <section>
-    <h3>Column access</h3>
-    <pre><code class="language-python">df['col']            # always works
-df.col               # works only if name is a valid attr
-df[['a', 'b', 'c']]  # multiple columns -&gt; new DataFrame</code></pre>
+    <h2>Cleaner syntax: <code>.query</code> and <code>.isin</code></h2>
+    <pre><code class="language-python">df.query('species == "Adelie" and bill_length_mm > 40')
+df.query('species in ["Adelie", "Gentoo"] and 35 &lt; bill_length_mm &lt; 50')
+
+# .isin is the readable form of (col == a) | (col == b) | ...
+df[df['island'].isin(['Biscoe', 'Dream'])]
+
+# Reference a local variable inside query with @
+threshold = 4500
+df.query('body_mass_g > @threshold')</code></pre>
+  </section>
+
+  <section>
+    <h2>Column access — three flavors</h2>
+    <pre><code class="language-python">df['col']             # always works
+df.col                # works only if name is a valid identifier
+                      # (no spaces, no leading digit, no shadowing methods)
+df[['a', 'b', 'c']]   # list → new DataFrame with those columns
+
+df.filter(regex='_id$')   # all columns ending in _id</code></pre>
+    <div class="warn">Don't write <code>df.count</code> hoping to access a column named "count" — that's the DataFrame method. Prefer <code>df['col']</code> in code you ship.</div>
+  </section>
+
+  <section>
+    <h2>Mutating safely</h2>
+    <pre><code class="language-python"># Chained assignment is the classic Pandas gotcha
+df[df['x'] > 0]['y'] = 99      #  ✗  SettingWithCopyWarning — may or may not work
+
+# Always use a single .loc
+df.loc[df['x'] > 0, 'y'] = 99  #  ✓</code></pre>
+    <div class="mistake">If you see <em>SettingWithCopyWarning</em>: stop, re-read your assignment, and rewrite it with a single <code>.loc</code>.</div>
   </section>
 </section>
 
-<!-- ============================== PART 3 ============================== -->
+<!-- =================================================================== -->
+<!-- PART 3                                                               -->
+<!-- =================================================================== -->
 <section>
-  <section><h2>Part 3 &mdash; Cleaning &amp; Grouping</h2>
-    <p class="muted">1:00 &ndash; 1:30</p></section>
-
-  <section>
-    <h3>Missing values</h3>
-    <pre><code class="language-python">df.isna().sum()              # NaNs per column
-df.dropna()                  # nuke any row with a NaN
-df.fillna(0)                 # constant
-df['x'].fillna(df['x'].median())   # impute with column median
-df.ffill()                   # carry last valid value forward</code></pre>
-    <p class="callout">Decide <em>per column</em>: drop vs. impute. There is no
-    one correct strategy.</p>
+  <section class="title-slide">
+    <span class="kicker">Part 3 · 1:00 – 1:30</span>
+    <h1>Cleaning &amp; Grouping</h1>
+    <p class="muted">NaNs, split-apply-combine, features</p>
   </section>
 
   <section>
-    <h3>groupby + agg</h3>
+    <h2>Detecting missing values</h2>
+    <pre><code class="language-python">df.isna().sum()              # NaNs per column
+df.isna().any(axis=1).sum()  # how many rows have at least one NaN
+df.isna().mean() * 100       # NaN percentage per column</code></pre>
+    <div class="tip">Visualize NaNs with <code>sns.heatmap(df.isna(), cbar=False)</code> — instant view of where the holes are.</div>
+  </section>
+
+  <section>
+    <h2>Strategy: drop vs. impute</h2>
+    <div class="two-col">
+      <div class="card">
+        <h4>drop</h4>
+        <pre><code class="language-python">df.dropna()              # any NaN
+df.dropna(how='all')     # only rows that are all NaN
+df.dropna(subset=['x'])  # only NaN in col x
+df.dropna(axis=1)        # drop NaN columns</code></pre>
+        <p class="muted" style="font-size:0.75em;">Use when missing data is rare and probably MCAR.</p>
+      </div>
+      <div class="card">
+        <h4>impute</h4>
+        <pre><code class="language-python">df.fillna(0)
+df['x'].fillna(df['x'].median())
+df['x'].fillna(df.groupby('cat')['x'].transform('median'))
+df.ffill()    # carry last valid value forward
+df.bfill()    # use next valid value backward</code></pre>
+        <p class="muted" style="font-size:0.75em;">Use when missing data is structural or correlated.</p>
+      </div>
+    </div>
+    <div class="callout">There is no universally correct strategy. Decide <em>per column</em>, ideally informed by why the value is missing.</div>
+  </section>
+
+  <section>
+    <h2>split → apply → combine</h2>
+    <svg class="diagram" viewBox="0 0 800 280" xmlns="http://www.w3.org/2000/svg">
+      <!-- original -->
+      <g font-family="JetBrains Mono" font-size="11">
+        <text x="20" y="30" font-size="13" font-weight="700" font-family="Inter">DataFrame</text>
+        <rect x="20" y="40" width="120" height="120" fill="#f8fafc" stroke="#1e293b"/>
+        <text x="80" y="62" text-anchor="middle">Adelie · 3750</text>
+        <text x="80" y="80" text-anchor="middle">Gentoo · 5050</text>
+        <text x="80" y="98" text-anchor="middle">Adelie · 3800</text>
+        <text x="80" y="116" text-anchor="middle">Chinstrap · 3500</text>
+        <text x="80" y="134" text-anchor="middle">Gentoo · 5100</text>
+        <text x="80" y="152" text-anchor="middle">Adelie · 3650</text>
+      </g>
+      <!-- arrow split -->
+      <path d="M150 100 L 210 100" stroke="#475569" stroke-width="2" marker-end="url(#a2)"/>
+      <text x="180" y="92" text-anchor="middle" font-size="11" fill="#475569">split</text>
+      <!-- groups -->
+      <g font-family="JetBrains Mono" font-size="11">
+        <rect x="220" y="20" width="160" height="60" fill="#dbeafe" stroke="#2563eb"/>
+        <text x="300" y="35" text-anchor="middle" font-weight="700" font-family="Inter">Adelie</text>
+        <text x="300" y="55" text-anchor="middle">3750 · 3800 · 3650</text>
+        <rect x="220" y="90" width="160" height="60" fill="#dbeafe" stroke="#2563eb"/>
+        <text x="300" y="105" text-anchor="middle" font-weight="700" font-family="Inter">Gentoo</text>
+        <text x="300" y="125" text-anchor="middle">5050 · 5100</text>
+        <rect x="220" y="160" width="160" height="60" fill="#dbeafe" stroke="#2563eb"/>
+        <text x="300" y="175" text-anchor="middle" font-weight="700" font-family="Inter">Chinstrap</text>
+        <text x="300" y="195" text-anchor="middle">3500</text>
+      </g>
+      <!-- arrow apply -->
+      <path d="M390 110 L 460 110" stroke="#475569" stroke-width="2" marker-end="url(#a2)"/>
+      <text x="425" y="102" text-anchor="middle" font-size="11" fill="#475569">apply mean</text>
+      <!-- results per group -->
+      <g font-family="JetBrains Mono" font-size="11">
+        <rect x="470" y="20" width="120" height="60" fill="#d1fae5" stroke="#047857"/>
+        <text x="530" y="55" text-anchor="middle">3733</text>
+        <rect x="470" y="90" width="120" height="60" fill="#d1fae5" stroke="#047857"/>
+        <text x="530" y="125" text-anchor="middle">5075</text>
+        <rect x="470" y="160" width="120" height="60" fill="#d1fae5" stroke="#047857"/>
+        <text x="530" y="195" text-anchor="middle">3500</text>
+      </g>
+      <!-- arrow combine -->
+      <path d="M600 120 L 660 120" stroke="#475569" stroke-width="2" marker-end="url(#a2)"/>
+      <text x="630" y="112" text-anchor="middle" font-size="11" fill="#475569">combine</text>
+      <!-- combined output -->
+      <g font-family="JetBrains Mono" font-size="11">
+        <rect x="670" y="60" width="120" height="120" fill="#fef3c7" stroke="#b45309"/>
+        <text x="730" y="85" text-anchor="middle">Adelie · 3733</text>
+        <text x="730" y="115" text-anchor="middle">Gentoo · 5075</text>
+        <text x="730" y="145" text-anchor="middle">Chinstrap · 3500</text>
+      </g>
+      <defs>
+        <marker id="a2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+          <path d="M0,0 L8,4 L0,8 Z" fill="#475569"/>
+        </marker>
+      </defs>
+    </svg>
+    <p class="muted" style="font-size:0.78em;">Every <code>groupby</code> in Pandas is exactly this pattern.</p>
+  </section>
+
+  <section>
+    <h2>groupby + agg in code</h2>
     <pre><code class="language-python">df.groupby('species')['body_mass_g'].mean()
 
 df.groupby(['species', 'sex']).agg(
-    n=('body_mass_g', 'size'),
-    mean_mass=('body_mass_g', 'mean'),
-    std_mass =('body_mass_g', 'std'),
+    n         =('body_mass_g', 'size'),
+    mass_mean =('body_mass_g', 'mean'),
+    mass_std  =('body_mass_g', 'std'),
+)
+
+# transform: aggregate but keep the original shape
+df['mass_zscore_by_species'] = (
+    df.groupby('species')['body_mass_g']
+      .transform(lambda x: (x - x.mean()) / x.std())
 )</code></pre>
-    <p>Pattern: <em>split &rarr; apply &rarr; combine.</em></p>
+    <div class="callout"><code>agg</code> collapses; <code>transform</code> broadcasts the result back to the original index. <code>filter</code> keeps or drops whole groups.</div>
   </section>
 
   <section>
-    <h3>Feature engineering &mdash; derive new columns</h3>
+    <h2>Feature engineering — derive new columns</h2>
     <pre><code class="language-python">df = df.assign(
-    mass_kg = df['body_mass_g'] / 1000,
-    is_heavy = df['body_mass_g'] &gt; 4500,
-    bill_ratio = df['bill_length_mm'] / df['bill_depth_mm'],
+    mass_kg     = df['body_mass_g'] / 1000,
+    is_heavy    = df['body_mass_g'] > 4500,
+    bill_ratio  = df['bill_length_mm'] / df['bill_depth_mm'],
+    log_mass    = np.log(df['body_mass_g']),
 )</code></pre>
-    <p><code>.assign</code> returns a new DataFrame &mdash; method-chain friendly.</p>
+    <p class="muted" style="font-size:0.78em;"><code>.assign</code> returns a new DataFrame, so it chains beautifully. Prefer it over in-place <code>df['x'] = ...</code> when building pipelines.</p>
   </section>
 
   <section>
+    <h2>The method-chain pattern</h2>
+    <pre><code class="language-python">result = (
+    df
+      .dropna(subset=['body_mass_g'])
+      .assign(mass_kg=lambda d: d['body_mass_g'] / 1000)
+      .query('mass_kg > 4.0')
+      .groupby('species')['mass_kg']
+      .agg(['mean', 'std', 'count'])
+      .round(2)
+      .sort_values('mean', ascending=False)
+)</code></pre>
+    <div class="tip">Every step is a transformation; nothing is hidden in mutated state. This is how production data pipelines read.</div>
+  </section>
+
+  <section>
+    <h2>Joins — one slide</h2>
+    <pre><code class="language-python">left.merge(right, on='id', how='left')      # inner / left / right / outer
+left.merge(right, left_on='aid', right_on='bid')
+left.join(right, how='left')                 # index-based join
+
+pd.concat([df1, df2], axis=0)                # stack rows
+pd.concat([df1, df2], axis=1)                # bolt on columns</code></pre>
+    <div class="warn">Always check row counts before and after a merge. A mis-keyed left join can silently multiply rows.</div>
+  </section>
+
+  <section>
+    <h2>Common mistakes catalog</h2>
+    <div class="mistake"><strong>Chained assignment.</strong> <code>df[mask][col] = ...</code> — use single <code>.loc</code>.</div>
+    <div class="mistake"><strong><code>and</code> / <code>or</code> instead of <code>&amp;</code> / <code>|</code>.</strong> Raises on Series.</div>
+    <div class="mistake"><strong>Forgetting <code>.copy()</code>.</strong> A slice is a view; mutating it pokes the original.</div>
+    <div class="mistake"><strong>Index mismatch on join.</strong> Merge produces <code>NaN</code>; you'll think your data is broken.</div>
+    <div class="mistake"><strong>Mixed dtype object columns.</strong> A column of "ints" with one stray string becomes <code>object</code> and quietly slow.</div>
+  </section>
+
+  <section class="title-slide">
+    <span class="kicker">Recap</span>
     <h2>Leave with these reflexes</h2>
     <ol>
-      <li><code>head() &rarr; info() &rarr; isna().sum()</code> on any fresh dataset.</li>
-      <li><code>.loc</code> for labels, <code>.iloc</code> for positions, masks for filters.</li>
-      <li>Group, aggregate, derive. Pipelines, not for-loops.</li>
+      <li class="fragment fade-up"><code>head() → info() → isna().sum()</code> on any fresh dataset.</li>
+      <li class="fragment fade-up"><code>.loc</code> for labels, <code>.iloc</code> for positions, masks for filtering. Parens around comparisons.</li>
+      <li class="fragment fade-up">Group, aggregate, derive — in chained pipelines, not mutated state.</li>
     </ol>
-    <p class="callout">Next: visualize the data you just cleaned.</p>
+    <p class="callout fragment fade-up">Next: visualize the data you just cleaned — and meet the optimizer that makes models <em>learn</em>.</p>
   </section>
 </section>
 
@@ -173,8 +477,16 @@ df.groupby(['species', 'sex']).agg(
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
 <script>
-  Reveal.initialize({ hash: true, slideNumber: 'c/t', transition: 'slide',
-                      plugins: [ RevealNotes, RevealHighlight ] });
+  Reveal.initialize({
+    hash: true,
+    slideNumber: 'c/t',
+    transition: 'slide',
+    transitionSpeed: 'fast',
+    backgroundTransition: 'fade',
+    width: 1280, height: 760,
+    margin: 0.06,
+    plugins: [ RevealNotes, RevealHighlight ],
+  });
 </script>
 </body>
 </html>
