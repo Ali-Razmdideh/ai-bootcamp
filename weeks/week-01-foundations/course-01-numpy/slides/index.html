@@ -20,13 +20,6 @@
   <span class="kicker">Week 1 · Course 1 · 1.5 hours</span>
   <h1>The Numerical Engine</h1>
   <p class="muted" style="font-size:1.1em;">NumPy — from loops to arrays</p>
-  <aside class="notes">
-    Frame: this is the most important hour of the bootcamp. If a student leaves
-    still reaching for <code>for</code> loops to do numeric work, everything
-    downstream — sklearn, PyTorch, JAX — will feel slow and unreadable. Pace
-    with the schedule on the next slide; if you're behind, cut the worked
-    example on stride math, not the broadcasting visuals.
-  </aside>
 </section>
 
 <section>
@@ -72,11 +65,6 @@
       </div>
     </div>
     <p class="muted" style="font-size:0.75em; margin-top:0.4em;">A single mental picture explains every speed difference we'll see.</p>
-    <aside class="notes">
-      Draw the memory model live (or use the next slide). Stress: list cells
-      point to objects scattered across the heap; the ndarray is one block of
-      bytes the CPU can stream through.
-    </aside>
   </section>
 
   <section>
@@ -139,11 +127,6 @@
         </marker>
       </defs>
     </svg>
-    <aside class="notes">
-      The picture is the lesson. Pause here. Ask: "where does the CPU spend its
-      time when summing a list of ints?" Answer: chasing pointers. The ndarray
-      lets it stream bytes — that's it.
-    </aside>
   </section>
 
   <section>
@@ -151,7 +134,7 @@
     <pre><code class="language-python">%timeit sum(range(1_000_000))             # ~30 ms
 %timeit np.arange(1_000_000).sum()        # ~1 ms</code></pre>
     <div class="tip">~30× faster, half the code, same answer. This is not a micro-optimization — it's <strong>the</strong> reason NumPy exists.</div>
-    <div class="warn">Don't quote these numbers as gospel; show students how to <em>measure</em> on their own laptop. <code>%timeit</code> is your friend.</div>
+    <div class="warn">Don't trust the exact numbers — run <code>%timeit</code> on your own laptop. The ratio matters, not the absolute milliseconds.</div>
   </section>
 
   <section>
