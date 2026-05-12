@@ -19,12 +19,13 @@ before the bootcamp dives into classical ML and deep learning.
 3. **Viz + SciPy** — make the math visible and watch an optimizer minimize a
    function. This demystifies what "training a model" really means.
 
-Each course ships a Reveal.js slide deck, a live-coding `lecture.ipynb`,
-and three exercises (starter + solution).
+Each course ships a Reveal.js slide deck and a single `lecture.ipynb`. The
+lecture is a live-coding walkthrough; three exercises with their solutions are
+appended as the final section of the same notebook.
 
 ## Capstone
 
-The final exercise of Course 3 — the **Grand Finale Lab** — is a 15-minute
+The final exercise in Course 3 — the **Grand Finale Lab** — is a 15-minute
 synthesis: load a messy stock-prices CSV, clean it with Pandas, compute a 7-day
 moving average with NumPy, and plot the result with Matplotlib. If a student
 can finish it, they own the foundations.

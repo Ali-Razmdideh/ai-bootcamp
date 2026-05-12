@@ -18,9 +18,8 @@ happens here.
 
 - `slides/index.html` — Reveal.js deck. Open it in a browser; append
   `?showNotes` to see the speaker notes.
-- `lecture.ipynb` — live-coding notebook that mirrors the slides one-for-one.
-- `exercises/` — three starter notebooks; matching solutions live in
-  `exercises/solutions/`.
+- `lecture.ipynb` — live-coding notebook that mirrors the slides one-for-one,
+  followed by three exercises (each with its solution).
 
 ## Learning outcomes
 

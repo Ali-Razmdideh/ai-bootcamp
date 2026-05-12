@@ -822,31 +822,45 @@ def course3_ex3_solution() -> list[dict]:
 # DRIVER
 # ============================================================================
 
+def combine(lecture, *exercise_pairs):
+    """Concatenate lecture + (exercise, solution) pairs into one notebook.
+
+    Each exercise/solution gets its own divider so the instructor can fold
+    sections in JupyterLab. The bootstrap/import cell duplicated in every
+    builder is harmless on re-run (sys.path insert is idempotent).
+    """
+    cells = list(lecture)
+    cells.append(md("---", "", "# Exercises",
+                    "",
+                    "Each exercise below is followed by its solution.",
+                    "Try to solve the tasks yourself before revealing the next cell."))
+    for i, (starter, solution) in enumerate(exercise_pairs, 1):
+        cells.append(md(f"---\n\n## Exercise {i}"))
+        cells.extend(starter)
+        cells.append(md(f"### Exercise {i} — Solution"))
+        cells.extend(solution)
+    return cells
+
+
 NOTEBOOKS = [
-    # (relative path under week-01-foundations, builder)
-    ("course-01-numpy/lecture.ipynb",                              course1_lecture),
-    ("course-01-numpy/exercises/01_array_basics.ipynb",            course1_ex1_starter),
-    ("course-01-numpy/exercises/solutions/01_array_basics.ipynb",  course1_ex1_solution),
-    ("course-01-numpy/exercises/02_slicing_reshape.ipynb",         course1_ex2_starter),
-    ("course-01-numpy/exercises/solutions/02_slicing_reshape.ipynb", course1_ex2_solution),
-    ("course-01-numpy/exercises/03_vectorization.ipynb",           course1_ex3_starter),
-    ("course-01-numpy/exercises/solutions/03_vectorization.ipynb", course1_ex3_solution),
-
-    ("course-02-pandas/lecture.ipynb",                             course2_lecture),
-    ("course-02-pandas/exercises/01_dataframe_io.ipynb",           course2_ex1_starter),
-    ("course-02-pandas/exercises/solutions/01_dataframe_io.ipynb", course2_ex1_solution),
-    ("course-02-pandas/exercises/02_loc_iloc_boolean.ipynb",       course2_ex2_starter),
-    ("course-02-pandas/exercises/solutions/02_loc_iloc_boolean.ipynb", course2_ex2_solution),
-    ("course-02-pandas/exercises/03_clean_groupby.ipynb",          course2_ex3_starter),
-    ("course-02-pandas/exercises/solutions/03_clean_groupby.ipynb", course2_ex3_solution),
-
-    ("course-03-viz-scipy/lecture.ipynb",                          course3_lecture),
-    ("course-03-viz-scipy/exercises/01_matplotlib_seaborn.ipynb",  course3_ex1_starter),
-    ("course-03-viz-scipy/exercises/solutions/01_matplotlib_seaborn.ipynb", course3_ex1_solution),
-    ("course-03-viz-scipy/exercises/02_scipy_stats_optimize.ipynb", course3_ex2_starter),
-    ("course-03-viz-scipy/exercises/solutions/02_scipy_stats_optimize.ipynb", course3_ex2_solution),
-    ("course-03-viz-scipy/exercises/03_grand_finale_lab.ipynb",    course3_ex3_starter),
-    ("course-03-viz-scipy/exercises/solutions/03_grand_finale_lab.ipynb", course3_ex3_solution),
+    ("course-01-numpy/lecture.ipynb", lambda: combine(
+        course1_lecture(),
+        (course1_ex1_starter(), course1_ex1_solution()),
+        (course1_ex2_starter(), course1_ex2_solution()),
+        (course1_ex3_starter(), course1_ex3_solution()),
+    )),
+    ("course-02-pandas/lecture.ipynb", lambda: combine(
+        course2_lecture(),
+        (course2_ex1_starter(), course2_ex1_solution()),
+        (course2_ex2_starter(), course2_ex2_solution()),
+        (course2_ex3_starter(), course2_ex3_solution()),
+    )),
+    ("course-03-viz-scipy/lecture.ipynb", lambda: combine(
+        course3_lecture(),
+        (course3_ex1_starter(), course3_ex1_solution()),
+        (course3_ex2_starter(), course3_ex2_solution()),
+        (course3_ex3_starter(), course3_ex3_solution()),
+    )),
 ]
 
 

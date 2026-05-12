@@ -31,9 +31,9 @@ shared/
 ```
 
 Each course ships:
-- `lecture.ipynb` — live-coded walkthrough mirroring the slides
+- `lecture.ipynb` — live-coded walkthrough mirroring the slides, with three
+  exercises and their solutions appended as a final section
 - `slides/index.html` — Reveal.js deck (open in a browser, no build step)
-- `exercises/` — starter notebooks + `solutions/` filled-in versions
 
 ## Datasets
 

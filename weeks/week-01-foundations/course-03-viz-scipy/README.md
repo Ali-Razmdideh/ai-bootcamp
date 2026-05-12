@@ -17,9 +17,10 @@ in three lines of SciPy.
 ## Files
 
 - `slides/index.html` — Reveal.js deck.
-- `lecture.ipynb` — loss-curve plots, correlation heatmap, `minimize` demo.
-- `exercises/` — three starter notebooks; the third is the 15-minute
-  Grand Finale capstone tying together Pandas, NumPy, and Matplotlib.
+- `lecture.ipynb` — loss-curve plots, correlation heatmap, and `minimize`
+  demo, followed by three exercises (each with its solution). The third
+  exercise is the 15-minute **Grand Finale** capstone tying together Pandas,
+  NumPy, and Matplotlib.
 
 ## Learning outcomes
 

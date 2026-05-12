@@ -16,8 +16,8 @@ language for that work in Python.
 ## Files
 
 - `slides/index.html` — Reveal.js deck.
-- `lecture.ipynb` — live walkthrough on the Palmer Penguins dataset.
-- `exercises/` — three starter notebooks + `solutions/`.
+- `lecture.ipynb` — live walkthrough on the Palmer Penguins dataset, followed
+  by three exercises (each with its solution).
 
 ## Learning outcomes
 
