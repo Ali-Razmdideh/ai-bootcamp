@@ -1,0 +1,46 @@
+<!--
+  Reveal.js skeleton for bootcamp slide decks.
+  Each course copies/customizes this into its own slides/index.html. The
+  template is documented here so the per-deck file can stay focused on content.
+
+  Replacement points:
+    TITLE        — course title shown in the <title> tag and on the title slide
+    SUBTITLE     — short subtitle (e.g. "Week 1 · Course 1")
+    DECK_BODY    — the <section> elements that make up the deck
+    THEME_PATH   — relative path back to ../../../shared/slides-template/theme.css
+
+  Usage when presenting:
+    Open the file in a browser. Append ?showNotes for the speaker-notes view.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TITLE</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/monokai.css" />
+  <link rel="stylesheet" href="THEME_PATH" />
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+      DECK_BODY
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+  <script>
+    Reveal.initialize({
+      hash: true,
+      slideNumber: 'c/t',
+      transition: 'slide',
+      plugins: [ RevealNotes, RevealHighlight ],
+    });
+  </script>
+</body>
+</html>

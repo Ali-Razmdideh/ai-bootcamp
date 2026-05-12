@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NumPy — The Numerical Engine</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/monokai.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- ============================== TITLE ============================== -->
+<section>
+  <h1>The Numerical Engine</h1>
+  <h3>NumPy &mdash; from loops to arrays</h3>
+  <p class="muted">Week 1 &middot; Course 1 &middot; 1.5 hours</p>
+  <aside class="notes">
+    The single most important hour of the bootcamp. If students leave this
+    session still reaching for <code>for</code> loops to do numeric work,
+    everything downstream will be slow and unreadable. Frame the goal up front:
+    "by the end you will think in shapes, not in indices."
+  </aside>
+</section>
+
+<section>
+  <h2>Where we are heading</h2>
+  <ul>
+    <li>0:00 &mdash; The ND-Array: what it is, why it is fast</li>
+    <li>0:30 &mdash; Shape &amp; Slicing: reshape, transpose, indexing</li>
+    <li>1:00 &mdash; Vectorization &amp; Broadcasting</li>
+  </ul>
+  <p class="callout">Every neural net you will train is a chain of operations
+    on tensors. A tensor is an ndarray with a GPU pointer. Master ndarrays now;
+    the rest will feel familiar.</p>
+</section>
+
+<!-- ============================== PART 1 ============================== -->
+<section>
+  <section>
+    <h2>Part 1 &mdash; The ND-Array</h2>
+    <p class="muted">0:00 &ndash; 0:30</p>
+  </section>
+
+  <section>
+    <h3>Python list vs. NumPy array</h3>
+    <pre><code class="language-python">xs = [1, 2, 3, 4]              # list of PyObject pointers
+import numpy as np
+arr = np.array([1, 2, 3, 4])   # contiguous int64 buffer</code></pre>
+    <ul>
+      <li>A list stores <em>pointers</em> to boxed Python ints scattered in memory.</li>
+      <li>An ndarray is one contiguous typed buffer &mdash; like a C array.</li>
+    </ul>
+    <aside class="notes">
+      Draw the memory model: list = array of pointers each hopping to a
+      different heap location; ndarray = one block of bytes. This single picture
+      explains every speed difference we will see.
+    </aside>
+  </section>
+
+  <section>
+    <h3>Why it is fast</h3>
+    <ol>
+      <li><strong>Locality</strong>: the CPU prefetches contiguous bytes.</li>
+      <li><strong>Typed</strong>: no per-element type checks.</li>
+      <li><strong>SIMD/BLAS</strong>: vector instructions process multiple values per cycle.</li>
+    </ol>
+    <pre><code class="language-python">%timeit sum(range(1_000_000))            # ~30 ms
+%timeit np.arange(1_000_000).sum()       # ~1 ms</code></pre>
+  </section>
+
+  <section>
+    <h3>dtypes</h3>
+    <pre><code class="language-python">np.array([1, 2, 3]).dtype          # int64
+np.array([1.0, 2, 3]).dtype        # float64  (one float promotes the whole array)
+np.array([1, 2, 3], dtype=np.float32).dtype  # float32</code></pre>
+    <p>Pick the smallest dtype that fits your data &mdash; memory matters for
+    large images and tensors.</p>
+  </section>
+
+  <section>
+    <h3>Creating arrays</h3>
+    <pre><code class="language-python">np.zeros((3, 4))            # 3x4 of 0.0
+np.ones((2, 2), int)        # 2x2 of 1
+np.arange(0, 10, 2)         # [0 2 4 6 8]
+np.linspace(0, 1, 5)        # [0. 0.25 0.5 0.75 1.]
+rng = np.random.default_rng(0)
+rng.normal(size=(2, 3))     # 2x3 standard normal</code></pre>
+    <p class="callout"><strong>Habit:</strong> always seed your RNG in
+    notebooks. Reproducibility is the difference between a tutorial and a bug
+    report.</p>
+  </section>
+</section>
+
+<!-- ============================== PART 2 ============================== -->
+<section>
+  <section>
+    <h2>Part 2 &mdash; Shape &amp; Slicing</h2>
+    <p class="muted">0:30 &ndash; 1:00</p>
+  </section>
+
+  <section>
+    <h3>Shape, ndim, size</h3>
+    <pre><code class="language-python">a = np.arange(12).reshape(3, 4)
+a.shape   # (3, 4)
+a.ndim    # 2
+a.size    # 12</code></pre>
+    <p>An image is just a shape. A 224&times;224 RGB photo is an array of
+    shape <code>(224, 224, 3)</code>; a batch of 32 of them is
+    <code>(32, 224, 224, 3)</code>.</p>
+  </section>
+
+  <section>
+    <h3>reshape and -1</h3>
+    <pre><code class="language-python">x = np.arange(24)
+x.reshape(4, 6)
+x.reshape(2, 3, 4)
+x.reshape(2, -1)    # NumPy infers the missing dim &rarr; (2, 12)</code></pre>
+    <p>Reshape never copies if it can avoid it. The data buffer stays put; only
+    the <em>strides</em> change.</p>
+  </section>
+
+  <section>
+    <h3>Transpose</h3>
+    <pre><code class="language-python">m = np.arange(6).reshape(2, 3)
+m.T                  # (3, 2)
+img = rng.random((224, 224, 3))
+img.transpose(2, 0, 1).shape   # (3, 224, 224) &mdash; PyTorch layout</code></pre>
+  </section>
+
+  <section>
+    <h3>Slicing in N dimensions</h3>
+    <pre><code class="language-python">a = np.arange(20).reshape(4, 5)
+a[1, 2]        # scalar at row 1, col 2
+a[1]           # whole row 1
+a[:, 0]        # whole column 0
+a[1:3, 2:4]    # 2x2 sub-block
+a[::-1]        # rows reversed
+a[:, ::2]      # every other column</code></pre>
+    <p class="muted">Slices are <em>views</em>, not copies &mdash; mutating
+    them mutates the source.</p>
+  </section>
+
+  <section>
+    <h3>Boolean &amp; fancy indexing</h3>
+    <pre><code class="language-python">x = rng.normal(size=10)
+x[x > 0]                       # keep positives
+x[x > 0] = 0                   # clip them in-place
+
+ix = np.array([0, 2, 4])
+x[ix]                          # pick specific rows</code></pre>
+  </section>
+</section>
+
+<!-- ============================== PART 3 ============================== -->
+<section>
+  <section>
+    <h2>Part 3 &mdash; Vectorization &amp; Broadcasting</h2>
+    <p class="muted">1:00 &ndash; 1:30</p>
+  </section>
+
+  <section>
+    <h3>The loop you should never write</h3>
+    <pre><code class="language-python">out = np.empty_like(x)
+for i in range(len(x)):
+    out[i] = x[i] ** 2 + 3 * x[i]</code></pre>
+    <p>vs.</p>
+    <pre><code class="language-python">out = x**2 + 3*x</code></pre>
+    <p class="callout">Same answer. ~50&times; faster. Half the code.</p>
+  </section>
+
+  <section>
+    <h3>Element-wise &amp; reductions</h3>
+    <pre><code class="language-python">a + b, a * b, np.exp(a), np.sqrt(a)
+
+a.sum(),    a.sum(axis=0)
+a.mean(),   a.mean(axis=1)
+a.max(),    a.argmax()</code></pre>
+    <p>The <code>axis</code> argument is the one you must internalize:
+    <em>"the axis that disappears in the result."</em></p>
+  </section>
+
+  <section>
+    <h3>Broadcasting in one picture</h3>
+    <pre><code>(3,)        +     (3, 3)
+   [a b c]    +   [[1 2 3]
+                   [4 5 6]
+                   [7 8 9]]
+
+         &darr;  (NumPy stretches the row to every row)
+
+                  [[1+a 2+b 3+c]
+                   [4+a 5+b 6+c]
+                   [7+a 8+b 9+c]]</code></pre>
+  </section>
+
+  <section>
+    <h3>The broadcasting rule</h3>
+    <p>Align shapes from the right. Compatible if each dimension is either
+       equal or 1.</p>
+    <table>
+      <thead><tr><th>A</th><th>B</th><th>Result</th></tr></thead>
+      <tbody>
+        <tr><td>(3, 3)</td><td>(3,)</td><td>(3, 3)</td></tr>
+        <tr><td>(3, 1)</td><td>(1, 3)</td><td>(3, 3)</td></tr>
+        <tr><td>(4, 1, 3)</td><td>(2, 3)</td><td>(4, 2, 3)</td></tr>
+        <tr><td>(3, 2)</td><td>(3,)</td><td><span class="accent">ERROR</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h3>Worked example: pairwise distances</h3>
+    <pre><code class="language-python">pts = rng.normal(size=(100, 2))     # 100 points in 2D
+
+# Naive: two nested loops &mdash; slow, verbose
+# Vectorized:
+diff = pts[:, None, :] - pts[None, :, :]    # (100, 100, 2)
+dist = np.sqrt((diff**2).sum(axis=-1))      # (100, 100)</code></pre>
+    <p class="muted">This pattern &mdash; insert a length-1 axis with
+    <code>None</code> &mdash; appears everywhere in ML code.</p>
+  </section>
+
+  <section>
+    <h2>What you should leave with</h2>
+    <ul>
+      <li>ndarray = contiguous typed buffer. That is the entire speed story.</li>
+      <li>Shape is meaning. Memorize the axis argument.</li>
+      <li>If you typed <code>for</code> on numeric data, pause and ask: can broadcasting do this?</li>
+    </ul>
+    <p class="callout">Next session: Pandas &mdash; the same engine, with column names.</p>
+  </section>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    slideNumber: 'c/t',
+    transition: 'slide',
+    plugins: [ RevealNotes, RevealHighlight ],
+  });
+</script>
+</body>
+</html>

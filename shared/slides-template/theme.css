@@ -1,0 +1,56 @@
+/* Bootcamp Reveal.js theme overrides — applied on top of the `white` base theme. */
+:root {
+  --bc-accent: #2563eb;
+  --bc-accent-soft: #dbeafe;
+  --bc-ink: #0f172a;
+  --bc-muted: #475569;
+  --bc-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+}
+
+.reveal {
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  color: var(--bc-ink);
+}
+
+.reveal h1, .reveal h2, .reveal h3 {
+  text-transform: none;
+  letter-spacing: -0.01em;
+  color: var(--bc-ink);
+}
+
+.reveal h1 { font-size: 2.4em; }
+.reveal h2 { font-size: 1.8em; }
+.reveal h3 { font-size: 1.3em; color: var(--bc-accent); }
+
+.reveal code,
+.reveal pre code {
+  font-family: var(--bc-mono);
+  font-size: 0.85em;
+}
+
+.reveal pre {
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+  border-radius: 8px;
+}
+
+.reveal .accent      { color: var(--bc-accent); }
+.reveal .muted       { color: var(--bc-muted); }
+.reveal .callout {
+  background: var(--bc-accent-soft);
+  border-left: 4px solid var(--bc-accent);
+  padding: 0.6em 1em;
+  border-radius: 4px;
+  text-align: left;
+  font-size: 0.85em;
+}
+
+.reveal .footer {
+  position: absolute;
+  bottom: 12px;
+  right: 24px;
+  font-size: 0.5em;
+  color: var(--bc-muted);
+}
+
+.reveal table { font-size: 0.7em; }
+.reveal table th { background: var(--bc-accent-soft); }

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visualization & Math Bridge</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/monokai.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<section>
+  <h1>Visualization &amp; the Math Bridge</h1>
+  <h3>Matplotlib &middot; Seaborn &middot; SciPy</h3>
+  <p class="muted">Week 1 &middot; Course 3 &middot; 1.5 hours</p>
+  <aside class="notes">
+    The hidden goal of this session is to demystify "training." After today
+    students should be able to say: a model fits parameters by calling an
+    optimizer on a loss function. They will have seen the whole thing in
+    SciPy first, before any sklearn or PyTorch.
+  </aside>
+</section>
+
+<section>
+  <h2>Roadmap</h2>
+  <ul>
+    <li>0:00 &mdash; Matplotlib + Seaborn</li>
+    <li>0:45 &mdash; SciPy: <code>stats</code> &amp; <code>optimize</code></li>
+    <li>1:15 &mdash; Grand Finale: clean, transform, plot</li>
+  </ul>
+</section>
+
+<!-- ============================== PART 1 ============================== -->
+<section>
+  <section>
+    <h2>Part 1 &mdash; Matplotlib &amp; Seaborn</h2>
+    <p class="muted">0:00 &ndash; 0:45</p>
+  </section>
+
+  <section>
+    <h3>Matplotlib: the anatomy of a plot</h3>
+    <pre><code class="language-python">fig, ax = plt.subplots(figsize=(6, 4))
+ax.plot(x, y, label='train')
+ax.set_xlabel('epoch'); ax.set_ylabel('loss')
+ax.set_title('Loss curve'); ax.legend()</code></pre>
+    <p>Always use the <em>object-oriented</em> API (<code>fig, ax</code>). Avoids
+    surprises when you have multiple subplots.</p>
+  </section>
+
+  <section>
+    <h3>The two charts you'll draw most</h3>
+    <ul>
+      <li><strong>Line plot</strong> &mdash; loss curves, time series.</li>
+      <li><strong>Scatter</strong> &mdash; clusters, predictions vs. truth.</li>
+    </ul>
+    <pre><code class="language-python">ax.plot(epochs, train_loss, label='train')
+ax.plot(epochs, val_loss,  label='val')
+
+ax.scatter(X[:, 0], X[:, 1], c=labels, cmap='viridis')</code></pre>
+  </section>
+
+  <section>
+    <h3>Seaborn: stats plots in one line</h3>
+    <pre><code class="language-python">sns.heatmap(df.corr(), annot=True, cmap='coolwarm')
+sns.kdeplot(data=df, x='bill_length_mm', hue='species', fill=True)
+sns.pairplot(df, hue='species')</code></pre>
+    <p class="callout">Heatmap of correlations is the fastest way to spot
+    redundant features. Use it before any modeling.</p>
+  </section>
+</section>
+
+<!-- ============================== PART 2 ============================== -->
+<section>
+  <section>
+    <h2>Part 2 &mdash; SciPy</h2>
+    <p class="muted">0:45 &ndash; 1:15</p>
+  </section>
+
+  <section>
+    <h3><code>scipy.stats</code></h3>
+    <pre><code class="language-python">from scipy import stats
+stats.norm.pdf(x, loc=0, scale=1)          # PDF
+stats.norm.rvs(loc=0, scale=1, size=1000)  # samples
+stats.norm.fit(data)                       # fit parameters
+
+stats.binom.pmf(k=5, n=10, p=0.5)
+stats.ttest_ind(group_a, group_b)</code></pre>
+  </section>
+
+  <section>
+    <h3>The optimizer demo &mdash; what models actually do</h3>
+    <pre><code class="language-python">from scipy import optimize
+
+f = lambda x: (x - 3)**2 + np.sin(5 * x)
+res = optimize.minimize(f, x0=0.0)
+print(res.x)   # ≈ argmin</code></pre>
+    <p class="callout">Every supervised model: define a loss
+    <code>L(parameters)</code>, then ask an optimizer to minimize it. That's it.</p>
+  </section>
+
+  <section>
+    <h3>Local minima &mdash; why initialization matters</h3>
+    <p>Try <code>x0 = 0</code> vs <code>x0 = 10</code> on the same bumpy
+    function and you'll get different answers. This is the conceptual seed of
+    every "different random seed -&gt; different model" conversation later.</p>
+  </section>
+</section>
+
+<!-- ============================== PART 3 ============================== -->
+<section>
+  <section>
+    <h2>Grand Finale &mdash; 15 minutes</h2>
+    <p class="muted">1:15 &ndash; 1:30</p>
+  </section>
+
+  <section>
+    <h3>The mission</h3>
+    <ol>
+      <li>Load a messy stock-prices CSV (with <code>shared.data_utils</code>).</li>
+      <li>Forward-fill NaNs with pandas.</li>
+      <li>Compute a 7-day moving average with NumPy (no Python loop).</li>
+      <li>Plot price + MA on the same axes.</li>
+    </ol>
+    <p class="callout">This is the whole week-1 pipeline in one notebook. If
+    students can finish it, they own the foundations.</p>
+  </section>
+
+  <section>
+    <h2>Where this leads</h2>
+    <ul>
+      <li>NumPy &rarr; tensors in PyTorch.</li>
+      <li>Pandas &rarr; data pipelines for every model.</li>
+      <li>SciPy <code>optimize</code> &rarr; gradient descent in neural nets.</li>
+    </ul>
+    <p>You now have the entire ML mental model. Everything else is detail.</p>
+  </section>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script>
+  Reveal.initialize({ hash: true, slideNumber: 'c/t', transition: 'slide',
+                      plugins: [ RevealNotes, RevealHighlight ] });
+</script>
+</body>
+</html>

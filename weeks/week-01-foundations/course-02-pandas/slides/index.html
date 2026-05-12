@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pandas — Data Manipulation</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/monokai.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<section>
+  <h1>Pandas</h1>
+  <h3>Treat your data like a database</h3>
+  <p class="muted">Week 1 &middot; Course 2 &middot; 1.5 hours</p>
+  <aside class="notes">
+    Frame Pandas as "NumPy with column names and a brain about missing data."
+    Students who already know SQL should think of a DataFrame as a typed table
+    they can query in Python.
+  </aside>
+</section>
+
+<section>
+  <h2>Roadmap</h2>
+  <ul>
+    <li>0:00 &mdash; DataFrames &amp; Loading</li>
+    <li>0:30 &mdash; Selection &amp; Filtering</li>
+    <li>1:00 &mdash; Cleaning &amp; Grouping</li>
+  </ul>
+  <p class="callout">If your model is bad, 9 times out of 10 the problem is in
+    the data pipeline &mdash; not the model.</p>
+</section>
+
+<!-- ============================== PART 1 ============================== -->
+<section>
+  <section><h2>Part 1 &mdash; DataFrames &amp; Loading</h2>
+    <p class="muted">0:00 &ndash; 0:30</p></section>
+
+  <section>
+    <h3>What is a DataFrame?</h3>
+    <ul>
+      <li>A 2-D table of columns. Each column is a typed <code>Series</code>.</li>
+      <li>Two axes: a row <em>index</em> and a <em>columns</em> label.</li>
+      <li>Underneath: NumPy arrays + a label-to-position lookup.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h3>Loading data</h3>
+    <pre><code class="language-python">import pandas as pd
+
+df = pd.read_csv("penguins.csv")
+df = pd.read_excel("file.xlsx")
+df = pd.read_parquet("file.parquet")
+df = pd.read_sql("SELECT * FROM t", conn)</code></pre>
+    <p class="muted">In this bootcamp we use <code>shared.data_utils.load_dataset</code>
+    so URLs aren't hard-coded in every notebook.</p>
+  </section>
+
+  <section>
+    <h3>The first three things you always do</h3>
+    <pre><code class="language-python">df.head()        # eyeball it
+df.info()        # types + non-null counts
+df.describe()    # 5-number summary of numeric columns</code></pre>
+    <p class="callout">Skip these and you'll waste 30 minutes debugging a
+    string column you thought was a float.</p>
+  </section>
+
+  <section>
+    <h3>Index vs. columns</h3>
+    <pre><code class="language-python">df.index        # row labels
+df.columns      # column labels
+df.set_index("penguin_id")
+df.reset_index()</code></pre>
+    <p>The index is not just row numbers &mdash; it's a real lookup. Time series
+    almost always use a <code>DatetimeIndex</code>.</p>
+  </section>
+</section>
+
+<!-- ============================== PART 2 ============================== -->
+<section>
+  <section><h2>Part 2 &mdash; Selection &amp; Filtering</h2>
+    <p class="muted">0:30 &ndash; 1:00</p></section>
+
+  <section>
+    <h3>Three ways to pick rows</h3>
+    <table>
+      <thead><tr><th>tool</th><th>uses</th><th>example</th></tr></thead>
+      <tbody>
+        <tr><td><code>.loc</code></td><td>labels</td><td><code>df.loc[3:7, ['col']]</code></td></tr>
+        <tr><td><code>.iloc</code></td><td>positions</td><td><code>df.iloc[3:7, 0:2]</code></td></tr>
+        <tr><td>boolean</td><td>masks</td><td><code>df[df['age'] &gt; 25]</code></td></tr>
+      </tbody>
+    </table>
+    <p class="muted"><code>.loc</code> end is inclusive; <code>.iloc</code> end is exclusive. Memorize this.</p>
+  </section>
+
+  <section>
+    <h3>Boolean indexing &mdash; the workhorse</h3>
+    <pre><code class="language-python">df[df['species'] == 'Adelie']
+df[(df['species'] == 'Adelie') &amp; (df['bill_length_mm'] &gt; 40)]
+
+# Same with .query
+df.query('species == "Adelie" and bill_length_mm &gt; 40')</code></pre>
+    <p>Parens around each clause matter &mdash; <code>&amp;</code> has higher
+    precedence than <code>==</code>.</p>
+  </section>
+
+  <section>
+    <h3>Column access</h3>
+    <pre><code class="language-python">df['col']            # always works
+df.col               # works only if name is a valid attr
+df[['a', 'b', 'c']]  # multiple columns -&gt; new DataFrame</code></pre>
+  </section>
+</section>
+
+<!-- ============================== PART 3 ============================== -->
+<section>
+  <section><h2>Part 3 &mdash; Cleaning &amp; Grouping</h2>
+    <p class="muted">1:00 &ndash; 1:30</p></section>
+
+  <section>
+    <h3>Missing values</h3>
+    <pre><code class="language-python">df.isna().sum()              # NaNs per column
+df.dropna()                  # nuke any row with a NaN
+df.fillna(0)                 # constant
+df['x'].fillna(df['x'].median())   # impute with column median
+df.ffill()                   # carry last valid value forward</code></pre>
+    <p class="callout">Decide <em>per column</em>: drop vs. impute. There is no
+    one correct strategy.</p>
+  </section>
+
+  <section>
+    <h3>groupby + agg</h3>
+    <pre><code class="language-python">df.groupby('species')['body_mass_g'].mean()
+
+df.groupby(['species', 'sex']).agg(
+    n=('body_mass_g', 'size'),
+    mean_mass=('body_mass_g', 'mean'),
+    std_mass =('body_mass_g', 'std'),
+)</code></pre>
+    <p>Pattern: <em>split &rarr; apply &rarr; combine.</em></p>
+  </section>
+
+  <section>
+    <h3>Feature engineering &mdash; derive new columns</h3>
+    <pre><code class="language-python">df = df.assign(
+    mass_kg = df['body_mass_g'] / 1000,
+    is_heavy = df['body_mass_g'] &gt; 4500,
+    bill_ratio = df['bill_length_mm'] / df['bill_depth_mm'],
+)</code></pre>
+    <p><code>.assign</code> returns a new DataFrame &mdash; method-chain friendly.</p>
+  </section>
+
+  <section>
+    <h2>Leave with these reflexes</h2>
+    <ol>
+      <li><code>head() &rarr; info() &rarr; isna().sum()</code> on any fresh dataset.</li>
+      <li><code>.loc</code> for labels, <code>.iloc</code> for positions, masks for filters.</li>
+      <li>Group, aggregate, derive. Pipelines, not for-loops.</li>
+    </ol>
+    <p class="callout">Next: visualize the data you just cleaned.</p>
+  </section>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script>
+  Reveal.initialize({ hash: true, slideNumber: 'c/t', transition: 'slide',
+                      plugins: [ RevealNotes, RevealHighlight ] });
+</script>
+</body>
+</html>
