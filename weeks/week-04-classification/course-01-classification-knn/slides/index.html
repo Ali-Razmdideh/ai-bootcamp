@@ -12,118 +12,334 @@
 </head>
 <body>
 <div class="reveal"><div class="slides">
+
 <section class="title-slide">
   <span class="kicker">Week 4 · Course 1 · 1.5 hours</span>
   <h1>Classification + KNN</h1>
   <p class="muted" style="font-size:1.1em;">Decision boundaries, confusion matrices, ROC</p>
 </section>
+
 <section>
   <span class="kicker">Roadmap</span>
   <h2>Where we are heading</h2>
   <div class="three-col">
     <div class="card"><h4>0:00 · 0:30</h4><strong>What a classifier outputs</strong>
-      <p class="muted" style="margin:0.3em 0 0;">labels, probs, metrics.</p></div>
-    <div class="card"><h4>0:30 · 1:00</h4><strong>KNN</strong>
-      <p class="muted" style="margin:0.3em 0 0;">the no-training baseline.</p></div>
+      <p class="muted" style="margin:0.3em 0 0;">labels, probabilities, boundaries, metrics.</p></div>
+    <div class="card"><h4>0:30 · 1:00</h4><strong>KNN, the geometric baseline</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Bayes-optimal in the limit, sensitive to scale.</p></div>
     <div class="card"><h4>1:00 · 1:30</h4><strong>Class imbalance</strong>
-      <p class="muted" style="margin:0.3em 0 0;">the majority-class trap.</p></div>
+      <p class="muted" style="margin:0.3em 0 0;">why "always say No" scores 97%.</p></div>
   </div>
   <p class="callout" style="margin-top:1.2em;">Before any specific classifier, internalize the interface: predict a label, plot a decision boundary, read a confusion matrix, pick the right metric.</p>
 </section>
+
+<!-- ============================================================ PART 1 -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 1 · 0:00 – 0:30</span>
     <h1>What a classifier outputs</h1>
-    <p class="muted">label, probability, boundary</p>
-  </section>
-  <section>
-    <h2>From regression to classification</h2>
-<ul>
-  <li class="fragment fade-up"><strong>Regression</strong>: ŷ is a number; minimize squared error.</li>
-  <li class="fragment fade-up"><strong>Classification</strong>: ŷ is a label; minimize misclassification (or maximize log-likelihood).</li>
-  <li class="fragment fade-up">Same X, different y. Same toolbox: pipelines, CV, regularization.</li>
-</ul>
+    <p class="muted">label, probability, decision boundary</p>
   </section>
 
   <section>
-    <h2>Confusion matrix</h2>
-<p>For binary classification:</p><table style="font-size:0.95em;margin:0 auto;"><tr><td></td><td><strong>pred 0</strong></td><td><strong>pred 1</strong></td></tr><tr><td><strong>true 0</strong></td><td>TN</td><td>FP</td></tr><tr><td><strong>true 1</strong></td><td>FN</td><td>TP</td></tr></table><p class="muted" style="margin-top:1em;">All metrics — accuracy, precision, recall, F1 — are functions of these four cells.</p>
+    <h2>Qualitative responses are everywhere</h2>
+    <div class="two-col">
+      <div>
+        <ul>
+          <li><strong>eye color</strong> ∈ {brown, blue, green}</li>
+          <li><strong>email</strong> ∈ {spam, ham}</li>
+          <li><strong>credit card</strong> ∈ {default, no default}</li>
+          <li><strong>ER patient</strong> ∈ {stroke, overdose, seizure}</li>
+        </ul>
+      </div>
+      <div>
+        <p class="muted">Given features <em>X</em> and a label <em>Y</em> in some set 𝒞, we want a function C(X) → 𝒞.</p>
+        <p class="muted">Often what we really want is the <strong>probability</strong> a sample belongs to each class — "this claim is 87% likely fraudulent" beats "fraud / not fraud" every time.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Why not just fit linear regression?</h2>
+    <p>For a binary outcome, code <em>Y</em> = 0 / 1 and regress. Two failure modes:</p>
+    <div class="two-col">
+      <div class="card">
+        <h4>Probabilities outside [0, 1]</h4>
+        <p class="muted">Linear regression has no floor or ceiling. For low balances, the fitted "probability of default" goes <em>negative</em>.</p>
+      </div>
+      <div class="card">
+        <h4>No ordering of classes</h4>
+        <p class="muted">Coding stroke=1, overdose=2, seizure=3 implies seizure is "twice as far" from stroke as overdose. Nonsense.</p>
+      </div>
+    </div>
+    <p class="callout">The fix: model log-odds (Course 2) or model the class-conditional density (Course 3).</p>
+  </section>
+
+  <section>
+    <h2>The Default dataset — our running example</h2>
+    <div class="two-col">
+      <div>
+        <svg viewBox="0 0 320 240" style="width:100%;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
+          <!-- axes -->
+          <line x1="40" y1="200" x2="300" y2="200" stroke="#0f172a" stroke-width="1"/>
+          <line x1="40" y1="200" x2="40" y2="20" stroke="#0f172a" stroke-width="1"/>
+          <text x="170" y="225" font-size="11" text-anchor="middle">balance →</text>
+          <text x="20" y="110" font-size="11" text-anchor="middle" transform="rotate(-90 20 110)">income →</text>
+          <!-- no-default cloud (left) -->
+          <g fill="#2563eb" opacity="0.35">
+            <circle cx="80"  cy="120" r="2.2"/><circle cx="95"  cy="80"  r="2.2"/>
+            <circle cx="60"  cy="140" r="2.2"/><circle cx="110" cy="110" r="2.2"/>
+            <circle cx="130" cy="60"  r="2.2"/><circle cx="75"  cy="160" r="2.2"/>
+            <circle cx="100" cy="140" r="2.2"/><circle cx="120" cy="170" r="2.2"/>
+            <circle cx="90"  cy="100" r="2.2"/><circle cx="115" cy="90"  r="2.2"/>
+            <circle cx="145" cy="120" r="2.2"/><circle cx="65"  cy="100" r="2.2"/>
+            <circle cx="140" cy="180" r="2.2"/><circle cx="85"  cy="180" r="2.2"/>
+          </g>
+          <!-- default cloud (right, smaller) -->
+          <g fill="#b91c1c" opacity="0.6">
+            <circle cx="210" cy="90"  r="2.6"/><circle cx="240" cy="120" r="2.6"/>
+            <circle cx="225" cy="160" r="2.6"/><circle cx="260" cy="70"  r="2.6"/>
+            <circle cx="245" cy="180" r="2.6"/><circle cx="220" cy="140" r="2.6"/>
+            <circle cx="255" cy="100" r="2.6"/>
+          </g>
+        </svg>
+        <p class="ghost" style="text-align:center;">10 000 customers · 333 defaulted (3.3%)</p>
+      </div>
+      <div>
+        <p><code>Default</code> from ISLR: features <code>balance</code>, <code>income</code>, <code>student</code>; label <code>default ∈ {Yes, No}</code>.</p>
+        <ul>
+          <li>Defaulters cluster at <strong>high balance</strong>.</li>
+          <li>Income hardly matters.</li>
+          <li>Only 3.3% positives — the <em>imbalance</em> tax shows up in Part 3.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Confusion matrix — the source of every metric</h2>
+    <table style="font-size:1em;margin:0 auto;border-collapse:collapse;">
+      <tr style="background:var(--bc-panel);">
+        <th style="padding:0.5em 1em;"></th>
+        <th style="padding:0.5em 1em;">predicted 0</th>
+        <th style="padding:0.5em 1em;">predicted 1</th>
+      </tr>
+      <tr><th style="padding:0.5em 1em;background:var(--bc-panel);">true 0</th>
+          <td style="padding:0.6em 1.2em;background:var(--bc-success-soft);">TN</td>
+          <td style="padding:0.6em 1.2em;background:var(--bc-danger-soft);">FP</td></tr>
+      <tr><th style="padding:0.5em 1em;background:var(--bc-panel);">true 1</th>
+          <td style="padding:0.6em 1.2em;background:var(--bc-danger-soft);">FN</td>
+          <td style="padding:0.6em 1.2em;background:var(--bc-success-soft);">TP</td></tr>
+    </table>
+    <div class="two-col" style="margin-top:1em;">
+      <p class="muted"><strong>Accuracy</strong> = (TN+TP)/n &nbsp;·&nbsp; <strong>Precision</strong> = TP/(TP+FP)</p>
+      <p class="muted"><strong>Recall</strong> = TP/(TP+FN) &nbsp;·&nbsp; <strong>F1</strong> = 2·P·R/(P+R)</p>
+    </div>
   </section>
 
   <section>
     <h2>Which metric for which job?</h2>
-<ul>
-  <li class="fragment fade-up"><strong>Accuracy</strong> — only on balanced classes. Lies on imbalanced data.</li>
-  <li class="fragment fade-up"><strong>Precision</strong> — when false positives are costly (spam filter).</li>
-  <li class="fragment fade-up"><strong>Recall</strong> — when false negatives are costly (cancer screening).</li>
-  <li class="fragment fade-up"><strong>F1</strong> — when both matter equally.</li>
-  <li class="fragment fade-up"><strong>AUC</strong> — robust to threshold choice; ranks positives above negatives.</li>
-</ul>
+    <ul>
+      <li class="fragment fade-up"><strong>Accuracy</strong> — only on balanced classes. Lies on imbalanced data (see Part 3).</li>
+      <li class="fragment fade-up"><strong>Precision</strong> — when false positives are costly. <em>Spam filter</em>: don't bury legit mail.</li>
+      <li class="fragment fade-up"><strong>Recall</strong> — when false negatives are costly. <em>Cancer screening</em>: missing one is catastrophic.</li>
+      <li class="fragment fade-up"><strong>F1</strong> — when both matter equally.</li>
+      <li class="fragment fade-up"><strong>ROC/AUC</strong> — threshold-free; ranks positives above negatives. The default report card.</li>
+    </ul>
   </section>
 
+  <section>
+    <h2>The ROC curve</h2>
+    <div class="two-col">
+      <div>
+        <svg viewBox="0 0 240 240" style="width:100%;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
+          <line x1="30" y1="210" x2="220" y2="210" stroke="#0f172a"/>
+          <line x1="30" y1="210" x2="30"  y2="20"  stroke="#0f172a"/>
+          <line x1="30" y1="210" x2="220" y2="20"  stroke="#94a3b8" stroke-dasharray="4 3"/>
+          <path d="M30,210 C50,90 120,40 220,20" stroke="#2563eb" stroke-width="2.5" fill="none"/>
+          <text x="125" y="232" font-size="11" text-anchor="middle">False-positive rate</text>
+          <text x="14"  y="115" font-size="11" text-anchor="middle" transform="rotate(-90 14 115)">True-positive rate</text>
+          <text x="160" y="135" font-size="10" fill="#94a3b8">random</text>
+          <text x="100" y="60"  font-size="10" fill="#2563eb">good classifier</text>
+        </svg>
+      </div>
+      <div>
+        <ul>
+          <li>Sweep the decision threshold from 1 → 0.</li>
+          <li>At each threshold record (FPR, TPR) → trace the curve.</li>
+          <li><strong>AUC</strong> = area under the curve = P(score(positive) &gt; score(negative)).</li>
+          <li>Diagonal = random; top-left corner = perfect.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
 </section>
+
+<!-- ============================================================ PART 2 -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 2 · 0:30 – 1:00</span>
     <h1>KNN</h1>
-    <p class="muted">the no-training baseline</p>
+    <p class="muted">the no-training, Bayes-optimal-in-the-limit baseline</p>
   </section>
+
   <section>
     <h2>KNN in one slide</h2>
-<ul>
-  <li class="fragment fade-up">To predict a new point, find its k nearest training points.</li>
-  <li class="fragment fade-up">Take a majority vote (classification) or average (regression).</li>
-  <li class="fragment fade-up"><em>No model fit</em> — the training data <em>is</em> the model.</li>
-</ul>
+    <div class="two-col">
+      <div>
+        <svg viewBox="0 0 240 200" style="width:100%;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
+          <g fill="#2563eb" opacity="0.7">
+            <circle cx="60" cy="60" r="4"/><circle cx="80" cy="100" r="4"/>
+            <circle cx="50" cy="130" r="4"/><circle cx="90" cy="50" r="4"/>
+            <circle cx="100" cy="80" r="4"/>
+          </g>
+          <g fill="#b91c1c" opacity="0.7">
+            <circle cx="160" cy="70" r="4"/><circle cx="180" cy="120" r="4"/>
+            <circle cx="200" cy="90" r="4"/><circle cx="170" cy="160" r="4"/>
+            <circle cx="190" cy="50" r="4"/>
+          </g>
+          <!-- query point -->
+          <polygon points="125,110 132,124 118,124" fill="#0f172a"/>
+          <circle cx="125" cy="115" r="38" fill="none" stroke="#0f172a" stroke-dasharray="3 3"/>
+          <text x="125" y="190" font-size="11" text-anchor="middle">k=5: 3 red, 2 blue → predict red</text>
+        </svg>
+      </div>
+      <div>
+        <ol>
+          <li>Receive a new point <em>x</em>.</li>
+          <li>Find its <em>k</em> nearest training points.</li>
+          <li>Majority vote (classification) or mean (regression).</li>
+        </ol>
+        <p class="muted">No model fit. The training data <em>is</em> the model.</p>
+        <p class="tip"><strong>Bayes-optimal in the limit</strong> — as n → ∞ and k → ∞ slowly, KNN converges to the best possible classifier. The bar everything else must beat.</p>
+      </div>
+    </div>
   </section>
 
   <section>
     <h2>k controls the bias-variance dial</h2>
-<ul>
-  <li class="fragment fade-up"><strong>k = 1</strong> — perfectly fits training, jagged boundary, high variance.</li>
-  <li class="fragment fade-up"><strong>k = 25</strong> — smooth boundary, more bias, less variance.</li>
-  <li class="fragment fade-up">Pick k with cross-validation.</li>
-</ul>
+    <div class="three-col">
+      <div class="card">
+        <h4>k = 1</h4>
+        <p class="muted">Boundary wraps around <em>every</em> training point. Zero training error, jagged, high variance — memorizing noise.</p>
+      </div>
+      <div class="card">
+        <h4>k = 10</h4>
+        <p class="muted">Smooth, recognizable boundary. Usually the sweet spot for noisy real data.</p>
+      </div>
+      <div class="card">
+        <h4>k = 100</h4>
+        <p class="muted">Almost flat — predicts the global majority for nearly every query. High bias.</p>
+      </div>
+    </div>
+    <p class="callout">Pick <em>k</em> with cross-validation. Plot CV error vs <em>k</em>; choose the lowest, or the simplest within 1 SE.</p>
   </section>
 
   <section>
     <h2>Always scale before KNN</h2>
-<p>Income (0 to 70 000) versus balance (0 to 2700) — without scaling, KNN distance is dominated by income alone. Wrap in a Pipeline:</p><pre><code class="language-python">Pipeline([
-    (&#x27;scale&#x27;, StandardScaler()),
-    (&#x27;knn&#x27;, KNeighborsClassifier(k=5)),
-])</code></pre>
+    <div class="two-col">
+      <div>
+        <p>Two predictors on wildly different scales:</p>
+        <ul>
+          <li><code>balance</code> ∈ [0, 2 700]</li>
+          <li><code>income</code> ∈ [0, 70 000]</li>
+        </ul>
+        <p>Without scaling, Euclidean distance is dominated by income — <code>balance</code> contributes essentially zero. KNN ignores the variable that actually matters.</p>
+      </div>
+      <div>
+        <pre><code class="language-python">from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+
+knn = Pipeline([
+    ('scale', StandardScaler()),
+    ('knn',   KNeighborsClassifier(n_neighbors=5)),
+])
+knn.fit(X_train, y_train)</code></pre>
+        <p class="tip"><strong>Pipeline</strong> ensures the scaler is fit on training folds only — no leakage during CV.</p>
+      </div>
+    </div>
   </section>
 
+  <section>
+    <h2>KNN's failure modes</h2>
+    <ul>
+      <li class="fragment fade-up"><strong>Curse of dimensionality</strong> — in 50-D, "nearest" loses meaning. All points are roughly equidistant.</li>
+      <li class="fragment fade-up"><strong>Memory + latency</strong> — prediction is O(n·p) per query; bad on 10⁷ rows.</li>
+      <li class="fragment fade-up"><strong>No coefficients</strong> — you cannot say "balance matters most"; nothing to inspect.</li>
+    </ul>
+    <p class="muted">Despite this, KNN is the right first model: zero hyperparameters except <em>k</em>, often surprisingly strong on tabular data with p &lt; 20.</p>
+  </section>
 </section>
+
+<!-- ============================================================ PART 3 -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 3 · 1:00 – 1:30</span>
     <h1>Class imbalance</h1>
-    <p class="muted">the trap</p>
+    <p class="muted">why accuracy lies, and what to read instead</p>
   </section>
+
   <section>
-    <h2>'Always say No' scores 97%</h2>
-<p>Default rate ≈ 3%. The constant classifier 0 has 97% accuracy and 0% recall on defaulters.</p><p class="callout">Accuracy is useless when classes are imbalanced. Look at recall and AUC instead.</p>
+    <h2>"Always say No" scores 97%</h2>
+    <div class="two-col">
+      <div>
+        <p>Default rate ≈ 3.3%. The constant classifier <code>predict 0</code> scores:</p>
+        <table style="border-collapse:collapse;">
+          <tr><td class="muted">accuracy</td><td><strong>96.7%</strong></td></tr>
+          <tr><td class="muted">recall on defaulters</td><td><strong>0%</strong></td></tr>
+          <tr><td class="muted">precision</td><td>undefined (0/0)</td></tr>
+          <tr><td class="muted">AUC</td><td><strong>0.50</strong></td></tr>
+        </table>
+      </div>
+      <div>
+        <p class="mistake">Reporting 96.7% accuracy on this task is a lie. The model finds <em>none</em> of the people you actually care about.</p>
+      </div>
+    </div>
   </section>
 
   <section>
     <h2>Two fixes that always help</h2>
-<ul>
-  <li class="fragment fade-up"><code>train_test_split(stratify=y)</code> — keeps class proportions in both halves.</li>
-  <li class="fragment fade-up"><code>class_weight='balanced'</code> — weights the loss inversely to class frequency.</li>
-</ul>
+    <div class="two-col">
+      <div class="card">
+        <h4>stratify=y</h4>
+        <pre><code class="language-python">train_test_split(X, y,
+    stratify=y, test_size=0.25)</code></pre>
+        <p class="muted">Keeps class proportions identical in train and test. Free, no downside.</p>
+      </div>
+      <div class="card">
+        <h4>class_weight='balanced'</h4>
+        <pre><code class="language-python">LogisticRegression(
+    class_weight='balanced')</code></pre>
+        <p class="muted">Weights the loss inversely to class frequency. Trades precision for recall — usually the right trade when positives are rare and costly.</p>
+      </div>
+    </div>
   </section>
 
+  <section>
+    <h2>Move the threshold, not the model</h2>
+    <p>Most classifiers expose <code>predict_proba</code>. Don't accept the default 0.5 — pick a threshold that matches the cost of FN vs FP.</p>
+    <pre><code class="language-python">proba = model.predict_proba(X_test)[:, 1]
+
+import numpy as np
+from sklearn.metrics import f1_score
+thresholds = np.linspace(0.05, 0.6, 50)
+f1s = [f1_score(y_test, (proba >= t)) for t in thresholds]
+best_t = thresholds[int(np.argmax(f1s))]</code></pre>
+    <p class="tip">On Default, the F1-optimal threshold is around <strong>0.15</strong>, not 0.5.</p>
+  </section>
 </section>
+
+<!-- ============================================================ RECAP -->
 <section class="title-slide">
   <span class="kicker">Recap</span>
   <h2>Three things to leave with</h2>
   <ol>
-<li class="fragment fade-up"><strong>A classifier outputs a label (often via a probability).</strong> Read the confusion matrix every time.</li>
-<li class="fragment fade-up"><strong>KNN: no training, no fancy math, but it does need scaling.</strong></li>
-<li class="fragment fade-up"><strong>Accuracy lies on imbalanced data.</strong> Reach for recall/AUC and class_weight.</li>
+    <li class="fragment fade-up"><strong>A classifier outputs a label via a probability.</strong> Always read the confusion matrix; pick a metric that matches the cost of errors.</li>
+    <li class="fragment fade-up"><strong>KNN is the geometric baseline.</strong> Cheap to set up, needs scaling, dies in high dimensions.</li>
+    <li class="fragment fade-up"><strong>Accuracy lies on imbalanced data.</strong> Reach for recall, AUC, <code>class_weight</code>, and a tuned threshold.</li>
   </ol>
-  <p class="callout fragment fade-up">Next: the linear classifier — logistic regression.</p>
+  <p class="callout fragment fade-up">Next: the linear classifier industry actually deploys — logistic regression.</p>
 </section>
 
 </div></div>

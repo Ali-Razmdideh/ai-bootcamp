@@ -12,109 +12,280 @@
 </head>
 <body>
 <div class="reveal"><div class="slides">
+
 <section class="title-slide">
   <span class="kicker">Week 4 · Course 2 · 1.5 hours</span>
   <h1>Logistic Regression I — Binary</h1>
-  <p class="muted" style="font-size:1.1em;">From log-odds to ROC curves</p>
+  <p class="muted" style="font-size:1.1em;">From log-odds to ROC curves on the <code>Default</code> dataset</p>
 </section>
+
 <section>
   <span class="kicker">Roadmap</span>
   <h2>Where we are heading</h2>
   <div class="three-col">
-    <div class="card"><h4>0:00 · 0:30</h4><strong>The sigmoid & log-odds</strong>
-      <p class="muted" style="margin:0.3em 0 0;">from LR to LR.</p></div>
-    <div class="card"><h4>0:30 · 1:00</h4><strong>Multiple binary LR</strong>
-      <p class="muted" style="margin:0.3em 0 0;">Smarket — markets are hard.</p></div>
-    <div class="card"><h4>1:00 · 1:30</h4><strong>ROC & threshold tuning</strong>
-      <p class="muted" style="margin:0.3em 0 0;">predict_proba in action.</p></div>
+    <div class="card"><h4>0:00 · 0:30</h4><strong>The sigmoid &amp; log-odds</strong>
+      <p class="muted" style="margin:0.3em 0 0;">why linear regression breaks; how MLE replaces OLS.</p></div>
+    <div class="card"><h4>0:30 · 1:00</h4><strong>Multiple LR + confounding</strong>
+      <p class="muted" style="margin:0.3em 0 0;">student status flips sign — the Simpson moment.</p></div>
+    <div class="card"><h4>1:00 · 1:30</h4><strong>ROC &amp; threshold tuning</strong>
+      <p class="muted" style="margin:0.3em 0 0;"><code>predict_proba</code> in action.</p></div>
   </div>
-  <p class="callout" style="margin-top:1.2em;">Logistic regression is the single most important ML model in industry. The linear classifier you'll keep using even after you know all the rest.</p>
+  <p class="callout" style="margin-top:1.2em;">Logistic regression is the most-deployed model in industry. The linear classifier you'll keep using even after you know all the rest.</p>
 </section>
+
+<!-- ============================================================ PART 1 -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 1 · 0:00 – 0:30</span>
     <h1>From log-odds to sigmoid</h1>
-    <p class="muted">the linear classifier</p>
-  </section>
-  <section>
-    <h2>The model</h2>
-<p style="text-align:center;font-size:1.2em;">P(y=1|x) = σ(β₀ + β₁ x), where σ(z) = 1 / (1 + e<sup>−z</sup>)</p><p style="text-align:center;font-size:1.2em;">log(p / (1−p)) = β₀ + β₁ x</p><p class="muted">Linear in the log-odds. S-shaped in probability.</p>
+    <p class="muted">a linear model that respects [0, 1]</p>
   </section>
 
   <section>
-    <h2>The loss</h2>
-<p style="text-align:center;font-size:1.2em;">ℓ(β) = Σᵢ [yᵢ log pᵢ + (1−yᵢ) log(1−pᵢ)]</p><p>Concave in β — any reasonable optimizer reaches the unique maximum.</p>
+    <h2>Linear regression on a 0/1 outcome</h2>
+    <div class="two-col">
+      <div>
+        <svg viewBox="0 0 320 220" style="width:100%;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
+          <line x1="40" y1="180" x2="300" y2="180" stroke="#0f172a"/>
+          <line x1="40" y1="180" x2="40"  y2="20"  stroke="#0f172a"/>
+          <line x1="40" y1="40"  x2="300" y2="40"  stroke="#94a3b8" stroke-dasharray="3 3"/>
+          <line x1="40" y1="180" x2="300" y2="180" stroke="#94a3b8" stroke-dasharray="3 3"/>
+          <!-- y=0 ticks -->
+          <g fill="#b45309">
+            <circle cx="60" cy="180" r="2"/><circle cx="80" cy="180" r="2"/>
+            <circle cx="100" cy="180" r="2"/><circle cx="130" cy="180" r="2"/>
+            <circle cx="155" cy="180" r="2"/>
+          </g>
+          <!-- y=1 ticks -->
+          <g fill="#b45309">
+            <circle cx="200" cy="40" r="2"/><circle cx="220" cy="40" r="2"/>
+            <circle cx="240" cy="40" r="2"/><circle cx="265" cy="40" r="2"/>
+            <circle cx="285" cy="40" r="2"/>
+          </g>
+          <!-- linear fit going below 0 -->
+          <line x1="40" y1="200" x2="300" y2="-10" stroke="#2563eb" stroke-width="2.2"/>
+          <text x="50" y="195" font-size="10" fill="#b91c1c">predicts P &lt; 0</text>
+          <text x="170" y="210" font-size="11" text-anchor="middle">balance →</text>
+          <text x="22" y="105" font-size="11" transform="rotate(-90 22 105)" text-anchor="middle">P(default)</text>
+        </svg>
+      </div>
+      <div>
+        <p>Code <em>Y</em> = 0/1, fit OLS. For low <code>balance</code>, the line dips <em>below 0</em>. That cannot be a probability.</p>
+        <p class="mistake">For multi-class outcomes (stroke / overdose / seizure) it gets worse — coding them 1/2/3 invents an ordering that does not exist.</p>
+      </div>
+    </div>
   </section>
 
   <section>
-    <h2>Interpreting coefficients</h2>
-<p>e<sup>β</sup> is the <strong>odds ratio</strong> per unit change of x.</p><p>For Default, β<sub>balance</sub> ≈ 0.0055 → e<sup>100·β</sup> ≈ 1.74 → +$100 balance ≈ +74% odds of default.</p>
+    <h2>The sigmoid squashes the line into [0, 1]</h2>
+    <div class="two-col">
+      <div>
+        <svg viewBox="0 0 320 220" style="width:100%;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
+          <line x1="40" y1="180" x2="300" y2="180" stroke="#0f172a"/>
+          <line x1="40" y1="180" x2="40"  y2="20"  stroke="#0f172a"/>
+          <line x1="40" y1="40"  x2="300" y2="40"  stroke="#94a3b8" stroke-dasharray="3 3"/>
+          <path d="M40,178 C140,178 160,42 300,42" stroke="#2563eb" stroke-width="2.5" fill="none"/>
+          <g fill="#b45309">
+            <circle cx="60" cy="180" r="2"/><circle cx="80" cy="180" r="2"/>
+            <circle cx="120" cy="180" r="2"/><circle cx="155" cy="180" r="2"/>
+            <circle cx="200" cy="40" r="2"/><circle cx="240" cy="40" r="2"/>
+            <circle cx="280" cy="40" r="2"/>
+          </g>
+          <text x="170" y="210" font-size="11" text-anchor="middle">balance →</text>
+          <text x="22" y="105" font-size="11" transform="rotate(-90 22 105)" text-anchor="middle">P(default)</text>
+        </svg>
+      </div>
+      <div>
+        <p style="font-size:1.15em;">P(Y=1 | X) = σ(β₀ + β₁X) = <span style="white-space:nowrap;">e<sup>β₀+β₁X</sup> / (1 + e<sup>β₀+β₁X</sup>)</span></p>
+        <p>Equivalently, the model is <strong>linear in log-odds</strong>:</p>
+        <p style="font-size:1.15em;">log[ P/(1−P) ] = β₀ + β₁X</p>
+        <p class="muted">An S-shape in probability is a straight line in log-odds. That's the whole trick.</p>
+      </div>
+    </div>
   </section>
 
+  <section>
+    <h2>Fit by maximum likelihood, not OLS</h2>
+    <p>Choose β to make the observed labels as probable as possible:</p>
+    <p style="text-align:center;font-size:1.05em;">ℓ(β) = ∏<sub>i: y=1</sub> p(x<sub>i</sub>) · ∏<sub>i: y=0</sub> (1 − p(x<sub>i</sub>))</p>
+    <ul>
+      <li class="fragment fade-up">No closed form — solved iteratively (Newton-Raphson / L-BFGS).</li>
+      <li class="fragment fade-up">Loss is <em>convex</em> → any reasonable optimizer reaches the unique maximum.</li>
+      <li class="fragment fade-up">In R: <code>glm(..., family=binomial)</code>. In sklearn: <code>LogisticRegression()</code>.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Default → balance only</h2>
+    <table style="margin:0 auto;border-collapse:collapse;font-size:0.95em;">
+      <tr style="background:var(--bc-panel);">
+        <th style="padding:0.5em 1em;"></th><th style="padding:0.5em 1em;">Coef</th>
+        <th style="padding:0.5em 1em;">Std. Err</th><th style="padding:0.5em 1em;">z</th><th style="padding:0.5em 1em;">p-value</th>
+      </tr>
+      <tr><td style="padding:0.4em 1em;"><code>Intercept</code></td><td style="text-align:right;">-10.65</td><td style="text-align:right;">0.36</td><td style="text-align:right;">-29.5</td><td>&lt; 0.0001</td></tr>
+      <tr><td style="padding:0.4em 1em;"><code>balance</code></td><td style="text-align:right;">0.0055</td><td style="text-align:right;">0.0002</td><td style="text-align:right;">24.9</td><td>&lt; 0.0001</td></tr>
+    </table>
+    <div class="two-col" style="margin-top:1em;">
+      <p><strong>balance = $1 000</strong> → P̂ = σ(−10.65 + 5.5) = <strong>0.006</strong></p>
+      <p><strong>balance = $2 000</strong> → P̂ = σ(−10.65 + 11.0) = <strong>0.586</strong></p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Interpreting coefficients — odds ratios</h2>
+    <p>A unit change in <em>X</em><sub>j</sub> multiplies the odds by <span style="white-space:nowrap;">e<sup>β<sub>j</sub></sup></span>.</p>
+    <div class="card">
+      <p>On Default with β<sub>balance</sub> ≈ 0.0055:</p>
+      <p style="font-size:1.1em;">e<sup>100·0.0055</sup> ≈ <strong>1.74</strong></p>
+      <p>Every extra <strong>$100</strong> of balance multiplies the odds of default by <strong>1.74</strong> — a 74% relative bump.</p>
+    </div>
+    <p class="tip">This is what an executive will actually ask about. Practice converting β → odds ratios on the spot.</p>
+  </section>
 </section>
+
+<!-- ============================================================ PART 2 -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 2 · 0:30 – 1:00</span>
-    <h1>Multiple binary LR</h1>
-    <p class="muted">Smarket lab</p>
-  </section>
-  <section>
-    <h2>Predict market direction from lag returns</h2>
-<pre><code class="language-python">X = smarket[[&#x27;Lag1&#x27;, &#x27;Lag2&#x27;, &#x27;Lag3&#x27;, &#x27;Lag4&#x27;, &#x27;Lag5&#x27;, &#x27;Volume&#x27;]]
-y = (smarket[&#x27;Direction&#x27;] == &#x27;Up&#x27;).astype(int)
-m = LogisticRegression(C=1e6).fit(X, y)</code></pre><p class="muted">DO NOT use <code>Today</code> as a predictor — it IS the direction.</p>
+    <h1>Multiple LR + confounding</h1>
+    <p class="muted">when a coefficient flips sign</p>
   </section>
 
   <section>
-    <h2>The disappointment</h2>
-<ul>
-  <li class="fragment fade-up">Coefficients are tiny.</li>
-  <li class="fragment fade-up">Training accuracy barely above 50%.</li>
-  <li class="fragment fade-up">Held-out accuracy: also barely above 50%.</li>
-  <li class="fragment fade-up">Lesson: a clean lab dataset can still contain no signal. Markets are hard.</li>
-</ul>
+    <h2>Add more predictors</h2>
+    <p style="font-size:1.1em;text-align:center;">log[ P / (1−P) ] = β₀ + β₁X₁ + ⋯ + β<sub>p</sub>X<sub>p</sub></p>
+    <pre><code class="language-python">from sklearn.linear_model import LogisticRegression
+m = LogisticRegression(max_iter=2000).fit(
+    X[['balance', 'income', 'student']], y)</code></pre>
+    <p class="muted">Same model, more columns. Each β<sub>j</sub> is the effect of X<sub>j</sub> <em>holding the rest fixed</em>.</p>
   </section>
 
+  <section>
+    <h2>The Simpson moment on Default</h2>
+    <table style="margin:0 auto;border-collapse:collapse;font-size:0.9em;">
+      <tr style="background:var(--bc-panel);">
+        <th style="padding:0.4em 0.9em;"></th><th>balance only</th><th>+ income, student</th>
+      </tr>
+      <tr><td style="padding:0.4em 0.9em;"><code>balance</code></td><td>0.0055</td><td>0.0057</td></tr>
+      <tr><td style="padding:0.4em 0.9em;"><code>income</code></td><td>—</td><td>0.0030</td></tr>
+      <tr style="background:#fef3c7;"><td style="padding:0.4em 0.9em;"><code>student[Yes]</code></td>
+        <td><strong>+ 0.4049</strong></td><td><strong>− 0.6468</strong></td></tr>
+    </table>
+    <p class="callout" style="margin-top:1em;"><strong>Student</strong> flipped sign. Why?</p>
+  </section>
+
+  <section>
+    <h2>Confounding visualized</h2>
+    <div class="two-col">
+      <div>
+        <svg viewBox="0 0 260 200" style="width:100%;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
+          <line x1="30" y1="180" x2="240" y2="180" stroke="#0f172a"/>
+          <line x1="30" y1="180" x2="30"  y2="20"  stroke="#0f172a"/>
+          <!-- student (red) curve higher overall -->
+          <path d="M30,170 C90,170 130,90 240,30" stroke="#b91c1c" stroke-width="2.5" fill="none"/>
+          <!-- non-student (blue) curve below for any balance -->
+          <path d="M30,176 C100,176 150,110 240,40" stroke="#2563eb" stroke-width="2.5" fill="none"/>
+          <text x="135" y="195" font-size="10" text-anchor="middle">balance →</text>
+          <text x="20" y="100" font-size="10" transform="rotate(-90 20 100)" text-anchor="middle">P(default)</text>
+          <text x="160" y="55" font-size="10" fill="#b91c1c">student</text>
+          <text x="160" y="125" font-size="10" fill="#2563eb">non-student</text>
+        </svg>
+      </div>
+      <div>
+        <ul>
+          <li>Marginally, students default <em>more often</em> (they carry higher balances on average).</li>
+          <li>At any <em>fixed balance</em>, students default <em>less often</em> than non-students.</li>
+          <li>The multiple-LR coefficient captures the second story, after controlling for balance.</li>
+        </ul>
+        <p class="tip">Lesson: a univariate model can lie. Always check the multivariate version before drawing causal arrows.</p>
+      </div>
+    </div>
+  </section>
 </section>
+
+<!-- ============================================================ PART 3 -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 3 · 1:00 – 1:30</span>
-    <h1>ROC & threshold tuning</h1>
-    <p class="muted">predict_proba</p>
-  </section>
-  <section>
-    <h2>predict_proba vs predict</h2>
-<p>Logistic regression naturally outputs a probability. <code>predict</code> just applies a 0.5 threshold — rarely the right answer on imbalanced data.</p>
+    <h1>ROC &amp; threshold tuning</h1>
+    <p class="muted">probabilities are the real output</p>
   </section>
 
   <section>
-    <h2>ROC curve in one picture</h2>
-<ul>
-  <li class="fragment fade-up">X axis: FPR. Y axis: TPR.</li>
-  <li class="fragment fade-up">Sweep the threshold from 1 → 0; trace the curve.</li>
-  <li class="fragment fade-up">AUC = area under this curve = P(score(pos) > score(neg)).</li>
-  <li class="fragment fade-up">Diagonal line = random guessing.</li>
-</ul>
+    <h2><code>predict_proba</code> vs <code>predict</code></h2>
+    <p>Logistic regression's native output is a probability. <code>predict</code> applies a 0.5 cutoff — rarely optimal on imbalanced data.</p>
+    <pre><code class="language-python">proba = model.predict_proba(X_test)[:, 1]   # column for class 1
+pred  = (proba >= 0.5).astype(int)            # default threshold</code></pre>
+    <p class="muted">Default at threshold 0.5 → confusion matrix that misses three-quarters of true defaulters.</p>
   </section>
 
   <section>
-    <h2>Threshold tuning for F1</h2>
-<pre><code class="language-python">ts = np.linspace(0.05, 0.6, 50)
-f1s = [f1_score(y, (proba &gt;= t)) for t in ts]
-best_t = ts[np.argmax(f1s)]</code></pre>
-    <aside class="notes">For Default at default 0.5, F1 is low because few are predicted 1. Lowering threshold to ~0.15 trades precision for recall, and F1 jumps.</aside>
+    <h2>How the threshold trades errors</h2>
+    <svg viewBox="0 0 320 220" style="width:60%;display:block;margin:0 auto;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
+      <line x1="40" y1="180" x2="300" y2="180" stroke="#0f172a"/>
+      <line x1="40" y1="180" x2="40"  y2="20"  stroke="#0f172a"/>
+      <path d="M40,30 C100,30 130,140 300,170" stroke="#b91c1c" stroke-width="2.2" fill="none"/>
+      <path d="M40,170 C150,170 210,40 300,30" stroke="#2563eb" stroke-width="2.2" fill="none"/>
+      <text x="58" y="50"   font-size="10" fill="#b91c1c">false-negative rate</text>
+      <text x="195" y="55"  font-size="10" fill="#2563eb">false-positive rate</text>
+      <text x="170" y="210" font-size="11" text-anchor="middle">threshold →</text>
+    </svg>
+    <p class="muted" style="text-align:center;">Lower threshold → catch more defaulters (recall ↑) but flag more honest customers (precision ↓).</p>
   </section>
 
+  <section>
+    <h2>Tune the threshold for F1</h2>
+    <pre><code class="language-python">import numpy as np
+from sklearn.metrics import f1_score, confusion_matrix
+
+ts = np.linspace(0.05, 0.6, 50)
+f1s = [f1_score(y_test, (proba >= t)) for t in ts]
+best_t = ts[int(np.argmax(f1s))]
+
+print(f"F1-optimal threshold: {best_t:.2f}")
+print(confusion_matrix(y_test, proba >= best_t))</code></pre>
+    <aside class="notes">On Default the F1-optimal threshold lands near 0.15. Recall jumps from ~30% (at 0.5) to ~70% (at 0.15), with precision trading down accordingly.</aside>
+  </section>
+
+  <section>
+    <h2>ROC summary</h2>
+    <div class="two-col">
+      <div>
+        <svg viewBox="0 0 240 240" style="width:100%;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
+          <line x1="30" y1="210" x2="220" y2="210" stroke="#0f172a"/>
+          <line x1="30" y1="210" x2="30"  y2="20"  stroke="#0f172a"/>
+          <line x1="30" y1="210" x2="220" y2="20"  stroke="#94a3b8" stroke-dasharray="4 3"/>
+          <path d="M30,210 C50,90 120,40 220,20" stroke="#2563eb" stroke-width="2.5" fill="none"/>
+          <circle cx="60" cy="120" r="3" fill="#b91c1c"/>
+          <text x="68" y="118" font-size="9" fill="#b91c1c">t = 0.15</text>
+          <circle cx="130" cy="55" r="3" fill="#047857"/>
+          <text x="138" y="53" font-size="9" fill="#047857">t = 0.5</text>
+          <text x="125" y="232" font-size="11" text-anchor="middle">FPR</text>
+          <text x="14"  y="115" font-size="11" transform="rotate(-90 14 115)" text-anchor="middle">TPR</text>
+        </svg>
+      </div>
+      <div>
+        <ul>
+          <li>The whole curve is generated by sweeping the threshold.</li>
+          <li><strong>AUC</strong> summarizes the curve in one number, independent of any threshold.</li>
+          <li>Compare models on AUC; pick the operating point afterward.</li>
+        </ul>
+        <p class="tip"><code>sklearn.metrics.roc_curve</code> + <code>roc_auc_score</code> for both.</p>
+      </div>
+    </div>
+  </section>
 </section>
+
+<!-- ============================================================ RECAP -->
 <section class="title-slide">
   <span class="kicker">Recap</span>
   <h2>Three things to leave with</h2>
   <ol>
-<li class="fragment fade-up"><strong>Linear in log-odds, sigmoid in probability.</strong> The classic linear classifier.</li>
-<li class="fragment fade-up"><strong>e<sup>β</sup> is the odds ratio per unit of x.</strong> The interpretation an executive will ask about.</li>
-<li class="fragment fade-up"><strong>0.5 is rarely the right threshold.</strong> Tune it for F1 or any cost-sensitive metric.</li>
+    <li class="fragment fade-up"><strong>Linear in log-odds, sigmoid in probability.</strong> Fit by MLE; loss is convex.</li>
+    <li class="fragment fade-up"><strong>e<sup>β</sup> is the odds ratio per unit of X.</strong> The interpretation an executive will ask about — and the one that flips sign under confounding.</li>
+    <li class="fragment fade-up"><strong>0.5 is rarely the right threshold.</strong> Tune it for F1, recall, or any cost-sensitive metric; report AUC for the model itself.</li>
   </ol>
-  <p class="callout fragment fade-up">Next: more than two classes, and the regularization knob from Week 3 returns.</p>
+  <p class="callout fragment fade-up">Next: more than two classes, regularization, and the generative cousins (LDA / QDA / Naive Bayes).</p>
 </section>
 
 </div></div>

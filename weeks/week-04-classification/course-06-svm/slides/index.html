@@ -12,112 +12,323 @@
 </head>
 <body>
 <div class="reveal"><div class="slides">
+
 <section class="title-slide">
   <span class="kicker">Week 4 · Course 6 · 1.5 hours</span>
   <h1>Support Vector Machines</h1>
   <p class="muted" style="font-size:1.1em;">Maximum margin, kernels, and p ≫ n</p>
 </section>
+
 <section>
   <span class="kicker">Roadmap</span>
   <h2>Where we are heading</h2>
   <div class="three-col">
     <div class="card"><h4>0:00 · 0:30</h4><strong>Maximum margin</strong>
-      <p class="muted" style="margin:0.3em 0 0;">support vectors and geometry.</p></div>
+      <p class="muted" style="margin:0.3em 0 0;">hyperplanes, support vectors, the soft margin C.</p></div>
     <div class="card"><h4>0:30 · 1:00</h4><strong>Kernels</strong>
-      <p class="muted" style="margin:0.3em 0 0;">linear, polynomial, RBF.</p></div>
-    <div class="card"><h4>1:00 · 1:30</h4><strong>p ≫ n</strong>
+      <p class="muted" style="margin:0.3em 0 0;">non-linear boundaries without the features.</p></div>
+    <div class="card"><h4>1:00 · 1:30</h4><strong>p ≫ n &amp; SVM vs LR</strong>
       <p class="muted" style="margin:0.3em 0 0;">the Khan gene-expression lab.</p></div>
   </div>
-  <p class="callout" style="margin-top:1.2em;">SVMs produce non-linear boundaries without ever computing the non-linear features. They also dominate when p ≫ n — text and genomics.</p>
+  <p class="callout" style="margin-top:1.2em;">SVMs produce non-linear boundaries without ever computing the non-linear features. They dominate when p ≫ n — text and genomics.</p>
 </section>
+
+<!-- ============================================================ PART 1 -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 1 · 0:00 – 0:30</span>
     <h1>Maximum margin</h1>
-    <p class="muted">geometry and support vectors</p>
+    <p class="muted">geometry, support vectors, the soft margin</p>
   </section>
+
   <section>
-    <h2>The unique optimum</h2>
-<p>Infinitely many lines separate two linearly separable clouds. The maximum-margin line is the <em>unique</em> one furthest from both classes.</p><p>The points exactly on the margin are the <strong>support vectors</strong>. Move any other point and the boundary does not change.</p>
+    <h2>A hyperplane separates feature space</h2>
+    <div class="two-col">
+      <div>
+        <svg viewBox="0 0 240 200" style="width:100%;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
+          <line x1="20" y1="180" x2="220" y2="20" stroke="#2563eb" stroke-width="2.5"/>
+          <g fill="#2563eb" opacity="0.7">
+            <circle cx="40" cy="60"  r="3"/><circle cx="70"  cy="50"  r="3"/>
+            <circle cx="55" cy="100" r="3"/><circle cx="90"  cy="80"  r="3"/>
+            <circle cx="60" cy="130" r="3"/>
+          </g>
+          <g fill="#b91c1c" opacity="0.7">
+            <circle cx="170" cy="160" r="3"/><circle cx="200" cy="140" r="3"/>
+            <circle cx="190" cy="110" r="3"/><circle cx="150" cy="170" r="3"/>
+            <circle cx="170" cy="120" r="3"/>
+          </g>
+          <text x="120" y="195" font-size="10" text-anchor="middle">β₀ + β₁x₁ + β₂x₂ = 0</text>
+        </svg>
+      </div>
+      <div>
+        <p>In p dimensions a hyperplane is the (p−1)-dim flat surface</p>
+        <p style="text-align:center;font-size:1.05em;">β₀ + β₁x₁ + ⋯ + β<sub>p</sub>x<sub>p</sub> = 0</p>
+        <p>Code labels y ∈ {−1, +1}. If y<sub>i</sub>·(β₀ + β·x<sub>i</sub>) &gt; 0 for every i, that hyperplane <strong>separates</strong> the classes.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Infinitely many lines separate — pick the best</h2>
+    <div class="two-col">
+      <div>
+        <svg viewBox="0 0 240 200" style="width:100%;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
+          <line x1="20" y1="180" x2="220" y2="20"  stroke="#cbd5e1" stroke-width="1"/>
+          <line x1="40" y1="180" x2="180" y2="20"  stroke="#cbd5e1" stroke-width="1"/>
+          <line x1="60" y1="180" x2="200" y2="20"  stroke="#cbd5e1" stroke-width="1"/>
+          <line x1="50" y1="180" x2="200" y2="30"  stroke="#0f172a" stroke-width="2.5"/>
+          <line x1="50" y1="180" x2="200" y2="30"  stroke="#0f172a" stroke-dasharray="4 3" opacity="0.4" transform="translate(-25,-25)"/>
+          <line x1="50" y1="180" x2="200" y2="30"  stroke="#0f172a" stroke-dasharray="4 3" opacity="0.4" transform="translate(25,25)"/>
+          <g fill="#2563eb" opacity="0.7">
+            <circle cx="40" cy="60"  r="3"/><circle cx="70"  cy="50"  r="3"/>
+            <circle cx="90" cy="80"  r="3"/>
+            <circle cx="55" cy="130" r="4" stroke="#0f172a" stroke-width="1.5"/>
+          </g>
+          <g fill="#b91c1c" opacity="0.7">
+            <circle cx="170" cy="160" r="3"/><circle cx="200" cy="140" r="3"/>
+            <circle cx="190" cy="110" r="4" stroke="#0f172a" stroke-width="1.5"/>
+          </g>
+        </svg>
+      </div>
+      <div>
+        <p>The <strong>maximum-margin</strong> hyperplane is the unique one <em>furthest</em> from both classes.</p>
+        <p>Points touching the margin are the <strong>support vectors</strong> (circled). Move any other point — the boundary doesn't budge.</p>
+        <p class="muted">Only support vectors define the model. That's the source of SVM's robustness <em>and</em> its name.</p>
+      </div>
+    </div>
   </section>
 
   <section>
     <h2>The optimization</h2>
-<p style="text-align:center;font-size:1.2em;">minimize ½‖w‖² &nbsp; s.t. y<sub>i</sub>(w·x<sub>i</sub> + b) ≥ 1</p><p>Equivalent to maximizing 2 / ‖w‖, the margin width. Convex quadratic program — unique solution.</p>
+    <p style="text-align:center;font-size:1.05em;">maximize M s.t. y<sub>i</sub>(β₀ + β·x<sub>i</sub>) ≥ M, &nbsp;‖β‖ = 1</p>
+    <p>Convex quadratic program — one global optimum, solved in seconds for n in the thousands.</p>
+    <p class="muted">Equivalent dual form: minimize ½‖w‖² subject to y<sub>i</sub>(w·x<sub>i</sub> + b) ≥ 1.</p>
   </section>
 
   <section>
-    <h2>Soft margin — the C parameter</h2>
-<ul>
-  <li class="fragment fade-up">Real data overlaps. We allow some violations of the margin.</li>
-  <li class="fragment fade-up">Small C → wide margin, many support vectors, more bias.</li>
-  <li class="fragment fade-up">Large C → narrow margin, few support vectors, more variance.</li>
-  <li class="fragment fade-up">Tune C with CV.</li>
-</ul>
+    <h2>Real data overlaps — soft margin</h2>
+    <p>Hard margin breaks the moment one stray red sneaks into the blue cloud. The <strong>support vector classifier</strong> allows slack — let some points violate the margin (or even cross it), pay a penalty.</p>
+    <p style="text-align:center;font-size:1.05em;">maximize M s.t. y<sub>i</sub>(β₀ + β·x<sub>i</sub>) ≥ M(1 − ε<sub>i</sub>), &nbsp; ε ≥ 0, &nbsp; Σ ε<sub>i</sub> ≤ C</p>
   </section>
 
+  <section>
+    <h2>The C parameter — tuning the slack</h2>
+    <div class="three-col">
+      <div class="card">
+        <h4>Small C</h4>
+        <p class="muted">Wide margin, many support vectors. Tolerates violations. High bias, low variance.</p>
+      </div>
+      <div class="card">
+        <h4>Large C</h4>
+        <p class="muted">Narrow margin, few support vectors. Punishes violations. Low bias, high variance — overfits.</p>
+      </div>
+      <div class="card">
+        <h4>Tune with CV</h4>
+        <p class="muted"><code>GridSearchCV(svc, {'C': np.logspace(-2, 3, 6)})</code></p>
+      </div>
+    </div>
+    <p class="callout"><strong>Heads up:</strong> sklearn's C is the same direction as the formula above — large C = strict. Opposite of LR's C.</p>
+  </section>
 </section>
+
+<!-- ============================================================ PART 2 -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 2 · 0:30 – 1:00</span>
     <h1>Kernels</h1>
-    <p class="muted">non-linear, cheap</p>
-  </section>
-  <section>
-    <h2>The kernel trick</h2>
-<p>Map x → φ(x) into a higher-dimensional space where the classes become linearly separable. Compute only inner products φ(x<sub>i</sub>) · φ(x<sub>j</sub>) — never φ itself.</p><p>A <strong>kernel</strong> K(x, x') gives that inner product directly.</p>
+    <p class="muted">non-linear boundaries, cheaply</p>
   </section>
 
   <section>
-    <h2>Three kernels</h2>
-<ul>
-  <li class="fragment fade-up"><strong>Linear</strong>: K(x, x') = x · x'. Same as logistic regression boundary-wise.</li>
-  <li class="fragment fade-up"><strong>Polynomial</strong>: K(x, x') = (1 + x · x')<sup>d</sup>. Bends, but rigidly.</li>
-  <li class="fragment fade-up"><strong>RBF</strong>: K(x, x') = exp(−γ ‖x − x'‖²). Local bumps, very flexible. The default.</li>
-</ul>
+    <h2>Linear boundaries fail on curved truth</h2>
+    <div class="two-col">
+      <div>
+        <svg viewBox="0 0 200 200" style="width:100%;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
+          <g fill="#2563eb" opacity="0.6">
+            <circle cx="50"  cy="50"  r="3"/><circle cx="150" cy="50"  r="3"/>
+            <circle cx="50"  cy="150" r="3"/><circle cx="150" cy="150" r="3"/>
+          </g>
+          <g fill="#b91c1c" opacity="0.7">
+            <circle cx="80"  cy="100" r="3"/><circle cx="120" cy="100" r="3"/>
+            <circle cx="100" cy="80"  r="3"/><circle cx="100" cy="120" r="3"/>
+          </g>
+          <text x="100" y="195" font-size="10" text-anchor="middle">red surrounded — no line works</text>
+        </svg>
+      </div>
+      <div>
+        <p>The fix from Course 3 was to add features: x₁², x₂², x₁x₂, … Works, but the feature space blows up fast.</p>
+        <p class="callout">Kernels do this implicitly — non-linear boundary, original feature space, no explicit expansion.</p>
+      </div>
+    </div>
   </section>
 
   <section>
-    <h2>γ in the RBF kernel</h2>
-<ul>
-  <li class="fragment fade-up">Small γ — kernel is wide. Smooth boundary, more bias.</li>
-  <li class="fragment fade-up">Large γ — kernel is narrow. Boundary curls around individual points, more variance.</li>
-  <li class="fragment fade-up">Grid-search (C, γ) with CV. <code>gamma='scale'</code> is the modern default starting point.</li>
-</ul>
+    <h2>Inner products run the show</h2>
+    <p>The SVM solution can be written entirely in terms of inner products:</p>
+    <p style="text-align:center;font-size:1.1em;">f(x) = β₀ + Σ<sub>i∈𝒮</sub> α̂<sub>i</sub>·⟨x, x<sub>i</sub>⟩</p>
+    <ul>
+      <li class="fragment fade-up">𝒮 is the set of support vectors — usually a small subset.</li>
+      <li class="fragment fade-up">We never need x<sub>i</sub> on its own, only ⟨x, x<sub>i</sub>⟩.</li>
+      <li class="fragment fade-up">Replace ⟨·,·⟩ with a more powerful similarity → <em>kernel trick</em>.</li>
+    </ul>
   </section>
 
+  <section>
+    <h2>Three kernels in the wild</h2>
+    <div class="three-col">
+      <div class="card">
+        <h4>Linear</h4>
+        <p style="text-align:center;">K(x, x') = x · x'</p>
+        <p class="muted">Same boundary shape as logistic regression. Best when n &lt; p.</p>
+      </div>
+      <div class="card">
+        <h4>Polynomial (d)</h4>
+        <p style="text-align:center;">(1 + x · x')<sup>d</sup></p>
+        <p class="muted">Bends, but rigidly. Equivalent to fitting in a degree-d polynomial space without computing it.</p>
+      </div>
+      <div class="card">
+        <h4>RBF (γ)</h4>
+        <p style="text-align:center;">exp(−γ‖x − x'‖²)</p>
+        <p class="muted">Local bumps. Implicit feature space is infinite-dimensional. The default.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The γ knob in the RBF kernel</h2>
+    <div class="two-col">
+      <div>
+        <svg viewBox="0 0 240 200" style="width:100%;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
+          <path d="M40,180 C90,30 150,30 200,180" stroke="#2563eb" stroke-width="2" fill="none"/>
+          <text x="40" y="50" font-size="9" fill="#2563eb">small γ — smooth</text>
+          <path d="M40,180 C60,80 80,30 100,180 C120,30 140,80 200,180" stroke="#b91c1c" stroke-width="2" fill="none"/>
+          <text x="120" y="50" font-size="9" fill="#b91c1c">large γ — wiggly</text>
+          <text x="120" y="195" font-size="10" text-anchor="middle">distance to support vector →</text>
+        </svg>
+      </div>
+      <div>
+        <ul>
+          <li>Small γ — wide kernel; smooth boundary; more bias.</li>
+          <li>Large γ — narrow kernel; boundary curls around individual points; more variance.</li>
+          <li>Grid-search (C, γ) with CV. <code>gamma='scale'</code> is a sensible default starting point.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>SVM in sklearn</h2>
+    <pre><code class="language-python">from sklearn.svm import SVC
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import GridSearchCV
+
+pipe = Pipeline([('sc', StandardScaler()),
+                 ('svc', SVC(kernel='rbf'))])
+
+grid = GridSearchCV(pipe, {
+    'svc__C':     [0.1, 1, 10, 100],
+    'svc__gamma': [1e-3, 1e-2, 1e-1, 1],
+}, cv=5).fit(X_train, y_train)</code></pre>
+    <p class="tip"><strong>Always scale</strong> before an SVM — kernels are based on distances. Wrap in a Pipeline so scaling is fit on training folds only.</p>
+  </section>
+
+  <section>
+    <h2>SVM is hinge-loss + L2 regularization</h2>
+    <p style="text-align:center;font-size:1.05em;">min<sub>β</sub> &nbsp; Σ<sub>i</sub> max(0, 1 − y<sub>i</sub>·f(x<sub>i</sub>)) &nbsp; + &nbsp; λ‖β‖²</p>
+    <svg viewBox="0 0 320 180" style="width:55%;display:block;margin:0 auto;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
+      <line x1="30" y1="150" x2="300" y2="150" stroke="#0f172a"/>
+      <line x1="160" y1="150" x2="160" y2="20" stroke="#0f172a"/>
+      <path d="M30,30 L160,150 L300,150" stroke="#0f172a" stroke-width="2.5" fill="none"/>
+      <path d="M30,40 C90,80 160,135 300,148" stroke="#2563eb" stroke-width="2.2" fill="none"/>
+      <text x="40"  y="50"  font-size="10" fill="#0f172a">SVM (hinge)</text>
+      <text x="170" y="80"  font-size="10" fill="#2563eb">log loss (LR)</text>
+      <text x="165" y="170" font-size="9">y·f(x) →</text>
+    </svg>
+    <p class="muted" style="text-align:center;">Both are "loss + L2"; the loss differs. Hinge loss is zero past the margin — that's why only support vectors matter.</p>
+  </section>
 </section>
+
+<!-- ============================================================ PART 3 -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 3 · 1:00 – 1:30</span>
-    <h1>p ≫ n</h1>
-    <p class="muted">the Khan lab</p>
-  </section>
-  <section>
-    <h2>Khan — 63 cases, 2308 genes</h2>
-<ul>
-  <li class="fragment fade-up">Four cancer subtypes.</li>
-  <li class="fragment fade-up">Unregularized logistic regression diverges.</li>
-  <li class="fragment fade-up">Linear SVM thrives — the margin objective is itself a form of regularization.</li>
-</ul>
+    <h1>p ≫ n &amp; the comparison map</h1>
+    <p class="muted">the Khan gene-expression lab</p>
   </section>
 
   <section>
-    <h2>Use a linear kernel here</h2>
-<pre><code class="language-python">svc = SVC(kernel=&#x27;linear&#x27;, C=10).fit(xtr, ytr)
-GridSearchCV(svc, {&#x27;C&#x27;: [0.1, 1, 10, 100]}, cv=3)</code></pre><p class="muted">RBF is too slow at p = 2308 and not needed — the high dimension already gives enough flexibility.</p>
+    <h2>Khan — 63 patients, 2 308 genes, 4 cancer subtypes</h2>
+    <div class="two-col">
+      <div>
+        <ul>
+          <li>p (genes) ≫ n (patients): the classic genomics setup.</li>
+          <li>Unregularized LR diverges — perfect separation in 2 308-D.</li>
+          <li>Linear SVM thrives — the margin objective is itself a form of regularization.</li>
+          <li>RBF is overkill here: 2 308 raw dimensions already give plenty of flexibility.</li>
+        </ul>
+      </div>
+      <div>
+        <pre><code class="language-python">from sklearn.svm import SVC
+svc = SVC(kernel='linear', C=10).fit(X_train, y_train)
+print(svc.score(X_test, y_test))   # often perfect</code></pre>
+        <p class="tip">Rule of thumb: <strong>p ≫ n → linear kernel.</strong> Switch to RBF only when n is large and features are dense.</p>
+      </div>
+    </div>
   </section>
 
+  <section>
+    <h2>SVM vs the field — when to use what</h2>
+    <table style="margin:0 auto;border-collapse:collapse;font-size:0.85em;">
+      <tr style="background:var(--bc-panel);">
+        <th style="padding:0.4em 0.7em;">situation</th>
+        <th style="padding:0.4em 0.7em;">first model</th>
+      </tr>
+      <tr><td style="padding:0.4em 0.7em;">classes well-separated, n &lt; p</td><td>SVM (linear) or LDA</td></tr>
+      <tr><td style="padding:0.4em 0.7em;">need calibrated probabilities</td><td>Logistic regression</td></tr>
+      <tr><td style="padding:0.4em 0.7em;">curved boundary, n moderate</td><td>SVM (RBF) or gradient boosting</td></tr>
+      <tr><td style="padding:0.4em 0.7em;">tabular, mixed dtypes</td><td>Random forest / gradient boosting</td></tr>
+      <tr><td style="padding:0.4em 0.7em;">huge n (millions of rows)</td><td>Linear models / GBM — not RBF-SVM</td></tr>
+      <tr><td style="padding:0.4em 0.7em;">images, audio, text</td><td>Deep nets (next week onward)</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>More than two classes</h2>
+    <div class="two-col">
+      <div class="card">
+        <h4>One-vs-rest (OVR)</h4>
+        <p class="muted">Fit K binary SVMs (class k vs rest); predict the class with the highest score.</p>
+      </div>
+      <div class="card">
+        <h4>One-vs-one (OVO)</h4>
+        <p class="muted">Fit K(K−1)/2 pairwise SVMs; predict by majority vote among them.</p>
+      </div>
+    </div>
+    <p class="muted">sklearn defaults to OVO for kernel SVMs. For K not too large, OVO is usually preferred — each sub-problem is balanced.</p>
+  </section>
+
+  <section>
+    <h2>Caveats and gotchas</h2>
+    <ul>
+      <li class="fragment fade-up"><strong>No calibrated probabilities.</strong> <code>SVC(probability=True)</code> wraps Platt scaling — slow and approximate.</li>
+      <li class="fragment fade-up"><strong>Doesn't scale to n &gt; 10⁵ with RBF.</strong> Training is O(n²) – O(n³). Switch to linear SVM (<code>LinearSVC</code>) or GBM.</li>
+      <li class="fragment fade-up"><strong>Two hyperparameters to tune.</strong> Always do C × γ grid with CV.</li>
+      <li class="fragment fade-up"><strong>Scale your features.</strong> Repeating because forgetting is the #1 SVM bug.</li>
+    </ul>
+  </section>
 </section>
+
+<!-- ============================================================ RECAP -->
 <section class="title-slide">
   <span class="kicker">Recap</span>
   <h2>Three things to leave with</h2>
   <ol>
-<li class="fragment fade-up"><strong>SVM finds the maximum-margin boundary.</strong> Support vectors define it.</li>
-<li class="fragment fade-up"><strong>The kernel trick gives non-linear boundaries cheaply.</strong> RBF is the default.</li>
-<li class="fragment fade-up"><strong>SVM is the tool for p ≫ n.</strong> Use linear kernel and tune C.</li>
+    <li class="fragment fade-up"><strong>SVM finds the maximum-margin boundary.</strong> Only support vectors define it; soft margin C controls slack.</li>
+    <li class="fragment fade-up"><strong>The kernel trick gives non-linear boundaries cheaply.</strong> RBF is the default; tune C and γ.</li>
+    <li class="fragment fade-up"><strong>SVM is the tool for p ≫ n.</strong> Use a linear kernel, scale features, grid-search C.</li>
   </ol>
-  <p class="callout fragment fade-up">End of Week 4. From here: deep learning and neural networks.</p>
+  <p class="callout fragment fade-up">End of Week 4. From here: deep learning — where these classifiers become the final layer of much bigger models.</p>
 </section>
 
 </div></div>

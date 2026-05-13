@@ -12,106 +12,342 @@
 </head>
 <body>
 <div class="reveal"><div class="slides">
+
 <section class="title-slide">
   <span class="kicker">Week 4 · Course 4 · 1.5 hours</span>
-  <h1>Decision Trees</h1>
-  <p class="muted" style="font-size:1.1em;">The interpretable non-linear classifier</p>
+  <h1>Decision Trees (CART)</h1>
+  <p class="muted" style="font-size:1.1em;">The interpretable non-linear model: <code>Hitters</code> &amp; <code>Heart</code></p>
 </section>
+
 <section>
   <span class="kicker">Roadmap</span>
   <h2>Where we are heading</h2>
   <div class="three-col">
-    <div class="card"><h4>0:00 · 0:30</h4><strong>Classification trees</strong>
-      <p class="muted" style="margin:0.3em 0 0;">Gini, splits, plot_tree.</p></div>
-    <div class="card"><h4>0:30 · 1:00</h4><strong>Regression trees</strong>
-      <p class="muted" style="margin:0.3em 0 0;">cost-complexity pruning.</p></div>
-    <div class="card"><h4>1:00 · 1:30</h4><strong>Strengths & weaknesses</strong>
-      <p class="muted" style="margin:0.3em 0 0;">variance → ensembles.</p></div>
+    <div class="card"><h4>0:00 · 0:30</h4><strong>Regression trees</strong>
+      <p class="muted" style="margin:0.3em 0 0;">stratify the predictor space; the Hitters tree.</p></div>
+    <div class="card"><h4>0:30 · 1:00</h4><strong>Classification trees + pruning</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Gini, entropy, cost-complexity α.</p></div>
+    <div class="card"><h4>1:00 · 1:30</h4><strong>Strengths &amp; the variance problem</strong>
+      <p class="muted" style="margin:0.3em 0 0;">why one tree is rarely enough.</p></div>
   </div>
-  <p class="callout" style="margin-top:1.2em;">A single tree is the most interpretable model you'll meet. Every prediction is a flowchart. The weakness — variance — sets up next course's payoff.</p>
+  <p class="callout" style="margin-top:1.2em;">A single tree is the most interpretable model in this whole course. Every prediction is a flowchart. The weakness — variance — sets up next course's payoff.</p>
 </section>
+
+<!-- ============================================================ PART 1 -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 1 · 0:00 – 0:30</span>
-    <h1>Classification trees</h1>
-    <p class="muted">greedy recursive splitting</p>
-  </section>
-  <section>
-    <h2>The algorithm</h2>
-<ul>
-  <li>At each node, scan every feature and every threshold.</li>
-  <li>Pick the (feature, threshold) that most reduces Gini impurity.</li>
-  <li>Recurse on the two children. Stop at depth limit or pure leaf.</li>
-</ul>
+    <h1>Regression trees</h1>
+    <p class="muted">stratifying the predictor space</p>
   </section>
 
   <section>
-    <h2>Gini impurity</h2>
-<p style="text-align:center;font-size:1.2em;">Gini = 1 − Σ<sub>k</sub> p<sub>k</sub>²</p><ul>
-  <li class="fragment fade-up">p=0.5 (worst): Gini = 0.5.</li>
-  <li class="fragment fade-up">p=0 or 1 (pure): Gini = 0.</li>
-  <li class="fragment fade-up">Entropy is an alternative; in practice they pick almost the same splits.</li>
-</ul>
+    <h2>The Hitters dataset</h2>
+    <div class="two-col">
+      <div>
+        <p>Baseball players, predict <code>log(salary)</code> from <code>Years</code> in MLB and <code>Hits</code> last season.</p>
+        <svg viewBox="0 0 260 200" style="width:100%;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
+          <line x1="30" y1="180" x2="240" y2="180" stroke="#0f172a"/>
+          <line x1="30" y1="180" x2="30"  y2="20"  stroke="#0f172a"/>
+          <!-- color-coded by salary: low (blue) at low-years, high (red) at top-right -->
+          <g>
+            <circle cx="50" cy="120" r="2.5" fill="#1d4ed8"/><circle cx="55" cy="130" r="2.5" fill="#1d4ed8"/>
+            <circle cx="60" cy="100" r="2.5" fill="#3b82f6"/><circle cx="65" cy="150" r="2.5" fill="#3b82f6"/>
+            <circle cx="70" cy="80"  r="2.5" fill="#60a5fa"/><circle cx="80" cy="115" r="2.5" fill="#60a5fa"/>
+            <circle cx="100" cy="135" r="2.5" fill="#fbbf24"/><circle cx="120" cy="70" r="2.5" fill="#fbbf24"/>
+            <circle cx="140" cy="100" r="2.5" fill="#f59e0b"/><circle cx="150" cy="90" r="2.5" fill="#f59e0b"/>
+            <circle cx="170" cy="60" r="2.5" fill="#ea580c"/><circle cx="190" cy="50" r="2.5" fill="#ea580c"/>
+            <circle cx="200" cy="80" r="2.5" fill="#b91c1c"/><circle cx="220" cy="40" r="2.5" fill="#b91c1c"/>
+          </g>
+          <text x="135" y="195" font-size="10" text-anchor="middle">Years →</text>
+          <text x="18" y="100" font-size="10" transform="rotate(-90 18 100)" text-anchor="middle">Hits →</text>
+          <text x="55" y="35" font-size="9" fill="#64748b">color = log(salary)</text>
+        </svg>
+      </div>
+      <div>
+        <p>How would you split this space into rectangles to predict salary?</p>
+        <p class="muted">Eye-balled: young players earn low, regardless of hits. Veterans split by hits — the heavy hitters earn the most.</p>
+      </div>
+    </div>
   </section>
 
   <section>
-    <h2>Reading a tree</h2>
-<p>Each node prints: split criterion, samples, class distribution, prediction.</p><p>Trace a row from root to leaf — that is the model's reasoning, in human language.</p>
+    <h2>The fitted Hitters tree</h2>
+    <div class="two-col">
+      <div>
+        <svg viewBox="0 0 280 220" style="width:100%;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
+          <!-- root -->
+          <rect x="100" y="10" width="80" height="28" rx="4" fill="var(--bc-accent-soft)" stroke="var(--bc-accent)"/>
+          <text x="140" y="29" font-size="11" text-anchor="middle">Years &lt; 4.5</text>
+          <!-- left leaf (R1) -->
+          <line x1="120" y1="38" x2="60" y2="80" stroke="#0f172a"/>
+          <text x="80" y="60" font-size="9">yes</text>
+          <rect x="20" y="80" width="80" height="28" rx="4" fill="#e0f2fe" stroke="#0284c7"/>
+          <text x="60" y="99" font-size="11" text-anchor="middle">R₁ : 5.11</text>
+          <!-- right inner -->
+          <line x1="160" y1="38" x2="220" y2="80" stroke="#0f172a"/>
+          <text x="200" y="60" font-size="9">no</text>
+          <rect x="180" y="80" width="80" height="28" rx="4" fill="var(--bc-accent-soft)" stroke="var(--bc-accent)"/>
+          <text x="220" y="99" font-size="11" text-anchor="middle">Hits &lt; 117.5</text>
+          <!-- leaves -->
+          <line x1="200" y1="108" x2="160" y2="150" stroke="#0f172a"/>
+          <rect x="120" y="150" width="80" height="28" rx="4" fill="#fef3c7" stroke="#b45309"/>
+          <text x="160" y="169" font-size="11" text-anchor="middle">R₂ : 6.00</text>
+          <line x1="240" y1="108" x2="240" y2="150" stroke="#0f172a"/>
+          <rect x="200" y="150" width="80" height="28" rx="4" fill="#fee2e2" stroke="#b91c1c"/>
+          <text x="240" y="169" font-size="11" text-anchor="middle">R₃ : 6.74</text>
+        </svg>
+      </div>
+      <div>
+        <ul>
+          <li>Three regions, three predictions (mean of training salaries in each).</li>
+          <li>R₁ = rookies (Years &lt; 4.5) → log(salary) ≈ 5.11 (~$165k).</li>
+          <li>R₂ = veterans, fewer hits → 6.00 (~$400k).</li>
+          <li>R₃ = veterans, big hitters → 6.74 (~$845k).</li>
+        </ul>
+        <p class="muted">Years is the most important predictor; hits matter only once you're past the rookie cutoff.</p>
+      </div>
+    </div>
   </section>
 
+  <section>
+    <h2>The algorithm: recursive binary splitting</h2>
+    <ol>
+      <li class="fragment fade-up">Consider every feature and every threshold.</li>
+      <li class="fragment fade-up">Pick the (X<sub>j</sub>, s) that most reduces <strong>RSS</strong>:
+        <p style="text-align:center;">RSS = Σ<sub>m</sub> Σ<sub>i∈R<sub>m</sub></sub> (y<sub>i</sub> − ŷ<sub>R<sub>m</sub></sub>)²</p>
+      </li>
+      <li class="fragment fade-up">Recurse on each child region.</li>
+      <li class="fragment fade-up">Stop when leaves contain &lt; min_samples or pure.</li>
+    </ol>
+    <p class="callout"><strong>Top-down, greedy.</strong> Best split <em>now</em>, not best subsequence overall — exhaustive search is NP-hard.</p>
+  </section>
+
+  <section>
+    <h2>The induced partition</h2>
+    <div class="two-col">
+      <div>
+        <svg viewBox="0 0 240 200" style="width:100%;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
+          <line x1="30" y1="180" x2="220" y2="180" stroke="#0f172a"/>
+          <line x1="30" y1="180" x2="30"  y2="20"  stroke="#0f172a"/>
+          <line x1="80" y1="20"  x2="80"  y2="180" stroke="#2563eb" stroke-width="2"/>
+          <line x1="80" y1="100" x2="220" y2="100" stroke="#2563eb" stroke-width="2"/>
+          <text x="55"  y="110" font-size="11" fill="#0f172a">R₁</text>
+          <text x="145" y="60"  font-size="11" fill="#0f172a">R₃</text>
+          <text x="145" y="150" font-size="11" fill="#0f172a">R₂</text>
+          <text x="80"  y="195" font-size="10" text-anchor="middle">4.5</text>
+          <text x="22"  y="100" font-size="10" text-anchor="end">117.5</text>
+          <text x="125" y="200" font-size="10" text-anchor="middle">Years →</text>
+        </svg>
+      </div>
+      <div>
+        <p>Recursive binary splits → axis-aligned rectangles.</p>
+        <p class="muted">Trees cannot make oblique cuts. A diagonal class boundary requires a staircase of axis-aligned splits — a weakness that ensembles partly fix.</p>
+      </div>
+    </div>
+  </section>
 </section>
+
+<!-- ============================================================ PART 2 -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 2 · 0:30 – 1:00</span>
-    <h1>Regression trees & pruning</h1>
-    <p class="muted">ccp_alpha</p>
+    <h1>Classification trees &amp; pruning</h1>
+    <p class="muted">Gini, entropy, cost-complexity α</p>
   </section>
+
   <section>
     <h2>Same algorithm, different criterion</h2>
-<p>Regression trees split to minimize MSE within each child node. Final prediction = mean of training targets in the leaf.</p>
+    <p>For a classification leaf, we don't have an MSE. We have <em>class proportions</em> p̂<sub>mk</sub>. Three measures of "node purity":</p>
+    <div class="three-col">
+      <div class="card">
+        <h4>Misclassification error</h4>
+        <p style="text-align:center;">1 − max<sub>k</sub> p̂<sub>mk</sub></p>
+        <p class="muted">Intuitive, but not sensitive enough for growing.</p>
+      </div>
+      <div class="card">
+        <h4>Gini impurity</h4>
+        <p style="text-align:center;">Σ<sub>k</sub> p̂<sub>mk</sub>(1 − p̂<sub>mk</sub>)</p>
+        <p class="muted">Default in sklearn.</p>
+      </div>
+      <div class="card">
+        <h4>Cross-entropy</h4>
+        <p style="text-align:center;">− Σ<sub>k</sub> p̂<sub>mk</sub> log p̂<sub>mk</sub></p>
+        <p class="muted">Numerically similar to Gini.</p>
+      </div>
+    </div>
+    <p class="callout">Gini and entropy are smooth and pick more informative splits than raw error rate. In practice they agree on almost everything.</p>
+  </section>
+
+  <section>
+    <h2>The Heart dataset</h2>
+    <div class="two-col">
+      <div>
+        <p>303 patients with chest pain; predict <code>HD ∈ {Yes, No}</code> from 13 mixed predictors (Age, Sex, Cholesterol, Thal, ChestPain, …).</p>
+        <p>Cross-validation picks a tree with <strong>6 leaves</strong> — small enough to read, big enough to capture signal.</p>
+      </div>
+      <div>
+        <svg viewBox="0 0 280 220" style="width:100%;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
+          <rect x="100" y="10" width="80" height="22" rx="4" fill="var(--bc-accent-soft)" stroke="var(--bc-accent)"/>
+          <text x="140" y="26" font-size="10" text-anchor="middle">Thal : a</text>
+          <line x1="120" y1="32" x2="60" y2="70" stroke="#0f172a"/>
+          <line x1="160" y1="32" x2="220" y2="70" stroke="#0f172a"/>
+          <rect x="20" y="70" width="80" height="22" rx="4" fill="var(--bc-accent-soft)" stroke="var(--bc-accent)"/>
+          <text x="60" y="86" font-size="10" text-anchor="middle">Ca &lt; 0.5</text>
+          <rect x="180" y="70" width="80" height="22" rx="4" fill="var(--bc-accent-soft)" stroke="var(--bc-accent)"/>
+          <text x="220" y="86" font-size="10" text-anchor="middle">Ca &lt; 0.5</text>
+          <line x1="40" y1="92"  x2="20" y2="125" stroke="#0f172a"/>
+          <line x1="80" y1="92"  x2="100" y2="125" stroke="#0f172a"/>
+          <line x1="200" y1="92" x2="200" y2="125" stroke="#0f172a"/>
+          <line x1="240" y1="92" x2="240" y2="125" stroke="#0f172a"/>
+          <rect x="0"   y="125" width="40" height="22" rx="4" fill="#d1fae5" stroke="#047857"/>
+          <text x="20"  y="141" font-size="10" text-anchor="middle">No</text>
+          <rect x="80"  y="125" width="80" height="22" rx="4" fill="var(--bc-accent-soft)" stroke="var(--bc-accent)"/>
+          <text x="120" y="141" font-size="10" text-anchor="middle">MaxHR &lt; 162</text>
+          <rect x="180" y="125" width="40" height="22" rx="4" fill="#fee2e2" stroke="#b91c1c"/>
+          <text x="200" y="141" font-size="10" text-anchor="middle">Yes</text>
+          <rect x="220" y="125" width="40" height="22" rx="4" fill="#fee2e2" stroke="#b91c1c"/>
+          <text x="240" y="141" font-size="10" text-anchor="middle">Yes</text>
+          <line x1="100" y1="147" x2="80" y2="180" stroke="#0f172a"/>
+          <line x1="140" y1="147" x2="160" y2="180" stroke="#0f172a"/>
+          <rect x="60"  y="180" width="40" height="22" rx="4" fill="#d1fae5" stroke="#047857"/>
+          <text x="80"  y="196" font-size="10" text-anchor="middle">No</text>
+          <rect x="140" y="180" width="40" height="22" rx="4" fill="#fee2e2" stroke="#b91c1c"/>
+          <text x="160" y="196" font-size="10" text-anchor="middle">Yes</text>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Pre-pruning is too short-sighted</h2>
+    <p>"Stop growing once the next split gains less than ε" — tempting but bad. A useless split now can <em>enable</em> a great split next.</p>
+    <p class="tip"><strong>Better:</strong> grow a very large tree, then prune it back.</p>
   </section>
 
   <section>
     <h2>Cost-complexity pruning</h2>
-<p style="text-align:center;font-size:1.2em;">cost(T) = Σ<sub>leaves</sub> MSE(leaf) + α · |T|</p><ul>
-  <li class="fragment fade-up">α = 0 → fully grown, overfit.</li>
-  <li class="fragment fade-up">α → ∞ → root-only stump.</li>
-  <li class="fragment fade-up">Pick α with 5-fold CV.</li>
-</ul>
+    <p style="text-align:center;font-size:1.2em;">
+      C<sub>α</sub>(T) = Σ<sub>leaves m</sub> Σ<sub>i∈R<sub>m</sub></sub> (y<sub>i</sub> − ŷ<sub>m</sub>)² + α · |T|
+    </p>
+    <div class="three-col">
+      <div class="card">
+        <h4>α = 0</h4>
+        <p class="muted">Keep every leaf. Massive overfit.</p>
+      </div>
+      <div class="card">
+        <h4>α moderate</h4>
+        <p class="muted">Sweet spot. Cross-validate.</p>
+      </div>
+      <div class="card">
+        <h4>α → ∞</h4>
+        <p class="muted">Collapse to root — predict the mean.</p>
+      </div>
+    </div>
+    <pre><code class="language-python">from sklearn.tree import DecisionTreeRegressor
+path  = DecisionTreeRegressor().cost_complexity_pruning_path(X, y)
+alphas = path.ccp_alphas               # candidate αs
+# pick best with CV: GridSearchCV(..., {'ccp_alpha': alphas})</code></pre>
   </section>
 
+  <section>
+    <h2>Algorithm in summary</h2>
+    <ol>
+      <li class="fragment fade-up">Grow a very large tree T₀, stopping only at min-leaf-size.</li>
+      <li class="fragment fade-up">Cost-complexity prune → a sequence of subtrees indexed by α.</li>
+      <li class="fragment fade-up">K-fold CV on α; pick the α minimizing CV error.</li>
+      <li class="fragment fade-up">Return the subtree of T₀ corresponding to that α.</li>
+    </ol>
+  </section>
 </section>
+
+<!-- ============================================================ PART 3 -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 3 · 1:00 – 1:30</span>
-    <h1>Strengths & weaknesses</h1>
-    <p class="muted">and the road to ensembles</p>
-  </section>
-  <section>
-    <h2>Strengths</h2>
-<ul>
-  <li class="fragment fade-up">Interpretable end-to-end.</li>
-  <li class="fragment fade-up">Handles mixed dtypes without preprocessing.</li>
-  <li class="fragment fade-up">No scaling required.</li>
-  <li class="fragment fade-up">Captures interactions and non-linearities natively.</li>
-</ul>
+    <h1>Strengths, weaknesses, &amp; ensembles</h1>
+    <p class="muted">why one tree is rarely enough</p>
   </section>
 
   <section>
-    <h2>Weakness — variance</h2>
-<p>Refit the same tree on a bootstrap sample. Different root split. Different tree. <em>Massively different</em> predictions on borderline points.</p><p class="callout">Solution: fit many trees and vote. Next course.</p>
+    <h2>Why teams love trees</h2>
+    <ul>
+      <li class="fragment fade-up"><strong>Interpretable end-to-end.</strong> Every prediction is a flowchart. Mirrors how humans reason.</li>
+      <li class="fragment fade-up"><strong>Mixed dtypes, no scaling.</strong> Numeric + categorical, missing values handled, no <code>StandardScaler</code> needed.</li>
+      <li class="fragment fade-up"><strong>Native non-linearity &amp; interactions.</strong> No polynomial features or kernels required.</li>
+      <li class="fragment fade-up"><strong>Cheap inference.</strong> A trained tree is just a chain of <code>if</code>s.</li>
+    </ul>
   </section>
 
+  <section>
+    <h2>Trees vs linear models</h2>
+    <div class="two-col">
+      <div>
+        <svg viewBox="0 0 240 200" style="width:100%;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
+          <line x1="20" y1="180" x2="220" y2="20" stroke="#2563eb" stroke-width="2.5"/>
+          <g fill="#2563eb" opacity="0.6">
+            <circle cx="40"  cy="60"  r="3"/><circle cx="60"  cy="80"  r="3"/>
+            <circle cx="80"  cy="50"  r="3"/><circle cx="50"  cy="100" r="3"/>
+          </g>
+          <g fill="#b91c1c" opacity="0.6">
+            <circle cx="160" cy="130" r="3"/><circle cx="180" cy="150" r="3"/>
+            <circle cx="200" cy="120" r="3"/><circle cx="140" cy="160" r="3"/>
+          </g>
+          <text x="120" y="195" font-size="10" text-anchor="middle">linear data → linear wins</text>
+        </svg>
+      </div>
+      <div>
+        <svg viewBox="0 0 240 200" style="width:100%;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
+          <line x1="120" y1="20" x2="120" y2="180" stroke="#b91c1c" stroke-width="2.5"/>
+          <line x1="120" y1="100" x2="220" y2="100" stroke="#b91c1c" stroke-width="2.5"/>
+          <g fill="#2563eb" opacity="0.6">
+            <circle cx="60"  cy="60"  r="3"/><circle cx="80"  cy="120" r="3"/>
+            <circle cx="50"  cy="150" r="3"/><circle cx="150" cy="60"  r="3"/>
+            <circle cx="200" cy="50"  r="3"/>
+          </g>
+          <g fill="#fbbf24" opacity="0.8">
+            <circle cx="160" cy="130" r="3"/><circle cx="180" cy="160" r="3"/>
+            <circle cx="200" cy="140" r="3"/>
+          </g>
+          <text x="120" y="195" font-size="10" text-anchor="middle">box-shaped truth → tree wins</text>
+        </svg>
+      </div>
+    </div>
+    <p class="muted" style="text-align:center;margin-top:0.6em;">Models match the geometry they assume. Pick to fit the data, not the textbook.</p>
+  </section>
+
+  <section>
+    <h2>The weakness: <strong>variance</strong></h2>
+    <p>Refit a tree on a bootstrap sample of the same data.</p>
+    <ul>
+      <li class="fragment fade-up">The root split may change entirely.</li>
+      <li class="fragment fade-up">Downstream splits change in cascade.</li>
+      <li class="fragment fade-up">Borderline cases jump between leaves — predictions wobble.</li>
+    </ul>
+    <p class="mistake">A single tree is <em>unstable</em>. The greedy top-down search is sensitive to small changes in the data.</p>
+  </section>
+
+  <section>
+    <h2>The fix is in the next course</h2>
+    <p class="callout">Fit <em>many</em> trees on perturbed copies of the data, then vote / average.<br>The bias barely changes; the variance collapses.</p>
+    <ul>
+      <li>Random copies → <strong>bagging</strong> &amp; <strong>random forests</strong>.</li>
+      <li>Sequential residual-fitting → <strong>gradient boosting</strong>.</li>
+      <li>Bayesian random perturbations → <strong>BART</strong>.</li>
+    </ul>
+  </section>
 </section>
+
+<!-- ============================================================ RECAP -->
 <section class="title-slide">
   <span class="kicker">Recap</span>
   <h2>Three things to leave with</h2>
   <ol>
-<li class="fragment fade-up"><strong>Greedy splits on Gini (classification) or MSE (regression).</strong></li>
-<li class="fragment fade-up"><strong>Prune with ccp_alpha to fight overfit.</strong></li>
-<li class="fragment fade-up"><strong>Single trees are interpretable but high-variance.</strong> Ensembles fix that.</li>
+    <li class="fragment fade-up"><strong>Greedy axis-aligned splits</strong> on RSS (regression) or Gini / entropy (classification).</li>
+    <li class="fragment fade-up"><strong>Grow large, then prune</strong> via cost-complexity α; choose α with CV.</li>
+    <li class="fragment fade-up"><strong>Single trees are interpretable but unstable.</strong> Ensembles trade some readability for a lot of accuracy.</li>
   </ol>
-  <p class="callout fragment fade-up">Next: bagging, random forests, and gradient boosting.</p>
+  <p class="callout fragment fade-up">Next: bagging, random forests, gradient boosting — the ensembles that win.</p>
 </section>
 
 </div></div>
