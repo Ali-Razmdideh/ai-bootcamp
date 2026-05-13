@@ -13,9 +13,7 @@
 <body>
 <div class="reveal"><div class="slides">
 
-<!-- =================================================================== -->
-<!-- TITLE                                                                -->
-<!-- =================================================================== -->
+<!-- TITLE -->
 <section class="title-slide">
   <span class="kicker">Week 1 · Course 1 · 1.5 hours</span>
   <h1>The Numerical Engine</h1>
@@ -27,20 +25,18 @@
   <h2>Where we are heading</h2>
   <div class="three-col">
     <div class="card"><h4>0:00 · 0:30</h4><strong>The ND-Array</strong>
-      <p class="muted" style="margin:0.3em 0 0;">What it is, why it is fast.</p></div>
+      <p class="muted" style="margin:0.3em 0 0;">Create, inspect, dtype.</p></div>
     <div class="card"><h4>0:30 · 1:00</h4><strong>Shape & Slicing</strong>
-      <p class="muted" style="margin:0.3em 0 0;">reshape, transpose, indexing.</p></div>
-    <div class="card"><h4>1:00 · 1:30</h4><strong>Vectorize & Broadcast</strong>
-      <p class="muted" style="margin:0.3em 0 0;">Loops out, arrays in.</p></div>
+      <p class="muted" style="margin:0.3em 0 0;">reshape, transpose, index.</p></div>
+    <div class="card"><h4>1:00 · 1:30</h4><strong>Vectorize</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Arithmetic, broadcasting, matmul.</p></div>
   </div>
-  <p class="callout" style="margin-top:1.2em;">Every neural network is a chain
-    of operations on tensors. A tensor is an ndarray with a GPU pointer.
-    Master ndarrays now; the rest is detail.</p>
+  <p class="callout" style="margin-top:1.2em;">Every neural net is a chain of operations on tensors. A tensor is an ndarray with a GPU pointer. Master ndarrays now.</p>
 </section>
 
-<!-- =================================================================== -->
-<!-- PART 1 — ND-ARRAY                                                    -->
-<!-- =================================================================== -->
+<!-- ================================================================== -->
+<!-- PART 1 -->
+<!-- ================================================================== -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 1 · 0:00 – 0:30</span>
@@ -49,7 +45,7 @@
   </section>
 
   <section>
-    <h2>Python list vs. ndarray</h2>
+    <h2>List vs. ndarray — same data, different machine</h2>
     <div class="two-col">
       <div>
         <h4>list</h4>
@@ -59,21 +55,19 @@
       </div>
       <div>
         <h4>ndarray</h4>
-        <pre><code class="language-python">arr = np.array([1, 2, 3, 4])
+        <pre><code class="language-python">import numpy as np
+arr = np.array([1, 2, 3, 4])
 # one contiguous int64 buffer
 # 32 bytes, end of story</code></pre>
       </div>
     </div>
-    <p class="muted" style="font-size:0.75em; margin-top:0.4em;">A single mental picture explains every speed difference we'll see.</p>
   </section>
 
   <section>
     <h2>The memory model</h2>
     <svg class="diagram" viewBox="0 0 800 320" xmlns="http://www.w3.org/2000/svg">
-      <!-- list -->
       <text x="40" y="30" font-size="16" font-weight="700">Python list</text>
       <g font-family="JetBrains Mono">
-        <!-- pointer cells -->
         <g>
           <rect x="40"  y="50" width="60" height="40" fill="#dbeafe" stroke="#2563eb"/>
           <rect x="100" y="50" width="60" height="40" fill="#dbeafe" stroke="#2563eb"/>
@@ -84,7 +78,6 @@
           <text x="190" y="76" text-anchor="middle">ptr</text>
           <text x="250" y="76" text-anchor="middle">ptr</text>
         </g>
-        <!-- heap objects -->
         <g>
           <rect x="20"  y="160" width="68" height="44" fill="#fef3c7" stroke="#b45309"/>
           <rect x="140" y="200" width="68" height="44" fill="#fef3c7" stroke="#b45309"/>
@@ -95,7 +88,6 @@
           <text x="284" y="177" text-anchor="middle">PyInt(3)</text>
           <text x="94"  y="277" text-anchor="middle">PyInt(4)</text>
         </g>
-        <!-- arrows -->
         <g stroke="#475569" stroke-width="1" fill="none" marker-end="url(#arrow1)">
           <path d="M70 90 C 70 130, 54 140, 54 160"/>
           <path d="M130 90 C 130 150, 170 180, 174 200"/>
@@ -103,7 +95,6 @@
           <path d="M250 90 C 220 170, 90 220, 94 250"/>
         </g>
       </g>
-      <!-- ndarray -->
       <text x="430" y="30" font-size="16" font-weight="700">NumPy ndarray</text>
       <g font-family="JetBrains Mono">
         <rect x="430" y="50" width="60" height="40" fill="#d1fae5" stroke="#047857"/>
@@ -130,210 +121,157 @@
   </section>
 
   <section>
-    <h2>Measure it — the speed story</h2>
+    <h2>Measure it</h2>
     <pre><code class="language-python">%timeit sum(range(1_000_000))             # ~30 ms
 %timeit np.arange(1_000_000).sum()        # ~1 ms</code></pre>
-    <div class="tip">~30× faster, half the code, same answer. This is not a micro-optimization — it's <strong>the</strong> reason NumPy exists.</div>
-    <div class="warn">Don't trust the exact numbers — run <code>%timeit</code> on your own laptop. The ratio matters, not the absolute milliseconds.</div>
+    <div class="tip">~30× faster, half the code. The ratio matters, not the absolute milliseconds — run it on your own laptop.</div>
+  </section>
+
+  <section>
+    <h2>Creating arrays — the recipes you'll use weekly</h2>
+    <pre><code class="language-python">np.zeros(5)                # [0. 0. 0. 0. 0.]
+np.zeros((3, 4))           # 3×4 of 0.0
+np.ones((3, 4))
+np.full((3, 4), np.pi)     # 3×4 filled with π
+np.empty((2, 3))           # uninitialized — fast, garbage values
+
+np.arange(1, 5)            # [1 2 3 4]
+np.arange(1, 5, 0.5)       # [1. 1.5 2. 2.5 3. 3.5 4. 4.5]
+np.linspace(0, 5/3, 6)     # 6 evenly-spaced points, end included
+
+rng = np.random.default_rng(seed=42)
+rng.random((3, 4))         # uniform [0, 1)
+rng.standard_normal((3, 4))</code></pre>
+    <div class="tip">Seed your RNG. Reproducible code is the difference between a tutorial and a bug report.</div>
   </section>
 
   <section>
     <h2>dtypes — one float promotes the whole array</h2>
-    <pre><code class="language-python">np.array([1, 2, 3]).dtype              # int64
-np.array([1.0, 2, 3]).dtype             # float64  (one float wins)
-np.array([1, 2, 3], dtype=np.float32)   # explicit
-np.array([True, False, True]).dtype     # bool</code></pre>
-    <div class="callout">Pick the <strong>smallest dtype that fits</strong>. A 224×224×3 image in
-      <code>uint8</code> is 150 kB; in <code>float64</code> it's 1.2 MB. Multiply by batch size 32 and you're at 38 MB just for one mini-batch.</div>
+    <pre><code class="language-python">c = np.arange(1, 5)
+print(c.dtype, c)                       # int64 [1 2 3 4]
+
+k1 = np.arange(0, 5, dtype=np.uint8)
+k2 = k1 + np.array([5, 6, 7, 8, 9], dtype=np.int8)
+print(k2.dtype, k2)                     # int16 [5 7 9 11 13]
+
+k3 = k1 + 1.5
+print(k3.dtype, k3)                     # float64 [1.5 2.5 3.5 4.5 5.5]</code></pre>
+    <div class="callout">Smallest dtype that fits = lowest memory. A 224×224×3 image in <code>uint8</code> is 150 kB; in <code>float64</code> it's 1.2 MB.</div>
   </section>
 
   <section>
-    <h2>Creating arrays — five recipes</h2>
-    <pre><code class="language-python">np.zeros((3, 4))            # 3x4 of 0.0
-np.ones((2, 2), dtype=int)  # 2x2 of 1
-np.full((2, 2), 7)          # 2x2 of 7
-np.arange(0, 10, 2)         # [0 2 4 6 8]   like range()
-np.linspace(0, 1, 5)        # [0. 0.25 0.5 0.75 1.]   inclusive end
-np.eye(3)                   # identity matrix
-rng = np.random.default_rng(0)
-rng.normal(size=(2, 3))     # 2x3 standard normal</code></pre>
-    <div class="tip">Always seed your RNG in notebooks (<code>default_rng(seed)</code>). Reproducibility is the difference between a tutorial and a bug report.</div>
-    <div class="warn"><code>np.random.seed(...)</code> is the legacy API. Prefer the <code>default_rng</code> Generator — it's stateless across libraries.</div>
-  </section>
-
-  <section>
-    <h2>Inspect any array in 5 attributes</h2>
-    <table>
-      <thead><tr><th>attribute</th><th>meaning</th><th>example</th></tr></thead>
-      <tbody>
-        <tr><td><code>shape</code></td><td>length along each axis</td><td><code>(3, 4)</code></td></tr>
-        <tr><td><code>ndim</code></td><td>number of axes</td><td><code>2</code></td></tr>
-        <tr><td><code>size</code></td><td>total elements</td><td><code>12</code></td></tr>
-        <tr><td><code>dtype</code></td><td>element type</td><td><code>int64</code></td></tr>
-        <tr><td><code>nbytes</code></td><td>memory used</td><td><code>96</code></td></tr>
-      </tbody>
-    </table>
-    <p class="muted" style="font-size:0.7em;">Every time you load a tensor or read a dataset: print these. It catches 80% of bugs before they happen.</p>
+    <h2>Inspect any array in six attributes</h2>
+    <pre><code class="language-python">a = np.zeros((3, 4))
+a.shape, a.ndim, a.size, a.itemsize, a.nbytes, a.dtype
+#  (3, 4)    2      12        8         96     float64</code></pre>
+    <p class="muted" style="font-size:0.78em;">Print these on every fresh array. It catches 80% of bugs before they happen.</p>
   </section>
 </section>
 
-<!-- =================================================================== -->
-<!-- PART 2 — SHAPE & SLICING                                             -->
-<!-- =================================================================== -->
+<!-- ================================================================== -->
+<!-- PART 2 -->
+<!-- ================================================================== -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 2 · 0:30 – 1:00</span>
-    <h1>Shape & Slicing</h1>
-    <p class="muted">strides, views, and N-D indexing</p>
+    <h1>Shape &amp; Slicing</h1>
+    <p class="muted">reshape · transpose · index</p>
   </section>
 
   <section>
     <h2>Shape is meaning</h2>
-    <pre><code class="language-python">a = np.arange(12).reshape(3, 4)
-a.shape, a.ndim, a.size      # (3, 4)  2  12</code></pre>
-    <p class="muted" style="font-size:0.78em;">Shape isn't a number; it's <em>vocabulary</em>:</p>
-    <ul style="font-size:0.85em;">
-      <li class="fragment fade-up">A grayscale image: <code>(H, W)</code></li>
-      <li class="fragment fade-up">A color image: <code>(H, W, 3)</code></li>
-      <li class="fragment fade-up">A batch of color images (PyTorch): <code>(B, 3, H, W)</code></li>
-      <li class="fragment fade-up">A batch of token IDs: <code>(B, T)</code></li>
+    <pre><code class="language-python">g = np.arange(24)
+g.shape = (6, 4)            # reshape in place
+
+g2 = g.reshape(4, 6)        # new view, same buffer
+g.ravel()                   # back to 1-D
+
+t = np.arange(24).reshape(4, 2, 3)
+t.transpose((1, 2, 0)).shape    # (2, 3, 4) — axes permuted
+
+m1 = np.arange(10).reshape(2, 5)
+m1.T                         # quick transpose of a 2-D array</code></pre>
+    <div class="callout">reshape and transpose change <em>strides</em>, not data. No copy.</div>
+  </section>
+
+  <section>
+    <h2>What shape <em>means</em> in practice</h2>
+    <ul style="font-size:0.9em;">
+      <li class="fragment fade-up">Grayscale image: <code>(H, W)</code></li>
+      <li class="fragment fade-up">Color image: <code>(H, W, 3)</code></li>
+      <li class="fragment fade-up">Batch of color images (PyTorch): <code>(B, 3, H, W)</code></li>
+      <li class="fragment fade-up">Batch of token IDs: <code>(B, T)</code></li>
       <li class="fragment fade-up">Hidden states in a transformer: <code>(B, T, D)</code></li>
     </ul>
     <p class="callout fragment fade-up">When debugging, always print <code>.shape</code> before guessing.</p>
   </section>
 
   <section>
-    <h2>reshape and the <code>-1</code> trick</h2>
-    <pre><code class="language-python">x = np.arange(24)
-x.reshape(4, 6)
-x.reshape(2, 3, 4)
-x.reshape(2, -1)     # NumPy infers the missing dim → (2, 12)
-x.reshape(-1)        # flatten (same as x.ravel())</code></pre>
-    <div class="callout">reshape <strong>never copies</strong> if it can avoid it. The data buffer stays put; only the <em>strides</em> change.</div>
+    <h2>2-D slicing — the main move</h2>
+    <pre><code class="language-python">b = np.arange(48).reshape(4, 12)
+
+b[1, 2]          # scalar at row 1, col 2  → 14
+b[1, :]          # whole row 1             → shape (12,)
+b[:, 1]          # whole column 1          → shape (4,)
+b[1:3, 2:5]      # 2×3 sub-block
+b[::-1]          # rows reversed</code></pre>
+    <p class="muted" style="font-size:0.78em;">Comma separates axes; colon = "everything along this axis."</p>
   </section>
 
   <section>
-    <h2>What is a stride, really?</h2>
-    <svg class="diagram" viewBox="0 0 760 270" xmlns="http://www.w3.org/2000/svg">
-      <!-- linear buffer -->
-      <text x="20" y="30" font-size="14" font-weight="700">Buffer (1-D, 24 int8 bytes)</text>
-      <g font-family="JetBrains Mono">
-        <g stroke="#1e293b" fill="#f8fafc">
-          <!-- 24 cells -->
-          <g><rect x="20"  y="50" width="28" height="28"/><text x="34"  y="69" text-anchor="middle">0</text></g>
-          <g><rect x="48"  y="50" width="28" height="28"/><text x="62"  y="69" text-anchor="middle">1</text></g>
-          <g><rect x="76"  y="50" width="28" height="28"/><text x="90"  y="69" text-anchor="middle">2</text></g>
-          <g><rect x="104" y="50" width="28" height="28"/><text x="118" y="69" text-anchor="middle">3</text></g>
-          <g><rect x="132" y="50" width="28" height="28"/><text x="146" y="69" text-anchor="middle">4</text></g>
-          <g><rect x="160" y="50" width="28" height="28"/><text x="174" y="69" text-anchor="middle">5</text></g>
-          <g><rect x="188" y="50" width="28" height="28"/><text x="202" y="69" text-anchor="middle">6</text></g>
-          <g><rect x="216" y="50" width="28" height="28"/><text x="230" y="69" text-anchor="middle">7</text></g>
-          <g><rect x="244" y="50" width="28" height="28"/><text x="258" y="69" text-anchor="middle">…</text></g>
-        </g>
-      </g>
-      <!-- reshape (3,4) -->
-      <text x="20" y="120" font-size="14" font-weight="700">a.reshape(3, 4) — strides (32, 8)</text>
-      <g font-family="JetBrains Mono" font-size="12">
-        <g><rect x="20"  y="140" width="40" height="32" fill="#dbeafe" stroke="#2563eb"/><text x="40"  y="160" text-anchor="middle">0</text></g>
-        <g><rect x="60"  y="140" width="40" height="32" fill="#dbeafe" stroke="#2563eb"/><text x="80"  y="160" text-anchor="middle">1</text></g>
-        <g><rect x="100" y="140" width="40" height="32" fill="#dbeafe" stroke="#2563eb"/><text x="120" y="160" text-anchor="middle">2</text></g>
-        <g><rect x="140" y="140" width="40" height="32" fill="#dbeafe" stroke="#2563eb"/><text x="160" y="160" text-anchor="middle">3</text></g>
-        <g><rect x="20"  y="172" width="40" height="32" fill="#dbeafe" stroke="#2563eb"/><text x="40"  y="192" text-anchor="middle">4</text></g>
-        <g><rect x="60"  y="172" width="40" height="32" fill="#dbeafe" stroke="#2563eb"/><text x="80"  y="192" text-anchor="middle">5</text></g>
-        <g><rect x="100" y="172" width="40" height="32" fill="#dbeafe" stroke="#2563eb"/><text x="120" y="192" text-anchor="middle">6</text></g>
-        <g><rect x="140" y="172" width="40" height="32" fill="#dbeafe" stroke="#2563eb"/><text x="160" y="192" text-anchor="middle">7</text></g>
-        <g><rect x="20"  y="204" width="40" height="32" fill="#dbeafe" stroke="#2563eb"/><text x="40"  y="224" text-anchor="middle">8</text></g>
-        <g><rect x="60"  y="204" width="40" height="32" fill="#dbeafe" stroke="#2563eb"/><text x="80"  y="224" text-anchor="middle">9</text></g>
-        <g><rect x="100" y="204" width="40" height="32" fill="#dbeafe" stroke="#2563eb"/><text x="120" y="224" text-anchor="middle">10</text></g>
-        <g><rect x="140" y="204" width="40" height="32" fill="#dbeafe" stroke="#2563eb"/><text x="160" y="224" text-anchor="middle">11</text></g>
-      </g>
-      <!-- transpose -->
-      <text x="400" y="120" font-size="14" font-weight="700">a.T — strides (8, 32)</text>
-      <g font-family="JetBrains Mono" font-size="12">
-        <g><rect x="400" y="140" width="40" height="32" fill="#d1fae5" stroke="#047857"/><text x="420" y="160" text-anchor="middle">0</text></g>
-        <g><rect x="440" y="140" width="40" height="32" fill="#d1fae5" stroke="#047857"/><text x="460" y="160" text-anchor="middle">4</text></g>
-        <g><rect x="480" y="140" width="40" height="32" fill="#d1fae5" stroke="#047857"/><text x="500" y="160" text-anchor="middle">8</text></g>
-        <g><rect x="400" y="172" width="40" height="32" fill="#d1fae5" stroke="#047857"/><text x="420" y="192" text-anchor="middle">1</text></g>
-        <g><rect x="440" y="172" width="40" height="32" fill="#d1fae5" stroke="#047857"/><text x="460" y="192" text-anchor="middle">5</text></g>
-        <g><rect x="480" y="172" width="40" height="32" fill="#d1fae5" stroke="#047857"/><text x="500" y="192" text-anchor="middle">9</text></g>
-        <g><rect x="400" y="204" width="40" height="32" fill="#d1fae5" stroke="#047857"/><text x="420" y="224" text-anchor="middle">2</text></g>
-        <g><rect x="440" y="204" width="40" height="32" fill="#d1fae5" stroke="#047857"/><text x="460" y="224" text-anchor="middle">6</text></g>
-        <g><rect x="480" y="204" width="40" height="32" fill="#d1fae5" stroke="#047857"/><text x="500" y="224" text-anchor="middle">10</text></g>
-      </g>
-      <text x="555" y="180" font-size="12" fill="#475569">Same buffer.</text>
-      <text x="555" y="200" font-size="12" fill="#475569">Different strides.</text>
-      <text x="555" y="220" font-size="12" fill="#475569">No copy.</text>
-    </svg>
-    <p class="muted" style="font-size:0.7em;">A stride is "how many bytes do I jump to move one step along this axis?" That's all reshape and transpose ever change.</p>
+    <h2>Fancy indexing — pick whatever rows/cols you want</h2>
+    <pre><code class="language-python">b = np.arange(48).reshape(4, 12)
+
+b[(0, 2), 2:5]              # rows 0 and 2, cols 2-4
+b[:, (-1, 2, -1)]           # all rows; cols last, 2, last (repeats!)
+b[(-1, 2, -1, 2), (5, 9, 1, 9)]   # paired indices — 4 specific cells</code></pre>
+    <div class="tip">Two index arrays of equal length pair up element-wise — handy for gathering arbitrary cells.</div>
   </section>
 
   <section>
-    <h2>Transpose — and why batch layout matters</h2>
-    <pre><code class="language-python">m = np.arange(6).reshape(2, 3)
-m.T                           # (3, 2)
+    <h2>Boolean indexing — filter by a condition</h2>
+    <pre><code class="language-python">m = np.array([20, -5, 30, 40])
+m[m < 25]                   # [20 -5]
 
-img = rng.random((224, 224, 3))           # HWC (matplotlib)
-img.transpose(2, 0, 1).shape              # CHW (PyTorch)  → (3, 224, 224)</code></pre>
-    <div class="callout">Half of all PyTorch tensor-shape bugs are HWC ↔ CHW confusion. Print shapes generously.</div>
+# Mix with rows
+rows_on = np.array([True, False, True, False])
+b[rows_on, :]               # keep rows 0 and 2
+
+# 2-D mask: pick all elements satisfying a condition
+b[b % 3 == 1]               # 1-D array of every elem where x%3 == 1</code></pre>
   </section>
 
   <section>
-    <h2>Slicing in N dimensions</h2>
-    <pre><code class="language-python">a = np.arange(20).reshape(4, 5)
-a[1, 2]        # scalar at row 1, col 2
-a[1]           # whole row 1                          → shape (5,)
-a[:, 0]        # whole column 0                       → shape (4,)
-a[1:3, 2:4]    # 2x2 sub-block
-a[::-1]        # rows reversed
-a[:, ::2]      # every other column
-a[..., 0]      # ... = "as many ':' as needed"</code></pre>
-    <p class="muted" style="font-size:0.78em;">Comma separates axes. Colon means "everything along this axis."</p>
-  </section>
-
-  <section>
-    <h2 class="accent">Gotcha: slices are <em>views</em>, not copies</h2>
+    <h2 class="accent">Gotcha: slices are <em>views</em></h2>
     <pre><code class="language-python">a = np.arange(12).reshape(3, 4)
 b = a[:2, :2]
 b[0, 0] = -999
 print(a)        # the source mutated too!</code></pre>
     <div class="mistake">You will hit this once. After that you'll remember <code>.copy()</code> forever.</div>
-    <p class="muted" style="font-size:0.78em;">Want a copy? <code>a[:2, :2].copy()</code> or <code>np.array(a[:2, :2], copy=True)</code>.</p>
-  </section>
-
-  <section>
-    <h2>Boolean &amp; fancy indexing</h2>
-    <pre><code class="language-python">x = rng.normal(size=10)
-
-x[x > 0]          # boolean mask — keep positives
-x[x &lt; 0] = 0      # clip in-place
-
-ix = np.array([0, 3, 5])
-x[ix]             # fancy index — pick specific positions</code></pre>
-    <div class="tip">Boolean masks compose: <code>(x > 0) &amp; (x &lt; 1)</code>. Note the parentheses — <code>&amp;</code> binds tighter than comparison operators.</div>
   </section>
 
   <section>
     <h2>Pattern: <code>None</code> / <code>np.newaxis</code></h2>
-    <pre><code class="language-python">v = np.array([1, 2, 3])      # shape (3,)
-v[:, None].shape             # (3, 1)   — column
-v[None, :].shape             # (1, 3)   — row
-v[None, :, None].shape       # (1, 3, 1)</code></pre>
+    <pre><code class="language-python">v = np.array([1, 2, 3])         # shape (3,)
+v[:, None].shape                # (3, 1)   — column
+v[None, :].shape                # (1, 3)   — row
+v[None, :, None].shape          # (1, 3, 1)</code></pre>
     <div class="callout"><code>None</code> = "insert a length-1 axis here." You'll use it constantly to set up broadcasting.</div>
   </section>
 </section>
 
-<!-- =================================================================== -->
-<!-- PART 3 — VECTORIZE & BROADCAST                                       -->
-<!-- =================================================================== -->
+<!-- ================================================================== -->
+<!-- PART 3 -->
+<!-- ================================================================== -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 3 · 1:00 – 1:30</span>
-    <h1>Vectorize &amp; Broadcast</h1>
-    <p class="muted">the loop you stop writing</p>
+    <h1>Vectorize</h1>
+    <p class="muted">arithmetic · broadcasting · matmul</p>
   </section>
 
   <section>
-    <h2>The loop you should never write</h2>
+    <h2>The loop you stop writing</h2>
     <div class="two-col">
       <div>
         <h4 class="ghost">DON'T</h4>
@@ -350,117 +288,155 @@ for i in range(len(x)):
   </section>
 
   <section>
-    <h2>Element-wise &amp; universal functions (ufuncs)</h2>
-    <pre><code class="language-python">a + b, a - b, a * b, a / b, a ** 2
+    <h2>Element-wise arithmetic — paired arrays</h2>
+    <pre><code class="language-python">a = np.array([14, 23, 32, 41])
+b = np.array([5, 4, 3, 2])
 
-np.exp(a), np.log(a), np.sqrt(a), np.sin(a)
-np.maximum(a, 0)            # ReLU in one line
-np.clip(a, 0, 1)</code></pre>
-    <p class="muted" style="font-size:0.78em;">All of these are C loops behind a Python API. They're as fast as it gets without leaving NumPy.</p>
+a + b           # [19 27 35 43]
+a - b           # [ 9 19 29 39]
+a * b           # [70 92 96 82]
+a / b           # [2.8  5.75 10.67 20.5]
+a ** b          # element-wise power
+
+np.add(a, b)        # same as a + b
+np.greater(a, b)    # element-wise comparison
+np.maximum(a, b)    # element-wise max</code></pre>
   </section>
 
   <section>
-    <h2>Reductions — the <code>axis</code> mnemonic</h2>
-    <pre><code class="language-python">a = np.arange(12).reshape(3, 4)
-a.sum()                # scalar
-a.sum(axis=0)          # shape (4,) — column totals
-a.sum(axis=1)          # shape (3,) — row totals
-a.sum(axis=0, keepdims=True)   # shape (1, 4) — handy for broadcasting</code></pre>
-    <div class="callout"><strong>The mnemonic:</strong> <em>axis is the one that disappears in the result.</em></div>
-    <p class="muted" style="font-size:0.78em;">Same vocabulary for <code>mean</code>, <code>std</code>, <code>max</code>, <code>min</code>, <code>argmax</code>, <code>any</code>, <code>all</code>.</p>
+    <h2>Universal functions — math everywhere</h2>
+    <pre><code class="language-python">a = np.array([14, 23, 32, 41])
+
+np.sqrt(a)              # [3.74 4.80 5.66 6.40]
+np.exp(a)
+np.sin(a)
+np.maximum(a, 0)        # ReLU in one line
+np.clip(a, 0, 30)       # [14 23 30 30]</code></pre>
+    <p class="muted" style="font-size:0.78em;">All ufuncs are C loops behind a Python API. As fast as it gets without leaving NumPy.</p>
+  </section>
+
+  <section>
+    <h2>Reductions — and the axis mnemonic</h2>
+    <pre><code class="language-python">a = np.array([[-2.5, 3.1, 7],
+              [10,    11,  12]])
+a.mean()                        # 6.7666...
+
+c = np.arange(24).reshape(2, 3, 4)
+c.sum(axis=0)                   # collapse axis 0 → shape (3, 4)
+c.sum(axis=1)                   # collapse axis 1 → shape (2, 4)
+c.sum(axis=(0, 2))              # collapse axes 0 and 2 → shape (3,)</code></pre>
+    <div class="callout"><strong>The mnemonic:</strong> <em>axis is the one that disappears.</em></div>
   </section>
 
   <section>
     <h2>Broadcasting in one picture</h2>
-    <svg class="diagram" viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg">
-      <!-- row vector -->
+    <svg class="diagram" viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg">
       <text x="40" y="30" font-size="14" font-weight="700">row · shape (3,)</text>
       <g font-family="JetBrains Mono" font-size="13">
-        <g><rect x="40"  y="50" width="40" height="32" fill="#dbeafe" stroke="#2563eb"/><text x="60"  y="71" text-anchor="middle">a</text></g>
-        <g><rect x="80"  y="50" width="40" height="32" fill="#dbeafe" stroke="#2563eb"/><text x="100" y="71" text-anchor="middle">b</text></g>
-        <g><rect x="120" y="50" width="40" height="32" fill="#dbeafe" stroke="#2563eb"/><text x="140" y="71" text-anchor="middle">c</text></g>
+        <g><rect x="40"  y="50" width="40" height="32" fill="#dbeafe" stroke="#2563eb"/><text x="60"  y="71" text-anchor="middle">100</text></g>
+        <g><rect x="80"  y="50" width="40" height="32" fill="#dbeafe" stroke="#2563eb"/><text x="100" y="71" text-anchor="middle">200</text></g>
+        <g><rect x="120" y="50" width="40" height="32" fill="#dbeafe" stroke="#2563eb"/><text x="140" y="71" text-anchor="middle">300</text></g>
       </g>
       <text x="200" y="71" font-size="20" font-weight="700">+</text>
-      <!-- matrix -->
-      <text x="230" y="30" font-size="14" font-weight="700">M · shape (3, 3)</text>
+      <text x="230" y="30" font-size="14" font-weight="700">k · shape (2, 3)</text>
       <g font-family="JetBrains Mono" font-size="12">
-        <g><rect x="230" y="50" width="40" height="32" fill="#f8fafc" stroke="#1e293b"/><text x="250" y="71" text-anchor="middle">1</text></g>
-        <g><rect x="270" y="50" width="40" height="32" fill="#f8fafc" stroke="#1e293b"/><text x="290" y="71" text-anchor="middle">2</text></g>
-        <g><rect x="310" y="50" width="40" height="32" fill="#f8fafc" stroke="#1e293b"/><text x="330" y="71" text-anchor="middle">3</text></g>
-        <g><rect x="230" y="82" width="40" height="32" fill="#f8fafc" stroke="#1e293b"/><text x="250" y="103" text-anchor="middle">4</text></g>
-        <g><rect x="270" y="82" width="40" height="32" fill="#f8fafc" stroke="#1e293b"/><text x="290" y="103" text-anchor="middle">5</text></g>
-        <g><rect x="310" y="82" width="40" height="32" fill="#f8fafc" stroke="#1e293b"/><text x="330" y="103" text-anchor="middle">6</text></g>
-        <g><rect x="230" y="114" width="40" height="32" fill="#f8fafc" stroke="#1e293b"/><text x="250" y="135" text-anchor="middle">7</text></g>
-        <g><rect x="270" y="114" width="40" height="32" fill="#f8fafc" stroke="#1e293b"/><text x="290" y="135" text-anchor="middle">8</text></g>
-        <g><rect x="310" y="114" width="40" height="32" fill="#f8fafc" stroke="#1e293b"/><text x="330" y="135" text-anchor="middle">9</text></g>
+        <g><rect x="230" y="50" width="40" height="32" fill="#f8fafc" stroke="#1e293b"/><text x="250" y="71" text-anchor="middle">0</text></g>
+        <g><rect x="270" y="50" width="40" height="32" fill="#f8fafc" stroke="#1e293b"/><text x="290" y="71" text-anchor="middle">1</text></g>
+        <g><rect x="310" y="50" width="40" height="32" fill="#f8fafc" stroke="#1e293b"/><text x="330" y="71" text-anchor="middle">2</text></g>
+        <g><rect x="230" y="82" width="40" height="32" fill="#f8fafc" stroke="#1e293b"/><text x="250" y="103" text-anchor="middle">3</text></g>
+        <g><rect x="270" y="82" width="40" height="32" fill="#f8fafc" stroke="#1e293b"/><text x="290" y="103" text-anchor="middle">4</text></g>
+        <g><rect x="310" y="82" width="40" height="32" fill="#f8fafc" stroke="#1e293b"/><text x="330" y="103" text-anchor="middle">5</text></g>
       </g>
-      <text x="385" y="98" font-size="20">=</text>
-      <!-- result -->
+      <text x="385" y="87" font-size="20">=</text>
       <g font-family="JetBrains Mono" font-size="12">
-        <g><rect x="420" y="50" width="60" height="32" fill="#d1fae5" stroke="#047857"/><text x="450" y="71" text-anchor="middle">1+a</text></g>
-        <g><rect x="480" y="50" width="60" height="32" fill="#d1fae5" stroke="#047857"/><text x="510" y="71" text-anchor="middle">2+b</text></g>
-        <g><rect x="540" y="50" width="60" height="32" fill="#d1fae5" stroke="#047857"/><text x="570" y="71" text-anchor="middle">3+c</text></g>
-        <g><rect x="420" y="82" width="60" height="32" fill="#d1fae5" stroke="#047857"/><text x="450" y="103" text-anchor="middle">4+a</text></g>
-        <g><rect x="480" y="82" width="60" height="32" fill="#d1fae5" stroke="#047857"/><text x="510" y="103" text-anchor="middle">5+b</text></g>
-        <g><rect x="540" y="82" width="60" height="32" fill="#d1fae5" stroke="#047857"/><text x="570" y="103" text-anchor="middle">6+c</text></g>
-        <g><rect x="420" y="114" width="60" height="32" fill="#d1fae5" stroke="#047857"/><text x="450" y="135" text-anchor="middle">7+a</text></g>
-        <g><rect x="480" y="114" width="60" height="32" fill="#d1fae5" stroke="#047857"/><text x="510" y="135" text-anchor="middle">8+b</text></g>
-        <g><rect x="540" y="114" width="60" height="32" fill="#d1fae5" stroke="#047857"/><text x="570" y="135" text-anchor="middle">9+c</text></g>
+        <g><rect x="420" y="50" width="60" height="32" fill="#d1fae5" stroke="#047857"/><text x="450" y="71" text-anchor="middle">100</text></g>
+        <g><rect x="480" y="50" width="60" height="32" fill="#d1fae5" stroke="#047857"/><text x="510" y="71" text-anchor="middle">201</text></g>
+        <g><rect x="540" y="50" width="60" height="32" fill="#d1fae5" stroke="#047857"/><text x="570" y="71" text-anchor="middle">302</text></g>
+        <g><rect x="420" y="82" width="60" height="32" fill="#d1fae5" stroke="#047857"/><text x="450" y="103" text-anchor="middle">103</text></g>
+        <g><rect x="480" y="82" width="60" height="32" fill="#d1fae5" stroke="#047857"/><text x="510" y="103" text-anchor="middle">204</text></g>
+        <g><rect x="540" y="82" width="60" height="32" fill="#d1fae5" stroke="#047857"/><text x="570" y="103" text-anchor="middle">305</text></g>
       </g>
-      <text x="40" y="200" font-size="14" fill="#475569">NumPy <em>stretches</em> the row to every row of the matrix.</text>
-      <text x="40" y="222" font-size="14" fill="#475569">No copy. No allocation. Just smart strides.</text>
+      <text x="40" y="180" font-size="14" fill="#475569">The row stretches to every row of <tspan font-family="JetBrains Mono">k</tspan>. No copy. No allocation.</text>
     </svg>
   </section>
 
   <section>
+    <h2>Broadcasting — three live examples</h2>
+    <pre><code class="language-python">k = np.arange(6).reshape(2, 3)
+#   [[0 1 2]
+#    [3 4 5]]
+
+k + [100, 200, 300]
+# shape (2,3) + (3,) → broadcast row across both rows
+#   [[100 201 302]
+#    [103 204 305]]
+
+k + [[100], [200]]
+# shape (2,3) + (2,1) → broadcast column across cols
+#   [[100 101 102]
+#    [203 204 205]]
+
+h = np.arange(5).reshape(1, 1, 5)
+h + [10, 20, 30, 40, 50]      # (1,1,5) + (5,) → (1,1,5)</code></pre>
+  </section>
+
+  <section>
     <h2>The broadcasting rule</h2>
-    <p>Align shapes <strong>from the right</strong>. Each pair of dimensions is compatible if they are equal, or one of them is 1.</p>
+    <p>Align shapes <strong>from the right</strong>. Each pair is compatible if equal, or one is 1.</p>
     <table>
-      <thead><tr><th>A</th><th>B</th><th>Result</th><th>Notes</th></tr></thead>
+      <thead><tr><th>A</th><th>B</th><th>Result</th></tr></thead>
       <tbody>
-        <tr><td>(3, 3)</td><td>(3,)</td><td>(3, 3)</td><td>row broadcast</td></tr>
-        <tr><td>(3, 1)</td><td>(1, 3)</td><td>(3, 3)</td><td>outer-product shape</td></tr>
-        <tr><td>(4, 1, 3)</td><td>(2, 3)</td><td>(4, 2, 3)</td><td>middle dim stretched</td></tr>
-        <tr><td>(B, T, D)</td><td>(D,)</td><td>(B, T, D)</td><td>per-feature bias</td></tr>
-        <tr><td>(3, 2)</td><td>(3,)</td><td><span style="color:#b91c1c;">ERROR</span></td><td>3 vs. 2 — no rescue</td></tr>
+        <tr><td>(2, 3)</td><td>(3,)</td><td>(2, 3)</td></tr>
+        <tr><td>(2, 1)</td><td>(1, 3)</td><td>(2, 3)</td></tr>
+        <tr><td>(4, 1, 3)</td><td>(2, 3)</td><td>(4, 2, 3)</td></tr>
+        <tr><td>(B, T, D)</td><td>(D,)</td><td>(B, T, D)</td></tr>
+        <tr><td>(3, 2)</td><td>(3,)</td><td><span style="color:#b91c1c;">ERROR</span></td></tr>
       </tbody>
     </table>
   </section>
 
   <section>
-    <h2>Worked example: pairwise distances</h2>
-    <pre><code class="language-python">pts = rng.normal(size=(100, 2))             # 100 points in 2D
+    <h2>Matrix multiplication</h2>
+    <pre><code class="language-python">n1 = np.arange(10).reshape(2, 5)
+n2 = np.arange(15).reshape(5, 3)
 
-# Naive: two nested Python loops — slow & verbose
-# Vectorized:
-diff = pts[:, None, :] - pts[None, :, :]    # (100, 1, 2) - (1, 100, 2)
-                                            #            → (100, 100, 2)
-dist = np.sqrt((diff**2).sum(axis=-1))       # (100, 100)</code></pre>
-    <div class="callout">This <code>[:, None, :] - [None, :, :]</code> pattern shows up in every attention-mechanism implementation. It's worth staring at until it clicks.</div>
+n1.dot(n2)          # 2×5 @ 5×3 → 2×3
+n1 @ n2             # same thing, prettier syntax</code></pre>
+    <div class="callout"><code>@</code> is the dedicated matmul operator since Python 3.5. Use it.</div>
+    <div class="mistake"><code>n1 * n2</code> is element-wise — shapes must match. Different beast from <code>@</code>.</div>
   </section>
 
   <section>
-    <h2>Common broadcasting mistakes</h2>
-    <div class="mistake"><strong>Shape mismatch on the wrong side.</strong>
-      Want to center columns? <code>x - x.mean(axis=0)</code> ✓ (shape <code>(n, d) - (d,)</code>).<br>
-      Center rows? <code>x - x.mean(axis=1, keepdims=True)</code> — without <code>keepdims</code> you get a shape error.
-    </div>
-    <div class="mistake"><strong>Silent broadcasting.</strong> <code>x + y</code> where both happen to be 1-D — NumPy obliges; you might have wanted a matrix.</div>
-    <div class="tip">Habit: when in doubt, print shapes on both sides of every arithmetic op.</div>
+    <h2>Linear algebra — the toolbox</h2>
+    <pre><code class="language-python">import numpy.linalg as linalg
+
+m = np.array([[1,  2,  3],
+              [5,  7, 11],
+              [21, 29, 31]])
+
+linalg.inv(m)              # inverse
+linalg.det(m)              # determinant
+linalg.eig(m)              # eigenvalues & eigenvectors
+linalg.qr(m)               # QR decomposition
+linalg.svd(m)              # singular value decomposition
+
+# Solve  Ax = b  for x
+A = np.array([[2, 6], [5, 3]])
+b = np.array([6, -9])
+linalg.solve(A, b)         # [-3.  2.]</code></pre>
   </section>
 
   <section>
-    <h2>Mini-pattern catalog</h2>
-    <table>
-      <thead><tr><th>I want to…</th><th>NumPy spelling</th></tr></thead>
-      <tbody>
-        <tr><td>standardize columns</td><td><code>(x - x.mean(0)) / x.std(0)</code></td></tr>
-        <tr><td>one-hot encode labels</td><td><code>np.eye(K)[labels]</code></td></tr>
-        <tr><td>L2-normalize rows</td><td><code>x / np.linalg.norm(x, axis=1, keepdims=True)</code></td></tr>
-        <tr><td>softmax (numerically stable)</td><td><code>e = np.exp(x - x.max(-1, keepdims=True)); e / e.sum(-1, keepdims=True)</code></td></tr>
-        <tr><td>top-k indices</td><td><code>np.argpartition(x, -k)[-k:]</code></td></tr>
-      </tbody>
-    </table>
+    <h2>Worked example — standardize a data matrix</h2>
+    <pre><code class="language-python">rng = np.random.default_rng(0)
+X = rng.normal(loc=5, scale=2, size=(200, 5))
+
+# Subtract column mean, divide by column std — in two lines
+Z = (X - X.mean(axis=0)) / X.std(axis=0)
+
+Z.mean(axis=0).round(4)     # ≈ [0. 0. 0. 0. 0.]
+Z.std(axis=0).round(4)      # ≈ [1. 1. 1. 1. 1.]</code></pre>
+    <p class="muted" style="font-size:0.78em;">Every preprocessing step in sklearn boils down to this kind of one-line broadcast.</p>
   </section>
 
   <section class="title-slide">
@@ -469,9 +445,9 @@ dist = np.sqrt((diff**2).sum(axis=-1))       # (100, 100)</code></pre>
     <ol>
       <li class="fragment fade-up"><strong>ndarray = contiguous typed buffer.</strong> That is the entire speed story.</li>
       <li class="fragment fade-up"><strong>Shape is meaning.</strong> Memorize the <code>axis</code> mnemonic.</li>
-      <li class="fragment fade-up"><strong>If you typed <code>for</code> on numeric data,</strong> pause — can broadcasting do this?</li>
+      <li class="fragment fade-up"><strong>If you typed <code>for</code> on numeric data,</strong> ask: can broadcasting do this?</li>
     </ol>
-    <p class="callout fragment fade-up">Next session: Pandas — the same engine, with column names.</p>
+    <p class="callout fragment fade-up">Next: Pandas — the same engine, with column names.</p>
   </section>
 </section>
 
@@ -482,13 +458,9 @@ dist = np.sqrt((diff**2).sum(axis=-1))       # (100, 100)</code></pre>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
 <script>
   Reveal.initialize({
-    hash: true,
-    slideNumber: 'c/t',
-    transition: 'slide',
-    transitionSpeed: 'fast',
-    backgroundTransition: 'fade',
-    width: 1280, height: 760,
-    margin: 0.06,
+    hash: true, slideNumber: 'c/t', transition: 'slide',
+    transitionSpeed: 'fast', backgroundTransition: 'fade',
+    width: 1280, height: 760, margin: 0.06,
     plugins: [ RevealNotes, RevealHighlight ],
   });
 </script>

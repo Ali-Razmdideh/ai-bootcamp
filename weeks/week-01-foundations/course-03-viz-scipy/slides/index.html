@@ -13,9 +13,7 @@
 <body>
 <div class="reveal"><div class="slides">
 
-<!-- =================================================================== -->
-<!-- TITLE                                                                -->
-<!-- =================================================================== -->
+<!-- TITLE -->
 <section class="title-slide">
   <span class="kicker">Week 1 · Course 3 · 1.5 hours</span>
   <h1>Visualization &amp; the Math Bridge</h1>
@@ -27,7 +25,7 @@
   <h2>Where we are heading</h2>
   <div class="three-col">
     <div class="card"><h4>0:00 · 0:45</h4><strong>Matplotlib + Seaborn</strong>
-      <p class="muted" style="margin:0.3em 0 0;">Lines, scatters, heatmaps, KDEs.</p></div>
+      <p class="muted" style="margin:0.3em 0 0;">Lines, scatters, hists, contours.</p></div>
     <div class="card"><h4>0:45 · 1:15</h4><strong>SciPy</strong>
       <p class="muted" style="margin:0.3em 0 0;">stats · optimize</p></div>
     <div class="card"><h4>1:15 · 1:30</h4><strong>Grand Finale</strong>
@@ -35,9 +33,9 @@
   </div>
 </section>
 
-<!-- =================================================================== -->
-<!-- PART 1 — MATPLOTLIB/SEABORN                                          -->
-<!-- =================================================================== -->
+<!-- ================================================================== -->
+<!-- PART 1 — MATPLOTLIB / SEABORN -->
+<!-- ================================================================== -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 1 · 0:00 – 0:45</span>
@@ -46,124 +44,144 @@
   </section>
 
   <section>
-    <h2>The anatomy of a plot</h2>
-    <svg class="diagram" viewBox="0 0 760 380" xmlns="http://www.w3.org/2000/svg">
-      <!-- figure -->
-      <rect x="20"  y="20"  width="720" height="340" fill="none" stroke="#2563eb" stroke-dasharray="6 4"/>
-      <text x="30" y="40" font-size="12" fill="#2563eb" font-weight="600">Figure</text>
-      <!-- axes -->
-      <rect x="120" y="80"  width="560" height="220" fill="#f8fafc" stroke="#1e293b"/>
-      <text x="120" y="72" font-size="12" fill="#1e293b" font-weight="600">Axes</text>
-      <!-- y axis -->
-      <line x1="120" y1="80" x2="120" y2="300" stroke="#1e293b" stroke-width="2"/>
-      <text x="60" y="195" font-size="13" font-weight="600">loss</text>
-      <text x="80" y="100" font-size="11" fill="#475569" text-anchor="end">1.0</text>
-      <text x="80" y="200" font-size="11" fill="#475569" text-anchor="end">0.5</text>
-      <text x="80" y="295" font-size="11" fill="#475569" text-anchor="end">0.0</text>
-      <!-- x axis -->
-      <line x1="120" y1="300" x2="680" y2="300" stroke="#1e293b" stroke-width="2"/>
-      <text x="395" y="335" font-size="13" font-weight="600" text-anchor="middle">epoch</text>
-      <!-- curves -->
-      <path d="M120 130 C 200 200, 320 250, 680 280" stroke="#2563eb" stroke-width="2.5" fill="none"/>
-      <path d="M120 110 C 220 180, 380 220, 680 250" stroke="#b45309" stroke-width="2.5" fill="none"/>
-      <!-- legend -->
-      <rect x="540" y="100" width="120" height="50" fill="#fff" stroke="#cbd5e1"/>
-      <line x1="552" y1="118" x2="582" y2="118" stroke="#2563eb" stroke-width="2.5"/>
-      <text x="588" y="122" font-size="11">train</text>
-      <line x1="552" y1="138" x2="582" y2="138" stroke="#b45309" stroke-width="2.5"/>
-      <text x="588" y="142" font-size="11">val</text>
-      <!-- annotations -->
-      <text x="700" y="100" font-size="11" fill="#2563eb">Figure = canvas</text>
-      <text x="700" y="120" font-size="11" fill="#1e293b">Axes = a plot</text>
-    </svg>
-    <p class="muted" style="font-size:0.78em;">One Figure can hold many Axes; one Axes can hold many Lines. Always work with <code>(fig, ax)</code>, not the stateful <code>plt</code> shortcuts.</p>
+    <h2>Your first plot</h2>
+    <pre><code class="language-python">import matplotlib.pyplot as plt
+
+plt.plot([-3, -2, 5, 0], [1, 6, 4, 3])
+plt.show()</code></pre>
+    <p class="muted" style="font-size:0.78em;">Two arrays: x-coords and y-coords. <code>plot()</code> connects them; <code>show()</code> renders.</p>
   </section>
 
   <section>
-    <h2>The object-oriented API</h2>
-    <pre><code class="language-python">fig, ax = plt.subplots(figsize=(6, 4))
-ax.plot(epochs, train_loss, label='train')
-ax.plot(epochs, val_loss,   label='val')
-ax.set_xlabel('epoch')
-ax.set_ylabel('loss')
-ax.set_title('Loss curves')
-ax.legend()
-ax.grid(alpha=0.3)</code></pre>
-    <div class="callout"><code>plt.plot(...)</code> works but uses an invisible "current axes." That breaks the moment you want subplots. Start with <code>fig, ax = plt.subplots()</code> and never look back.</div>
+    <h2>Plot a function</h2>
+    <pre><code class="language-python">import numpy as np
+
+x = np.linspace(-2, 2, 500)
+y = x**2
+plt.plot(x, y)
+plt.show()</code></pre>
+    <div class="callout"><code>np.linspace</code> + a vectorized expression + <code>plt.plot</code> = every function plot you'll ever make.</div>
   </section>
 
   <section>
-    <h2>Subplots</h2>
-    <pre><code class="language-python">fig, axes = plt.subplots(2, 3, figsize=(12, 6), sharex=True)
-# axes is shape (2, 3) — index like a NumPy array
+    <h2>Labels, title, grid, axis limits</h2>
+    <pre><code class="language-python">x = np.linspace(-2, 2, 500)
+y = x**2
 
-axes[0, 0].plot(...)
-axes[1, 2].scatter(...)
-fig.suptitle('Diagnostics')
-fig.tight_layout()</code></pre>
-    <p class="muted" style="font-size:0.78em;">Reuse the NumPy axis vocabulary you already know.</p>
+plt.plot(x, y)
+plt.title("Square function")
+plt.xlabel("x")
+plt.ylabel("y = x**2")
+plt.axis([-2.5, 2.5, 0, 5])      # [xmin, xmax, ymin, ymax]
+plt.grid(True)
+plt.show()</code></pre>
+    <div class="mistake">A plot without axis labels is decoration, not information. Label everything you ship.</div>
   </section>
 
   <section>
-    <h2>The two charts you'll draw most</h2>
-    <div class="two-col">
-      <div class="card">
-        <h4>line — losses, time series</h4>
-        <pre><code class="language-python">ax.plot(epochs, train, label='train')
-ax.plot(epochs, val,   label='val')</code></pre>
-      </div>
-      <div class="card">
-        <h4>scatter — clusters, preds-vs-truth</h4>
-        <pre><code class="language-python">ax.scatter(X[:, 0], X[:, 1],
-           c=labels, cmap='viridis',
-           s=20, alpha=0.7)</code></pre>
-      </div>
-    </div>
-    <div class="tip">For a "predicted vs. actual" diagnostic, always add <code>ax.axline((0, 0), slope=1, ls='--')</code> — the y=x reference line.</div>
+    <h2>Multiple curves on one axes</h2>
+    <pre><code class="language-python">plt.plot([0, 100, 100,   0,   0], [0,   0, 100, 100,   0], "r-")
+plt.plot([0, 100,  50,   0, 100], [0, 100, 130, 100,   0], "g--")
+plt.axis([-10, 110, -10, 140])
+plt.show()</code></pre>
+    <p class="muted" style="font-size:0.78em;">Style strings: <code>"r-"</code> red solid, <code>"g--"</code> green dashed, <code>"bo"</code> blue dots, <code>"k:"</code> black dotted.</p>
+  </section>
+
+  <section>
+    <h2>Subplots — a 2×2 grid</h2>
+    <pre><code class="language-python">x = np.linspace(-1.4, 1.4, 30)
+
+plt.subplot(2, 2, 1);  plt.plot(x, x);     plt.title("x")
+plt.subplot(2, 2, 2);  plt.plot(x, x**2);  plt.title("x²")
+plt.subplot(2, 2, 3);  plt.plot(x, x**3);  plt.title("x³")
+plt.subplot(2, 2, 4);  plt.plot(x, x**4);  plt.title("x⁴")
+plt.show()</code></pre>
+    <div class="callout"><code>subplot(rows, cols, idx)</code> — index starts at 1 (top-left), counts left-to-right then top-to-bottom.</div>
+  </section>
+
+  <section>
+    <h2>Scatter plot</h2>
+    <pre><code class="language-python">rng = np.random.default_rng(seed=42)
+x, y = rng.random((2, 100))
+
+plt.scatter(x, y)
+plt.show()
+
+# With sizes &amp; colors
+sizes = 200 * rng.random(100)
+plt.scatter(x, y, s=sizes, c=x + y, cmap="viridis", alpha=0.6)</code></pre>
+  </section>
+
+  <section>
+    <h2>Histogram</h2>
+    <pre><code class="language-python">data = [1, 1.1, 1.8, 2, 2.1, 3.2, 3, 3, 3, 3]
+plt.hist(data, bins=10, rwidth=0.8)
+plt.show()</code></pre>
+    <p class="muted" style="font-size:0.78em;">Always your first look at the shape of a numeric column.</p>
+  </section>
+
+  <section>
+    <h2>Annotations — point at the interesting bit</h2>
+    <pre><code class="language-python">x = np.linspace(-1.5, 1.5, 30)
+px, py = 0.8, 0.64                    # the point we want to highlight
+
+plt.plot(x, x**2, px, py, "ro")
+plt.annotate("Beautiful point",
+             xy=(px, py), xytext=(px - 1.3, py + 0.5),
+             color="green", weight="heavy", fontsize=14,
+             arrowprops={"facecolor": "lightgreen"})
+plt.show()</code></pre>
+  </section>
+
+  <section>
+    <h2>Saving</h2>
+    <pre><code class="language-python">x = np.linspace(-1.4, 1.4, 30)
+plt.plot(x, x**2)
+plt.savefig("my_square_function.png", transparent=True)</code></pre>
+    <div class="tip"><code>savefig</code> writes whatever is in the current figure. Call it before <code>plt.show()</code> if you're in a script.</div>
+  </section>
+
+  <section>
+    <h2>3D surface — same vocabulary, one extra dimension</h2>
+    <pre><code class="language-python">import matplotlib
+
+x = np.linspace(-5, 5, 50)
+y = np.linspace(-5, 5, 50)
+X, Y = np.meshgrid(x, y)
+R = np.sqrt(X**2 + Y**2)
+Z = np.sin(R)
+
+ax = plt.subplot(111, projection="3d")
+ax.plot_surface(X, Y, Z, rstride=1, cstride=1,
+                cmap=matplotlib.cm.coolwarm)
+plt.show()</code></pre>
+    <p class="muted" style="font-size:0.78em;"><code>np.meshgrid</code> turns 1-D <code>x</code> and <code>y</code> into 2-D coordinate grids — the lingua franca for any 2-D function.</p>
+  </section>
+
+  <section>
+    <h2>Contour — the 2-D loss landscape</h2>
+    <pre><code class="language-python">plt.contourf(X, Y, Z, cmap=matplotlib.cm.coolwarm)
+plt.colorbar()
+plt.show()</code></pre>
+    <div class="callout">You'll see contour plots constantly when visualizing 2-parameter loss surfaces in ML.</div>
   </section>
 
   <section>
     <h2>Seaborn — stats plots in one line</h2>
-    <pre><code class="language-python">sns.set_theme(style='whitegrid')
+    <pre><code class="language-python">import seaborn as sns
+sns.set_theme(style="whitegrid")
 
-sns.heatmap(df.corr(numeric_only=True), annot=True, cmap='coolwarm', center=0)
-
-sns.kdeplot(data=df, x='bill_length_mm', hue='species', fill=True)
-
-sns.boxplot(data=df, x='species', y='body_mass_g')
-sns.violinplot(data=df, x='species', y='body_mass_g')
-
-sns.pairplot(df, hue='species')                  # the "first look" tool</code></pre>
-    <div class="callout">Correlation heatmap is the fastest way to spot redundant features. Run it on any new dataset before modeling.</div>
-  </section>
-
-  <section>
-    <h2>Choosing the right chart</h2>
-    <table>
-      <thead><tr><th>question</th><th>chart</th></tr></thead>
-      <tbody>
-        <tr><td>How does X evolve over time?</td><td>line</td></tr>
-        <tr><td>Do two variables correlate?</td><td>scatter (+ regression line)</td></tr>
-        <tr><td>What does the distribution of X look like?</td><td>hist · kde · boxplot · violin</td></tr>
-        <tr><td>How does X differ across groups?</td><td>boxplot · violin · strip + swarm</td></tr>
-        <tr><td>What's the relationship between many features?</td><td>heatmap · pairplot</td></tr>
-        <tr><td>Where are the missing values?</td><td><code>sns.heatmap(df.isna())</code></td></tr>
-      </tbody>
-    </table>
-  </section>
-
-  <section>
-    <h2>Common viz mistakes</h2>
-    <div class="mistake"><strong>Forgetting axis labels.</strong> A plot without labels is decoration, not information.</div>
-    <div class="mistake"><strong>Default colormap on categorical data.</strong> <code>viridis</code> is ordinal; use a categorical palette for unordered classes.</div>
-    <div class="mistake"><strong>Overlapping markers in dense scatters.</strong> Use <code>alpha</code> or a hexbin.</div>
-    <div class="mistake"><strong>Wrong axis scale.</strong> Losses often need log y-scale: <code>ax.set_yscale('log')</code>.</div>
+sns.heatmap(df.corr(numeric_only=True), annot=True, cmap="coolwarm", center=0)
+sns.kdeplot(data=df, x="bill_length_mm", hue="species", fill=True)
+sns.boxplot(data=df, x="species", y="body_mass_g")
+sns.pairplot(df, hue="species")                  # the "first look" tool</code></pre>
+    <div class="tip">Correlation heatmap on any new dataset before modeling — fastest way to spot redundant features.</div>
   </section>
 </section>
 
-<!-- =================================================================== -->
-<!-- PART 2 — SCIPY                                                       -->
-<!-- =================================================================== -->
+<!-- ================================================================== -->
+<!-- PART 2 — SCIPY -->
+<!-- ================================================================== -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 2 · 0:45 – 1:15</span>
@@ -184,27 +202,47 @@ stats.norm.fit(data)                           # MLE parameters
 # Discrete
 stats.binom.pmf(k=5, n=10, p=0.5)
 
-# Hypothesis testing
+# Hypothesis tests
 stats.ttest_ind(group_a, group_b)
 stats.pearsonr(x, y)</code></pre>
-    <p class="muted" style="font-size:0.78em;">Every distribution: <code>.pdf</code> / <code>.cdf</code> / <code>.rvs</code> / <code>.fit</code>. Learn the verbs once, get 80+ distributions free.</p>
+    <p class="muted" style="font-size:0.78em;">Every distribution: <code>.pdf · .cdf · .rvs · .fit</code>. Learn the verbs once, get 80+ distributions free.</p>
+  </section>
+
+  <section>
+    <h2>Plot three Gaussians, on one axes</h2>
+    <pre><code class="language-python">x = np.linspace(-4, 4, 200)
+for mu, sigma in [(0, 1), (0, 0.5), (1, 1)]:
+    plt.plot(x, stats.norm.pdf(x, mu, sigma), label=f"N({mu}, {sigma})")
+plt.legend()
+plt.title("Normal PDFs")
+plt.show()</code></pre>
+  </section>
+
+  <section>
+    <h2>Fit a Gaussian to data</h2>
+    <pre><code class="language-python">rng = np.random.default_rng(1)
+samples = rng.normal(loc=2.0, scale=1.5, size=1000)
+
+mu_hat, sigma_hat = stats.norm.fit(samples)    # MLE → ≈ (2.0, 1.5)
+
+xs = np.linspace(samples.min(), samples.max(), 200)
+plt.hist(samples, bins=30, density=True, alpha=0.5)
+plt.plot(xs, stats.norm.pdf(xs, mu_hat, sigma_hat), lw=2, label="fitted")
+plt.legend()</code></pre>
+    <p class="muted" style="font-size:0.78em;">This <em>is</em> what a one-parameter "model" does — fit, then plot fit vs. data. Scale it up to millions of parameters and you have deep learning.</p>
   </section>
 
   <section>
     <h2>A 1-D loss landscape</h2>
     <svg class="diagram" viewBox="0 0 800 320" xmlns="http://www.w3.org/2000/svg">
-      <!-- axes -->
       <line x1="60" y1="280" x2="760" y2="280" stroke="#1e293b" stroke-width="2"/>
       <line x1="60" y1="40"  x2="60"  y2="280" stroke="#1e293b" stroke-width="2"/>
       <text x="395" y="305" text-anchor="middle" font-size="13" font-weight="600">x (parameter)</text>
       <text x="20" y="160" font-size="13" font-weight="600" transform="rotate(-90 20 160)">loss</text>
-      <!-- bumpy curve: (x-3)^2 + sin(5x), rendered as polyline -->
       <polyline fill="none" stroke="#2563eb" stroke-width="2.5"
         points="60,80 90,110 120,140 150,150 180,135 210,150 240,180 270,210 300,235 330,250 360,245 390,235 420,225 450,215 480,205 510,195 540,210 570,225 600,210 630,180 660,150 690,120 720,90 750,60"/>
-      <!-- starting point -->
       <circle cx="120" cy="140" r="6" fill="#b91c1c"/>
       <text x="120" y="125" text-anchor="middle" font-size="11" fill="#b91c1c">x0 = 0</text>
-      <!-- optimizer steps (dots) -->
       <g fill="#047857">
         <circle cx="160" cy="155" r="4"/>
         <circle cx="200" cy="170" r="4"/>
@@ -226,9 +264,9 @@ stats.pearsonr(x, y)</code></pre>
 f = lambda x: (x - 3)**2 + np.sin(5 * x)
 res = optimize.minimize(f, x0=0.0)
 
-print(res.x)     # ≈ argmin
-print(res.fun)   # min value
-print(res.nit)   # iterations</code></pre>
+res.x       # ≈ argmin
+res.fun     # min value
+res.nit     # iterations</code></pre>
     <div class="callout">Every supervised model: define a loss <code>L(parameters)</code>, then ask an optimizer to minimize it. <code>fit</code> in sklearn, <code>backward()</code> in PyTorch — all the same idea.</div>
   </section>
 
@@ -254,24 +292,11 @@ optimize.minimize(f, x0=10.0).x     # ≈ 6.21   different local min!</code></pr
       </tbody>
     </table>
   </section>
-
-  <section>
-    <h2>Worked example: fit a Gaussian</h2>
-    <pre><code class="language-python">samples = rng.normal(loc=2.0, scale=1.5, size=1000)
-mu_hat, sigma_hat = stats.norm.fit(samples)        # MLE
-
-xs = np.linspace(samples.min(), samples.max(), 200)
-fig, ax = plt.subplots()
-ax.hist(samples, bins=30, density=True, alpha=0.5)
-ax.plot(xs, stats.norm.pdf(xs, mu_hat, sigma_hat), lw=2, label='fitted')
-ax.legend()</code></pre>
-    <p class="muted" style="font-size:0.78em;">This is exactly what a one-parameter "model" does — fit, then plot fit vs. data. Now scale it up to millions of parameters and you have deep learning.</p>
-  </section>
 </section>
 
-<!-- =================================================================== -->
-<!-- PART 3 — GRAND FINALE                                                -->
-<!-- =================================================================== -->
+<!-- ================================================================== -->
+<!-- PART 3 — GRAND FINALE -->
+<!-- ================================================================== -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 3 · 1:15 – 1:30</span>
@@ -288,6 +313,17 @@ ax.legend()</code></pre>
       <li class="fragment fade-up"><strong>Plot</strong> price + MA on the same axes with Matplotlib.</li>
     </ol>
     <p class="callout fragment fade-up">Finish this lab and you own week 1.</p>
+  </section>
+
+  <section>
+    <h2>The 7-day moving average — no Python loop</h2>
+    <pre><code class="language-python">window = 7
+kernel = np.ones(window) / window
+ma = np.convolve(df["price"].values, kernel, mode="valid")
+
+# Pad the front so lengths line up for plotting
+ma_full = np.concatenate([np.full(window - 1, np.nan), ma])</code></pre>
+    <p class="muted" style="font-size:0.78em;">Convolution with a uniform kernel = moving average. The same primitive becomes a CNN filter later in the bootcamp.</p>
   </section>
 
   <section>
@@ -350,13 +386,9 @@ ax.legend()</code></pre>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
 <script>
   Reveal.initialize({
-    hash: true,
-    slideNumber: 'c/t',
-    transition: 'slide',
-    transitionSpeed: 'fast',
-    backgroundTransition: 'fade',
-    width: 1280, height: 760,
-    margin: 0.06,
+    hash: true, slideNumber: 'c/t', transition: 'slide',
+    transitionSpeed: 'fast', backgroundTransition: 'fade',
+    width: 1280, height: 760, margin: 0.06,
     plugins: [ RevealNotes, RevealHighlight ],
   });
 </script>
