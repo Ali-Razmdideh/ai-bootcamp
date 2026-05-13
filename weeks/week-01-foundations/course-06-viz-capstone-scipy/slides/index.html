@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Viz Capstone + SciPy Bridge</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<section class="title-slide">
+  <span class="kicker">Week 1 · Course 6 · 1.5 hours</span>
+  <h1>Viz Capstone + SciPy Bridge</h1>
+  <p class="muted" style="font-size:1.1em;">Seaborn for stats, SciPy for math, then the Grand Finale.</p>
+</section>
+
+<section>
+  <span class="kicker">Roadmap</span>
+  <h2>Where we are heading</h2>
+  <div class="three-col">
+    <div class="card"><h4>0:00 · 0:30</h4><strong>Seaborn</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Statistical plots, one line each.</p></div>
+    <div class="card"><h4>0:30 · 1:00</h4><strong>SciPy stats</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Distributions, fits, tests.</p></div>
+    <div class="card"><h4>1:00 · 1:30</h4><strong>Optimize + finale</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Minimize a function, then ship.</p></div>
+  </div>
+  <p class="callout" style="margin-top:1.2em;">The finale at 1:00 fires every Week 1 skill at once: load, clean, smooth, plot. Six cells, one pipeline.</p>
+</section>
+
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 1 · 0:00 – 0:30</span>
+    <h1>Seaborn</h1>
+    <p class="muted">statistical plots, one line each</p>
+  </section>
+
+  <section>
+    <h2>Same data, more story</h2>
+    <p>Seaborn sits on top of Matplotlib. It knows about DataFrames, categorical variables, and statistical aesthetics by default.</p>
+<pre><code class="language-python">sns.scatterplot(data=penguins, x='bill_length_mm',
+                y='bill_depth_mm',
+                hue='species', style='sex')</code></pre>
+  </section>
+
+  <section>
+    <h2>Five plots that earn their keep</h2>
+    <ul>
+      <li class="fragment fade-up"><code>scatterplot</code> — relation, colored by category.</li>
+      <li class="fragment fade-up"><code>boxplot</code> — per-group distribution summary.</li>
+      <li class="fragment fade-up"><code>violinplot</code> — boxplot plus KDE shape.</li>
+      <li class="fragment fade-up"><code>pairplot</code> — every numeric vs every numeric.</li>
+      <li class="fragment fade-up"><code>heatmap</code> — correlation or any matrix.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Correlation heatmap — five lines, big insight</h2>
+<pre><code class="language-python">corr = penguins.select_dtypes('number').corr()
+sns.heatmap(corr, annot=True, cmap='coolwarm', center=0)</code></pre>
+    <p class="muted">First thing to do on any wide numeric dataset. Reveals collinearity in one glance.</p>
+  </section>
+</section>
+
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 2 · 0:30 – 1:00</span>
+    <h1>SciPy stats</h1>
+  </section>
+
+  <section>
+    <h2>Distributions are objects</h2>
+<pre><code class="language-python">stats.norm.pdf(x, loc=0, scale=1)
+stats.norm.cdf(x)
+stats.t.cdf(x, df=3)
+stats.chi2.cdf(x, df=3)</code></pre>
+    <p>Every distribution exposes <code>.pdf</code>, <code>.cdf</code>, <code>.ppf</code>, <code>.rvs</code>, <code>.fit</code>. Same API for Normal, t, chi-squared, gamma, beta.</p>
+  </section>
+
+  <section>
+    <h2>Fit a Normal in one call</h2>
+<pre><code class="language-python">mu, sigma = stats.norm.fit(samples)</code></pre>
+    <p class="muted">Maximum-likelihood by default. Overlay the fitted PDF on a histogram to eyeball goodness.</p>
+  </section>
+
+  <section>
+    <h2>One-sample t-test</h2>
+<pre><code class="language-python">res = stats.ttest_1samp(samples, popmean=0)
+res.statistic, res.pvalue</code></pre>
+    <p>Use when you want to know whether a sample's mean differs significantly from a hypothesized value. We will lean on this in Week 3.</p>
+  </section>
+</section>
+
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 3 · 1:00 – 1:30</span>
+    <h1>Optimize + Grand Finale</h1>
+  </section>
+
+  <section>
+    <h2>minimize — the engine under every model</h2>
+<pre><code class="language-python">res = optimize.minimize(rosen, x0=[0.0, 0.0])
+res.x       # argmin
+res.fun     # min value
+res.nit     # iterations used</code></pre>
+    <p class="callout">Every supervised model is "define a loss, call an optimizer." You just used both halves.</p>
+  </section>
+
+  <section>
+    <h2>The 1-D loss landscape</h2>
+<pre><code class="language-python">f = lambda x: (x - 3)**2 + np.sin(5 * x)
+res = optimize.minimize(f, x0=0.0)</code></pre>
+    <p class="muted">A 1-D plot is the cheapest sanity check you have. Always look at your loss surface when something feels off.</p>
+  </section>
+
+  <section>
+    <h2>Grand Finale Lab — Week 1 in 6 cells</h2>
+    <ol>
+      <li class="fragment fade-up">Load <code>stock-prices</code> and inject 5% NaNs.</li>
+      <li class="fragment fade-up">Parse dates and sort.</li>
+      <li class="fragment fade-up">Forward-fill the price column.</li>
+      <li class="fragment fade-up">7-day moving average with <code>np.convolve</code>.</li>
+      <li class="fragment fade-up">Plot price + MA with Matplotlib.</li>
+      <li class="fragment fade-up">Refactor into a reusable function.</li>
+    </ol>
+    <p class="callout fragment fade-up">Every step uses a different course from this week.</p>
+  </section>
+</section>
+
+<section class="title-slide">
+  <span class="kicker">Recap</span>
+  <h2>Three things to leave with</h2>
+  <ol>
+    <li class="fragment fade-up"><strong>Seaborn is a five-function language.</strong> scatter, box, violin, pair, heatmap.</li>
+    <li class="fragment fade-up"><strong>SciPy stats has one shape for every distribution.</strong> Learn it once, use it forever.</li>
+    <li class="fragment fade-up"><strong>Every ML model = define loss + call optimizer.</strong> You saw both today.</li>
+  </ol>
+  <p class="callout fragment fade-up">Next week: classical machine learning. The foundations are now solid.</p>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true, slideNumber: 'c/t', transition: 'slide',
+    transitionSpeed: 'fast', backgroundTransition: 'fade',
+    width: 1280, height: 760, margin: 0.06,
+    plugins: [ RevealNotes, RevealHighlight ],
+  });
+</script>
+</body>
+</html>

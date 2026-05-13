@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pandas II — Cleaning, GroupBy, Joins, Time</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<section class="title-slide">
+  <span class="kicker">Week 1 · Course 4 · 1.5 hours</span>
+  <h1>Pandas II — Cleaning, GroupBy, Joins, Time</h1>
+  <p class="muted" style="font-size:1.1em;">Three verbs that close most data-prep tickets.</p>
+</section>
+
+<section>
+  <span class="kicker">Roadmap</span>
+  <h2>Where we are heading</h2>
+  <div class="three-col">
+    <div class="card"><h4>0:00 · 0:30</h4><strong>Missing data & columns</strong>
+      <p class="muted" style="margin:0.3em 0 0;">drop, fill, assign, query.</p></div>
+    <div class="card"><h4>0:30 · 1:00</h4><strong>Group, pivot, join</strong>
+      <p class="muted" style="margin:0.3em 0 0;">aggregate, reshape, merge.</p></div>
+    <div class="card"><h4>1:00 · 1:30</h4><strong>Time series</strong>
+      <p class="muted" style="margin:0.3em 0 0;">DatetimeIndex, resample.</p></div>
+  </div>
+  <p class="callout" style="margin-top:1.2em;">If Course 3 was "how to hold data," this is "how to fix it." Every analytics job is this sequence: clean -&gt; group -&gt; join -&gt; resample.</p>
+</section>
+
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 1 · 0:00 – 0:30</span>
+    <h1>Missing data & column ops</h1>
+  </section>
+
+  <section>
+    <h2>Find the holes</h2>
+<pre><code class="language-python">titanic.isna().sum()       # NaNs per column</code></pre>
+    <p class="muted">Always start cleaning by counting. <code>isna().sum()</code> is your microscope.</p>
+  </section>
+
+  <section>
+    <h2>Three responses to a NaN</h2>
+    <ul>
+      <li class="fragment fade-up"><strong>Drop</strong> — <code>dropna(subset=['embarked'])</code>. Use when missingness is rare or non-informative.</li>
+      <li class="fragment fade-up"><strong>Fill</strong> — <code>fillna(df['age'].median())</code>. Use when you can't afford to lose rows.</li>
+      <li class="fragment fade-up"><strong>Interpolate</strong> — <code>interpolate(axis=1)</code>. Use for ordered data with smooth structure.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Column ops — <code>assign</code> and <code>query</code></h2>
+<pre><code class="language-python">(tips
+   .assign(tip_pct=lambda df: df['tip'] / df['total_bill'])
+   .query('tip_pct &gt; 0.2 and time == "Dinner"'))</code></pre>
+    <p class="muted"><code>assign</code> adds a derived column without mutating; <code>query</code> filters with a string expression. Both chain.</p>
+  </section>
+</section>
+
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 2 · 0:30 – 1:00</span>
+    <h1>Group, pivot, join</h1>
+  </section>
+
+  <section>
+    <h2>GroupBy — the workhorse</h2>
+<pre><code class="language-python">tips.groupby('day')['tip'].mean()
+tips.groupby(['day', 'sex'])['tip'].agg(['mean', 'count'])</code></pre>
+    <p class="muted">Split → apply → combine. Pass a single column or a list; pass a single agg or a list of aggs.</p>
+  </section>
+
+  <section>
+    <h2>Pivot — reshape from long to wide</h2>
+<pre><code class="language-python">pd.pivot_table(
+    more_grades,
+    index='name', columns='month', values='grade',
+    margins=True)</code></pre>
+  </section>
+
+  <section>
+    <h2>Merge — SQL joins for DataFrames</h2>
+<pre><code class="language-python">pd.merge(city_loc, city_pop, on='city')             # INNER
+pd.merge(city_loc, city_pop, on='city', how='outer') # OUTER
+pd.merge(city_loc, city_pop, on='city', how='left')  # LEFT</code></pre>
+    <p>Same vocabulary as SQL. <code>how=</code> picks the join type.</p>
+  </section>
+
+  <section>
+    <h2>Concat — stack rows or columns</h2>
+<pre><code class="language-python">pd.concat([a, b], ignore_index=True)   # vertical
+pd.concat([a, b], axis=1)              # horizontal</code></pre>
+  </section>
+</section>
+
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 3 · 1:00 – 1:30</span>
+    <h1>Time series</h1>
+  </section>
+
+  <section>
+    <h2>A DatetimeIndex is the whole game</h2>
+<pre><code class="language-python">dates = pd.date_range('2016-10-29 17:30', periods=12, freq='h')
+ts = pd.Series(temps, index=dates)</code></pre>
+    <p class="muted">Once the index is datetimes, every time-aware method unlocks: <code>.dt</code>, <code>.resample</code>, partial-string slicing.</p>
+  </section>
+
+  <section>
+    <h2>Resample — change the frequency</h2>
+<pre><code class="language-python">ts.resample('2h').mean()             # downsample
+ts.resample('15min').interpolate()   # upsample</code></pre>
+    <p class="callout">Downsampling aggregates; upsampling interpolates. Pick the verb that matches your direction.</p>
+  </section>
+
+  <section>
+    <h2>Real CSV — stock-prices</h2>
+<pre><code class="language-python">sp = load_dataset('stock-prices')
+sp.columns                       # ['AAPL_x', 'AAPL_y']
+sp['AAPL_x'] = pd.to_datetime(sp['AAPL_x'])
+sp = sp.sort_values('AAPL_x').set_index('AAPL_x')
+
+sp['AAPL_y'].resample('W').mean().plot()</code></pre>
+    <p class="muted">Load, parse, sort, set the index, resample, plot. Five lines.</p>
+  </section>
+</section>
+
+<section class="title-slide">
+  <span class="kicker">Recap</span>
+  <h2>Three things to leave with</h2>
+  <ol>
+    <li class="fragment fade-up"><strong>Clean by counting first.</strong> <code>isna().sum()</code> before any drop/fill decision.</li>
+    <li class="fragment fade-up"><strong>GroupBy + pivot + merge cover most reshape work.</strong> Three verbs, most jobs.</li>
+    <li class="fragment fade-up"><strong>Make your index a DatetimeIndex and <code>resample</code> becomes a one-liner.</strong></li>
+  </ol>
+  <p class="callout fragment fade-up">Next course: make the data visible — Matplotlib essentials.</p>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true, slideNumber: 'c/t', transition: 'slide',
+    transitionSpeed: 'fast', backgroundTransition: 'fade',
+    width: 1280, height: 760, margin: 0.06,
+    plugins: [ RevealNotes, RevealHighlight ],
+  });
+</script>
+</body>
+</html>

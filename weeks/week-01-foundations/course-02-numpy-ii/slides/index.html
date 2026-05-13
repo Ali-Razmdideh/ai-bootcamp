@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NumPy II — Vectorization & Beyond</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<section class="title-slide">
+  <span class="kicker">Week 1 · Course 2 · 1.5 hours</span>
+  <h1>NumPy II — Vectorization & Beyond</h1>
+  <p class="muted" style="font-size:1.1em;">Stop writing loops. Start writing math.</p>
+</section>
+
+<section>
+  <span class="kicker">Roadmap</span>
+  <h2>Where we are heading</h2>
+  <div class="three-col">
+    <div class="card"><h4>0:00 · 0:30</h4><strong>Vectorize & ufuncs</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Element-wise math + reductions.</p></div>
+    <div class="card"><h4>0:30 · 1:00</h4><strong>Broadcasting</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Mixed shapes, no loops.</p></div>
+    <div class="card"><h4>1:00 · 1:30</h4><strong>Linear algebra</strong>
+      <p class="muted" style="margin:0.3em 0 0;">matmul, solve, eig.</p></div>
+  </div>
+  <p class="callout" style="margin-top:1.2em;">"Thinking in arrays" is the gear-shift this hour makes happen. Once you stop reaching for <code>for</code>, scikit-learn and PyTorch start to read like English.</p>
+</section>
+
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 1 · 0:00 – 0:30</span>
+    <h1>Vectorize & ufuncs</h1>
+  </section>
+
+  <section>
+    <h2>The loop you stop writing</h2>
+<pre><code class="language-python">def slow(x):
+    out = np.empty_like(x)
+    for i in range(len(x)):
+        out[i] = x[i]**2 + 3*x[i]
+    return out
+
+def fast(x):
+    return x**2 + 3*x</code></pre>
+    <p class="muted">On 1M elements, <code>fast</code> is typically 50-100x faster — and 5 characters shorter.</p>
+  </section>
+
+  <section>
+    <h2>Element-wise arithmetic on paired arrays</h2>
+<pre><code class="language-python">a + b      a - b      a * b      a / b
+np.maximum(a, b)        # cell-by-cell max
+np.greater(a, b)        # cell-by-cell &gt;</code></pre>
+    <p>If shapes match, every operator applies element-by-element. If they don't — broadcasting (next part) makes them match.</p>
+  </section>
+
+  <section>
+    <h2>Universal functions — math everywhere</h2>
+<pre><code class="language-python">np.sqrt(a)        np.exp(a)         np.log(a)
+np.sin(a)         np.cos(a)
+np.maximum(a, 0)  # ReLU in one line</code></pre>
+    <p class="muted">A "ufunc" is a function that operates element-wise on any-shape array. Build your own with <code>np.vectorize</code> (slow) or just write the expression.</p>
+  </section>
+
+  <section>
+    <h2>Reductions — and the axis mnemonic</h2>
+<pre><code class="language-python">a.mean()                  # collapse everything
+a.mean(axis=0)            # collapse axis 0 -> one row
+a.mean(axis=1)            # collapse axis 1 -> one column
+a.sum(axis=(0, 2))        # collapse two axes</code></pre>
+    <p class="callout">Mnemonic: <strong><code>axis=k</code> means "the axis k disappears."</strong> Repeat that to yourself.</p>
+  </section>
+</section>
+
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 2 · 0:30 – 1:00</span>
+    <h1>Broadcasting</h1>
+    <p class="muted">mixed shapes, no loops</p>
+  </section>
+
+  <section>
+    <h2>The rule, in one sentence</h2>
+    <p class="callout">Two shapes are compatible if, aligned right-to-left, every pair of dimensions is equal or one of them is 1.</p>
+    <p class="muted" style="margin-top:1em;">A length-1 axis is stretched to match. A missing axis is treated as length 1.</p>
+  </section>
+
+  <section>
+    <h2>Three live examples</h2>
+<pre><code class="language-python"># scalar
+(2, 3) + ()          ->  (2, 3)
+
+# row across rows
+(2, 3) + (3,)        ->  (2, 3)
+
+# column across cols
+(2, 3) + (2, 1)      ->  (2, 3)
+
+# outer-sum
+(3, 1) + (1, 4)      ->  (3, 4)</code></pre>
+  </section>
+
+  <section>
+    <h2>Standardize a data matrix in one line</h2>
+<pre><code class="language-python">Z = (X - X.mean(axis=0)) / X.std(axis=0)
+# X is (n, d). mean and std are (d,). They broadcast across rows.</code></pre>
+    <p class="muted">This single line — column-wise standardization — is one of the most-used preprocessing steps in all of ML.</p>
+  </section>
+
+  <section>
+    <h2>The "where did this shape come from" debug move</h2>
+<pre><code class="language-python">print(a.shape, b.shape, (a + b).shape)</code></pre>
+    <p>When a broadcast surprises you, print the shapes. The bug is always in one of them.</p>
+  </section>
+</section>
+
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 3 · 1:00 – 1:30</span>
+    <h1>Linear algebra & stacking</h1>
+  </section>
+
+  <section>
+    <h2>Matrix multiplication — the <code>@</code> operator</h2>
+<pre><code class="language-python">n1 = np.arange(10).reshape(2, 5)
+n2 = np.arange(15).reshape(5, 3)
+n1 @ n2                # shape (2, 3)</code></pre>
+    <p class="muted"><code>@</code> calls <code>np.matmul</code>. Use it; do not use <code>*</code> for matrix multiplication.</p>
+  </section>
+
+  <section>
+    <h2>Solve a linear system</h2>
+<pre><code class="language-python">x = np.linalg.solve(A, b)     # Ax = b</code></pre>
+    <p>Always prefer <code>solve</code> over <code>inv(A) @ b</code> — it is faster and numerically more stable.</p>
+  </section>
+
+  <section>
+    <h2>Norms, inverse, determinant, eig</h2>
+<pre><code class="language-python">np.linalg.norm(m)        # Frobenius by default
+np.linalg.inv(m)         # full inverse
+np.linalg.det(m)         # determinant
+w, V = np.linalg.eig(S)  # eigenpairs</code></pre>
+    <p class="muted">All you need for PCA, basic optimization, and most "hand-rolled" ML math.</p>
+  </section>
+
+  <section>
+    <h2>Stack & split — assemble bigger arrays</h2>
+<pre><code class="language-python">np.concatenate([a, b], axis=0)   # vstack
+np.concatenate([a, b], axis=1)   # hstack
+np.stack([a, b])                 # new leading axis
+np.split(big, 2, axis=1)         # two halves</code></pre>
+  </section>
+</section>
+
+<section class="title-slide">
+  <span class="kicker">Recap</span>
+  <h2>Three things to leave with</h2>
+  <ol>
+    <li class="fragment fade-up"><strong>If you wrote <code>for i in range(len(arr))</code>, you wrote it wrong.</strong> Vectorize.</li>
+    <li class="fragment fade-up"><strong>Broadcasting rule: aligned right-to-left, equal or one.</strong> Print shapes to debug.</li>
+    <li class="fragment fade-up"><strong><code>@</code> for matmul, <code>np.linalg.solve</code> for systems.</strong> Never form an inverse you don't need.</li>
+  </ol>
+  <p class="callout fragment fade-up">Next course: NumPy meets labels — welcome to Pandas.</p>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true, slideNumber: 'c/t', transition: 'slide',
+    transitionSpeed: 'fast', backgroundTransition: 'fade',
+    width: 1280, height: 760, margin: 0.06,
+    plugins: [ RevealNotes, RevealHighlight ],
+  });
+</script>
+</body>
+</html>

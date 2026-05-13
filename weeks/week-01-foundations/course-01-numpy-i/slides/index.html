@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NumPy I — The ND-Array</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<section class="title-slide">
+  <span class="kicker">Week 1 · Course 1 · 1.5 hours</span>
+  <h1>NumPy I — The ND-Array</h1>
+  <p class="muted" style="font-size:1.1em;">Create it, shape it, slice it</p>
+</section>
+
+<section>
+  <span class="kicker">Roadmap</span>
+  <h2>Where we are heading</h2>
+  <div class="three-col">
+    <div class="card"><h4>0:00 · 0:30</h4><strong>The ND-Array</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Create, inspect, dtype.</p></div>
+    <div class="card"><h4>0:30 · 1:00</h4><strong>Shape manipulation</strong>
+      <p class="muted" style="margin:0.3em 0 0;">reshape, transpose, axes.</p></div>
+    <div class="card"><h4>1:00 · 1:30</h4><strong>Indexing & slicing</strong>
+      <p class="muted" style="margin:0.3em 0 0;">basic, fancy, boolean.</p></div>
+  </div>
+  <p class="callout" style="margin-top:1.2em;">Every tensor in PyTorch is an ndarray with a GPU pointer. Master ndarrays now and the rest of the bootcamp inherits the fluency for free.</p>
+</section>
+
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 1 · 0:00 – 0:30</span>
+    <h1>The ND-Array</h1>
+    <p class="muted">contiguous, typed, fast</p>
+  </section>
+
+  <section>
+    <h2>List vs. ndarray — same data, different machine</h2>
+    <pre><code class="language-python">py = [1, 2, 3, 4]                # heterogeneous, boxed
+arr = np.array([1, 2, 3, 4])     # contiguous, typed (int64)</code></pre>
+    <p class="muted">Python lists store pointers to Python objects; ndarrays store raw C numbers back-to-back. That difference is the entire speed story.</p>
+    <aside class="notes">Live-time the loop sum vs np.sum — usually 50-100x.</aside>
+  </section>
+
+  <section>
+    <h2>Six recipes for creating arrays</h2>
+<pre><code class="language-python">np.zeros((3, 4))
+np.ones((3, 4))
+np.full((3, 4), np.pi)
+np.arange(1, 5, 0.5)
+np.linspace(0, 1, 6)
+np.eye(3)</code></pre>
+    <p class="muted">99% of "make an array" reduces to one of these.</p>
+  </section>
+
+  <section>
+    <h2>Random — use the modern API</h2>
+<pre><code class="language-python">rng = np.random.default_rng(seed=42)
+rng.random((3, 4))             # uniform [0, 1)
+rng.standard_normal((3, 4))    # N(0, 1)</code></pre>
+    <p class="muted"><code>np.random.seed</code> is legacy. <code>default_rng</code> gives you a deterministic generator object — pass it around.</p>
+  </section>
+
+  <section>
+    <h2>dtypes and promotion</h2>
+<pre><code class="language-python">np.arange(0, 5, dtype=np.uint8) + 1.5
+# -> float64  (the smallest dtype that holds both)</code></pre>
+    <p>Adding two arrays promotes to the smallest type that holds both. Adding a float scalar always promotes to float64.</p>
+  </section>
+
+  <section>
+    <h2>Six attributes you always check</h2>
+    <ul>
+      <li class="fragment fade-up"><code>shape</code> — tuple of dimensions</li>
+      <li class="fragment fade-up"><code>ndim</code> — number of axes</li>
+      <li class="fragment fade-up"><code>size</code> — total elements</li>
+      <li class="fragment fade-up"><code>dtype</code> — element type</li>
+      <li class="fragment fade-up"><code>itemsize</code> — bytes per element</li>
+      <li class="fragment fade-up"><code>nbytes</code> — total bytes</li>
+    </ul>
+  </section>
+</section>
+
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 2 · 0:30 – 1:00</span>
+    <h1>Shape manipulation</h1>
+    <p class="muted">reshape, transpose, axes</p>
+  </section>
+
+  <section>
+    <h2>Reshape changes strides, not data</h2>
+<pre><code class="language-python">g  = np.arange(24)
+g2 = g.reshape(6, 4)          # same buffer, new shape
+g.ravel()                     # back to 1-D (view if possible)
+g.flatten()                   # back to 1-D (always a copy)</code></pre>
+    <p class="muted">Reshape is essentially free. Reshape-then-write may mutate the source — that bites everyone once.</p>
+  </section>
+
+  <section>
+    <h2>Transpose — also a stride trick</h2>
+<pre><code class="language-python">m = np.arange(10).reshape(2, 5)
+m.T                                   # (5, 2) view
+t = np.arange(24).reshape(4, 2, 3)
+t.transpose((1, 2, 0)).shape          # (2, 3, 4)</code></pre>
+    <p class="muted">Transposing a 2-D array is the same as <code>.T</code>; for higher dims you list the axis permutation explicitly.</p>
+  </section>
+
+  <section>
+    <h2>Add and remove dimensions</h2>
+<pre><code class="language-python">v = np.array([1, 2, 3])
+v[np.newaxis, :].shape    # (1, 3) — row vector
+v[:, np.newaxis].shape    # (3, 1) — column vector
+np.squeeze(...)           # drop length-1 axes</code></pre>
+    <p>You will use these constantly for broadcasting (next course) and for matching tensor shapes in deep learning.</p>
+  </section>
+
+  <section>
+    <h2>C-order vs F-order — a one-slide footnote</h2>
+    <p>NumPy stores arrays row-by-row by default (C-order). Transposing flips to F-order without copying. You rarely care, until you do.</p>
+<pre><code class="language-python">a = np.arange(12).reshape(3, 4)
+a.flags['C_CONTIGUOUS']        # True
+a.T.flags['F_CONTIGUOUS']      # True</code></pre>
+  </section>
+</section>
+
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 3 · 1:00 – 1:30</span>
+    <h1>Indexing & slicing</h1>
+    <p class="muted">basic, strided, fancy, boolean</p>
+  </section>
+
+  <section>
+    <h2>Basic slicing — like Python, but per-axis</h2>
+<pre><code class="language-python">b = np.arange(48).reshape(4, 12)
+b[1, 2]            # one cell
+b[1, :]            # one row
+b[:, 1]            # one column
+b[1:3, 2:5]        # a sub-matrix
+b[::-1]            # reverse rows</code></pre>
+  </section>
+
+  <section>
+    <h2>Strided slicing — every other something</h2>
+<pre><code class="language-python">a[1:3, ::2]    # rows 1-2, every other column</code></pre>
+    <p class="muted">The third number in a slice is the <em>step</em>. <code>::-1</code> reverses; <code>::2</code> takes every other.</p>
+  </section>
+
+  <section>
+    <h2>Fancy (integer-array) indexing</h2>
+<pre><code class="language-python">b[(0, 2), 2:5]                       # rows 0 and 2
+b[:, (-1, 2, -1)]                    # cols last, 2, last
+b[(-1, 2, -1, 2), (5, 9, 1, 9)]      # 4 paired cells</code></pre>
+    <p>Pass lists of indices to pick any rows/columns/cells. Always returns a <em>copy</em>.</p>
+  </section>
+
+  <section>
+    <h2>Boolean masks — the most common filter</h2>
+<pre><code class="language-python">m = np.array([20, -5, 30, 40])
+m[m &lt; 25]                  # [20, -5]
+b[b % 3 == 1]              # every cell where x%3 == 1</code></pre>
+    <p class="callout">Mask + reduction is how you compute "how many rows satisfy X" in one line. You will use this every day.</p>
+  </section>
+
+  <section>
+    <h2>np.where — pick from two arrays</h2>
+<pre><code class="language-python">np.where(x % 2 == 0, x, -1)
+# keep evens, replace odds with -1</code></pre>
+    <p class="muted">Vectorized if/else. The shape of all three arguments must broadcast together.</p>
+  </section>
+
+  <section>
+    <h2>Gotcha — slices are views</h2>
+<pre><code class="language-python">view = a[:2, :2]
+view[0, 0] = -999
+print(a)            # the source mutated!</code></pre>
+    <p>Modifying a slice modifies the original. Use <code>.copy()</code> when you want independence.</p>
+  </section>
+</section>
+
+<section class="title-slide">
+  <span class="kicker">Recap</span>
+  <h2>Three things to leave with</h2>
+  <ol>
+    <li class="fragment fade-up"><strong>An ndarray is a contiguous typed buffer.</strong> That is the entire speed story.</li>
+    <li class="fragment fade-up"><strong>Reshape and transpose change strides, not data.</strong> Nearly free, but watch out for views.</li>
+    <li class="fragment fade-up"><strong>Slice with <code>:</code>, fancy with index arrays, filter with boolean masks.</strong> Three tools, every situation.</li>
+  </ol>
+  <p class="callout fragment fade-up">Next course: stop writing loops. Vectorize everything.</p>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true, slideNumber: 'c/t', transition: 'slide',
+    transitionSpeed: 'fast', backgroundTransition: 'fade',
+    width: 1280, height: 760, margin: 0.06,
+    plugins: [ RevealNotes, RevealHighlight ],
+  });
+</script>
+</body>
+</html>
