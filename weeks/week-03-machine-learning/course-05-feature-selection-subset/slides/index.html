@@ -37,12 +37,20 @@
     <p class="muted">the combinatorial cost</p>
   </section>
   <section>
+    <h2>Running example — the Credit data</h2>
+    <p>Predict <code>Balance</code> from 10 predictors: <code>Income</code>, <code>Limit</code>, <code>Rating</code>, <code>Cards</code>, <code>Age</code>, <code>Education</code>, plus dummies for <code>Gender</code>, <code>Student</code>, <code>Married</code>, <code>Ethnicity</code>.</p>
+    <p>Some of these are highly correlated (Limit and Rating in particular — credit limits are <em>set</em> from ratings). Several are likely irrelevant once others are in the model. The question this whole course answers: <strong>which subset of these 10 predictors should I keep?</strong></p>
+    <aside class="notes">We will see best subset, forward stepwise, and Cp/AIC/BIC/CV all applied to the same Credit data so students can compare answers directly.</aside>
+  </section>
+  <section>
     <h2>Why best-subset is intractable</h2>
 <ul>
-  <li class="fragment fade-up">p = 10 → 1024 subsets. p = 20 → 1 million.</li>
-  <li class="fragment fade-up">Hitters has p = 19 → 524288 fits.</li>
-  <li class="fragment fade-up">Wonderful for laptops but exponential — useless past ~30 predictors.</li>
+  <li class="fragment fade-up">p = 10 → 1024 subsets (Credit). Fine on a laptop.</li>
+  <li class="fragment fade-up">p = 20 → about 1 million.</li>
+  <li class="fragment fade-up">p = 40 → over 1,000,000,000,000 (a trillion). One billion+ models.</li>
+  <li class="fragment fade-up">Exponential — completely infeasible past ~30 predictors.</li>
 </ul>
+    <p class="muted">Genomics, NLP, recommender systems routinely have p in the thousands. Best subset is a non-starter; we need a greedy or shrinkage alternative.</p>
   </section>
 
   <section>
@@ -56,6 +64,34 @@
     <span class="kicker">Part 2 · 0:30 – 1:00</span>
     <h1>Forward stepwise</h1>
     <p class="muted">greedy but cheap</p>
+  </section>
+  <section>
+    <h2>Forward vs Backward stepwise</h2>
+    <div class="two-col">
+      <div>
+        <h3>Forward</h3>
+        <p>Start empty. Add the predictor that most lowers RSS. Repeat until all p are in.</p>
+        <p class="muted">Cost: 1 + p + (p−1) + … = 1 + p(p+1)/2 model fits. O(p²).</p>
+      </div>
+      <div>
+        <h3>Backward</h3>
+        <p>Start with all p. Drop the predictor whose removal lowers RSS the least. Repeat until empty.</p>
+        <p class="muted">Same O(p²) cost. Requires n &gt; p (otherwise the full model can't be fit).</p>
+      </div>
+    </div>
+    <p class="callout">For p = 1000, best subset = 2^1000 models. Stepwise = ~500,000. The difference between "impossible" and "lunchtime."</p>
+  </section>
+  <section>
+    <h2>Best Subset vs Forward Stepwise — Credit</h2>
+    <p>The 4-variable model picked by each method on Credit:</p>
+    <table>
+      <tr><th># Variables</th><th>Best Subset</th><th>Forward Stepwise</th></tr>
+      <tr><td>1</td><td>rating</td><td>rating</td></tr>
+      <tr><td>2</td><td>rating, income</td><td>rating, income</td></tr>
+      <tr><td>3</td><td>rating, income, student</td><td>rating, income, student</td></tr>
+      <tr><td><strong>4</strong></td><td><strong>cards</strong>, income, student, <strong>limit</strong></td><td><strong>rating</strong>, income, student, <strong>limit</strong></td></tr>
+    </table>
+    <div class="warn">At size 4 the two methods <em>disagree</em>. Forward stepwise is locked into the rating it picked at step 1 — it can't swap rating for cards even if the swap improves the 4-variable fit. Best subset can. Greedy choices have consequences.</div>
   </section>
   <section>
     <h2>Forward stepwise algorithm</h2>
@@ -91,6 +127,26 @@
 <p style="font-family:monospace;font-size:0.95em;">AIC = n log(RSS/n) + 2p</p><p style="font-family:monospace;font-size:0.95em;">BIC = n log(RSS/n) + p log n</p><p style="font-family:monospace;font-size:0.95em;">Cp  = (RSS + 2 p σ²)/n</p><p style="font-family:monospace;font-size:0.95em;">adj-R² = 1 − (1−R²)(n−1)/(n−p−1)</p>
   </section>
 
+  <section>
+    <h2>Credit data — four criteria, four curves</h2>
+    <p>Run best subset for sizes k = 1, 2, …, 10. Plot each criterion against k:</p>
+    <ul>
+      <li class="fragment fade-up"><strong>C_p</strong> minimum at k = 6.</li>
+      <li class="fragment fade-up"><strong>AIC</strong> minimum at k = 6 (proportional to C_p for Gaussian errors).</li>
+      <li class="fragment fade-up"><strong>BIC</strong> minimum at k = <strong>4</strong> — its log(n) penalty is heavier, so it prefers a smaller model.</li>
+      <li class="fragment fade-up"><strong>Adjusted R²</strong> maximum at k = 7 — the loosest, picks the biggest model.</li>
+    </ul>
+    <div class="callout">Same data, four reasonable criteria, three different answers. There is no single right size — pick a criterion based on whether you want prediction (AIC/C_p), parsimony (BIC), or just descriptive fit (adj-R²).</div>
+  </section>
+  <section>
+    <h2>The one-standard-error rule</h2>
+    <p>CV error curves are noisy. The minimum is often part of a flat region. Rule of thumb:</p>
+    <ol>
+      <li>Find the smallest CV error, MSE_min, and its standard error SE_min.</li>
+      <li>Among models with CV error ≤ MSE_min + SE_min, pick the <em>simplest</em>.</li>
+    </ol>
+    <p class="muted">A larger model that is only marginally better is not actually better — its apparent edge is within the noise. Always prefer the simpler model when they tie.</p>
+  </section>
   <section>
     <h2>Which to trust?</h2>
 <ul>

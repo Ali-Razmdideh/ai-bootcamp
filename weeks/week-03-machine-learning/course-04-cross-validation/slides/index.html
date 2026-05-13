@@ -37,6 +37,25 @@
     <p class="muted">one split lies</p>
   </section>
   <section>
+    <h2>The U-shaped curve, again</h2>
+    <p>The fundamental picture of supervised learning:</p>
+    <svg class="diagram" viewBox="0 0 460 220" width="540" height="260">
+      <line x1="50" y1="180" x2="440" y2="180" stroke="#0f172a" stroke-width="1"/>
+      <line x1="50" y1="20" x2="50" y2="180" stroke="#0f172a" stroke-width="1"/>
+      <text x="245" y="205" text-anchor="middle" class="muted">model complexity →</text>
+      <text x="22" y="100" transform="rotate(-90 22 100)" text-anchor="middle" class="muted">error</text>
+      <path d="M 60 60 Q 220 140 430 175" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+      <text x="350" y="160" class="accent" font-size="11">training MSE</text>
+      <path d="M 60 80 Q 160 50 230 60 Q 320 90 430 40" fill="none" stroke="#b45309" stroke-width="2.5"/>
+      <text x="350" y="55" font-size="11" fill="#b45309">test MSE</text>
+      <line x1="230" y1="60" x2="230" y2="180" stroke="#64748b" stroke-dasharray="3,3"/>
+      <text x="235" y="195" font-size="10" class="muted">sweet spot</text>
+      <line x1="50" y1="40" x2="440" y2="40" stroke="#64748b" stroke-dasharray="2,4"/>
+      <text x="55" y="35" font-size="10" class="muted">irreducible Var(ε)</text>
+    </svg>
+    <p class="muted">Training error monotonically falls. Test error falls, hits a minimum, then climbs. Our whole job is to find that minimum without using the test set.</p>
+  </section>
+  <section>
     <h2>Why one split is not enough</h2>
 <ul>
   <li class="fragment fade-up">Pick polynomial degree by held-out MSE → answer depends on the split.</li>
@@ -61,6 +80,13 @@
     <p class="muted">average over many splits</p>
   </section>
   <section>
+    <h2>Picture: ten splits, ten answers</h2>
+    <p>Take Auto mpg ~ horsepower. Loop ten random 50/50 splits. For each, fit polynomials of degree 1–10 and record validation MSE.</p>
+    <p>The result is <em>ten</em> wiggly U-shaped curves. They all roughly bottom out between degree 2 and 4 — but the exact minimum jumps around: split 1 picks d=2, split 4 picks d=7, split 7 picks d=3.</p>
+    <div class="warn">A single train/test split is a high-variance estimate of test error. Trusting one split to pick a hyperparameter is like trusting one coin flip to call the season.</div>
+    <p class="muted">CV averages over many splits and gives a stable curve.</p>
+  </section>
+  <section>
     <h2>K-fold cross-validation</h2>
 <p>Split into K folds. For k = 1…K, train on the other K−1 folds and score on fold k. Average the K scores.</p><ul>
   <li class="fragment fade-up">K = 5 or K = 10 is the standard. K = n is leave-one-out (LOOCV).</li>
@@ -68,6 +94,22 @@
 </ul>
   </section>
 
+  <section>
+    <h2>LOOCV — the magic shortcut for linear models</h2>
+    <p>K = n looks expensive — n model fits. For linear regression, there's an exact one-pass formula:</p>
+    <p style="text-align:center;font-size:1.2em;">CV(n) = (1/n) Σᵢ [(yᵢ − ŷᵢ) / (1 − hᵢ)]²</p>
+    <p>where h_i is the i-th diagonal of the hat matrix H = X(XᵀX)⁻¹Xᵀ. Fit the model <em>once</em>, divide each residual by (1 − h_i), square, average. Done.</p>
+    <p class="muted">For arbitrary models (random forests, neural nets), there is no shortcut — LOOCV genuinely costs n fits, which is why we use 5- or 10-fold by default.</p>
+  </section>
+  <section>
+    <h2>K = 5 or 10 is the sweet spot</h2>
+    <ul>
+      <li class="fragment fade-up"><strong>LOOCV (K = n)</strong>: near-zero bias (each fold trains on n − 1), but folds are almost identical → high variance in the estimate.</li>
+      <li class="fragment fade-up"><strong>K = 2</strong>: each fold trains on only n/2 → pessimistic bias.</li>
+      <li class="fragment fade-up"><strong>K = 5 or 10</strong>: trains on 80–90% of data, folds are diverse enough. Empirically the right default.</li>
+    </ul>
+    <div class="callout">ISLR's recommendation, repeated word-for-word: "K = 5 or K = 10 has been shown empirically to yield test error rate estimates that suffer neither from excessively high bias nor from very high variance."</div>
+  </section>
   <section>
     <h2>The CV curve</h2>
 <p>Plot CV error vs the hyperparameter (polynomial degree, α, λ, k, …). Pick the minimum.</p><p class="muted">For Auto mpg, the CV curve picks a stable d ≈ 2.</p>
@@ -82,6 +124,30 @@
     <p class="muted">resample with replacement</p>
   </section>
   <section>
+    <h2>The right way vs the wrong way</h2>
+    <p>Setup from ISLR §5.3: n = 50 samples, p = 5000 features, y is a coin flip, the predictors are pure noise. True test error = 50%.</p>
+    <div class="two-col">
+      <div>
+        <h3 style="color:#b91c1c;">Wrong way</h3>
+        <ol style="font-size:0.85em;">
+          <li>Screen 5000 features → keep the 100 most correlated with y.</li>
+          <li>Run 10-fold CV on those 100 features.</li>
+        </ol>
+        <p class="muted">Reported CV error: ~3%. Reality: 50%.</p>
+      </div>
+      <div>
+        <h3 style="color:#047857;">Right way</h3>
+        <ol style="font-size:0.85em;">
+          <li>For each of the 10 folds:</li>
+          <li>screen features <em>using only that fold's training data</em>,</li>
+          <li>then score on its held-out fold.</li>
+        </ol>
+        <p class="muted">CV error: ~50%. Honest.</p>
+      </div>
+    </div>
+    <div class="mistake">Every preprocessing step that uses y — feature screening, target encoding, supervised PCA — must live <strong>inside</strong> the CV loop. Otherwise the held-out fold has already leaked.</div>
+  </section>
+  <section>
     <h2>Bootstrap = sampling-distribution emulator</h2>
 <pre><code class="language-python">for k in range(B):
     idx = rng.choice(n, n, replace=True)
@@ -90,6 +156,19 @@ se = theta_boot.std()
 lo, hi = np.quantile(theta_boot, [0.025, 0.975])</code></pre><p class="muted">Works for any statistic — slope, median, ratio, correlation — without distributional assumptions.</p>
   </section>
 
+  <section>
+    <h2>The portfolio example — α</h2>
+    <p>Two financial assets with returns X and Y. Split your money: fraction α in X, (1 − α) in Y. The variance-minimizing α is:</p>
+    <p style="text-align:center;font-size:1.15em;">α = (σ²_Y − σ_XY) / (σ²_X + σ²_Y − 2σ_XY)</p>
+    <p>We have 100 historical return pairs. We compute α̂ ≈ 0.576. Question: how uncertain is that 0.576?</p>
+    <p>Bootstrap recipe: resample (X, Y) pairs with replacement 1000 times, recompute α̂ each time, take the standard deviation. That's SE(α̂). Slap ±1.96·SE around 0.576 for a 95% CI.</p>
+    <p class="muted">No formula for SE(α̂) — the closed-form would require knowing σ²_X, σ²_Y, σ_XY exactly. The bootstrap sidesteps the math entirely.</p>
+  </section>
+  <section>
+    <h2>"Pull yourself up by your bootstraps"</h2>
+    <p>Baron Munchausen claimed to have escaped a swamp by pulling himself out by his own bootstraps. Efron borrowed the metaphor in 1979 for the technique that estimates uncertainty using only the sample itself.</p>
+    <div class="warn"><strong>Don't use the bootstrap to estimate test error.</strong> Each bootstrap sample reuses about ⅔ of the original data, so "training set" and "test set" overlap — the test error estimate is biased down. For test error: use CV. For SE/CI of a statistic: use the bootstrap.</div>
+  </section>
   <section>
     <h2>Preview: stratification for classification</h2>
 <p>Next week <code>y</code> is a class label. <code>StratifiedKFold</code> keeps class proportions stable across folds.</p>

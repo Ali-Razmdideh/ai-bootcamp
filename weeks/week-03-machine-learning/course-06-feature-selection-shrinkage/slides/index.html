@@ -46,6 +46,22 @@
   </section>
 
   <section>
+    <h2>Ridge paths on Credit</h2>
+    <p>Standardize the 10 Credit predictors, fit Ridge for λ on a log grid from 10⁻² to 10⁵. Plot each β̂_j as a function of λ.</p>
+    <p>The picture: at λ ≈ 0, the coefficients sit at their OLS values — <code>income</code>, <code>limit</code>, <code>rating</code> large, <code>student</code> modest, others near zero. As λ grows, every coefficient is pulled smoothly toward zero. None reach exactly zero — Ridge always keeps all p predictors in the model.</p>
+    <div class="warn"><strong>Scale matters.</strong> Ridge penalizes Σβ_j². If <code>income</code> is in dollars and <code>cards</code> is a count, their β's live on wildly different scales — the penalty hits one ten thousand times harder than the other. Always standardize before Ridge. Plain OLS is scale-invariant; Ridge is not.</div>
+  </section>
+  <section>
+    <h2>Bias-variance for Ridge</h2>
+    <p>Sweep λ from 0 (= OLS) to ∞ (= all coefficients zero):</p>
+    <ul>
+      <li class="fragment fade-up"><strong>λ small</strong> — low bias, high variance. Coefficients flap from sample to sample.</li>
+      <li class="fragment fade-up"><strong>λ large</strong> — high bias (shrinkage pulls us away from the truth), low variance.</li>
+      <li class="fragment fade-up"><strong>Sweet spot</strong> — the test-MSE U-curve, again. Cross-validation finds it.</li>
+    </ul>
+    <p class="muted">Ridge wins biggest when OLS is high-variance: many predictors, modest n, collinearity. On Credit the gain is small; in genomics with p &gt; n it is decisive.</p>
+  </section>
+  <section>
     <h2>Coefficient paths</h2>
 <p>Plot every β<sub>j</sub> versus α (log axis). All paths shrink toward zero, none reach exactly zero.</p><p class="muted">Pick α with GridSearchCV over a log grid (e.g. np.logspace(-2, 4, 50)).</p>
   </section>
@@ -63,12 +79,84 @@
   </section>
 
   <section>
+    <h2>Why does Lasso zero out, Ridge not?</h2>
+    <p>Both are constrained optimization: minimize RSS subject to a penalty budget on the β's. The <em>shape</em> of the budget region is everything.</p>
+    <svg class="diagram" viewBox="0 0 480 220" width="540" height="260">
+      <g transform="translate(60, 20)">
+        <text x="80" y="-2" text-anchor="middle" font-weight="600">Lasso (ℓ₁): diamond</text>
+        <line x1="0" y1="90" x2="160" y2="90" stroke="#64748b"/>
+        <line x1="80" y1="10" x2="80" y2="170" stroke="#64748b"/>
+        <polygon points="80,40 130,90 80,140 30,90" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+        <ellipse cx="120" cy="55" rx="55" ry="35" fill="none" stroke="#b45309" stroke-width="1.5"/>
+        <ellipse cx="120" cy="55" rx="38" ry="22" fill="none" stroke="#b45309" stroke-width="1.5"/>
+        <ellipse cx="120" cy="55" rx="22" ry="12" fill="none" stroke="#b45309" stroke-width="1.5"/>
+        <circle cx="80" cy="40" r="4" fill="#b91c1c"/>
+        <text x="78" y="32" text-anchor="end" font-size="10" fill="#b91c1c">β̂₁ = 0</text>
+        <text x="160" y="100" font-size="10" class="muted">β₁</text>
+        <text x="80" y="185" text-anchor="middle" font-size="10" class="muted">β₂ axis (vertical)</text>
+      </g>
+      <g transform="translate(290, 20)">
+        <text x="80" y="-2" text-anchor="middle" font-weight="600">Ridge (ℓ₂): disc</text>
+        <line x1="0" y1="90" x2="160" y2="90" stroke="#64748b"/>
+        <line x1="80" y1="10" x2="80" y2="170" stroke="#64748b"/>
+        <circle cx="80" cy="90" r="50" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+        <ellipse cx="120" cy="55" rx="55" ry="35" fill="none" stroke="#b45309" stroke-width="1.5"/>
+        <ellipse cx="120" cy="55" rx="38" ry="22" fill="none" stroke="#b45309" stroke-width="1.5"/>
+        <ellipse cx="120" cy="55" rx="22" ry="12" fill="none" stroke="#b45309" stroke-width="1.5"/>
+        <circle cx="103" cy="65" r="4" fill="#b91c1c"/>
+        <text x="108" y="63" font-size="10" fill="#b91c1c">both ≠ 0</text>
+      </g>
+    </svg>
+    <p class="muted">The orange ellipses are RSS contours. The blue region is the budget. The optimum sits where the smallest ellipse first touches the budget. The diamond has <strong>corners</strong> on the axes — contours hit them often, killing one coefficient. The disc has no corners — almost always a non-axis tangent.</p>
+  </section>
+  <section>
     <h2>Lasso is a feature selector</h2>
 <ul>
   <li class="fragment fade-up">Survivor coefficients form an interpretable subset.</li>
   <li class="fragment fade-up">Use when you suspect many irrelevant features.</li>
   <li class="fragment fade-up">Use when you want a sparse model for production speed.</li>
 </ul><p class="callout">Comparison with forward stepwise: usually similar features. Lasso is faster and one-shot.</p>
+  </section>
+
+  <section>
+    <h2>When Lasso beats Ridge, and vice versa</h2>
+    <div class="two-col">
+      <div>
+        <h3>Lasso wins</h3>
+        <p>When the truth is <strong>sparse</strong> — a handful of predictors carry the signal, the rest are noise.</p>
+        <p class="muted">Genomics: 5 genes out of 20,000 drive the phenotype.</p>
+      </div>
+      <div>
+        <h3>Ridge wins</h3>
+        <p>When the truth is <strong>dense</strong> — many predictors each contribute a small effect, none is zero.</p>
+        <p class="muted">Polygenic traits, returns models with many weak factors.</p>
+      </div>
+    </div>
+    <p class="callout">You usually don't know which world you're in. That's why Elastic Net — a convex combination — is the safe default.</p>
+  </section>
+  <section>
+    <h2>Picking λ by cross-validation</h2>
+    <p>Same recipe as Course 4. For Lasso on Credit:</p>
+    <ol>
+      <li>Define a log-grid: <code>np.logspace(-3, 2, 50)</code>.</li>
+      <li>For each λ, 10-fold CV inside a pipeline that scales first.</li>
+      <li>Plot CV-MSE vs log(λ). Pick the minimum — or, by the one-SE rule, the largest λ within 1 SE of the minimum (sparser, stabler).</li>
+    </ol>
+    <p class="muted">sklearn ships <code>LassoCV</code> and <code>RidgeCV</code> that do this in one line.</p>
+  </section>
+  <section>
+    <h2>PCR and PLS — a brief contrast</h2>
+    <div class="two-col">
+      <div>
+        <h3>PCR</h3>
+        <p>Run PCA on X. Regress y on the top M principal components. <em>Unsupervised</em> dimension reduction — never looks at y when choosing directions.</p>
+      </div>
+      <div>
+        <h3>PLS</h3>
+        <p>Same idea, but choose directions that are highly correlated with y. <em>Supervised</em> dimension reduction.</p>
+      </div>
+    </div>
+    <p class="muted">Both reduce p before regressing. Both can fail when the top components are not the predictive ones. In practice Ridge / Lasso / Elastic Net dominate them on most tabular data.</p>
   </section>
 
 </section>

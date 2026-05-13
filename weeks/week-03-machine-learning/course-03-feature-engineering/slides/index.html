@@ -79,6 +79,45 @@ PolynomialFeatures(degree=3).fit_transform(X)
   </section>
 
   <section>
+    <h2>The Wage data — age, year, education</h2>
+    <p>3,000 male workers from the Mid-Atlantic. Predict <code>wage</code> from <code>age</code>, <code>year</code>, and <code>education</code>. ISLR's running example for non-linear modeling.</p>
+    <p>Picture the scatter of wage vs age: wages <em>rise</em> from age 18 to about 40, <em>plateau</em> through the 40s and 50s, then <em>fall</em> after 60. A straight line can only pick one of the three slopes.</p>
+    <div class="callout">Whenever the relationship is non-monotone, a single coefficient β₁ cannot describe it. We need a flexible representation of <em>age</em> as a feature.</div>
+  </section>
+  <section>
+    <h2>Polynomial regression — degree 4 on wage ~ age</h2>
+    <p>Replace <code>age</code> with <code>[age, age², age³, age⁴]</code> and fit by least squares.</p>
+    <p>Resulting fit: rises steeply, levels off around 45, dips after 60. R² and residual plot far better than the linear fit. <em>Still</em> linear regression — just on engineered columns.</p>
+    <div class="warn"><strong>Tail trouble.</strong> Polynomials have notorious tail behavior. A degree-14 polynomial on the wage data looks reasonable in the middle but explodes near age 18 and age 80. The fit at the boundary can be absurd.</div>
+    <p class="muted">This is the famous ISLR comparison: degree-14 polynomial vs a natural cubic spline — same number of degrees of freedom, dramatically different edge behavior. Splines win.</p>
+  </section>
+  <section>
+    <h2>Step functions — cut age into bins</h2>
+    <p>Pick cut-points, say {35, 50, 65}. Define four dummy indicators:</p>
+    <p style="text-align:center;font-family:var(--bc-mono);font-size:0.9em;">C₁(age &lt; 35),  C₂(35 ≤ age &lt; 50),  C₃(50 ≤ age &lt; 65),  C₄(age ≥ 65)</p>
+    <p>Fit a constant in each bin. The result is a staircase. Crude but interpretable — popular in epidemiology and credit scoring.</p>
+    <p class="muted">Problem: jumps at the cut-points. Reality doesn't jump at age 35. Solution: piecewise polynomials that match at the knots — splines.</p>
+  </section>
+  <section>
+    <h2>From piecewise polynomials to splines</h2>
+    <ul>
+      <li class="fragment fade-up"><strong>Piecewise polynomial</strong> — fit a cubic in each region, no continuity. Ugly jumps at knots.</li>
+      <li class="fragment fade-up"><strong>Cubic spline</strong> — force the function and its first two derivatives to match at each knot. Smooth.</li>
+      <li class="fragment fade-up"><strong>Natural cubic spline</strong> — additionally require linearity beyond the boundary knots. Tames the tails.</li>
+      <li class="fragment fade-up"><strong>Smoothing spline</strong> — a knot at every observation, with a roughness penalty λ∫f''(x)² dx. Pick λ by CV.</li>
+    </ul>
+    <p class="callout">For visualization, sklearn's <code>SplineTransformer</code> gives you natural cubic splines as plain features — fit ordinary LR on top.</p>
+  </section>
+  <section>
+    <h2>GAMs — the generalization</h2>
+    <p>A <strong>Generalized Additive Model</strong> writes:</p>
+    <p style="text-align:center;font-size:1.15em;">y = β₀ + f₁(X₁) + f₂(X₂) + … + f_p(X_p) + ε</p>
+    <p>One smooth function per predictor, added up. For Wage:</p>
+    <p style="text-align:center;font-family:var(--bc-mono);font-size:0.9em;">wage = β₀ + f₁(year) + f₂(age) + f₃(education) + ε</p>
+    <p>Each f_j is fit as a spline. You get the flexibility of non-linear modeling and the interpretability of "see one curve per feature."</p>
+    <p class="muted">For classification: log-odds(wage &gt; 250K) = β₀ + f₁(year) + f₂(age) + f₃(education). Same idea, logistic link.</p>
+  </section>
+  <section>
     <h2>Bias / variance, visualized</h2>
 <ul>
   <li class="fragment fade-up"><strong>d = 1</strong> — too straight (underfit, high bias).</li>

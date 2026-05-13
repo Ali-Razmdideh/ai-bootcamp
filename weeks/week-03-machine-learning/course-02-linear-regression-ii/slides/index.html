@@ -37,6 +37,31 @@
     <p class="muted">Y = Xβ + ε</p>
   </section>
   <section>
+    <h2>Advertising — three media at once</h2>
+    <p>Going from Sales ~ TV to Sales ~ TV + Radio + Newspaper. Fitted on the same 200 markets:</p>
+    <table>
+      <tr><th></th><th>Coefficient</th><th>Std. Error</th><th>t-stat</th><th>p-value</th></tr>
+      <tr><td><strong>Intercept</strong></td><td>2.939</td><td>0.3119</td><td>9.42</td><td>&lt; 0.0001</td></tr>
+      <tr><td>TV</td><td>0.046</td><td>0.0014</td><td>32.81</td><td>&lt; 0.0001</td></tr>
+      <tr><td>Radio</td><td>0.189</td><td>0.0086</td><td>21.89</td><td>&lt; 0.0001</td></tr>
+      <tr><td><strong>Newspaper</strong></td><td>-0.001</td><td>0.0059</td><td>-0.18</td><td>0.8599</td></tr>
+    </table>
+    <div class="callout">In the simple regression Sales ~ Newspaper, the newspaper slope was significant. Here, controlling for TV and Radio, it collapses to essentially zero. Newspaper spending is correlated with Radio spending — markets that buy radio also buy newspaper — but newspaper has no independent contribution.</div>
+    <p class="muted">This is THE example for "marginal vs joint significance." Never read a coefficient without asking what else is in the model.</p>
+  </section>
+  <section>
+    <h2>Is anything related to Y at all? — the F-statistic</h2>
+    <p style="text-align:center;font-size:1.2em;">F = [(TSS − RSS)/p] / [RSS/(n − p − 1)]</p>
+    <p>On Advertising (n = 200, p = 3): F ≈ 570. Under the null that all three slopes are zero, F is around 1. A value of 570 is overwhelming evidence that <em>at least one</em> medium matters.</p>
+    <p class="muted">Why not just look at the individual p-values? With p = 100 predictors and pure noise, about 5 will look significant at the 0.05 level. The F-test gives a single global verdict.</p>
+  </section>
+  <section>
+    <h2>Mosteller & Tukey's puzzle</h2>
+    <div class="callout">"In a regression of <em>football tackles</em> on weight and height, the coefficient on height comes out negative. Does that mean tall players make fewer tackles?"</div>
+    <p>No. Among players of equal weight, the taller ones tend to be the lankier ones — different positions, different physiques. The coefficient is the effect of height <em>holding weight fixed</em>, not the marginal effect of height.</p>
+    <p class="muted">Every coefficient in multiple regression is a "holding other things constant" coefficient. Forget that and you misread every model.</p>
+  </section>
+  <section>
     <h2>The matrix form</h2>
 <p style="text-align:center;font-size:1.3em;">Y = Xβ + ε,  β̂ = (XᵀX)⁻¹ Xᵀ Y</p><p class="muted">One predictor or one hundred — the formula is the same. The expensive bit is the matrix inverse, but n ≪ 10⁴ → microseconds.</p>
   </section>
@@ -95,6 +120,49 @@
   <section>
     <h2>Interactions are just products</h2>
 <pre><code class="language-python">df[&#x27;Price_x_Urban&#x27;] = df[&#x27;Price&#x27;] * df[&#x27;Urban_Yes&#x27;]</code></pre><p>The coefficient on the product term tells you how the effect of Price <em>changes</em> when Urban switches from No to Yes.</p>
+  </section>
+
+  <section>
+    <h2>The TV × Radio synergy</h2>
+    <p>On Advertising, adding a TV·Radio interaction term:</p>
+    <p style="text-align:center;">Sales = β₀ + β₁·TV + β₂·Radio + β₃·(TV·Radio) + ε</p>
+    <ul>
+      <li class="fragment fade-up">Without interaction: R² = 0.897.</li>
+      <li class="fragment fade-up">With interaction: <strong>R² = 0.968</strong>.</li>
+      <li class="fragment fade-up">Interpretation: each extra dollar on radio is more valuable when TV spending is high — the two media reinforce each other.</li>
+    </ul>
+    <div class="warn"><strong>Hierarchy principle.</strong> When you include TV·Radio, keep TV and Radio as main effects too — even if their t-stats become small. Otherwise the model is hard to interpret and not invariant to rescaling.</div>
+  </section>
+  <section>
+    <h2>Credit data — qualitative predictors</h2>
+    <p>The <strong>Credit</strong> dataset: predict Balance from Income, Limit, Rating, Cards, Age, Education, plus four categoricals — Gender, Student, Married, Ethnicity.</p>
+    <p>For a binary like Student ∈ {Yes, No}, create one dummy:</p>
+    <p style="text-align:center;font-family:var(--bc-mono);font-size:0.9em;">D = 1 if Student = Yes, else 0</p>
+    <p>The fitted coefficient on D is the average <em>extra</em> balance carried by students, holding everything else fixed. The baseline level (No) is absorbed into the intercept.</p>
+    <p class="muted">For Ethnicity with 3 levels you create 2 dummies. Always one fewer than the number of levels — otherwise perfect collinearity with the intercept (the dummy-variable trap).</p>
+  </section>
+  <section>
+    <h2>Interactions with a qualitative predictor</h2>
+    <p>Balance ~ Income, split by Student status. Two ways to model it:</p>
+    <div class="two-col">
+      <div>
+        <h3>No interaction</h3>
+        <p>Two parallel lines: students sit a fixed amount above non-students at every income.</p>
+        <p class="muted">Balance = β₀ + β₁·Income + β₂·Student</p>
+      </div>
+      <div>
+        <h3>With interaction</h3>
+        <p>Two lines with <em>different slopes</em>: the marginal effect of income on balance differs for students vs non-students.</p>
+        <p class="muted">+ β₃·(Income · Student)</p>
+      </div>
+    </div>
+    <p class="callout">If lines visibly fan out or cross, parallel-line model is wrong. Add the interaction.</p>
+  </section>
+  <section>
+    <h2>When linear isn't enough — Auto mpg</h2>
+    <p>Scatter of <code>mpg</code> against <code>horsepower</code> in the <strong>Auto</strong> data: a clear downward <em>curve</em>. A straight line systematically over-predicts at the extremes and under-predicts in the middle — its residual plot has a giant U-shape.</p>
+    <p>Fitting <code>mpg = β₀ + β₁·hp + β₂·hp²</code> straightens out the residuals and lowers test MSE substantially.</p>
+    <p class="muted">Still linear in β, so the same closed-form fit. We just engineered a new column. Course 3 generalizes this.</p>
   </section>
 
 </section>

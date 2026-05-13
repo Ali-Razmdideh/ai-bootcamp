@@ -37,6 +37,50 @@
     <p class="muted">least squares, by hand</p>
   </section>
   <section>
+    <h2>What is statistical learning?</h2>
+    <p>We observe a response <code>Y</code> and predictors <code>X = (X₁, …, X_p)</code>. We believe there is some unknown rule:</p>
+    <p style="text-align:center;font-size:1.4em;">Y = f(X) + ε</p>
+    <p class="muted">f is the systematic information X contains about Y. ε is irreducible noise — measurement error, unmeasured causes, plain luck. Statistical learning is the set of tools for <em>estimating f</em>.</p>
+    <div class="callout">The best possible predictor at a point x is the <strong>regression function</strong> f(x) = E[Y | X = x] — the average Y among all units with that x. Linear regression assumes that average is a straight line.</div>
+    <aside class="notes">Pull this directly from ISLR §2.1. The split between reducible (better f̂) and irreducible (the ε floor) is the mental model students should leave with.</aside>
+  </section>
+  <section>
+    <h2>Reducible vs irreducible error</h2>
+    <div class="two-col">
+      <div>
+        <h3>Reducible</h3>
+        <p>The gap between our f̂ and the true f. We close it with more data, better features, smarter models.</p>
+      </div>
+      <div>
+        <h3>Irreducible</h3>
+        <p>Var(ε). No model — no matter how clever — can predict Y better than f(X). This is the ceiling.</p>
+      </div>
+    </div>
+    <p class="muted" style="margin-top:1em;">Even if we knew f exactly, we would still miss Y by ε. That's why test error never goes to zero.</p>
+  </section>
+  <section>
+    <h2>Running example — the Advertising data</h2>
+    <p>200 markets. For each market we observe:</p>
+    <ul>
+      <li><strong>TV</strong>, <strong>Radio</strong>, <strong>Newspaper</strong> — ad budgets, in thousands of dollars.</li>
+      <li><strong>Sales</strong> — units sold of the product, in thousands.</li>
+    </ul>
+    <p>The motivating questions ISLR keeps coming back to:</p>
+    <ul>
+      <li class="fragment fade-up">Is there a relationship between advertising and sales?</li>
+      <li class="fragment fade-up">How strong is it?</li>
+      <li class="fragment fade-up">Which media contribute?</li>
+      <li class="fragment fade-up">How accurately can we predict sales from a new budget plan?</li>
+    </ul>
+    <aside class="notes">Every concept in Course 1 and Course 2 maps to one of these four questions.</aside>
+  </section>
+  <section>
+    <h2>Picture: Sales vs TV</h2>
+    <p>Imagine a scatter of 200 dots. TV budget on the x-axis, Sales on the y-axis. The cloud slopes upward — clearly more TV money tends to correspond to more units sold, but with scatter.</p>
+    <p>Through that cloud we draw the line that minimizes the sum of squared vertical gaps between dots and line. That line is our estimated f̂.</p>
+    <p class="muted">The vertical gaps are the <strong>residuals</strong>. Their sum of squares is the loss we minimize.</p>
+  </section>
+  <section>
     <h2>The cost we are minimizing</h2>
 <p>Given <code>(x₁, y₁), …, (xₙ, yₙ)</code>, the line ŷ = β₀ + β₁ x that minimizes <strong>residual sum of squares</strong>:</p><p style="text-align:center;font-size:1.4em;">RSS(β) = Σᵢ (yᵢ − β₀ − β₁ xᵢ)²</p><p class="muted">Take the gradient, set to zero, two-line closed-form solution.</p>
     <aside class="notes">Loss + closed-form solution. The point: every later model just changes the loss or the model class.</aside>
@@ -63,6 +107,18 @@ print(model.intercept_, model.coef_)</code></pre>
     <span class="kicker">Part 2 · 0:30 – 1:00</span>
     <h1>Reading the output</h1>
     <p class="muted">R², RMSE, residuals</p>
+  </section>
+  <section>
+    <h2>Sales ~ TV — the actual numbers</h2>
+    <p>Fit Sales = β₀ + β₁·TV on the 200 Advertising markets:</p>
+    <table>
+      <tr><th></th><th>Coefficient</th><th>Std. Error</th><th>t-statistic</th><th>p-value</th></tr>
+      <tr><td><strong>Intercept</strong></td><td>7.0325</td><td>0.4578</td><td>15.36</td><td>&lt; 0.0001</td></tr>
+      <tr><td><strong>TV</strong></td><td>0.0475</td><td>0.0027</td><td>17.67</td><td>&lt; 0.0001</td></tr>
+    </table>
+    <p class="muted">RSE = 3.26 (thousand units). R² = 0.612.</p>
+    <div class="callout">Reading: $1,000 more in TV ads is associated with about 47.5 extra units sold. A t-statistic of 17.67 means the slope is about <em>eighteen standard errors</em> away from zero — astronomically unlikely under the no-relationship null.</div>
+    <aside class="notes">This is the canonical table from ISLR §3.1. Numbers are exact. Students should leave able to read this table.</aside>
   </section>
   <section>
     <h2>Three numbers you always report</h2>
@@ -108,6 +164,30 @@ lo, hi = np.quantile(b1_boot, [0.025, 0.975])</code></pre>
     <aside class="notes">The bootstrap was Bradley Efron&#x27;s gift to applied stats. No formulas, no distributional assumptions, just resample with replacement.</aside>
   </section>
 
+  <section>
+    <h2>Bias-variance, a first look</h2>
+    <p>Imagine sweeping a knob from "very rigid" (a straight line) to "very flexible" (a curve that wiggles through every point). Plot training error and test error against that knob.</p>
+    <svg class="diagram" viewBox="0 0 420 200" width="520" height="240">
+      <line x1="40" y1="170" x2="400" y2="170" stroke="#0f172a" stroke-width="1"/>
+      <line x1="40" y1="20" x2="40" y2="170" stroke="#0f172a" stroke-width="1"/>
+      <text x="220" y="195" text-anchor="middle" class="muted">flexibility →</text>
+      <text x="15" y="95" transform="rotate(-90 15 95)" text-anchor="middle" class="muted">error</text>
+      <path d="M 50 60 Q 200 130 390 160" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+      <text x="395" y="155" class="accent" font-size="11">training</text>
+      <path d="M 50 40 Q 160 110 220 95 Q 300 80 390 35" fill="none" stroke="#b45309" stroke-width="2.5"/>
+      <text x="395" y="30" font-size="11" fill="#b45309">test</text>
+      <circle cx="220" cy="95" r="3" fill="#b45309"/>
+      <text x="225" y="110" font-size="10" fill="#b45309">sweet spot</text>
+    </svg>
+    <p class="muted">Training error always falls with flexibility. Test error is U-shaped: underfit on the left, overfit on the right. Course 4 makes this precise.</p>
+  </section>
+  <section>
+    <h2>KNN regression — a non-parametric contrast</h2>
+    <p>Prediction at a new x: average y over its K nearest neighbors. No formula for f, no β to learn.</p>
+    <p>It works beautifully in 1–2 dimensions. But in high dimensions, neighbors stop being near.</p>
+    <div class="warn"><strong>Curse of dimensionality.</strong> In p = 1, a 10% neighborhood spans 10% of the line. In p = 10, capturing 10% of the data needs a neighborhood that spans 10^(1/10) ≈ 80% of <em>each</em> axis. Your "neighbors" are no longer near.</div>
+    <aside class="notes">Direct quote from ISLR §3.5. Use it to motivate why linear/parametric models are still the default at high p.</aside>
+  </section>
   <section>
     <h2>Four assumptions of linear regression</h2>
 <ul>
