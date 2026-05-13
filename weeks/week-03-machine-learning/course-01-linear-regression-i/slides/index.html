@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Linear Regression I — Simple LR</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+</head>
+<body>
+<div class="reveal"><div class="slides">
+<section class="title-slide">
+  <span class="kicker">Week 3 · Course 1 · 1.5 hours</span>
+  <h1>Linear Regression I — Simple LR</h1>
+  <p class="muted" style="font-size:1.1em;">Fit a line, read the output, infer for β</p>
+</section>
+<section>
+  <span class="kicker">Roadmap</span>
+  <h2>Where we are heading</h2>
+  <div class="three-col">
+    <div class="card"><h4>0:00 · 0:30</h4><strong>Fitting a line</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Least squares, by hand and via sklearn.</p></div>
+    <div class="card"><h4>0:30 · 1:00</h4><strong>Reading the output</strong>
+      <p class="muted" style="margin:0.3em 0 0;">coef, R², RMSE, residuals.</p></div>
+    <div class="card"><h4>1:00 · 1:30</h4><strong>Inference for β</strong>
+      <p class="muted" style="margin:0.3em 0 0;">t-stat, bootstrap CI, assumptions.</p></div>
+  </div>
+  <p class="callout" style="margin-top:1.2em;">Every concept that appears later — loss, coefficients, R², residuals — shows up here in its cleanest form. Master simple LR and the rest of the course just adds knobs.</p>
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 1 · 0:00 – 0:30</span>
+    <h1>Fitting a line</h1>
+    <p class="muted">least squares, by hand</p>
+  </section>
+  <section>
+    <h2>The cost we are minimizing</h2>
+<p>Given <code>(x₁, y₁), …, (xₙ, yₙ)</code>, the line ŷ = β₀ + β₁ x that minimizes <strong>residual sum of squares</strong>:</p><p style="text-align:center;font-size:1.4em;">RSS(β) = Σᵢ (yᵢ − β₀ − β₁ xᵢ)²</p><p class="muted">Take the gradient, set to zero, two-line closed-form solution.</p>
+    <aside class="notes">Loss + closed-form solution. The point: every later model just changes the loss or the model class.</aside>
+  </section>
+
+  <section>
+    <h2>Closed form — both coefficients</h2>
+<p style="text-align:center;font-size:1.25em;">β̂₁ = Σᵢ (xᵢ − x̄)(yᵢ − ȳ) / Σᵢ (xᵢ − x̄)²</p><p style="text-align:center;font-size:1.25em;">β̂₀ = ȳ − β̂₁ x̄</p><p class="muted" style="margin-top:1em;">Two summations, no iteration. Compare with the iterative optimizers next month for neural nets.</p>
+  </section>
+
+  <section>
+    <h2>Sklearn in three lines</h2>
+<pre><code class="language-python">from sklearn.linear_model import LinearRegression
+X = boston[[&#x27;lstat&#x27;]]
+y = boston[&#x27;medv&#x27;]
+model = LinearRegression().fit(X, y)
+print(model.intercept_, model.coef_)</code></pre>
+    <aside class="notes">Live in notebook: derive by hand, then sklearn. Should match to 4 decimal places.</aside>
+  </section>
+
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 2 · 0:30 – 1:00</span>
+    <h1>Reading the output</h1>
+    <p class="muted">R², RMSE, residuals</p>
+  </section>
+  <section>
+    <h2>Three numbers you always report</h2>
+<ul>
+  <li class="fragment fade-up"><strong>R²</strong> — fraction of variance the model explains (0 = nothing, 1 = perfect).</li>
+  <li class="fragment fade-up"><strong>RMSE</strong> — root mean squared error, <em>in the units of y</em>.</li>
+  <li class="fragment fade-up"><strong>Residual plot</strong> — fitted vs (y − ŷ). Looks like noise? You are done. A pattern? The model is wrong somewhere.</li>
+</ul>
+  </section>
+
+  <section>
+    <h2>Residuals reveal everything</h2>
+<p>If residuals show a curve → the relationship is not linear.</p><p>If residuals fan out → the variance is not constant (heteroscedasticity).</p><p>If residuals cluster by some category → there is a missing predictor.</p><p class="callout">A residual plot is the cheapest model-criticism tool you have. Run it every time.</p>
+  </section>
+
+  <section>
+    <h2>R² is not the whole story</h2>
+<p class="muted">A model with R² = 0.95 can still be useless if:</p><ul>
+  <li class="fragment fade-up">Its residuals show a clear U-shape (model misspecified).</li>
+  <li class="fragment fade-up">Its predictions extrapolate badly outside the training range.</li>
+  <li class="fragment fade-up">The signal is dominated by one feature with a known data leak.</li>
+</ul>
+  </section>
+
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 3 · 1:00 – 1:30</span>
+    <h1>Inference for β</h1>
+    <p class="muted">is the slope real?</p>
+  </section>
+  <section>
+    <h2>Standard error and the t-statistic</h2>
+<p style="text-align:center;font-size:1.2em;">t = β̂₁ / SE(β̂₁)</p><p>If |t| is big (typically > 2), the slope is significantly different from zero. Sklearn does not report this; statsmodels does — but in this course we prefer the bootstrap.</p>
+  </section>
+
+  <section>
+    <h2>The bootstrap — a CI for anything</h2>
+<pre><code class="language-python">for k in range(2000):
+    idx = rng.choice(n, n, replace=True)
+    b1_boot[k] = slope(x[idx], y[idx])
+lo, hi = np.quantile(b1_boot, [0.025, 0.975])</code></pre>
+    <aside class="notes">The bootstrap was Bradley Efron&#x27;s gift to applied stats. No formulas, no distributional assumptions, just resample with replacement.</aside>
+  </section>
+
+  <section>
+    <h2>Four assumptions of linear regression</h2>
+<ul>
+  <li class="fragment fade-up"><strong>Linearity</strong> — residual plot has no curve.</li>
+  <li class="fragment fade-up"><strong>Constant variance</strong> — no fan, no funnel.</li>
+  <li class="fragment fade-up"><strong>Independence</strong> — observations not autocorrelated.</li>
+  <li class="fragment fade-up"><strong>Normality of errors</strong> — Q-Q plot of residuals is straight.</li>
+</ul>
+  </section>
+
+</section>
+<section class="title-slide">
+  <span class="kicker">Recap</span>
+  <h2>Three things to leave with</h2>
+  <ol>
+<li class="fragment fade-up"><strong>Least squares is two lines of arithmetic.</strong> The closed form, not gradient descent.</li>
+<li class="fragment fade-up"><strong>R² and RMSE summarize fit; residuals find what they miss.</strong> Always plot residuals.</li>
+<li class="fragment fade-up"><strong>A CI is what a coefficient is worth as a claim.</strong> Bootstrap one in three lines.</li>
+  </ol>
+  <p class="callout fragment fade-up">Next: multiple regression, collinearity, and the four diagnostic plots every modeler should read in five seconds.</p>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true, slideNumber: 'c/t', transition: 'slide',
+    transitionSpeed: 'fast', backgroundTransition: 'fade',
+    width: 1280, height: 760, margin: 0.06,
+    plugins: [ RevealNotes, RevealHighlight ],
+  });
+</script>
+</body>
+</html>

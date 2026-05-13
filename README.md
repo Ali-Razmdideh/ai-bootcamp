@@ -21,10 +21,24 @@ Open any course folder and start with `lecture.ipynb`.
 
 ```
 weeks/
-  week-01-foundations/
-    course-01-numpy/       # NumPy: ND-arrays, slicing, vectorization
-    course-02-pandas/      # Pandas: DataFrames, selection, cleaning, groupby
-    course-03-viz-scipy/   # Matplotlib/Seaborn + SciPy stats & optimize
+  week-01-foundations/         # NumPy, Pandas, Matplotlib/SciPy
+    course-01-numpy/
+    course-02-pandas/
+    course-03-viz-scipy/
+  week-03-machine-learning/    # Regression, CV, feature selection (ISLP Ch 3, 5, 6)
+    course-01-linear-regression-i/
+    course-02-linear-regression-ii/
+    course-03-feature-engineering/
+    course-04-cross-validation/
+    course-05-feature-selection-subset/
+    course-06-feature-selection-shrinkage/
+  week-04-classification/      # KNN, logistic, trees, ensembles, SVM (ISLP Ch 4, 8, 9)
+    course-01-classification-knn/
+    course-02-logistic-regression-i/
+    course-03-logistic-regression-ii/
+    course-04-decision-trees/
+    course-05-ensembles/
+    course-06-svm/
 shared/
   data_utils.py            # cached dataset fetcher used by all notebooks
   slides-template/         # Reveal.js base (theme + template)

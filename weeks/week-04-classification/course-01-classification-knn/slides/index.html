@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Classification + KNN</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+</head>
+<body>
+<div class="reveal"><div class="slides">
+<section class="title-slide">
+  <span class="kicker">Week 4 · Course 1 · 1.5 hours</span>
+  <h1>Classification + KNN</h1>
+  <p class="muted" style="font-size:1.1em;">Decision boundaries, confusion matrices, ROC</p>
+</section>
+<section>
+  <span class="kicker">Roadmap</span>
+  <h2>Where we are heading</h2>
+  <div class="three-col">
+    <div class="card"><h4>0:00 · 0:30</h4><strong>What a classifier outputs</strong>
+      <p class="muted" style="margin:0.3em 0 0;">labels, probs, metrics.</p></div>
+    <div class="card"><h4>0:30 · 1:00</h4><strong>KNN</strong>
+      <p class="muted" style="margin:0.3em 0 0;">the no-training baseline.</p></div>
+    <div class="card"><h4>1:00 · 1:30</h4><strong>Class imbalance</strong>
+      <p class="muted" style="margin:0.3em 0 0;">the majority-class trap.</p></div>
+  </div>
+  <p class="callout" style="margin-top:1.2em;">Before any specific classifier, internalize the interface: predict a label, plot a decision boundary, read a confusion matrix, pick the right metric.</p>
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 1 · 0:00 – 0:30</span>
+    <h1>What a classifier outputs</h1>
+    <p class="muted">label, probability, boundary</p>
+  </section>
+  <section>
+    <h2>From regression to classification</h2>
+<ul>
+  <li class="fragment fade-up"><strong>Regression</strong>: ŷ is a number; minimize squared error.</li>
+  <li class="fragment fade-up"><strong>Classification</strong>: ŷ is a label; minimize misclassification (or maximize log-likelihood).</li>
+  <li class="fragment fade-up">Same X, different y. Same toolbox: pipelines, CV, regularization.</li>
+</ul>
+  </section>
+
+  <section>
+    <h2>Confusion matrix</h2>
+<p>For binary classification:</p><table style="font-size:0.95em;margin:0 auto;"><tr><td></td><td><strong>pred 0</strong></td><td><strong>pred 1</strong></td></tr><tr><td><strong>true 0</strong></td><td>TN</td><td>FP</td></tr><tr><td><strong>true 1</strong></td><td>FN</td><td>TP</td></tr></table><p class="muted" style="margin-top:1em;">All metrics — accuracy, precision, recall, F1 — are functions of these four cells.</p>
+  </section>
+
+  <section>
+    <h2>Which metric for which job?</h2>
+<ul>
+  <li class="fragment fade-up"><strong>Accuracy</strong> — only on balanced classes. Lies on imbalanced data.</li>
+  <li class="fragment fade-up"><strong>Precision</strong> — when false positives are costly (spam filter).</li>
+  <li class="fragment fade-up"><strong>Recall</strong> — when false negatives are costly (cancer screening).</li>
+  <li class="fragment fade-up"><strong>F1</strong> — when both matter equally.</li>
+  <li class="fragment fade-up"><strong>AUC</strong> — robust to threshold choice; ranks positives above negatives.</li>
+</ul>
+  </section>
+
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 2 · 0:30 – 1:00</span>
+    <h1>KNN</h1>
+    <p class="muted">the no-training baseline</p>
+  </section>
+  <section>
+    <h2>KNN in one slide</h2>
+<ul>
+  <li class="fragment fade-up">To predict a new point, find its k nearest training points.</li>
+  <li class="fragment fade-up">Take a majority vote (classification) or average (regression).</li>
+  <li class="fragment fade-up"><em>No model fit</em> — the training data <em>is</em> the model.</li>
+</ul>
+  </section>
+
+  <section>
+    <h2>k controls the bias-variance dial</h2>
+<ul>
+  <li class="fragment fade-up"><strong>k = 1</strong> — perfectly fits training, jagged boundary, high variance.</li>
+  <li class="fragment fade-up"><strong>k = 25</strong> — smooth boundary, more bias, less variance.</li>
+  <li class="fragment fade-up">Pick k with cross-validation.</li>
+</ul>
+  </section>
+
+  <section>
+    <h2>Always scale before KNN</h2>
+<p>Income (0 to 70 000) versus balance (0 to 2700) — without scaling, KNN distance is dominated by income alone. Wrap in a Pipeline:</p><pre><code class="language-python">Pipeline([
+    (&#x27;scale&#x27;, StandardScaler()),
+    (&#x27;knn&#x27;, KNeighborsClassifier(k=5)),
+])</code></pre>
+  </section>
+
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 3 · 1:00 – 1:30</span>
+    <h1>Class imbalance</h1>
+    <p class="muted">the trap</p>
+  </section>
+  <section>
+    <h2>'Always say No' scores 97%</h2>
+<p>Default rate ≈ 3%. The constant classifier 0 has 97% accuracy and 0% recall on defaulters.</p><p class="callout">Accuracy is useless when classes are imbalanced. Look at recall and AUC instead.</p>
+  </section>
+
+  <section>
+    <h2>Two fixes that always help</h2>
+<ul>
+  <li class="fragment fade-up"><code>train_test_split(stratify=y)</code> — keeps class proportions in both halves.</li>
+  <li class="fragment fade-up"><code>class_weight='balanced'</code> — weights the loss inversely to class frequency.</li>
+</ul>
+  </section>
+
+</section>
+<section class="title-slide">
+  <span class="kicker">Recap</span>
+  <h2>Three things to leave with</h2>
+  <ol>
+<li class="fragment fade-up"><strong>A classifier outputs a label (often via a probability).</strong> Read the confusion matrix every time.</li>
+<li class="fragment fade-up"><strong>KNN: no training, no fancy math, but it does need scaling.</strong></li>
+<li class="fragment fade-up"><strong>Accuracy lies on imbalanced data.</strong> Reach for recall/AUC and class_weight.</li>
+  </ol>
+  <p class="callout fragment fade-up">Next: the linear classifier — logistic regression.</p>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true, slideNumber: 'c/t', transition: 'slide',
+    transitionSpeed: 'fast', backgroundTransition: 'fade',
+    width: 1280, height: 760, margin: 0.06,
+    plugins: [ RevealNotes, RevealHighlight ],
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Logistic Regression I — Binary</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+</head>
+<body>
+<div class="reveal"><div class="slides">
+<section class="title-slide">
+  <span class="kicker">Week 4 · Course 2 · 1.5 hours</span>
+  <h1>Logistic Regression I — Binary</h1>
+  <p class="muted" style="font-size:1.1em;">From log-odds to ROC curves</p>
+</section>
+<section>
+  <span class="kicker">Roadmap</span>
+  <h2>Where we are heading</h2>
+  <div class="three-col">
+    <div class="card"><h4>0:00 · 0:30</h4><strong>The sigmoid & log-odds</strong>
+      <p class="muted" style="margin:0.3em 0 0;">from LR to LR.</p></div>
+    <div class="card"><h4>0:30 · 1:00</h4><strong>Multiple binary LR</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Smarket — markets are hard.</p></div>
+    <div class="card"><h4>1:00 · 1:30</h4><strong>ROC & threshold tuning</strong>
+      <p class="muted" style="margin:0.3em 0 0;">predict_proba in action.</p></div>
+  </div>
+  <p class="callout" style="margin-top:1.2em;">Logistic regression is the single most important ML model in industry. The linear classifier you'll keep using even after you know all the rest.</p>
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 1 · 0:00 – 0:30</span>
+    <h1>From log-odds to sigmoid</h1>
+    <p class="muted">the linear classifier</p>
+  </section>
+  <section>
+    <h2>The model</h2>
+<p style="text-align:center;font-size:1.2em;">P(y=1|x) = σ(β₀ + β₁ x), where σ(z) = 1 / (1 + e<sup>−z</sup>)</p><p style="text-align:center;font-size:1.2em;">log(p / (1−p)) = β₀ + β₁ x</p><p class="muted">Linear in the log-odds. S-shaped in probability.</p>
+  </section>
+
+  <section>
+    <h2>The loss</h2>
+<p style="text-align:center;font-size:1.2em;">ℓ(β) = Σᵢ [yᵢ log pᵢ + (1−yᵢ) log(1−pᵢ)]</p><p>Concave in β — any reasonable optimizer reaches the unique maximum.</p>
+  </section>
+
+  <section>
+    <h2>Interpreting coefficients</h2>
+<p>e<sup>β</sup> is the <strong>odds ratio</strong> per unit change of x.</p><p>For Default, β<sub>balance</sub> ≈ 0.0055 → e<sup>100·β</sup> ≈ 1.74 → +$100 balance ≈ +74% odds of default.</p>
+  </section>
+
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 2 · 0:30 – 1:00</span>
+    <h1>Multiple binary LR</h1>
+    <p class="muted">Smarket lab</p>
+  </section>
+  <section>
+    <h2>Predict market direction from lag returns</h2>
+<pre><code class="language-python">X = smarket[[&#x27;Lag1&#x27;, &#x27;Lag2&#x27;, &#x27;Lag3&#x27;, &#x27;Lag4&#x27;, &#x27;Lag5&#x27;, &#x27;Volume&#x27;]]
+y = (smarket[&#x27;Direction&#x27;] == &#x27;Up&#x27;).astype(int)
+m = LogisticRegression(C=1e6).fit(X, y)</code></pre><p class="muted">DO NOT use <code>Today</code> as a predictor — it IS the direction.</p>
+  </section>
+
+  <section>
+    <h2>The disappointment</h2>
+<ul>
+  <li class="fragment fade-up">Coefficients are tiny.</li>
+  <li class="fragment fade-up">Training accuracy barely above 50%.</li>
+  <li class="fragment fade-up">Held-out accuracy: also barely above 50%.</li>
+  <li class="fragment fade-up">Lesson: a clean lab dataset can still contain no signal. Markets are hard.</li>
+</ul>
+  </section>
+
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 3 · 1:00 – 1:30</span>
+    <h1>ROC & threshold tuning</h1>
+    <p class="muted">predict_proba</p>
+  </section>
+  <section>
+    <h2>predict_proba vs predict</h2>
+<p>Logistic regression naturally outputs a probability. <code>predict</code> just applies a 0.5 threshold — rarely the right answer on imbalanced data.</p>
+  </section>
+
+  <section>
+    <h2>ROC curve in one picture</h2>
+<ul>
+  <li class="fragment fade-up">X axis: FPR. Y axis: TPR.</li>
+  <li class="fragment fade-up">Sweep the threshold from 1 → 0; trace the curve.</li>
+  <li class="fragment fade-up">AUC = area under this curve = P(score(pos) > score(neg)).</li>
+  <li class="fragment fade-up">Diagonal line = random guessing.</li>
+</ul>
+  </section>
+
+  <section>
+    <h2>Threshold tuning for F1</h2>
+<pre><code class="language-python">ts = np.linspace(0.05, 0.6, 50)
+f1s = [f1_score(y, (proba &gt;= t)) for t in ts]
+best_t = ts[np.argmax(f1s)]</code></pre>
+    <aside class="notes">For Default at default 0.5, F1 is low because few are predicted 1. Lowering threshold to ~0.15 trades precision for recall, and F1 jumps.</aside>
+  </section>
+
+</section>
+<section class="title-slide">
+  <span class="kicker">Recap</span>
+  <h2>Three things to leave with</h2>
+  <ol>
+<li class="fragment fade-up"><strong>Linear in log-odds, sigmoid in probability.</strong> The classic linear classifier.</li>
+<li class="fragment fade-up"><strong>e<sup>β</sup> is the odds ratio per unit of x.</strong> The interpretation an executive will ask about.</li>
+<li class="fragment fade-up"><strong>0.5 is rarely the right threshold.</strong> Tune it for F1 or any cost-sensitive metric.</li>
+  </ol>
+  <p class="callout fragment fade-up">Next: more than two classes, and the regularization knob from Week 3 returns.</p>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true, slideNumber: 'c/t', transition: 'slide',
+    transitionSpeed: 'fast', backgroundTransition: 'fade',
+    width: 1280, height: 760, margin: 0.06,
+    plugins: [ RevealNotes, RevealHighlight ],
+  });
+</script>
+</body>
+</html>

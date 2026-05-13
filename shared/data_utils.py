@@ -22,6 +22,18 @@ DATASETS: dict[str, str] = {
     # AAPL daily closing prices (2014). The Grand Finale lab injects synthetic
     # NaNs into this so students get to practice cleaning real-shaped data.
     "stock-prices": "https://raw.githubusercontent.com/plotly/datasets/master/2014_apple_stock.csv",
+    # ISLP textbook datasets (raw CSVs mirrored from the ISLP Python package).
+    # Used by Week 3 (regression) and Week 4 (classification).
+    "auto":       "https://raw.githubusercontent.com/intro-stat-learning/ISLP/main/ISLP/data/Auto.csv",
+    "boston":     "https://raw.githubusercontent.com/intro-stat-learning/ISLP/main/ISLP/data/Boston.csv",
+    "hitters":    "https://raw.githubusercontent.com/intro-stat-learning/ISLP/main/ISLP/data/Hitters.csv",
+    "default":    "https://raw.githubusercontent.com/intro-stat-learning/ISLP/main/ISLP/data/Default.csv",
+    "smarket":    "https://raw.githubusercontent.com/intro-stat-learning/ISLP/main/ISLP/data/Smarket.csv",
+    "carseats":   "https://raw.githubusercontent.com/intro-stat-learning/ISLP/main/ISLP/data/Carseats.csv",
+    "khan-xtrain": "https://raw.githubusercontent.com/intro-stat-learning/ISLP/main/ISLP/data/Khan_xtrain.csv",
+    "khan-ytrain": "https://raw.githubusercontent.com/intro-stat-learning/ISLP/main/ISLP/data/Khan_ytrain.csv",
+    "khan-xtest":  "https://raw.githubusercontent.com/intro-stat-learning/ISLP/main/ISLP/data/Khan_xtest.csv",
+    "khan-ytest":  "https://raw.githubusercontent.com/intro-stat-learning/ISLP/main/ISLP/data/Khan_ytest.csv",
 }
 
 

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Feature Selection I — Subset &amp; Stepwise</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+</head>
+<body>
+<div class="reveal"><div class="slides">
+<section class="title-slide">
+  <span class="kicker">Week 3 · Course 5 · 1.5 hours</span>
+  <h1>Feature Selection I — Subset & Stepwise</h1>
+  <p class="muted" style="font-size:1.1em;">Pick the predictors that matter</p>
+</section>
+<section>
+  <span class="kicker">Roadmap</span>
+  <h2>Where we are heading</h2>
+  <div class="three-col">
+    <div class="card"><h4>0:00 · 0:30</h4><strong>Best subset</strong>
+      <p class="muted" style="margin:0.3em 0 0;">2^p subsets — combinatorial.</p></div>
+    <div class="card"><h4>0:30 · 1:00</h4><strong>Forward stepwise</strong>
+      <p class="muted" style="margin:0.3em 0 0;">greedy and cheap.</p></div>
+    <div class="card"><h4>1:00 · 1:30</h4><strong>AIC / BIC / Cp / adj-R²</strong>
+      <p class="muted" style="margin:0.3em 0 0;">model-size criteria.</p></div>
+  </div>
+  <p class="callout" style="margin-top:1.2em;">Too many predictors hurt prediction. Subset selection is the classical answer; shrinkage (Course 6) is the modern one.</p>
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 1 · 0:00 – 0:30</span>
+    <h1>Best subset</h1>
+    <p class="muted">the combinatorial cost</p>
+  </section>
+  <section>
+    <h2>Why best-subset is intractable</h2>
+<ul>
+  <li class="fragment fade-up">p = 10 → 1024 subsets. p = 20 → 1 million.</li>
+  <li class="fragment fade-up">Hitters has p = 19 → 524288 fits.</li>
+  <li class="fragment fade-up">Wonderful for laptops but exponential — useless past ~30 predictors.</li>
+</ul>
+  </section>
+
+  <section>
+    <h2>RSS always drops with more predictors</h2>
+<p>Adding a predictor can never <em>increase</em> training RSS. So we cannot pick model size by raw RSS.</p><p>We need a criterion that <em>penalizes</em> size: AIC, BIC, Cp, adjusted R², or — best — held-out CV error.</p>
+  </section>
+
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 2 · 0:30 – 1:00</span>
+    <h1>Forward stepwise</h1>
+    <p class="muted">greedy but cheap</p>
+  </section>
+  <section>
+    <h2>Forward stepwise algorithm</h2>
+<ul>
+  <li>Start with the empty model.</li>
+  <li>At each step, add the single predictor that most reduces CV error.</li>
+  <li>Stop when CV error stops improving (or fit all p, then pick the best size).</li>
+</ul>
+  </section>
+
+  <section>
+    <h2>From scratch in 12 lines</h2>
+<pre><code class="language-python">while remaining:
+    best_col, best_mse = None, inf
+    for col in remaining:
+        mse = -cross_val_score(LinearRegression(),
+                  X[chosen+[col]], y,
+                  cv=5, scoring=&#x27;neg_mean_squared_error&#x27;).mean()
+        if mse &lt; best_mse:
+            best_col, best_mse = col, mse
+    chosen.append(best_col); remaining.remove(best_col)</code></pre>
+  </section>
+
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 3 · 1:00 – 1:30</span>
+    <h1>Model-size criteria</h1>
+    <p class="muted">AIC, BIC, Cp, adj-R²</p>
+  </section>
+  <section>
+    <h2>Four formulas, four answers</h2>
+<p style="font-family:monospace;font-size:0.95em;">AIC = n log(RSS/n) + 2p</p><p style="font-family:monospace;font-size:0.95em;">BIC = n log(RSS/n) + p log n</p><p style="font-family:monospace;font-size:0.95em;">Cp  = (RSS + 2 p σ²)/n</p><p style="font-family:monospace;font-size:0.95em;">adj-R² = 1 − (1−R²)(n−1)/(n−p−1)</p>
+  </section>
+
+  <section>
+    <h2>Which to trust?</h2>
+<ul>
+  <li class="fragment fade-up"><strong>BIC</strong> — most conservative; for large n it picks fewer predictors.</li>
+  <li class="fragment fade-up"><strong>AIC / Cp</strong> — pick slightly larger models, focused on prediction.</li>
+  <li class="fragment fade-up"><strong>adj-R²</strong> — loosest, easiest to fool with collinear predictors.</li>
+  <li class="fragment fade-up">Pick a criterion <em>before</em> you look at the answers, and consider CV the gold standard.</li>
+</ul>
+  </section>
+
+</section>
+<section class="title-slide">
+  <span class="kicker">Recap</span>
+  <h2>Three things to leave with</h2>
+  <ol>
+<li class="fragment fade-up"><strong>Best-subset is exponential</strong> — useless past ~30 predictors.</li>
+<li class="fragment fade-up"><strong>Forward stepwise is greedy and almost always good enough.</strong></li>
+<li class="fragment fade-up"><strong>BIC ≤ Cp ≈ AIC ≤ adj-R²</strong> in how many predictors they keep. Pick first, then look.</li>
+  </ol>
+  <p class="callout fragment fade-up">Next: instead of picking features in or out, shrink them softly with Ridge and Lasso.</p>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true, slideNumber: 'c/t', transition: 'slide',
+    transitionSpeed: 'fast', backgroundTransition: 'fade',
+    width: 1280, height: 760, margin: 0.06,
+    plugins: [ RevealNotes, RevealHighlight ],
+  });
+</script>
+</body>
+</html>

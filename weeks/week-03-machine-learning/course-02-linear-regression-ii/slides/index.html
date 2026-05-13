@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Linear Regression II — Multiple LR &amp; Diagnostics</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+</head>
+<body>
+<div class="reveal"><div class="slides">
+<section class="title-slide">
+  <span class="kicker">Week 3 · Course 2 · 1.5 hours</span>
+  <h1>Linear Regression II — Multiple LR & Diagnostics</h1>
+  <p class="muted" style="font-size:1.1em;">Many predictors, collinearity, residual plots, and categorical encoding</p>
+</section>
+<section>
+  <span class="kicker">Roadmap</span>
+  <h2>Where we are heading</h2>
+  <div class="three-col">
+    <div class="card"><h4>0:00 · 0:30</h4><strong>Multiple LR</strong>
+      <p class="muted" style="margin:0.3em 0 0;">matrix form, collinearity, VIF.</p></div>
+    <div class="card"><h4>0:30 · 1:00</h4><strong>Diagnostics</strong>
+      <p class="muted" style="margin:0.3em 0 0;">residuals, leverage, Cook's distance.</p></div>
+    <div class="card"><h4>1:00 · 1:30</h4><strong>Categoricals & interactions</strong>
+      <p class="muted" style="margin:0.3em 0 0;">one-hot, Price × Urban.</p></div>
+  </div>
+  <p class="callout" style="margin-top:1.2em;">Real datasets are multi-predictor and full of traps. The four diagnostic plots are your first reflex when a model 'looks fine'.</p>
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 1 · 0:00 – 0:30</span>
+    <h1>Multiple regression</h1>
+    <p class="muted">Y = Xβ + ε</p>
+  </section>
+  <section>
+    <h2>The matrix form</h2>
+<p style="text-align:center;font-size:1.3em;">Y = Xβ + ε,  β̂ = (XᵀX)⁻¹ Xᵀ Y</p><p class="muted">One predictor or one hundred — the formula is the same. The expensive bit is the matrix inverse, but n ≪ 10⁴ → microseconds.</p>
+  </section>
+
+  <section>
+    <h2>Collinearity flips signs</h2>
+<p>If predictor j is well predicted by the others, its coefficient becomes unstable.</p><p style="text-align:center;font-size:1.2em;">VIF<sub>j</sub> = 1 / (1 − R²<sub>j</sub>)</p><p>VIF > 5–10 is a red flag. Drop one of the correlated pair, or use Ridge (Course 6) to stabilize.</p>
+    <aside class="notes">Run VIF in the notebook on Boston; tax, rad, nox are biggest offenders.</aside>
+  </section>
+
+  <section>
+    <h2>Never read a coefficient in isolation</h2>
+<ul>
+  <li class="fragment fade-up">Its sign depends on which other predictors are in the model.</li>
+  <li class="fragment fade-up">Its size depends on the scale of the predictor.</li>
+  <li class="fragment fade-up">Its significance depends on collinearity with the others.</li>
+</ul>
+  </section>
+
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 2 · 0:30 – 1:00</span>
+    <h1>Diagnostic plots</h1>
+    <p class="muted">the 2×2 panel</p>
+  </section>
+  <section>
+    <h2>The four plots</h2>
+<ul>
+  <li class="fragment fade-up"><strong>Residuals vs fitted</strong> — look for a curve (model misspecified).</li>
+  <li class="fragment fade-up"><strong>Q-Q plot</strong> — look for tails (heavy-tailed errors).</li>
+  <li class="fragment fade-up"><strong>Scale-location</strong> — look for a fan (heteroscedasticity).</li>
+  <li class="fragment fade-up"><strong>Residuals vs leverage</strong> — look for high-leverage outliers (Cook's distance).</li>
+</ul>
+  </section>
+
+  <section>
+    <h2>Leverage — the hat matrix</h2>
+<p style="text-align:center;font-size:1.2em;">H = X(XᵀX)⁻¹Xᵀ,  hᵢ = Hᵢᵢ</p><p>A high <code>hᵢ</code> means observation i has unusual <em>predictor</em> values — it pulls the fit toward itself. Combined with a big residual = Cook's distance = trouble.</p>
+  </section>
+
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 3 · 1:00 – 1:30</span>
+    <h1>Categoricals & interactions</h1>
+    <p class="muted">one-hot and products</p>
+  </section>
+  <section>
+    <h2>One-hot encoding</h2>
+<pre><code class="language-python">df = pd.get_dummies(carseats,
+    columns=[&#x27;ShelveLoc&#x27;,&#x27;Urban&#x27;,&#x27;US&#x27;],
+    drop_first=True, dtype=float)</code></pre><p class="muted">drop_first=True avoids the dummy-variable trap (perfect collinearity with the intercept).</p>
+  </section>
+
+  <section>
+    <h2>Interactions are just products</h2>
+<pre><code class="language-python">df[&#x27;Price_x_Urban&#x27;] = df[&#x27;Price&#x27;] * df[&#x27;Urban_Yes&#x27;]</code></pre><p>The coefficient on the product term tells you how the effect of Price <em>changes</em> when Urban switches from No to Yes.</p>
+  </section>
+
+</section>
+<section class="title-slide">
+  <span class="kicker">Recap</span>
+  <h2>Three things to leave with</h2>
+  <ol>
+<li class="fragment fade-up"><strong>β̂ = (XᵀX)⁻¹Xᵀy</strong>, but always check VIF first.</li>
+<li class="fragment fade-up"><strong>The 2×2 diagnostic panel</strong> is the first reflex. Five seconds tell you a lot.</li>
+<li class="fragment fade-up"><strong>Categoricals one-hot, interactions multiply.</strong> Drop one dummy to avoid collinearity.</li>
+  </ol>
+  <p class="callout fragment fade-up">Next: feature engineering — scaling, polynomial expansion, pipelines.</p>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true, slideNumber: 'c/t', transition: 'slide',
+    transitionSpeed: 'fast', backgroundTransition: 'fade',
+    width: 1280, height: 760, margin: 0.06,
+    plugins: [ RevealNotes, RevealHighlight ],
+  });
+</script>
+</body>
+</html>

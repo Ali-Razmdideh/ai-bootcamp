@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cross-Validation</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+</head>
+<body>
+<div class="reveal"><div class="slides">
+<section class="title-slide">
+  <span class="kicker">Week 3 · Course 4 · 1.5 hours</span>
+  <h1>Cross-Validation</h1>
+  <p class="muted" style="font-size:1.1em;">Stop fooling yourself about test error</p>
+</section>
+<section>
+  <span class="kicker">Roadmap</span>
+  <h2>Where we are heading</h2>
+  <div class="three-col">
+    <div class="card"><h4>0:00 · 0:30</h4><strong>The trap</strong>
+      <p class="muted" style="margin:0.3em 0 0;">one split → ten different best degrees.</p></div>
+    <div class="card"><h4>0:30 · 1:00</h4><strong>K-fold & LOOCV</strong>
+      <p class="muted" style="margin:0.3em 0 0;">the right tool for tuning.</p></div>
+    <div class="card"><h4>1:00 · 1:30</h4><strong>The bootstrap</strong>
+      <p class="muted" style="margin:0.3em 0 0;">CIs without distributional assumptions.</p></div>
+  </div>
+  <p class="callout" style="margin-top:1.2em;">A single train/test split is noisy. CV averages out the noise; the bootstrap gives a CI for anything.</p>
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 1 · 0:00 – 0:30</span>
+    <h1>The validation-set trap</h1>
+    <p class="muted">one split lies</p>
+  </section>
+  <section>
+    <h2>Why one split is not enough</h2>
+<ul>
+  <li class="fragment fade-up">Pick polynomial degree by held-out MSE → answer depends on the split.</li>
+  <li class="fragment fade-up">Ten random splits give ten different 'best' degrees.</li>
+  <li class="fragment fade-up">That spread is <em>noise</em>, not signal.</li>
+</ul>
+  </section>
+
+  <section>
+    <h2>Live demo</h2>
+<pre><code class="language-python">for seed in range(10):
+    Xtr, Xte, ytr, yte = train_test_split(
+        x, y, test_size=0.5, random_state=seed)
+    # …pick best degree from this single split…</code></pre>
+  </section>
+
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 2 · 0:30 – 1:00</span>
+    <h1>K-fold and LOOCV</h1>
+    <p class="muted">average over many splits</p>
+  </section>
+  <section>
+    <h2>K-fold cross-validation</h2>
+<p>Split into K folds. For k = 1…K, train on the other K−1 folds and score on fold k. Average the K scores.</p><ul>
+  <li class="fragment fade-up">K = 5 or K = 10 is the standard. K = n is leave-one-out (LOOCV).</li>
+  <li class="fragment fade-up"><code>cross_val_score(model, X, y, cv=KFold(10))</code> is one line.</li>
+</ul>
+  </section>
+
+  <section>
+    <h2>The CV curve</h2>
+<p>Plot CV error vs the hyperparameter (polynomial degree, α, λ, k, …). Pick the minimum.</p><p class="muted">For Auto mpg, the CV curve picks a stable d ≈ 2.</p>
+    <aside class="notes">Reproduce ISLP Fig 5.4. Stable winner across folds = trustworthy choice.</aside>
+  </section>
+
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 3 · 1:00 – 1:30</span>
+    <h1>The bootstrap</h1>
+    <p class="muted">resample with replacement</p>
+  </section>
+  <section>
+    <h2>Bootstrap = sampling-distribution emulator</h2>
+<pre><code class="language-python">for k in range(B):
+    idx = rng.choice(n, n, replace=True)
+    theta_boot[k] = compute_statistic(data[idx])
+se = theta_boot.std()
+lo, hi = np.quantile(theta_boot, [0.025, 0.975])</code></pre><p class="muted">Works for any statistic — slope, median, ratio, correlation — without distributional assumptions.</p>
+  </section>
+
+  <section>
+    <h2>Preview: stratification for classification</h2>
+<p>Next week <code>y</code> is a class label. <code>StratifiedKFold</code> keeps class proportions stable across folds.</p>
+  </section>
+
+</section>
+<section class="title-slide">
+  <span class="kicker">Recap</span>
+  <h2>Three things to leave with</h2>
+  <ol>
+<li class="fragment fade-up"><strong>One split is noise.</strong> Always use K-fold for hyperparameter tuning.</li>
+<li class="fragment fade-up"><strong>Plot the CV curve and pick the minimum.</strong> If it's flat, simpler wins.</li>
+<li class="fragment fade-up"><strong>The bootstrap gives a CI for anything.</strong> Two lines of Python.</li>
+  </ol>
+  <p class="callout fragment fade-up">Next: with CV in hand, we can pick features and shrinkage strength honestly.</p>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true, slideNumber: 'c/t', transition: 'slide',
+    transitionSpeed: 'fast', backgroundTransition: 'fade',
+    width: 1280, height: 760, margin: 0.06,
+    plugins: [ RevealNotes, RevealHighlight ],
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Feature Engineering</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+</head>
+<body>
+<div class="reveal"><div class="slides">
+<section class="title-slide">
+  <span class="kicker">Week 3 · Course 3 · 1.5 hours</span>
+  <h1>Feature Engineering</h1>
+  <p class="muted" style="font-size:1.1em;">Scaling, polynomial features, encodings, pipelines</p>
+</section>
+<section>
+  <span class="kicker">Roadmap</span>
+  <h2>Where we are heading</h2>
+  <div class="three-col">
+    <div class="card"><h4>0:00 · 0:30</h4><strong>Scaling & pipelines</strong>
+      <p class="muted" style="margin:0.3em 0 0;">StandardScaler, log1p, Pipeline.</p></div>
+    <div class="card"><h4>0:30 · 1:00</h4><strong>Polynomial features</strong>
+      <p class="muted" style="margin:0.3em 0 0;">underfit, fit, overfit.</p></div>
+    <div class="card"><h4>1:00 · 1:30</h4><strong>Encoding & interactions</strong>
+      <p class="muted" style="margin:0.3em 0 0;">OneHot, ColumnTransformer.</p></div>
+  </div>
+  <p class="callout" style="margin-top:1.2em;">Models do not learn from raw columns — they learn from the features you hand them. This is where applied ML lives.</p>
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 1 · 0:00 – 0:30</span>
+    <h1>Scaling & pipelines</h1>
+    <p class="muted">StandardScaler, log1p</p>
+  </section>
+  <section>
+    <h2>Why scale at all?</h2>
+<ul>
+  <li class="fragment fade-up">Plain LR doesn't care — but <em>regularized</em> LR does (Ridge/Lasso in Course 6).</li>
+  <li class="fragment fade-up">Distance-based methods (KNN, SVM next week) crumble without scaling.</li>
+  <li class="fragment fade-up">Neural nets converge faster on standardized inputs.</li>
+</ul>
+  </section>
+
+  <section>
+    <h2>Pipeline = scaler + estimator, one object</h2>
+<pre><code class="language-python">from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression
+
+pipe = Pipeline([
+    (&#x27;scale&#x27;, StandardScaler()),
+    (&#x27;lr&#x27;, LinearRegression()),
+])
+pipe.fit(X_train, y_train)
+pipe.score(X_test, y_test)</code></pre><p class="muted">Pipelines survive train/test splits — they fit the scaler on train only.</p>
+  </section>
+
+  <section>
+    <h2>Skew? log1p it.</h2>
+<p>Many natural features (income, counts, prices) are right-skewed.</p><p style="text-align:center;font-size:1.2em;">log1p(x) = log(1 + x)</p><p class="muted">log1p handles zeros (unlike plain log). Always sanity-check with a histogram.</p>
+  </section>
+
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 2 · 0:30 – 1:00</span>
+    <h1>Polynomial features</h1>
+    <p class="muted">underfit ↔ overfit</p>
+  </section>
+  <section>
+    <h2>Polynomial features turn LR into a curve-fitter</h2>
+<pre><code class="language-python">from sklearn.preprocessing import PolynomialFeatures
+PolynomialFeatures(degree=3).fit_transform(X)
+# [x] -&gt; [1, x, x^2, x^3]</code></pre><p class="muted">Linear in the parameters β, non-linear in x. Still linear regression!</p>
+  </section>
+
+  <section>
+    <h2>Bias / variance, visualized</h2>
+<ul>
+  <li class="fragment fade-up"><strong>d = 1</strong> — too straight (underfit, high bias).</li>
+  <li class="fragment fade-up"><strong>d = 2</strong> — captures the curve (just right).</li>
+  <li class="fragment fade-up"><strong>d = 15</strong> — wagging tails (overfit, high variance).</li>
+</ul><p class="callout">How do you pick d without eyeballing? Cross-validation, next course.</p>
+  </section>
+
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 3 · 1:00 – 1:30</span>
+    <h1>Encoding & interactions</h1>
+    <p class="muted">ColumnTransformer is your friend</p>
+  </section>
+  <section>
+    <h2>Different transforms for different columns</h2>
+<pre><code class="language-python">ColumnTransformer([
+    (&#x27;num&#x27;, StandardScaler(), numeric_cols),
+    (&#x27;cat&#x27;, OneHotEncoder(drop=&#x27;first&#x27;), categorical_cols),
+])</code></pre>
+  </section>
+
+  <section>
+    <h2>Interactions in bulk</h2>
+<pre><code class="language-python">PolynomialFeatures(interaction_only=True, include_bias=False)
+# adds every x_i * x_j pair</code></pre><p class="muted">Combinatorial explosion ahead — combine with Lasso (Course 6) to keep only the useful interactions.</p>
+  </section>
+
+</section>
+<section class="title-slide">
+  <span class="kicker">Recap</span>
+  <h2>Three things to leave with</h2>
+  <ol>
+<li class="fragment fade-up"><strong>Scale numeric features</strong> before regularizing or measuring distances.</li>
+<li class="fragment fade-up"><strong>Polynomial features turn LR into a flexible curve fitter.</strong> Pick degree with care.</li>
+<li class="fragment fade-up"><strong>Pipelines + ColumnTransformer</strong> keep preprocessing honest under train/test splits.</li>
+  </ol>
+  <p class="callout fragment fade-up">Next: how do you pick the degree without fooling yourself? Cross-validation.</p>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true, slideNumber: 'c/t', transition: 'slide',
+    transitionSpeed: 'fast', backgroundTransition: 'fade',
+    width: 1280, height: 760, margin: 0.06,
+    plugins: [ RevealNotes, RevealHighlight ],
+  });
+</script>
+</body>
+</html>

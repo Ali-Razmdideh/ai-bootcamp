@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Feature Selection II — Ridge, Lasso, Elastic Net</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+</head>
+<body>
+<div class="reveal"><div class="slides">
+<section class="title-slide">
+  <span class="kicker">Week 3 · Course 6 · 1.5 hours</span>
+  <h1>Feature Selection II — Ridge, Lasso, Elastic Net</h1>
+  <p class="muted" style="font-size:1.1em;">Shrink instead of select</p>
+</section>
+<section>
+  <span class="kicker">Roadmap</span>
+  <h2>Where we are heading</h2>
+  <div class="three-col">
+    <div class="card"><h4>0:00 · 0:30</h4><strong>Ridge</strong>
+      <p class="muted" style="margin:0.3em 0 0;">L2 penalty, smooth shrinkage.</p></div>
+    <div class="card"><h4>0:30 · 1:00</h4><strong>Lasso</strong>
+      <p class="muted" style="margin:0.3em 0 0;">L1 penalty, exact zeros.</p></div>
+    <div class="card"><h4>1:00 · 1:30</h4><strong>Elastic Net & pipelines</strong>
+      <p class="muted" style="margin:0.3em 0 0;">the modern default.</p></div>
+  </div>
+  <p class="callout" style="margin-top:1.2em;">Subset selection is discrete (in or out). Shrinkage is continuous (pulled toward zero). For p > 20, shrinkage almost always wins.</p>
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 1 · 0:00 – 0:30</span>
+    <h1>Ridge</h1>
+    <p class="muted">L2 penalty</p>
+  </section>
+  <section>
+    <h2>Ridge objective</h2>
+<p style="text-align:center;font-size:1.25em;">minimize Σᵢ (yᵢ − ŷᵢ)² + <span style="color:#c33;">α Σⱼ βⱼ²</span></p><ul>
+  <li class="fragment fade-up">α → 0: same as OLS.</li>
+  <li class="fragment fade-up">α → ∞: every β shrinks to 0.</li>
+  <li class="fragment fade-up">Scale matters: <em>always</em> standardize before Ridge.</li>
+</ul>
+  </section>
+
+  <section>
+    <h2>Coefficient paths</h2>
+<p>Plot every β<sub>j</sub> versus α (log axis). All paths shrink toward zero, none reach exactly zero.</p><p class="muted">Pick α with GridSearchCV over a log grid (e.g. np.logspace(-2, 4, 50)).</p>
+  </section>
+
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 2 · 0:30 – 1:00</span>
+    <h1>Lasso</h1>
+    <p class="muted">L1 penalty, exact zeros</p>
+  </section>
+  <section>
+    <h2>Lasso objective</h2>
+<p style="text-align:center;font-size:1.25em;">minimize Σᵢ (yᵢ − ŷᵢ)² + <span style="color:#c33;">α Σⱼ |βⱼ|</span></p><p>The L1 penalty creates a <em>corner</em> at zero — some coefficients land exactly there.</p>
+  </section>
+
+  <section>
+    <h2>Lasso is a feature selector</h2>
+<ul>
+  <li class="fragment fade-up">Survivor coefficients form an interpretable subset.</li>
+  <li class="fragment fade-up">Use when you suspect many irrelevant features.</li>
+  <li class="fragment fade-up">Use when you want a sparse model for production speed.</li>
+</ul><p class="callout">Comparison with forward stepwise: usually similar features. Lasso is faster and one-shot.</p>
+  </section>
+
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 3 · 1:00 – 1:30</span>
+    <h1>Elastic Net & pipelines</h1>
+    <p class="muted">the modern default</p>
+  </section>
+  <section>
+    <h2>Elastic Net = α (l1_ratio · L1 + (1 − l1_ratio) · L2)</h2>
+<ul>
+  <li class="fragment fade-up">Combines Lasso sparsity with Ridge stability.</li>
+  <li class="fragment fade-up">Helps when features are correlated in groups.</li>
+  <li class="fragment fade-up">l1_ratio = 1 → Lasso. l1_ratio = 0 → Ridge.</li>
+</ul>
+  </section>
+
+  <section>
+    <h2>End-to-end pipeline + CV</h2>
+<pre><code class="language-python">Pipeline([
+    (&#x27;scale&#x27;, StandardScaler()),
+    (&#x27;poly&#x27;, PolynomialFeatures(2, interaction_only=True)),
+    (&#x27;lasso&#x27;, Lasso(max_iter=20000)),
+])
+GridSearchCV(pipe, {&#x27;lasso__alpha&#x27;: np.logspace(-1, 2, 12)},
+             cv=5, scoring=&#x27;neg_mean_squared_error&#x27;)</code></pre>
+  </section>
+
+</section>
+<section class="title-slide">
+  <span class="kicker">Recap</span>
+  <h2>Three things to leave with</h2>
+  <ol>
+<li class="fragment fade-up"><strong>Ridge shrinks; Lasso shrinks and zeros.</strong> Always scale first.</li>
+<li class="fragment fade-up"><strong>Tune α with GridSearchCV over a log grid.</strong> Coefficient paths are diagnostic.</li>
+<li class="fragment fade-up"><strong>Pipeline + CV = honest selection.</strong> The whole loop in 5 lines of sklearn.</li>
+  </ol>
+  <p class="callout fragment fade-up">End of Week 3. Next week: from regression to classification.</p>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true, slideNumber: 'c/t', transition: 'slide',
+    transitionSpeed: 'fast', backgroundTransition: 'fade',
+    width: 1280, height: 760, margin: 0.06,
+    plugins: [ RevealNotes, RevealHighlight ],
+  });
+</script>
+</body>
+</html>
