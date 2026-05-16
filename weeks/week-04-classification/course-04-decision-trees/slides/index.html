@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/interactive.css" />
 </head>
 <body>
 <div class="reveal"><div class="slides">
@@ -179,6 +180,117 @@
     <p class="callout">Gini and entropy are smooth and pick more informative splits than raw error rate. In practice they agree on almost everything.</p>
   </section>
 
+  <section class="exercise" data-packages="numpy,pandas,scikit-learn">
+    <h2>Exercise — Grow a depth-3 classification tree</h2>
+    <div class="ex-prompt">Build the binary target <code>high_tip = (tip / total_bill) &gt; 0.18</code> on the <code>tips</code> dataset, one-hot encode the categoricals, and fit a <code>DecisionTreeClassifier(max_depth=3, random_state=0)</code>. Assign the test accuracy to <code>result</code>.</div>
+<textarea class="ex-code">import pandas as pd
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split
+
+tips = pd.DataFrame({
+    'total_bill':[16.99,10.34,21.01,23.68,24.59,25.29,8.77,26.88,15.04,14.78,
+                  10.27,35.26,15.42,18.43,14.83,21.58,10.33,16.29,16.97,20.65,
+                  17.92,20.29,15.77,39.42,19.82,17.81,13.37,12.69,21.70,19.65,
+                  9.55,18.35,15.06,20.69,17.78,24.06,16.31,16.93,18.69,31.27],
+    'tip':[1.01,1.66,3.50,3.31,3.61,4.71,2.00,3.12,1.96,3.23,
+           1.71,5.00,1.57,3.00,3.02,3.92,1.67,3.71,3.50,3.35,
+           4.08,2.75,2.23,7.58,3.18,2.34,2.00,2.00,4.30,3.00,
+           1.45,2.50,3.00,2.45,3.27,3.60,2.00,3.07,2.31,5.00],
+    'size':[2,3,3,2,4,4,2,4,2,2,2,4,2,4,2,2,3,3,3,3,2,2,2,4,2,4,2,2,2,2,2,4,2,5,2,3,3,3,3,3],
+    'day':['Sun','Sun','Sun','Sun','Sun','Sun','Sun','Sun','Sun','Sun',
+           'Sun','Sun','Sun','Sun','Sun','Sun','Sun','Sun','Sat','Sat',
+           'Sat','Sat','Sat','Sat','Sat','Sat','Sat','Sat','Sat','Sat',
+           'Sat','Sat','Sat','Sat','Sat','Sat','Sat','Sat','Sat','Sat'],
+    'time':['Dinner']*40,
+    'sex':['F','M','M','M','F','M','M','M','M','M','M','F','M','M','F','M','F','F','F','M',
+           'M','M','F','M','F','M','M','F','M','M','F','F','M','F','F','M','F','M','M','M'],
+    'smoker':['No']*20 + ['Yes','No','No','No','No','No','No','No','No','No','No','No','No','Yes','No','No','No','No','No','No'],
+})
+tips['high_tip'] = ((tips['tip'] / tips['total_bill']) > 0.18).astype(int)
+
+X = pd.get_dummies(tips[['total_bill','size','day','time','sex','smoker']],
+                   columns=['day','time','sex','smoker'], drop_first=True, dtype=float)
+y = tips['high_tip']
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=0, stratify=y)
+
+tree = None
+result = None  # test accuracy
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+from sklearn.tree import DecisionTreeClassifier
+assert tree is not None, "Fit a DecisionTreeClassifier and assign it to `tree`."
+assert isinstance(tree, DecisionTreeClassifier), "`tree` should be a DecisionTreeClassifier."
+assert tree.get_params()['max_depth'] == 3, "Use max_depth=3."
+assert result is not None, "Assign test accuracy to `result`."
+expected = DecisionTreeClassifier(max_depth=3, random_state=0).fit(Xtr, ytr).score(Xte, yte)
+assert np.isclose(result, expected, atol=1e-6), f"Expected accuracy {expected:.4f}, got {result}."
+</script>
+<script type="text/x-solution">tree = DecisionTreeClassifier(max_depth=3, random_state=0).fit(Xtr, ytr)
+result = tree.score(Xte, yte)
+print(f'depth-3 test accuracy = {result:.4f}')</script>
+<script type="text/x-explain">Trees on classification use Gini (or entropy) instead of RSS — but the recursive top-down greedy procedure is identical. With max_depth=3 you get at most 8 leaves, each predicting the majority class of its region.</script>
+  </section>
+
+  <section class="exercise" data-packages="numpy,pandas,scikit-learn">
+    <h2>Exercise — Read the root split</h2>
+    <div class="ex-prompt">Re-fit the same depth-3 tree and identify which feature the <strong>root</strong> splits on. Assign that feature name (a string from <code>X.columns</code>) to <code>result</code>.</div>
+<textarea class="ex-code">import pandas as pd
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split
+
+tips = pd.DataFrame({
+    'total_bill':[16.99,10.34,21.01,23.68,24.59,25.29,8.77,26.88,15.04,14.78,
+                  10.27,35.26,15.42,18.43,14.83,21.58,10.33,16.29,16.97,20.65,
+                  17.92,20.29,15.77,39.42,19.82,17.81,13.37,12.69,21.70,19.65,
+                  9.55,18.35,15.06,20.69,17.78,24.06,16.31,16.93,18.69,31.27],
+    'tip':[1.01,1.66,3.50,3.31,3.61,4.71,2.00,3.12,1.96,3.23,
+           1.71,5.00,1.57,3.00,3.02,3.92,1.67,3.71,3.50,3.35,
+           4.08,2.75,2.23,7.58,3.18,2.34,2.00,2.00,4.30,3.00,
+           1.45,2.50,3.00,2.45,3.27,3.60,2.00,3.07,2.31,5.00],
+    'size':[2,3,3,2,4,4,2,4,2,2,2,4,2,4,2,2,3,3,3,3,2,2,2,4,2,4,2,2,2,2,2,4,2,5,2,3,3,3,3,3],
+    'day':['Sun']*18 + ['Sat']*22,
+    'time':['Dinner']*40,
+    'sex':['F','M','M','M','F','M','M','M','M','M','M','F','M','M','F','M','F','F','F','M',
+           'M','M','F','M','F','M','M','F','M','M','F','F','M','F','F','M','F','M','M','M'],
+    'smoker':['No']*20 + ['Yes','No','No','No','No','No','No','No','No','No','No','No','No','Yes','No','No','No','No','No','No'],
+})
+tips['high_tip'] = ((tips['tip'] / tips['total_bill']) > 0.18).astype(int)
+X = pd.get_dummies(tips[['total_bill','size','day','time','sex','smoker']],
+                   columns=['day','time','sex','smoker'], drop_first=True, dtype=float)
+y = tips['high_tip']
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=0, stratify=y)
+tree = DecisionTreeClassifier(max_depth=3, random_state=0).fit(Xtr, ytr)
+
+# inspect tree.tree_.feature[0] — the index of the root split feature
+result = None  # the feature name (string)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+expected = X.columns[tree.tree_.feature[0]]
+assert result is not None, "Assign the root-split feature name to `result`."
+assert result == expected, f"Expected '{expected}', got '{result}'."
+</script>
+<script type="text/x-solution">result = X.columns[tree.tree_.feature[0]]
+print('root split feature:', result)</script>
+<script type="text/x-explain">The root is whichever (feature, threshold) most reduced Gini across all candidates — usually the predictor most correlated with the target. Reading the root gives a one-glance answer to "what matters most".</script>
+  </section>
+
   <section>
     <h2>The Heart dataset</h2>
     <div class="two-col">
@@ -258,6 +370,82 @@ alphas = path.ccp_alphas               # candidate αs
       <li class="fragment fade-up">K-fold CV on α; pick the α minimizing CV error.</li>
       <li class="fragment fade-up">Return the subtree of T₀ corresponding to that α.</li>
     </ol>
+  </section>
+
+  <section class="exercise" data-packages="numpy,pandas,scikit-learn">
+    <h2>Exercise — Cost-complexity prune with CV</h2>
+    <div class="ex-prompt">Grow an unpruned tree on the same tips data, walk the <code>cost_complexity_pruning_path</code>, pick the α with the best 5-fold CV accuracy, refit, and assign the pruned tree's test accuracy to <code>result</code>.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split, cross_val_score
+
+tips = pd.DataFrame({
+    'total_bill':[16.99,10.34,21.01,23.68,24.59,25.29,8.77,26.88,15.04,14.78,
+                  10.27,35.26,15.42,18.43,14.83,21.58,10.33,16.29,16.97,20.65,
+                  17.92,20.29,15.77,39.42,19.82,17.81,13.37,12.69,21.70,19.65,
+                  9.55,18.35,15.06,20.69,17.78,24.06,16.31,16.93,18.69,31.27,
+                  16.04,17.46,13.94,9.68,30.40,18.29,22.23,32.40,28.55,18.04],
+    'tip':[1.01,1.66,3.50,3.31,3.61,4.71,2.00,3.12,1.96,3.23,
+           1.71,5.00,1.57,3.00,3.02,3.92,1.67,3.71,3.50,3.35,
+           4.08,2.75,2.23,7.58,3.18,2.34,2.00,2.00,4.30,3.00,
+           1.45,2.50,3.00,2.45,3.27,3.60,2.00,3.07,2.31,5.00,
+           2.24,2.54,3.06,1.32,5.60,3.00,5.00,6.00,2.05,3.00],
+    'size':[2,3,3,2,4,4,2,4,2,2,2,4,2,4,2,2,3,3,3,3,
+            2,2,2,4,2,4,2,2,2,2,2,4,2,5,2,3,3,3,3,3,
+            3,2,2,2,4,2,2,4,3,3],
+    'sex':['F','M','M','M','F','M','M','M','M','M','M','F','M','M','F','M','F','F','F','M',
+           'M','M','F','M','F','M','M','F','M','M','F','F','M','F','F','M','F','M','M','M',
+           'M','M','M','M','M','F','M','M','M','M'],
+    'smoker':['No']*20 + ['Yes','No','No','No','No','No','No','No','No','No',
+                          'No','No','No','Yes','No','No','No','No','No','No',
+                          'No','No','No','No','Yes','No','No','No','No','No'],
+})
+tips['high_tip'] = ((tips['tip'] / tips['total_bill']) > 0.18).astype(int)
+X = pd.get_dummies(tips[['total_bill','size','sex','smoker']],
+                   columns=['sex','smoker'], drop_first=True, dtype=float)
+y = tips['high_tip']
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=0, stratify=y)
+
+# 1. fit a full tree, get its pruning path
+# 2. for each alpha (drop last), 5-fold CV accuracy
+# 3. pick best alpha, refit, score on test
+pruned = None
+result = None  # test accuracy of the pruned tree
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import cross_val_score
+assert pruned is not None, "Fit the pruned tree and assign it to `pruned`."
+assert result is not None, "Assign the pruned test accuracy to `result`."
+full = DecisionTreeClassifier(random_state=0).fit(Xtr, ytr)
+path = full.cost_complexity_pruning_path(Xtr, ytr)
+alphas = path.ccp_alphas[:-1]
+scores = [cross_val_score(DecisionTreeClassifier(random_state=0, ccp_alpha=a),
+                          Xtr, ytr, cv=5).mean() for a in alphas]
+best_a = alphas[int(np.argmax(scores))]
+expected = DecisionTreeClassifier(random_state=0, ccp_alpha=best_a).fit(Xtr, ytr).score(Xte, yte)
+assert np.isclose(result, expected, atol=1e-6), f"Expected accuracy {expected:.4f}, got {result}."
+</script>
+<script type="text/x-solution">full = DecisionTreeClassifier(random_state=0).fit(Xtr, ytr)
+path = full.cost_complexity_pruning_path(Xtr, ytr)
+alphas = path.ccp_alphas[:-1]
+scores = [cross_val_score(DecisionTreeClassifier(random_state=0, ccp_alpha=a),
+                          Xtr, ytr, cv=5).mean() for a in alphas]
+best_a = alphas[int(np.argmax(scores))]
+pruned = DecisionTreeClassifier(random_state=0, ccp_alpha=best_a).fit(Xtr, ytr)
+result = pruned.score(Xte, yte)
+print(f'best alpha = {best_a:.4f}  test accuracy = {result:.4f}')</script>
+<script type="text/x-explain">Growing fully then pruning beats early-stopping: a "useless" split now can enable a great split later. Cross-validation on α picks the bias-variance sweet spot — typically a smaller, more robust tree than the unpruned one.</script>
   </section>
 </section>
 
@@ -355,6 +543,7 @@ alphas = path.ccp_alphas               # candidate αs
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="../../../../shared/slides-template/interactive.js"></script>
 <script>
   Reveal.initialize({
     hash: true, slideNumber: 'c/t', transition: 'slide',

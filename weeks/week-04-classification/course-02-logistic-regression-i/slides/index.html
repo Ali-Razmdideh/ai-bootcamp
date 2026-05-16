@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/interactive.css" />
 </head>
 <body>
 <div class="reveal"><div class="slides">
@@ -201,6 +202,138 @@ m = LogisticRegression(max_iter=2000).fit(
       </div>
     </div>
   </section>
+
+  <section class="exercise" data-packages="numpy,pandas,scikit-learn">
+    <h2>Exercise — Fit logistic regression on Titanic</h2>
+    <div class="ex-prompt">Using the small inlined <code>titanic</code> frame, predict <code>survived</code> from <code>pclass, sex, age, sibsp, parch, fare, embarked</code>. One-hot encode <code>sex</code> and <code>embarked</code> (<code>drop_first=True</code>), do a stratified 70/30 split with <code>random_state=0</code>, fit <code>LogisticRegression(max_iter=2000)</code>, and assign held-out accuracy to <code>acc</code> and AUC to <code>auc_score</code>.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_auc_score
+
+rng = np.random.default_rng(0)
+n = 400
+pclass = rng.choice([1,2,3], size=n, p=[0.25,0.25,0.5])
+sex = rng.choice(['male','female'], size=n, p=[0.65,0.35])
+age = np.clip(rng.normal(30, 12, n), 1, 75)
+sibsp = rng.integers(0, 4, n); parch = rng.integers(0, 3, n)
+fare = np.clip(rng.normal(40, 25, n) + (4-pclass)*20, 5, 200)
+embarked = rng.choice(['S','C','Q'], size=n, p=[0.7,0.2,0.1])
+logit = (-0.5 + 1.6*(sex=='female') - 0.9*(pclass-1) - 0.02*age
+         + 0.004*fare - 0.2*sibsp)
+p = 1/(1+np.exp(-logit))
+survived = (rng.uniform(size=n) < p).astype(int)
+titanic = pd.DataFrame({'survived':survived,'pclass':pclass,'sex':sex,
+                        'age':age,'sibsp':sibsp,'parch':parch,
+                        'fare':fare,'embarked':embarked})
+
+# your code: build X, y; split; fit; compute acc and auc_score
+acc = None
+auc_score = None
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+assert acc is not None, "Assign held-out accuracy to `acc`."
+assert auc_score is not None, "Assign held-out AUC to `auc_score`."
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_auc_score
+df = pd.get_dummies(titanic, columns=['sex','embarked'], drop_first=True, dtype=float)
+y_ = df['survived']; X_ = df.drop(columns=['survived'])
+Xtr, Xte, ytr, yte = train_test_split(X_, y_, test_size=0.3, random_state=0, stratify=y_)
+m_ = LogisticRegression(max_iter=2000).fit(Xtr, ytr)
+exp_acc = m_.score(Xte, yte)
+exp_auc = roc_auc_score(yte, m_.predict_proba(Xte)[:,1])
+import numpy as np
+assert np.isclose(acc, exp_acc, atol=1e-6), f"accuracy off: got {acc}, expected {exp_acc:.4f}"
+assert np.isclose(auc_score, exp_auc, atol=1e-6), f"AUC off: got {auc_score}, expected {exp_auc:.4f}"
+</script>
+<script type="text/x-solution">df = pd.get_dummies(titanic, columns=['sex','embarked'], drop_first=True, dtype=float)
+y = df['survived']; X = df.drop(columns=['survived'])
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=0, stratify=y)
+m = LogisticRegression(max_iter=2000).fit(Xtr, ytr)
+acc = m.score(Xte, yte)
+auc_score = roc_auc_score(yte, m.predict_proba(Xte)[:, 1])
+print(f"accuracy = {acc:.4f}")
+print(f"AUC      = {auc_score:.4f}")</script>
+<script type="text/x-explain">One-hot encoding turns categorical levels into 0/1 columns the linear model can score; <code>drop_first</code> avoids the dummy-variable trap. Accuracy summarizes one threshold; AUC summarizes the whole probability ranking — report both when the classes are imbalanced.</script>
+  </section>
+
+  <section class="exercise" data-packages="numpy,pandas,scikit-learn">
+    <h2>Exercise — Add a sex × pclass interaction</h2>
+    <div class="ex-prompt">Augment the design matrix with one extra column <code>sex_male * pclass</code>, refit, and compare AUCs. Assign baseline AUC to <code>auc_base</code> and interaction AUC to <code>auc_int</code>.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_auc_score
+
+rng = np.random.default_rng(0)
+n = 400
+pclass = rng.choice([1,2,3], size=n, p=[0.25,0.25,0.5])
+sex = rng.choice(['male','female'], size=n, p=[0.65,0.35])
+age = np.clip(rng.normal(30, 12, n), 1, 75)
+sibsp = rng.integers(0, 4, n); parch = rng.integers(0, 3, n)
+fare = np.clip(rng.normal(40, 25, n) + (4-pclass)*20, 5, 200)
+embarked = rng.choice(['S','C','Q'], size=n, p=[0.7,0.2,0.1])
+logit = (-0.5 + 1.6*(sex=='female') - 0.9*(pclass-1) - 0.02*age
+         + 0.004*fare - 0.2*sibsp)
+p = 1/(1+np.exp(-logit))
+survived = (rng.uniform(size=n) < p).astype(int)
+titanic = pd.DataFrame({'survived':survived,'pclass':pclass,'sex':sex,
+                        'age':age,'sibsp':sibsp,'parch':parch,
+                        'fare':fare,'embarked':embarked})
+df = pd.get_dummies(titanic, columns=['sex','embarked'], drop_first=True, dtype=float)
+y = df['survived']; X = df.drop(columns=['survived'])
+
+# your code: compute auc_base and auc_int (with sex_male * pclass added)
+auc_base = None
+auc_int = None
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_auc_score
+assert auc_base is not None and auc_int is not None, "Assign both AUCs."
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=0, stratify=y)
+m1 = LogisticRegression(max_iter=2000).fit(Xtr, ytr)
+exp_base = roc_auc_score(yte, m1.predict_proba(Xte)[:,1])
+X2 = X.copy(); X2['sex_x_pclass'] = X['sex_male'] * X['pclass']
+Xtr2, Xte2, ytr2, yte2 = train_test_split(X2, y, test_size=0.3, random_state=0, stratify=y)
+m2 = LogisticRegression(max_iter=2000).fit(Xtr2, ytr2)
+exp_int = roc_auc_score(yte2, m2.predict_proba(Xte2)[:,1])
+assert np.isclose(auc_base, exp_base, atol=1e-6), f"baseline AUC off: {auc_base} vs {exp_base:.4f}"
+assert np.isclose(auc_int, exp_int, atol=1e-6), f"interaction AUC off: {auc_int} vs {exp_int:.4f}"
+</script>
+<script type="text/x-solution">Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=0, stratify=y)
+m1 = LogisticRegression(max_iter=2000).fit(Xtr, ytr)
+auc_base = roc_auc_score(yte, m1.predict_proba(Xte)[:, 1])
+
+X2 = X.copy()
+X2['sex_x_pclass'] = X['sex_male'] * X['pclass']
+Xtr2, Xte2, ytr2, yte2 = train_test_split(X2, y, test_size=0.3, random_state=0, stratify=y)
+m2 = LogisticRegression(max_iter=2000).fit(Xtr2, ytr2)
+auc_int = roc_auc_score(yte2, m2.predict_proba(Xte2)[:, 1])
+print(f"baseline   AUC = {auc_base:.4f}")
+print(f"with x-int AUC = {auc_int:.4f}")</script>
+<script type="text/x-explain">Logistic regression is linear in log-odds, so the effect of <code>sex</code> is forced to be the same at every <code>pclass</code> unless you add an explicit interaction term. The product column lets the model say "being male hurts more in 3rd class than in 1st" — sometimes that buys real AUC, often it just spends a degree of freedom.</script>
+  </section>
 </section>
 
 <!-- ============================================================ PART 3 -->
@@ -245,6 +378,67 @@ best_t = ts[int(np.argmax(f1s))]
 print(f"F1-optimal threshold: {best_t:.2f}")
 print(confusion_matrix(y_test, proba >= best_t))</code></pre>
     <aside class="notes">On Default the F1-optimal threshold lands near 0.15. Recall jumps from ~30% (at 0.5) to ~70% (at 0.15), with precision trading down accordingly.</aside>
+  </section>
+
+  <section class="exercise" data-packages="numpy,pandas,scikit-learn">
+    <h2>Exercise — Tune the threshold for F1</h2>
+    <div class="ex-prompt">On the same Titanic split, sweep thresholds <code>np.linspace(0.1, 0.9, 81)</code> over the held-out <code>predict_proba</code>. Assign the F1-maximising threshold to <code>best_t</code> and the F1 there to <code>best_f1</code>.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import f1_score
+
+rng = np.random.default_rng(0)
+n = 400
+pclass = rng.choice([1,2,3], size=n, p=[0.25,0.25,0.5])
+sex = rng.choice(['male','female'], size=n, p=[0.65,0.35])
+age = np.clip(rng.normal(30, 12, n), 1, 75)
+sibsp = rng.integers(0, 4, n); parch = rng.integers(0, 3, n)
+fare = np.clip(rng.normal(40, 25, n) + (4-pclass)*20, 5, 200)
+embarked = rng.choice(['S','C','Q'], size=n, p=[0.7,0.2,0.1])
+logit = (-0.5 + 1.6*(sex=='female') - 0.9*(pclass-1) - 0.02*age
+         + 0.004*fare - 0.2*sibsp)
+p = 1/(1+np.exp(-logit))
+survived = (rng.uniform(size=n) < p).astype(int)
+titanic = pd.DataFrame({'survived':survived,'pclass':pclass,'sex':sex,
+                        'age':age,'sibsp':sibsp,'parch':parch,
+                        'fare':fare,'embarked':embarked})
+df = pd.get_dummies(titanic, columns=['sex','embarked'], drop_first=True, dtype=float)
+y = df['survived']; X = df.drop(columns=['survived'])
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=0, stratify=y)
+m = LogisticRegression(max_iter=2000).fit(Xtr, ytr)
+proba = m.predict_proba(Xte)[:, 1]
+
+# your code: sweep thresholds, find best_t and best_f1
+best_t = None
+best_f1 = None
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+from sklearn.metrics import f1_score
+assert best_t is not None and best_f1 is not None, "Assign best_t and best_f1."
+ts = np.linspace(0.1, 0.9, 81)
+f1s = [f1_score(yte, (proba >= t).astype(int)) for t in ts]
+exp_t = ts[int(np.argmax(f1s))]
+exp_f1 = max(f1s)
+assert np.isclose(best_t, exp_t, atol=1e-6), f"best_t off: {best_t} vs {exp_t:.4f}"
+assert np.isclose(best_f1, exp_f1, atol=1e-6), f"best_f1 off: {best_f1} vs {exp_f1:.4f}"
+</script>
+<script type="text/x-solution">ts = np.linspace(0.1, 0.9, 81)
+f1s = [f1_score(yte, (proba >= t).astype(int)) for t in ts]
+best_t = ts[int(np.argmax(f1s))]
+best_f1 = max(f1s)
+print(f"F1@0.5      = {f1_score(yte, (proba>=0.5).astype(int)):.4f}")
+print(f"F1@{best_t:.2f}   = {best_f1:.4f}")</script>
+<script type="text/x-explain">F1 is the harmonic mean of precision and recall, so it punishes models that achieve high accuracy by ignoring the rare class. Sweeping the threshold and picking the F1-max operating point is the cheap, fully-empirical way to find the cutoff that balances the two errors on your data.</script>
   </section>
 
   <section>
@@ -293,6 +487,7 @@ print(confusion_matrix(y_test, proba >= best_t))</code></pre>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="../../../../shared/slides-template/interactive.js"></script>
 <script>
   Reveal.initialize({
     hash: true, slideNumber: 'c/t', transition: 'slide',

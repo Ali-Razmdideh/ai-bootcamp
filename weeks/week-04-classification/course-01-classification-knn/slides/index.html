@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/interactive.css" />
 </head>
 <body>
 <div class="reveal"><div class="slides">
@@ -261,6 +262,169 @@ knn.fit(X_train, y_train)</code></pre>
     </div>
   </section>
 
+  <section class="exercise" data-packages="numpy,scikit-learn">
+    <h2>Exercise — KNN on penguins</h2>
+    <div class="ex-prompt">Fit a scaled <code>KNeighborsClassifier(n_neighbors=5)</code> on a synthetic 3-species penguins dataset (features: <code>flipper_length_mm</code>, <code>bill_length_mm</code>). Use a stratified 70/30 split with <code>random_state=0</code>. Assign the test accuracy to <code>result</code>.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import train_test_split
+
+rng = np.random.default_rng(0)
+def make_penguins():
+    centers = {'Adelie': (190, 39), 'Chinstrap': (196, 49), 'Gentoo': (217, 47)}
+    Xs, ys = [], []
+    for sp, (fl, bl) in centers.items():
+        n = 100
+        Xs.append(np.c_[rng.normal(fl, 6, n), rng.normal(bl, 2, n)])
+        ys.extend([sp]*n)
+    return np.vstack(Xs), np.array(ys)
+
+X, y = make_penguins()
+# TODO: stratified split (random_state=0), fit scaled KNN(k=5), assign test accuracy
+result = None
+print(result)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+assert result is not None, "Assign your test accuracy to `result`."
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import train_test_split
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=0, stratify=y)
+pipe = Pipeline([('s', StandardScaler()), ('knn', KNeighborsClassifier(5))]).fit(Xtr, ytr)
+expected = pipe.score(Xte, yte)
+assert np.isclose(float(result), expected, atol=1e-6), f"Expected accuracy {expected:.4f}, got {result}."
+</script>
+<script type="text/x-solution">from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import train_test_split
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=0, stratify=y)
+pipe = Pipeline([('s', StandardScaler()), ('knn', KNeighborsClassifier(5))]).fit(Xtr, ytr)
+result = pipe.score(Xte, yte)
+print(f'k=5 test accuracy = {result:.4f}')</script>
+<script type="text/x-explain">KNN with k=5 works well once features are on a common scale. Stratifying the split keeps each species' proportion in train and test, which matters most when one class is rarer than the others.</script>
+  </section>
+
+  <section class="exercise" data-packages="numpy,scikit-learn,matplotlib">
+    <h2>Exercise — Decision boundary vs k</h2>
+    <div class="ex-prompt">Plot the KNN decision boundary on the synthetic penguins data for <code>k = 1, 5, 25</code>. Build three subplots on <code>fig, axes = plt.subplots(1, 3)</code> using <code>ax.contourf</code> for the regions and <code>ax.scatter</code> for the training points.</div>
+<textarea class="ex-code">import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.pipeline import Pipeline
+
+rng = np.random.default_rng(0)
+centers = {'Adelie': (190, 39), 'Chinstrap': (196, 49), 'Gentoo': (217, 47)}
+Xs, ys = [], []
+for sp, (fl, bl) in centers.items():
+    Xs.append(np.c_[rng.normal(fl, 6, 100), rng.normal(bl, 2, 100)])
+    ys.extend([sp]*100)
+X = np.vstack(Xs); y = np.array(ys)
+y_enc = LabelEncoder().fit_transform(y)
+
+fig, axes = None, None
+# TODO: create subplots(1, 3) and draw decision regions + scatter for k in [1, 5, 25]
+print(fig, axes)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+assert fig is not None and axes is not None, "Assign fig, axes = plt.subplots(1, 3)."
+assert len(axes) == 3, "Expected three subplots."
+for ax in axes:
+    assert len(ax.collections) >= 1, "Each subplot needs the contourf regions plus scatter points."
+</script>
+<script type="text/x-solution">fig, axes = plt.subplots(1, 3, figsize=(13, 4), sharey=True)
+x_min, x_max = X[:,0].min()-2, X[:,0].max()+2
+y_min, y_max = X[:,1].min()-2, X[:,1].max()+2
+xx, yy = np.meshgrid(np.linspace(x_min, x_max, 80), np.linspace(y_min, y_max, 80))
+for ax, k in zip(axes, [1, 5, 25]):
+    pipe = Pipeline([('s', StandardScaler()), ('knn', KNeighborsClassifier(k))]).fit(X, y_enc)
+    Z = pipe.predict(np.c_[xx.ravel(), yy.ravel()]).reshape(xx.shape)
+    ax.contourf(xx, yy, Z, alpha=0.25, levels=[-0.5, 0.5, 1.5, 2.5])
+    for cls in range(3):
+        ax.scatter(X[y_enc==cls,0], X[y_enc==cls,1], s=10)
+    ax.set_title(f'k = {k}')
+print('done')</script>
+<script type="text/x-explain">k = 1 carves a region around every training point (high variance, memorises noise); k = 25 smooths the boundary toward the global class mix (higher bias). The "right" k sits between — pick it with CV, not by eye.</script>
+  </section>
+
+  <section class="exercise" data-packages="numpy,scikit-learn">
+    <h2>Exercise — Pick k with 5-fold CV</h2>
+    <div class="ex-prompt">For <code>k in [1, 3, 5, 11, 21, 51]</code>, compute the mean 5-fold <code>cross_val_score</code> of a scaled KNN pipeline on the penguins data. Assign the best k (the one with highest mean CV accuracy) to <code>result</code>.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score
+
+rng = np.random.default_rng(0)
+centers = {'Adelie': (190, 39), 'Chinstrap': (196, 49), 'Gentoo': (217, 47)}
+Xs, ys = [], []
+for sp, (fl, bl) in centers.items():
+    Xs.append(np.c_[rng.normal(fl, 6, 100), rng.normal(bl, 2, 100)])
+    ys.extend([sp]*100)
+X = np.vstack(Xs); y = np.array(ys)
+
+ks = [1, 3, 5, 11, 21, 51]
+# TODO: compute mean cross_val_score(cv=5) for each k, pick the best
+result = None
+print(result)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score
+assert result is not None, "Assign the best k to `result`."
+scores = []
+for k in ks:
+    pipe = Pipeline([('s', StandardScaler()), ('knn', KNeighborsClassifier(k))])
+    scores.append(cross_val_score(pipe, X, y, cv=5).mean())
+expected = ks[int(np.argmax(scores))]
+assert int(result) == expected, f"Expected best k = {expected}, got {result}."
+</script>
+<script type="text/x-solution">scores = []
+for k in ks:
+    pipe = Pipeline([('s', StandardScaler()), ('knn', KNeighborsClassifier(k))])
+    s = cross_val_score(pipe, X, y, cv=5).mean()
+    scores.append(s)
+    print(f'k={k:3d}  CV accuracy = {s:.4f}')
+result = ks[int(np.argmax(scores))]
+print('best k =', result)</script>
+<script type="text/x-explain">Cross-validation picks k by held-out performance instead of training error (which would always prefer k = 1). A scaled pipeline inside CV keeps the scaler from leaking test-fold statistics.</script>
+  </section>
+
   <section>
     <h2>KNN's failure modes</h2>
     <ul>
@@ -347,6 +511,7 @@ best_t = thresholds[int(np.argmax(f1s))]</code></pre>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="../../../../shared/slides-template/interactive.js"></script>
 <script>
   Reveal.initialize({
     hash: true, slideNumber: 'c/t', transition: 'slide',

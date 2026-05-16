@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/interactive.css" />
 </head>
 <body>
 <div class="reveal"><div class="slides">
@@ -75,6 +76,59 @@ m.predict_proba(X_new)        # shape (n, K)
 m.classes_                    # column ordering</code></pre>
     <p class="muted">In Week 8 (deep learning) the very last layer of a classification network is a softmax — same math, learned features.</p>
   </section>
+
+  <section class="exercise" data-packages="numpy,pandas,scikit-learn">
+    <h2>Exercise — Multinomial LR on penguins</h2>
+    <div class="ex-prompt">Fit a standardized multinomial <code>LogisticRegression</code> pipeline on the four numeric measurements and report 5-fold CV accuracy. Assign the mean accuracy to <code>result</code>.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score, KFold
+
+# tiny synthetic penguins-like sample (3 species, 4 numeric features)
+rng = np.random.default_rng(0)
+def block(n, mu):
+    return rng.normal(loc=mu, scale=[1.2, 0.8, 4.0, 150.0], size=(n, 4))
+X = np.vstack([block(20, [39, 18.5, 190, 3700]),   # Adelie
+               block(20, [49, 18.0, 195, 3700]),   # Chinstrap
+               block(20, [47, 15.0, 217, 5100])])  # Gentoo
+y = np.array(['Adelie']*20 + ['Chinstrap']*20 + ['Gentoo']*20)
+
+# Build a (StandardScaler -> LogisticRegression(max_iter=2000)) pipeline.
+# Score it with 5-fold CV (KFold(n_splits=5, shuffle=True, random_state=0)).
+result = None
+print(result)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score, KFold
+assert result is not None, "Assign the mean CV accuracy to `result`."
+pipe = Pipeline([('s', StandardScaler()),
+                 ('lr', LogisticRegression(max_iter=2000))])
+cv = KFold(n_splits=5, shuffle=True, random_state=0)
+expected = cross_val_score(pipe, X, y, cv=cv).mean()
+assert np.isclose(result, expected, atol=1e-6), f"Expected {expected:.4f}, got {result}."
+</script>
+<script type="text/x-solution">pipe = Pipeline([('s', StandardScaler()),
+                 ('lr', LogisticRegression(max_iter=2000))])
+cv = KFold(n_splits=5, shuffle=True, random_state=0)
+result = cross_val_score(pipe, X, y, cv=cv).mean()
+print(f"CV accuracy = {result:.4f}")</script>
+<script type="text/x-explain">Multinomial LR auto-engages when y has &gt; 2 classes. Standardizing first keeps the (default L2) penalty fair across features with very different scales — body mass in grams would otherwise dwarf bill length in mm.</script>
+  </section>
 </section>
 
 <!-- ============================================================ PART 2 -->
@@ -102,6 +156,115 @@ m.classes_                    # column ordering</code></pre>
       </div>
     </div>
     <p class="callout">Regularization is one idea applied to many losses: OLS → ridge/lasso; MLE → L2/L1 logistic.</p>
+  </section>
+
+  <section class="exercise" data-packages="numpy,pandas,scikit-learn">
+    <h2>Exercise — Count L1 survivors</h2>
+    <div class="ex-prompt">Fit L1-penalized multinomial LR with <code>C=0.05</code>, <code>solver='saga'</code> on standardized features. Assign to <code>result</code> a list of per-class non-zero coefficient counts in <code>model.classes_</code> order.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+
+rng = np.random.default_rng(0)
+def block(n, mu):
+    return rng.normal(loc=mu, scale=[1.2, 0.8, 4.0, 150.0], size=(n, 4))
+X = np.vstack([block(20, [39, 18.5, 190, 3700]),
+               block(20, [49, 18.0, 195, 3700]),
+               block(20, [47, 15.0, 217, 5100])])
+y = np.array(['Adelie']*20 + ['Chinstrap']*20 + ['Gentoo']*20)
+
+Xs = StandardScaler().fit_transform(X)
+# Fit LogisticRegression(C=0.05, penalty='l1', solver='saga', max_iter=5000, random_state=0)
+# Count non-zero coefs per class row.
+result = None
+print(result)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+from sklearn.linear_model import LogisticRegression
+assert result is not None, "Assign a list of per-class non-zero counts to `result`."
+m = LogisticRegression(C=0.05, penalty='l1', solver='saga',
+                       max_iter=5000, random_state=0).fit(Xs, y)
+expected = [int((row != 0).sum()) for row in m.coef_]
+got = [int(v) for v in result]
+assert got == expected, f"Expected {expected}, got {got}."
+</script>
+<script type="text/x-solution">m = LogisticRegression(C=0.05, penalty='l1', solver='saga',
+                       max_iter=5000, random_state=0).fit(Xs, y)
+result = [int((row != 0).sum()) for row in m.coef_]
+for cls, k in zip(m.classes_, result):
+    print(f"{cls:10s} survivors = {k}")</script>
+<script type="text/x-explain">Strong L1 (small C) drives some coefficients to exactly zero — sparsity, the same automatic feature-selection story as Lasso. Each class gets its own coefficient row, so they can drop different features.</script>
+  </section>
+
+  <section class="exercise" data-packages="numpy,pandas,scikit-learn">
+    <h2>Exercise — Sweep C under L1</h2>
+    <div class="ex-prompt">Compute 5-fold CV accuracy for <code>C ∈ {0.001, 0.01, 0.1, 1, 10}</code> with L1-penalized LR. Assign the list of mean accuracies (in that order) to <code>result</code>.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score, KFold
+
+rng = np.random.default_rng(0)
+def block(n, mu):
+    return rng.normal(loc=mu, scale=[1.2, 0.8, 4.0, 150.0], size=(n, 4))
+X = np.vstack([block(20, [39, 18.5, 190, 3700]),
+               block(20, [49, 18.0, 195, 3700]),
+               block(20, [47, 15.0, 217, 5100])])
+y = np.array(['Adelie']*20 + ['Chinstrap']*20 + ['Gentoo']*20)
+
+Cs = [0.001, 0.01, 0.1, 1, 10]
+# For each C build Pipeline(StandardScaler, LogisticRegression(C=C, penalty='l1',
+# solver='saga', max_iter=5000, random_state=0)) and score with
+# KFold(n_splits=5, shuffle=True, random_state=0). Collect mean accuracies.
+result = None
+print(result)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score, KFold
+assert result is not None, "Assign the list of mean accuracies to `result`."
+cv = KFold(n_splits=5, shuffle=True, random_state=0)
+expected = []
+for C in [0.001, 0.01, 0.1, 1, 10]:
+    pipe = Pipeline([('s', StandardScaler()),
+                     ('lr', LogisticRegression(C=C, penalty='l1', solver='saga',
+                                               max_iter=5000, random_state=0))])
+    expected.append(cross_val_score(pipe, X, y, cv=cv).mean())
+got = np.asarray(result, dtype=float)
+assert got.shape == (5,), f"Expected 5 accuracies, got shape {got.shape}."
+assert np.allclose(got, expected, atol=1e-6), f"Expected {expected}, got {list(got)}."
+</script>
+<script type="text/x-solution">cv = KFold(n_splits=5, shuffle=True, random_state=0)
+result = []
+for C in [0.001, 0.01, 0.1, 1, 10]:
+    pipe = Pipeline([('s', StandardScaler()),
+                     ('lr', LogisticRegression(C=C, penalty='l1', solver='saga',
+                                               max_iter=5000, random_state=0))])
+    result.append(cross_val_score(pipe, X, y, cv=cv).mean())
+for C, a in zip([0.001, 0.01, 0.1, 1, 10], result):
+    print(f"C={C:7g}  acc = {a:.4f}")</script>
+<script type="text/x-explain">Tiny C zeros nearly every coefficient — the model collapses toward predicting the majority class. As C grows, the penalty relaxes and accuracy climbs to a plateau. The curve is the empirical bias–variance trade-off for L1 LR.</script>
   </section>
 
   <section>
@@ -281,6 +444,7 @@ LogisticRegression().fit(poly.fit_transform(X), y)</code></pre>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="../../../../shared/slides-template/interactive.js"></script>
 <script>
   Reveal.initialize({
     hash: true, slideNumber: 'c/t', transition: 'slide',

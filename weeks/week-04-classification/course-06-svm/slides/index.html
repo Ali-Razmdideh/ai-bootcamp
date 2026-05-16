@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/interactive.css" />
 </head>
 <body>
 <div class="reveal"><div class="slides">
@@ -233,6 +234,185 @@ grid = GridSearchCV(pipe, {
     <p class="tip"><strong>Always scale</strong> before an SVM — kernels are based on distances. Wrap in a Pipeline so scaling is fit on training folds only.</p>
   </section>
 
+  <section class="exercise" data-packages="numpy,pandas,scikit-learn">
+    <h2>Exercise — Scaled RBF SVM with CV</h2>
+    <div class="ex-prompt">Build a <code>Pipeline(StandardScaler &rarr; SVC(kernel='rbf'))</code> on a small penguins-like dataset and report the mean 5-fold CV accuracy in <code>cv_acc</code>.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score
+
+# Penguins-like sample (bill_length, bill_depth, flipper_length, body_mass) -> species
+data = [
+    (39.1,18.7,181,3750,'Adelie'),(39.5,17.4,186,3800,'Adelie'),(40.3,18.0,195,3250,'Adelie'),
+    (36.7,19.3,193,3450,'Adelie'),(39.3,20.6,190,3650,'Adelie'),(38.9,17.8,181,3625,'Adelie'),
+    (39.2,19.6,195,4675,'Adelie'),(34.1,18.1,193,3475,'Adelie'),(42.0,20.2,190,4250,'Adelie'),
+    (37.8,17.1,186,3300,'Adelie'),(37.8,17.3,180,3700,'Adelie'),(41.1,17.6,182,3200,'Adelie'),
+    (46.5,17.9,192,3500,'Chinstrap'),(50.0,19.5,196,3900,'Chinstrap'),(51.3,19.2,193,3650,'Chinstrap'),
+    (45.4,18.7,188,3525,'Chinstrap'),(52.7,19.8,197,3725,'Chinstrap'),(45.2,17.8,198,3950,'Chinstrap'),
+    (46.1,18.2,178,3250,'Chinstrap'),(51.3,18.2,197,3750,'Chinstrap'),(46.0,18.9,195,4150,'Chinstrap'),
+    (51.3,19.9,198,3700,'Chinstrap'),(46.6,17.8,193,3800,'Chinstrap'),(51.7,20.3,194,3775,'Chinstrap'),
+    (46.1,13.2,211,4500,'Gentoo'),(50.0,16.3,230,5700,'Gentoo'),(48.7,14.1,210,4450,'Gentoo'),
+    (50.0,15.2,218,5700,'Gentoo'),(47.6,14.5,215,5400,'Gentoo'),(46.5,13.5,210,4550,'Gentoo'),
+    (45.4,14.6,211,4800,'Gentoo'),(46.7,15.3,219,5200,'Gentoo'),(43.3,13.4,209,4400,'Gentoo'),
+    (46.8,15.4,215,5150,'Gentoo'),(40.9,13.7,214,4650,'Gentoo'),(49.0,16.1,216,5550,'Gentoo'),
+]
+df = pd.DataFrame(data, columns=['bill_length_mm','bill_depth_mm','flipper_length_mm','body_mass_g','species'])
+X = df[['bill_length_mm','bill_depth_mm','flipper_length_mm','body_mass_g']]
+y = df['species']
+
+pipe = None       # build the pipeline
+cv_acc = None     # mean 5-fold CV accuracy
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
+from sklearn.model_selection import cross_val_score
+import numpy as np
+assert pipe is not None, "Assign your Pipeline to `pipe`."
+assert isinstance(pipe, Pipeline), "`pipe` must be an sklearn Pipeline."
+names = [n for n, _ in pipe.steps]
+assert any(isinstance(s, StandardScaler) for _, s in pipe.steps), "Pipeline must include StandardScaler."
+last = pipe.steps[-1][1]
+assert isinstance(last, SVC) and last.kernel == 'rbf', "Final step must be SVC(kernel='rbf')."
+assert cv_acc is not None, "Assign the mean 5-fold CV accuracy to `cv_acc`."
+expected = cross_val_score(Pipeline([('s', StandardScaler()), ('svc', SVC(kernel='rbf'))]), X, y, cv=5).mean()
+assert np.isclose(cv_acc, expected, atol=1e-6), f"cv_acc={cv_acc:.4f} does not match expected {expected:.4f}."
+print(f"OK — cv_acc = {cv_acc:.4f}")
+</script>
+<script type="text/x-solution">pipe = Pipeline([('s', StandardScaler()), ('svc', SVC(kernel='rbf'))])
+cv_acc = cross_val_score(pipe, X, y, cv=5).mean()
+print(f"CV accuracy = {cv_acc:.4f}")</script>
+<script type="text/x-explain">RBF kernels measure similarity through Euclidean distance, so features on very different scales (here body_mass in grams vs bill_depth in mm) would dominate. Wrapping StandardScaler inside the Pipeline ensures the scaler is refit on each CV training fold — no leakage.</script>
+  </section>
+
+  <section class="exercise" data-packages="numpy,pandas,scikit-learn">
+    <h2>Exercise — Unscaled RBF SVM</h2>
+    <div class="ex-prompt">Fit an <em>unscaled</em> <code>SVC(kernel='rbf')</code> on the same data with 5-fold CV. Store the mean accuracy in <code>unscaled_acc</code> and compare to the scaled version.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+from sklearn.svm import SVC
+from sklearn.model_selection import cross_val_score
+
+data = [
+    (39.1,18.7,181,3750,'Adelie'),(39.5,17.4,186,3800,'Adelie'),(40.3,18.0,195,3250,'Adelie'),
+    (36.7,19.3,193,3450,'Adelie'),(39.3,20.6,190,3650,'Adelie'),(38.9,17.8,181,3625,'Adelie'),
+    (39.2,19.6,195,4675,'Adelie'),(34.1,18.1,193,3475,'Adelie'),(42.0,20.2,190,4250,'Adelie'),
+    (37.8,17.1,186,3300,'Adelie'),(37.8,17.3,180,3700,'Adelie'),(41.1,17.6,182,3200,'Adelie'),
+    (46.5,17.9,192,3500,'Chinstrap'),(50.0,19.5,196,3900,'Chinstrap'),(51.3,19.2,193,3650,'Chinstrap'),
+    (45.4,18.7,188,3525,'Chinstrap'),(52.7,19.8,197,3725,'Chinstrap'),(45.2,17.8,198,3950,'Chinstrap'),
+    (46.1,18.2,178,3250,'Chinstrap'),(51.3,18.2,197,3750,'Chinstrap'),(46.0,18.9,195,4150,'Chinstrap'),
+    (51.3,19.9,198,3700,'Chinstrap'),(46.6,17.8,193,3800,'Chinstrap'),(51.7,20.3,194,3775,'Chinstrap'),
+    (46.1,13.2,211,4500,'Gentoo'),(50.0,16.3,230,5700,'Gentoo'),(48.7,14.1,210,4450,'Gentoo'),
+    (50.0,15.2,218,5700,'Gentoo'),(47.6,14.5,215,5400,'Gentoo'),(46.5,13.5,210,4550,'Gentoo'),
+    (45.4,14.6,211,4800,'Gentoo'),(46.7,15.3,219,5200,'Gentoo'),(43.3,13.4,209,4400,'Gentoo'),
+    (46.8,15.4,215,5150,'Gentoo'),(40.9,13.7,214,4650,'Gentoo'),(49.0,16.1,216,5550,'Gentoo'),
+]
+df = pd.DataFrame(data, columns=['bill_length_mm','bill_depth_mm','flipper_length_mm','body_mass_g','species'])
+X = df[['bill_length_mm','bill_depth_mm','flipper_length_mm','body_mass_g']]
+y = df['species']
+
+unscaled_acc = None
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+from sklearn.svm import SVC
+from sklearn.model_selection import cross_val_score
+import numpy as np
+assert unscaled_acc is not None, "Assign the unscaled mean CV accuracy to `unscaled_acc`."
+expected = cross_val_score(SVC(kernel='rbf'), X, y, cv=5).mean()
+assert np.isclose(unscaled_acc, expected, atol=1e-6), f"unscaled_acc={unscaled_acc:.4f} does not match expected {expected:.4f}."
+print(f"OK — unscaled_acc = {unscaled_acc:.4f} (note how much lower than the scaled version!)")
+</script>
+<script type="text/x-solution">unscaled_acc = cross_val_score(SVC(kernel='rbf'), X, y, cv=5).mean()
+print(f"unscaled CV accuracy = {unscaled_acc:.4f}")</script>
+<script type="text/x-explain">Without scaling, body_mass_g (roughly 3000–6000) dwarfs the bill features (~15–50) in the RBF distance. The kernel effectively sees only one feature, and accuracy collapses. This is why scaling is the #1 SVM-bug fix.</script>
+  </section>
+
+  <section class="exercise" data-packages="numpy,pandas,scikit-learn">
+    <h2>Exercise — Grid-search C and gamma</h2>
+    <div class="ex-prompt">Tune <code>C &in; [0.1, 1, 10]</code> and <code>gamma &in; ['scale', 0.1, 1.0]</code> with 5-fold <code>GridSearchCV</code> on the scaled RBF pipeline. Store the result in <code>grid</code>.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV
+
+data = [
+    (39.1,18.7,181,3750,'Adelie'),(39.5,17.4,186,3800,'Adelie'),(40.3,18.0,195,3250,'Adelie'),
+    (36.7,19.3,193,3450,'Adelie'),(39.3,20.6,190,3650,'Adelie'),(38.9,17.8,181,3625,'Adelie'),
+    (39.2,19.6,195,4675,'Adelie'),(34.1,18.1,193,3475,'Adelie'),(42.0,20.2,190,4250,'Adelie'),
+    (37.8,17.1,186,3300,'Adelie'),(37.8,17.3,180,3700,'Adelie'),(41.1,17.6,182,3200,'Adelie'),
+    (46.5,17.9,192,3500,'Chinstrap'),(50.0,19.5,196,3900,'Chinstrap'),(51.3,19.2,193,3650,'Chinstrap'),
+    (45.4,18.7,188,3525,'Chinstrap'),(52.7,19.8,197,3725,'Chinstrap'),(45.2,17.8,198,3950,'Chinstrap'),
+    (46.1,18.2,178,3250,'Chinstrap'),(51.3,18.2,197,3750,'Chinstrap'),(46.0,18.9,195,4150,'Chinstrap'),
+    (51.3,19.9,198,3700,'Chinstrap'),(46.6,17.8,193,3800,'Chinstrap'),(51.7,20.3,194,3775,'Chinstrap'),
+    (46.1,13.2,211,4500,'Gentoo'),(50.0,16.3,230,5700,'Gentoo'),(48.7,14.1,210,4450,'Gentoo'),
+    (50.0,15.2,218,5700,'Gentoo'),(47.6,14.5,215,5400,'Gentoo'),(46.5,13.5,210,4550,'Gentoo'),
+    (45.4,14.6,211,4800,'Gentoo'),(46.7,15.3,219,5200,'Gentoo'),(43.3,13.4,209,4400,'Gentoo'),
+    (46.8,15.4,215,5150,'Gentoo'),(40.9,13.7,214,4650,'Gentoo'),(49.0,16.1,216,5550,'Gentoo'),
+]
+df = pd.DataFrame(data, columns=['bill_length_mm','bill_depth_mm','flipper_length_mm','body_mass_g','species'])
+X = df[['bill_length_mm','bill_depth_mm','flipper_length_mm','body_mass_g']]
+y = df['species']
+
+grid = None
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+from sklearn.model_selection import GridSearchCV
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
+import numpy as np
+assert grid is not None, "Assign your fitted GridSearchCV to `grid`."
+assert isinstance(grid, GridSearchCV), "`grid` must be a GridSearchCV instance."
+assert hasattr(grid, 'best_params_'), "Did you call .fit() on the grid?"
+keys = set(grid.param_grid.keys())
+assert keys == {'svc__C', 'svc__gamma'}, f"Expected param_grid keys {{'svc__C', 'svc__gamma'}}, got {keys}."
+assert sorted(grid.param_grid['svc__C']) == [0.1, 1, 10]
+assert list(grid.param_grid['svc__gamma']) == ['scale', 0.1, 1.0] or set(grid.param_grid['svc__gamma']) == {'scale', 0.1, 1.0}
+ref = GridSearchCV(Pipeline([('s', StandardScaler()), ('svc', SVC(kernel='rbf'))]),
+                   {'svc__C': [0.1, 1, 10], 'svc__gamma': ['scale', 0.1, 1.0]}, cv=5).fit(X, y)
+assert np.isclose(grid.best_score_, ref.best_score_, atol=1e-6), f"best_score_ mismatch: {grid.best_score_} vs {ref.best_score_}"
+print(f"OK — best params = {grid.best_params_}, best CV acc = {grid.best_score_:.4f}")
+</script>
+<script type="text/x-solution">grid = GridSearchCV(
+    Pipeline([('s', StandardScaler()), ('svc', SVC(kernel='rbf'))]),
+    {'svc__C': [0.1, 1, 10], 'svc__gamma': ['scale', 0.1, 1.0]},
+    cv=5,
+).fit(X, y)
+print(f"best params = {grid.best_params_}")
+print(f"best CV acc = {grid.best_score_:.4f}")</script>
+<script type="text/x-explain">SVMs have two interacting knobs — C trades margin width for slack, gamma controls the RBF bandwidth. They must be tuned together: a small grid with cross-validation is the standard recipe. Use the <code>svc__</code> prefix to reach the SVC step through the Pipeline.</script>
+  </section>
+
   <section>
     <h2>SVM is hinge-loss + L2 regularization</h2>
     <p style="text-align:center;font-size:1.05em;">min<sub>β</sub> &nbsp; Σ<sub>i</sub> max(0, 1 − y<sub>i</sub>·f(x<sub>i</sub>)) &nbsp; + &nbsp; λ‖β‖²</p>
@@ -336,6 +516,7 @@ print(svc.score(X_test, y_test))   # often perfect</code></pre>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="../../../../shared/slides-template/interactive.js"></script>
 <script>
   Reveal.initialize({
     hash: true, slideNumber: 'c/t', transition: 'slide',

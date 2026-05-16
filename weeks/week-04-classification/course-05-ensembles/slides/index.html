@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/interactive.css" />
 </head>
 <body>
 <div class="reveal"><div class="slides">
@@ -185,6 +186,68 @@ print(rf.oob_score_)        # ≈ generalization accuracy</code></pre>
     </div>
   </section>
 
+  <section class="exercise" data-packages="numpy,pandas,scikit-learn,matplotlib">
+    <h2>Exercise — Plot top-5 RF feature importances</h2>
+    <div class="ex-prompt">Fit a <code>RandomForestClassifier(n_estimators=300, random_state=0)</code> on the supplied synthetic <code>tips</code>-shaped data, then build a horizontal bar chart of the 5 largest <code>feature_importances_</code>. Assign <code>fig, ax = plt.subplots()</code> and plot on <code>ax</code>.</div>
+<textarea class="ex-code">import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
+
+rng = np.random.RandomState(0)
+n = 200
+total_bill = rng.uniform(5, 50, n)
+size = rng.randint(1, 6, n)
+day_Sat = rng.binomial(1, 0.4, n)
+day_Sun = rng.binomial(1, 0.3, n)
+time_Dinner = rng.binomial(1, 0.7, n)
+sex_Male = rng.binomial(1, 0.55, n)
+smoker_Yes = rng.binomial(1, 0.35, n)
+X = pd.DataFrame({
+    'total_bill': total_bill, 'size': size,
+    'day_Sat': day_Sat, 'day_Sun': day_Sun,
+    'time_Dinner': time_Dinner, 'sex_Male': sex_Male,
+    'smoker_Yes': smoker_Yes,
+})
+logit = -0.05 * total_bill + 0.4 * size + 0.3 * smoker_Yes + rng.normal(0, 0.5, n)
+y = (logit > np.median(logit)).astype(int)
+
+rf = None
+fig, ax = None, None
+# 1) fit rf
+# 2) take top-5 importances, plot on ax as horizontal bars
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+from sklearn.ensemble import RandomForestClassifier
+assert rf is not None, "Fit `rf` as a RandomForestClassifier."
+assert isinstance(rf, RandomForestClassifier), "`rf` must be a RandomForestClassifier."
+assert rf.n_estimators == 300, "Use n_estimators=300."
+assert ax is not None, "Create `fig, ax = plt.subplots()` and plot on `ax`."
+# Must have drawn a bar chart with at least 5 bars (Rectangle patches)
+from matplotlib.patches import Rectangle
+bars = [p for p in ax.patches if isinstance(p, Rectangle)]
+assert len(bars) >= 5, f"Expected at least 5 bars, got {len(bars)}."
+</script>
+<script type="text/x-solution">rf = RandomForestClassifier(n_estimators=300, random_state=0).fit(X, y)
+imp = pd.Series(rf.feature_importances_, index=X.columns).sort_values().tail(5)
+fig, ax = plt.subplots(figsize=(6, 3))
+imp.plot.barh(ax=ax)
+ax.set_xlabel('importance')
+print(imp)</script>
+<script type="text/x-explain">Gini importance sums the impurity decrease attributed to each feature across all trees. Sorting and showing the top-k turns an opaque 300-tree forest into a one-glance ranking — the cheapest first pass at explainability.</script>
+  </section>
+
   <section>
     <h2>Partial dependence plots (PDPs)</h2>
     <p>For feature j: sweep j across its range, average predictions over the marginal of the rest. The shape of the model's relationship with j.</p>
@@ -284,6 +347,138 @@ PartialDependenceDisplay.from_estimator(rf, X, features=['balance', 'income'])</
     <p class="callout">All four implement the same core idea with different speed / quality tweaks. Default to histogram-based GBMs; switch only when you have a reason.</p>
   </section>
 
+  <section class="exercise" data-packages="numpy,pandas,scikit-learn">
+    <h2>Exercise — Compare tree, forest, boosting accuracy</h2>
+    <div class="ex-prompt">On the supplied synthetic <code>tips</code>-shaped data, train three classifiers on the <em>same</em> stratified split (<code>test_size=0.3, random_state=0</code>): a <code>DecisionTreeClassifier</code>, a <code>RandomForestClassifier(n_estimators=300)</code>, and a <code>GradientBoostingClassifier(n_estimators=300)</code>. Store test accuracies in <code>acc_tree</code>, <code>acc_rf</code>, <code>acc_gbm</code>.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.model_selection import train_test_split
+
+rng = np.random.RandomState(0)
+n = 300
+total_bill = rng.uniform(5, 50, n)
+size = rng.randint(1, 6, n)
+day_Sat = rng.binomial(1, 0.4, n)
+day_Sun = rng.binomial(1, 0.3, n)
+time_Dinner = rng.binomial(1, 0.7, n)
+sex_Male = rng.binomial(1, 0.55, n)
+smoker_Yes = rng.binomial(1, 0.35, n)
+X = pd.DataFrame({
+    'total_bill': total_bill, 'size': size,
+    'day_Sat': day_Sat, 'day_Sun': day_Sun,
+    'time_Dinner': time_Dinner, 'sex_Male': sex_Male,
+    'smoker_Yes': smoker_Yes,
+})
+logit = -0.05 * total_bill + 0.4 * size + 0.3 * smoker_Yes + rng.normal(0, 0.5, n)
+y = (logit > np.median(logit)).astype(int)
+
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=0, stratify=y)
+
+tree = None
+rf = None
+gbm = None
+acc_tree = None
+acc_rf = None
+acc_gbm = None
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+assert isinstance(tree, DecisionTreeClassifier), "`tree` must be a DecisionTreeClassifier."
+assert isinstance(rf, RandomForestClassifier) and rf.n_estimators == 300, "`rf` must be a 300-tree RandomForestClassifier."
+assert isinstance(gbm, GradientBoostingClassifier) and gbm.n_estimators == 300, "`gbm` must be a 300-tree GradientBoostingClassifier."
+ref_tree = DecisionTreeClassifier(random_state=0).fit(Xtr, ytr).score(Xte, yte)
+ref_rf = RandomForestClassifier(n_estimators=300, random_state=0).fit(Xtr, ytr).score(Xte, yte)
+ref_gbm = GradientBoostingClassifier(n_estimators=300, random_state=0).fit(Xtr, ytr).score(Xte, yte)
+assert np.isclose(acc_tree, ref_tree, atol=1e-6), f"acc_tree off: got {acc_tree}, expected {ref_tree}."
+assert np.isclose(acc_rf, ref_rf, atol=1e-6), f"acc_rf off: got {acc_rf}, expected {ref_rf}."
+assert np.isclose(acc_gbm, ref_gbm, atol=1e-6), f"acc_gbm off: got {acc_gbm}, expected {ref_gbm}."
+</script>
+<script type="text/x-solution">tree = DecisionTreeClassifier(random_state=0).fit(Xtr, ytr)
+rf = RandomForestClassifier(n_estimators=300, random_state=0).fit(Xtr, ytr)
+gbm = GradientBoostingClassifier(n_estimators=300, random_state=0).fit(Xtr, ytr)
+acc_tree = tree.score(Xte, yte)
+acc_rf = rf.score(Xte, yte)
+acc_gbm = gbm.score(Xte, yte)
+print(f"tree={acc_tree:.4f}  rf={acc_rf:.4f}  gbm={acc_gbm:.4f}")</script>
+<script type="text/x-explain">One deep tree has high variance; bagging in a forest averages it down; boosting goes further by fitting residuals sequentially. Fixing the split and random_state makes the three numbers directly comparable so the variance-reduction story is visible.</script>
+  </section>
+
+  <section class="exercise" data-packages="numpy,pandas,scikit-learn">
+    <h2>Exercise — Rank the three models by AUC</h2>
+    <div class="ex-prompt">Reusing the models you just fit, compute test-set ROC-AUC with <code>predict_proba(...)[:, 1]</code> and store the floats in <code>auc_tree</code>, <code>auc_rf</code>, <code>auc_gbm</code>.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_auc_score
+
+rng = np.random.RandomState(0)
+n = 300
+total_bill = rng.uniform(5, 50, n)
+size = rng.randint(1, 6, n)
+day_Sat = rng.binomial(1, 0.4, n)
+day_Sun = rng.binomial(1, 0.3, n)
+time_Dinner = rng.binomial(1, 0.7, n)
+sex_Male = rng.binomial(1, 0.55, n)
+smoker_Yes = rng.binomial(1, 0.35, n)
+X = pd.DataFrame({
+    'total_bill': total_bill, 'size': size,
+    'day_Sat': day_Sat, 'day_Sun': day_Sun,
+    'time_Dinner': time_Dinner, 'sex_Male': sex_Male,
+    'smoker_Yes': smoker_Yes,
+})
+logit = -0.05 * total_bill + 0.4 * size + 0.3 * smoker_Yes + rng.normal(0, 0.5, n)
+y = (logit > np.median(logit)).astype(int)
+
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=0, stratify=y)
+tree = DecisionTreeClassifier(random_state=0).fit(Xtr, ytr)
+rf = RandomForestClassifier(n_estimators=300, random_state=0).fit(Xtr, ytr)
+gbm = GradientBoostingClassifier(n_estimators=300, random_state=0).fit(Xtr, ytr)
+
+auc_tree = None
+auc_rf = None
+auc_gbm = None
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+from sklearn.metrics import roc_auc_score
+ref_tree = roc_auc_score(yte, tree.predict_proba(Xte)[:, 1])
+ref_rf = roc_auc_score(yte, rf.predict_proba(Xte)[:, 1])
+ref_gbm = roc_auc_score(yte, gbm.predict_proba(Xte)[:, 1])
+for name, got, exp in [('auc_tree', auc_tree, ref_tree),
+                        ('auc_rf', auc_rf, ref_rf),
+                        ('auc_gbm', auc_gbm, ref_gbm)]:
+    assert got is not None, f"Assign {name}."
+    assert np.isclose(got, exp, atol=1e-6), f"{name} off: got {got}, expected {exp}."
+</script>
+<script type="text/x-solution">auc_tree = roc_auc_score(yte, tree.predict_proba(Xte)[:, 1])
+auc_rf = roc_auc_score(yte, rf.predict_proba(Xte)[:, 1])
+auc_gbm = roc_auc_score(yte, gbm.predict_proba(Xte)[:, 1])
+print(f"AUC  tree={auc_tree:.4f}  rf={auc_rf:.4f}  gbm={auc_gbm:.4f}")</script>
+<script type="text/x-explain">Accuracy hides probability quality: a single tree's hard 0/1 votes can match an ensemble's accuracy yet have far worse ranking. AUC measures how well the score orders positives above negatives — usually where bagged/boosted ensembles really pull ahead.</script>
+  </section>
+
   <section>
     <h2>Honorable mention: BART</h2>
     <p>Bayesian Additive Regression Trees — perturbs trees stochastically inside an MCMC loop. Lower tuning burden than boosting; gives uncertainty intervals natively. Worth knowing about for any statistical-genetics / causal-inference work.</p>
@@ -307,6 +502,7 @@ PartialDependenceDisplay.from_estimator(rf, X, features=['balance', 'income'])</
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="../../../../shared/slides-template/interactive.js"></script>
 <script>
   Reveal.initialize({
     hash: true, slideNumber: 'c/t', transition: 'slide',
