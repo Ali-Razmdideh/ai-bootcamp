@@ -41,50 +41,131 @@
     <p class="muted">contiguous, typed, fast</p>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy">
+    <h2>NumPy is installed — confirm the version</h2>
+    <div class="ex-prompt">Sanity-check that NumPy imports and report its version. Every notebook in this course starts the same way.</div>
+<textarea class="ex-code">import numpy as np
+print(np.__version__)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy">
     <h2>List vs. ndarray — same data, different machine</h2>
-    <pre><code class="language-python">py = [1, 2, 3, 4]                # heterogeneous, boxed
-arr = np.array([1, 2, 3, 4])     # contiguous, typed (int64)</code></pre>
-    <p class="muted">Python lists store pointers to Python objects; ndarrays store raw C numbers back-to-back. That difference is the entire speed story.</p>
-    <aside class="notes">Live-time the loop sum vs np.sum — usually 50-100x.</aside>
+    <div class="ex-prompt">Python lists store pointers to boxed Python objects; ndarrays store raw C numbers back-to-back in one contiguous typed buffer. That difference is the entire speed story.</div>
+<textarea class="ex-code">import numpy as np
+py_list = [1, 2, 3, 4]
+arr = np.array([1, 2, 3, 4])
+print(py_list, type(py_list).__name__)
+print(arr, type(arr).__name__, arr.dtype)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy">
     <h2>Six recipes for creating arrays</h2>
-<pre><code class="language-python">np.zeros((3, 4))
-np.ones((3, 4))
-np.full((3, 4), np.pi)
-np.arange(1, 5, 0.5)
-np.linspace(0, 1, 6)
-np.eye(3)</code></pre>
-    <p class="muted">99% of "make an array" reduces to one of these.</p>
+    <div class="ex-prompt">99% of "make an array" reduces to one of these constructors: <code>zeros</code>, <code>ones</code>, <code>full</code>, <code>arange</code>, <code>linspace</code>, <code>eye</code>.</div>
+<textarea class="ex-code">import numpy as np
+print(np.zeros(5))
+print(np.zeros((3, 4)))
+print(np.ones((3, 4)))
+print(np.full((3, 4), np.pi))
+print(np.arange(1, 5))
+print(np.arange(1, 5, 0.5))
+print(np.linspace(0, 5/3, 6))
+print(np.eye(3))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy">
     <h2>Random — use the modern API</h2>
-<pre><code class="language-python">rng = np.random.default_rng(seed=42)
-rng.random((3, 4))             # uniform [0, 1)
-rng.standard_normal((3, 4))    # N(0, 1)</code></pre>
-    <p class="muted"><code>np.random.seed</code> is legacy. <code>default_rng</code> gives you a deterministic generator object — pass it around.</p>
+    <div class="ex-prompt"><code>np.random.seed</code> is legacy. <code>default_rng</code> gives you a deterministic generator object — seed it once and pass it around.</div>
+<textarea class="ex-code">import numpy as np
+rng = np.random.default_rng(seed=42)
+print(rng.random((3, 4)))
+print(rng.standard_normal((3, 4)))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy">
     <h2>dtypes and promotion</h2>
-<pre><code class="language-python">np.arange(0, 5, dtype=np.uint8) + 1.5
-# -> float64  (the smallest dtype that holds both)</code></pre>
-    <p>Adding two arrays promotes to the smallest type that holds both. Adding a float scalar always promotes to float64.</p>
+    <div class="ex-prompt">Adding two arrays promotes to the smallest dtype that holds both. Adding a float scalar always promotes to float64.</div>
+<textarea class="ex-code">import numpy as np
+c = np.arange(1, 5)
+print(c.dtype, c)        # int64
+
+k1 = np.arange(0, 5, dtype=np.uint8)
+k2 = k1 + np.array([5, 6, 7, 8, 9], dtype=np.int8)
+print(k2.dtype, k2)      # int16 - promoted
+
+k3 = k1 + 1.5
+print(k3.dtype, k3)      # float64
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy">
+    <h2>astype — convert dtype, get a new array</h2>
+    <div class="ex-prompt"><code>astype</code> returns a fresh array in the requested dtype. Going float→int truncates toward zero; no rounding.</div>
+<textarea class="ex-code">import numpy as np
+g = np.arange(6, dtype=np.float64)
+print(g.dtype, g)
+h = g.astype(np.int32)
+print(h.dtype, h)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy">
     <h2>Six attributes you always check</h2>
-    <ul>
-      <li class="fragment fade-up"><code>shape</code> — tuple of dimensions</li>
-      <li class="fragment fade-up"><code>ndim</code> — number of axes</li>
-      <li class="fragment fade-up"><code>size</code> — total elements</li>
-      <li class="fragment fade-up"><code>dtype</code> — element type</li>
-      <li class="fragment fade-up"><code>itemsize</code> — bytes per element</li>
-      <li class="fragment fade-up"><code>nbytes</code> — total bytes</li>
-    </ul>
+    <div class="ex-prompt">Every ndarray exposes <code>shape</code>, <code>ndim</code>, <code>size</code>, <code>itemsize</code>, <code>nbytes</code>, <code>dtype</code>. Inspecting these is the first move when a shape error bites.</div>
+<textarea class="ex-code">import numpy as np
+a = np.zeros((3, 4))
+print('shape   :', a.shape)
+print('ndim    :', a.ndim)
+print('size    :', a.size)
+print('itemsize:', a.itemsize)
+print('nbytes  :', a.nbytes)
+print('dtype   :', a.dtype)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 </section>
 
@@ -95,31 +176,60 @@ rng.standard_normal((3, 4))    # N(0, 1)</code></pre>
     <p class="muted">reshape, transpose, axes</p>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy">
     <h2>Reshape changes strides, not data</h2>
-<pre><code class="language-python">g  = np.arange(24)
-g2 = g.reshape(6, 4)          # same buffer, new shape
-g.ravel()                     # back to 1-D (view if possible)
-g.flatten()                   # back to 1-D (always a copy)</code></pre>
-    <p class="muted">Reshape is essentially free. Reshape-then-write may mutate the source — that bites everyone once.</p>
+    <div class="ex-prompt">Reshape is essentially free — it makes a view over the same buffer. <code>ravel</code> returns a 1-D view when possible; <code>flatten</code> always copies.</div>
+<textarea class="ex-code">import numpy as np
+g = np.arange(24)
+g2 = g.reshape(6, 4)        # new view, same buffer
+print(g2)
+print(g2.ravel())            # back to 1-D (view if possible)
+print(g2.flatten())          # always a copy
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy">
     <h2>Transpose — also a stride trick</h2>
-<pre><code class="language-python">m = np.arange(10).reshape(2, 5)
-m.T                                   # (5, 2) view
+    <div class="ex-prompt">Transposing a 2-D array is the same as <code>.T</code>; for higher dims you list the axis permutation explicitly.</div>
+<textarea class="ex-code">import numpy as np
+m1 = np.arange(10).reshape(2, 5)
+print(m1)
+print(m1.T)                   # shorthand for .transpose()
+
 t = np.arange(24).reshape(4, 2, 3)
-t.transpose((1, 2, 0)).shape          # (2, 3, 4)</code></pre>
-    <p class="muted">Transposing a 2-D array is the same as <code>.T</code>; for higher dims you list the axis permutation explicitly.</p>
+print(t.transpose((1, 2, 0)).shape)   # (2, 3, 4)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy">
     <h2>Add and remove dimensions</h2>
-<pre><code class="language-python">v = np.array([1, 2, 3])
-v[np.newaxis, :].shape    # (1, 3) — row vector
-v[:, np.newaxis].shape    # (3, 1) — column vector
-np.squeeze(...)           # drop length-1 axes</code></pre>
-    <p>You will use these constantly for broadcasting (next course) and for matching tensor shapes in deep learning.</p>
+    <div class="ex-prompt">You will use these constantly for broadcasting (next course) and for matching tensor shapes in deep learning. <code>np.newaxis</code> inserts a length-1 axis; <code>squeeze</code> drops them.</div>
+<textarea class="ex-code">import numpy as np
+v = np.array([1, 2, 3])
+print(v.shape)
+print(v[np.newaxis, :].shape)        # (1, 3) - row vector
+print(v[:, np.newaxis].shape)        # (3, 1) - column vector
+print(np.expand_dims(v, axis=0).shape)
+print(np.squeeze(np.array([[[1, 2, 3]]])).shape)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy">
@@ -186,12 +296,20 @@ E = M[:, :, np.newaxis]</script>
 <script type="text/x-explain">`reshape` only succeeds if the new shape has the same total element count (8*4 == 4*8). `np.newaxis` (alias for `None`) inserts a length-1 axis — the buffer is unchanged, only the strides.</script>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy">
     <h2>C-order vs F-order — a one-slide footnote</h2>
-    <p>NumPy stores arrays row-by-row by default (C-order). Transposing flips to F-order without copying. You rarely care, until you do.</p>
-<pre><code class="language-python">a = np.arange(12).reshape(3, 4)
-a.flags['C_CONTIGUOUS']        # True
-a.T.flags['F_CONTIGUOUS']      # True</code></pre>
+    <div class="ex-prompt">NumPy stores arrays row-by-row by default (C-order). Transposing flips to F-order without copying. You rarely care, until you do.</div>
+<textarea class="ex-code">import numpy as np
+a = np.arange(12).reshape(3, 4)            # default: C-order (row-major)
+print('C-contig?', a.flags['C_CONTIGUOUS'])
+print('F-contig?', a.T.flags['F_CONTIGUOUS'])
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 </section>
 
@@ -202,20 +320,40 @@ a.T.flags['F_CONTIGUOUS']      # True</code></pre>
     <p class="muted">basic, strided, fancy, boolean</p>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy">
     <h2>Basic slicing — like Python, but per-axis</h2>
-<pre><code class="language-python">b = np.arange(48).reshape(4, 12)
-b[1, 2]            # one cell
-b[1, :]            # one row
-b[:, 1]            # one column
-b[1:3, 2:5]        # a sub-matrix
-b[::-1]            # reverse rows</code></pre>
+    <div class="ex-prompt">Slice each axis with <code>start:stop:step</code>, separated by commas. Returns a view over the same buffer.</div>
+<textarea class="ex-code">import numpy as np
+b = np.arange(48).reshape(4, 12)
+print(b)
+print('b[1, 2]   =', b[1, 2])
+print('b[1, :]   =', b[1, :])
+print('b[:, 1]   =', b[:, 1])
+print('b[1:3,2:5]=\n', b[1:3, 2:5])
+print('b[::-1]   =\n', b[::-1])
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy">
     <h2>Strided slicing — every other something</h2>
-<pre><code class="language-python">a[1:3, ::2]    # rows 1-2, every other column</code></pre>
-    <p class="muted">The third number in a slice is the <em>step</em>. <code>::-1</code> reverses; <code>::2</code> takes every other.</p>
+    <div class="ex-prompt">The third number in a slice is the <em>step</em>. <code>::-1</code> reverses; <code>::2</code> takes every other.</div>
+<textarea class="ex-code">import numpy as np
+a = np.arange(20).reshape(4, 5)
+print(a)
+print(a[1:3, ::2])     # rows 1-2, every other column
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy">
@@ -250,12 +388,21 @@ mirrored = M[:, ::-1]</script>
 <script type="text/x-explain">The slice step is the third number in `start:stop:step`. `M[::2]` keeps every other row; `M[:, ::-1]` walks columns backwards. Both are views over the same buffer — cheap.</script>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy">
     <h2>Fancy (integer-array) indexing</h2>
-<pre><code class="language-python">b[(0, 2), 2:5]                       # rows 0 and 2
-b[:, (-1, 2, -1)]                    # cols last, 2, last
-b[(-1, 2, -1, 2), (5, 9, 1, 9)]      # 4 paired cells</code></pre>
-    <p>Pass lists of indices to pick any rows/columns/cells. Always returns a <em>copy</em>.</p>
+    <div class="ex-prompt">Pass lists of indices to pick any rows/columns/cells. Paired index arrays select one cell per pair. Always returns a <em>copy</em>.</div>
+<textarea class="ex-code">import numpy as np
+b = np.arange(48).reshape(4, 12)
+print(b[(0, 2), 2:5])                       # rows 0 and 2, cols 2-4
+print(b[:, (-1, 2, -1)])                     # cols last, 2, last (repeats!)
+print(b[(-1, 2, -1, 2), (5, 9, 1, 9)])       # paired indices - 4 cells
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy">
@@ -290,19 +437,40 @@ print(diag)</script>
 <script type="text/x-explain">Paired index arrays pick one cell per pair. Passing the same array twice — `table[ix, ix]` — selects (0,0), (1,1), (2,2), … which is exactly the diagonal.</script>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy">
     <h2>Boolean masks — the most common filter</h2>
-<pre><code class="language-python">m = np.array([20, -5, 30, 40])
-m[m &lt; 25]                  # [20, -5]
-b[b % 3 == 1]              # every cell where x%3 == 1</code></pre>
-    <p class="callout">Mask + reduction is how you compute "how many rows satisfy X" in one line. You will use this every day.</p>
+    <div class="ex-prompt">Mask + reduction is how you compute "how many rows satisfy X" in one line. You will use this every day.</div>
+<textarea class="ex-code">import numpy as np
+b = np.arange(48).reshape(4, 12)
+m = np.array([20, -5, 30, 40])
+print(m[m < 25])             # [20 -5]
+
+rows_on = np.array([True, False, True, False])
+print(b[rows_on, :])         # keep rows 0 and 2
+
+print(b[b % 3 == 1])         # every elem where x % 3 == 1
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy">
     <h2>np.where — pick from two arrays</h2>
-<pre><code class="language-python">np.where(x % 2 == 0, x, -1)
-# keep evens, replace odds with -1</code></pre>
-    <p class="muted">Vectorized if/else. The shape of all three arguments must broadcast together.</p>
+    <div class="ex-prompt">Vectorized if/else. The shape of all three arguments must broadcast together.</div>
+<textarea class="ex-code">import numpy as np
+x = np.arange(10)
+print(np.where(x % 2 == 0, x, -1))   # keep evens, replace odds with -1
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy">
@@ -341,12 +509,21 @@ print(v); print(mult3); print(out)</script>
 <script type="text/x-explain">`np.arange(1, 31)` is 1..30 (stop is exclusive). `v % 3 == 0` is a boolean mask of the same shape; indexing `v[mask]` pulls the matching values. `np.where(cond, a, b)` returns a new array picking from `a` where `cond` is true and `b` otherwise.</script>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy">
     <h2>Gotcha — slices are views</h2>
-<pre><code class="language-python">view = a[:2, :2]
+    <div class="ex-prompt">Modifying a slice modifies the original. Use <code>.copy()</code> when you want independence.</div>
+<textarea class="ex-code">import numpy as np
+a = np.arange(12).reshape(3, 4)
+view = a[:2, :2]
 view[0, 0] = -999
-print(a)            # the source mutated!</code></pre>
-    <p>Modifying a slice modifies the original. Use <code>.copy()</code> when you want independence.</p>
+print(a)        # the source mutated too!
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 </section>
 

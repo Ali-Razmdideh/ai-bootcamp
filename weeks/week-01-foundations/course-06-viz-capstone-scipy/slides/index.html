@@ -41,12 +41,126 @@
     <p class="muted">statistical plots, one line each</p>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,pandas,matplotlib,seaborn">
     <h2>Same data, more story</h2>
-    <p>Seaborn sits on top of Matplotlib. It knows about DataFrames, categorical variables, and statistical aesthetics by default.</p>
-<pre><code class="language-python">sns.scatterplot(data=penguins, x='bill_length_mm',
-                y='bill_depth_mm',
-                hue='species', style='sex')</code></pre>
+    <div class="ex-prompt">Seaborn sits on top of Matplotlib and knows about DataFrames, categorical variables, and statistical aesthetics by default. A scatter coloured by category turns a numeric cloud into a story. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+
+rng = np.random.default_rng(0)
+species = np.repeat(['Adelie', 'Chinstrap', 'Gentoo'], 20)
+sex = rng.choice(['Male', 'Female'], 60)
+bill_length = np.concatenate([rng.normal(39, 2, 20), rng.normal(49, 2, 20), rng.normal(47, 2, 20)])
+bill_depth  = np.concatenate([rng.normal(18, 1, 20), rng.normal(18, 1, 20), rng.normal(15, 1, 20)])
+flipper     = np.concatenate([rng.normal(190, 5, 20), rng.normal(195, 5, 20), rng.normal(217, 5, 20)])
+body_mass   = np.concatenate([rng.normal(3700, 300, 20), rng.normal(3800, 300, 20), rng.normal(5100, 400, 20)])
+penguins = pd.DataFrame({
+    'species': species, 'sex': sex,
+    'bill_length_mm': bill_length, 'bill_depth_mm': bill_depth,
+    'flipper_length_mm': flipper, 'body_mass_g': body_mass,
+})
+
+sns.scatterplot(data=penguins, x='bill_length_mm', y='bill_depth_mm',
+                hue='species', style='sex')
+plt.show()
+print(penguins.head())
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy,pandas,matplotlib,seaborn">
+    <h2>Boxplot — distribution per group</h2>
+    <div class="ex-prompt">A boxplot summarises each group's distribution: median, IQR, whiskers, outliers. Splitting by <code>hue</code> stacks two categorical variables in one chart. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+
+rng = np.random.default_rng(0)
+species = np.repeat(['Adelie', 'Chinstrap', 'Gentoo'], 20)
+sex = rng.choice(['Male', 'Female'], 60)
+body_mass = np.concatenate([rng.normal(3700, 300, 20), rng.normal(3800, 300, 20), rng.normal(5100, 400, 20)])
+penguins = pd.DataFrame({'species': species, 'sex': sex, 'body_mass_g': body_mass})
+
+sns.boxplot(data=penguins, x='species', y='body_mass_g', hue='sex')
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy,pandas,matplotlib,seaborn">
+    <h2>Violinplot — boxplot + KDE in one</h2>
+    <div class="ex-prompt">A violinplot mirrors a KDE around the box, so you see both the summary stats and the full shape of each group's distribution. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+
+rng = np.random.default_rng(0)
+species = np.repeat(['Adelie', 'Chinstrap', 'Gentoo'], 20)
+flipper = np.concatenate([rng.normal(190, 5, 20), rng.normal(195, 5, 20), rng.normal(217, 5, 20)])
+penguins = pd.DataFrame({'species': species, 'flipper_length_mm': flipper})
+
+sns.violinplot(data=penguins, x='species', y='flipper_length_mm')
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy,pandas,matplotlib,seaborn">
+    <h2>Pairplot — every numeric vs every numeric</h2>
+    <div class="ex-prompt">A pairplot is the fastest way to scan a wide numeric table: every column gets a scatter against every other, with histograms on the diagonal. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+
+rng = np.random.default_rng(0)
+species = np.repeat(['Adelie', 'Chinstrap', 'Gentoo'], 20)
+bill_length = np.concatenate([rng.normal(39, 2, 20), rng.normal(49, 2, 20), rng.normal(47, 2, 20)])
+bill_depth  = np.concatenate([rng.normal(18, 1, 20), rng.normal(18, 1, 20), rng.normal(15, 1, 20)])
+flipper     = np.concatenate([rng.normal(190, 5, 20), rng.normal(195, 5, 20), rng.normal(217, 5, 20)])
+body_mass   = np.concatenate([rng.normal(3700, 300, 20), rng.normal(3800, 300, 20), rng.normal(5100, 400, 20)])
+penguins = pd.DataFrame({
+    'species': species,
+    'bill_length_mm': bill_length, 'bill_depth_mm': bill_depth,
+    'flipper_length_mm': flipper, 'body_mass_g': body_mass,
+})
+
+sns.pairplot(penguins, hue='species', height=1.8)
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section>
@@ -60,11 +174,39 @@
     </ul>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,pandas,matplotlib,seaborn">
     <h2>Correlation heatmap — five lines, big insight</h2>
-<pre><code class="language-python">corr = penguins.select_dtypes('number').corr()
-sns.heatmap(corr, annot=True, cmap='coolwarm', center=0)</code></pre>
-    <p class="muted">First thing to do on any wide numeric dataset. Reveals collinearity in one glance.</p>
+    <div class="ex-prompt">The first thing to do on any wide numeric dataset: compute the correlation matrix and render it as a heatmap. Collinearity shows up in one glance. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+
+rng = np.random.default_rng(0)
+species = np.repeat(['Adelie', 'Chinstrap', 'Gentoo'], 20)
+bill_length = np.concatenate([rng.normal(39, 2, 20), rng.normal(49, 2, 20), rng.normal(47, 2, 20)])
+bill_depth  = np.concatenate([rng.normal(18, 1, 20), rng.normal(18, 1, 20), rng.normal(15, 1, 20)])
+flipper     = np.concatenate([rng.normal(190, 5, 20), rng.normal(195, 5, 20), rng.normal(217, 5, 20)])
+body_mass   = np.concatenate([rng.normal(3700, 300, 20), rng.normal(3800, 300, 20), rng.normal(5100, 400, 20)])
+penguins = pd.DataFrame({
+    'species': species,
+    'bill_length_mm': bill_length, 'bill_depth_mm': bill_depth,
+    'flipper_length_mm': flipper, 'body_mass_g': body_mass,
+})
+
+corr = penguins.select_dtypes('number').corr()
+sns.heatmap(corr, annot=True, cmap='coolwarm', center=0)
+plt.show()
+print(corr.round(2))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 </section>
 
@@ -74,19 +216,84 @@ sns.heatmap(corr, annot=True, cmap='coolwarm', center=0)</code></pre>
     <h1>SciPy stats</h1>
   </section>
 
-  <section>
-    <h2>Distributions are objects</h2>
-<pre><code class="language-python">stats.norm.pdf(x, loc=0, scale=1)
-stats.norm.cdf(x)
-stats.t.cdf(x, df=3)
-stats.chi2.cdf(x, df=3)</code></pre>
-    <p>Every distribution exposes <code>.pdf</code>, <code>.cdf</code>, <code>.ppf</code>, <code>.rvs</code>, <code>.fit</code>. Same API for Normal, t, chi-squared, gamma, beta.</p>
+  <section class="example" data-packages="numpy,scipy,matplotlib">
+    <h2>Distributions are objects — PDFs</h2>
+    <div class="ex-prompt">Every distribution in <code>scipy.stats</code> exposes the same API: <code>.pdf</code>, <code>.cdf</code>, <code>.ppf</code>, <code>.rvs</code>, <code>.fit</code>. Here we plot three Normal PDFs with different parameters. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy import stats
+
+x = np.linspace(-4, 4, 200)
+fig, ax = plt.subplots()
+for mu, sigma in [(0, 1), (0, 0.5), (1, 1)]:
+    ax.plot(x, stats.norm.pdf(x, mu, sigma), label=f'N({mu}, {sigma})')
+ax.set_title('Normal PDFs')
+ax.legend()
+plt.show()
+print('PDF at x=0 for N(0,1):', stats.norm.pdf(0))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,scipy,matplotlib">
+    <h2>CDFs — Normal, t, chi-squared</h2>
+    <div class="ex-prompt">CDFs answer "probability of being below x". Same API across distributions — swap <code>norm</code> for <code>t</code> or <code>chi2</code> and the rest of the code stays the same. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy import stats
+
+x = np.linspace(-4, 4, 200)
+fig, ax = plt.subplots()
+ax.plot(x, stats.norm.cdf(x), label='Normal CDF')
+ax.plot(x, stats.t.cdf(x, df=3), label='t(df=3) CDF')
+ax.plot(x, stats.chi2.cdf(np.clip(x, 0, None), df=3), label='chi2(df=3) CDF')
+ax.legend()
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy,scipy,matplotlib">
     <h2>Fit a Normal in one call</h2>
-<pre><code class="language-python">mu, sigma = stats.norm.fit(samples)</code></pre>
-    <p class="muted">Maximum-likelihood by default. Overlay the fitted PDF on a histogram to eyeball goodness.</p>
+    <div class="ex-prompt">Maximum-likelihood by default — <code>stats.norm.fit</code> returns <code>(mu, sigma)</code>. Overlay the fitted PDF on a density histogram to eyeball goodness of fit. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy import stats
+
+rng = np.random.default_rng(0)
+samples = rng.normal(loc=2.0, scale=1.5, size=1000)
+mu_hat, sigma_hat = stats.norm.fit(samples)
+print(f'mu_hat = {mu_hat:.3f}, sigma_hat = {sigma_hat:.3f}')
+
+xs = np.linspace(samples.min(), samples.max(), 200)
+fig, ax = plt.subplots()
+ax.hist(samples, bins=30, density=True, alpha=0.5)
+ax.plot(xs, stats.norm.pdf(xs, mu_hat, sigma_hat), lw=2, label='fitted')
+ax.legend()
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,scipy">
@@ -168,11 +375,24 @@ ax.legend()</script>
 <script type="text/x-explain">A density histogram (`density=True`) normalizes area to 1 so it can be compared directly with a PDF. If the fitted curve hugs the histogram, the distribution choice is reasonable.</script>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,scipy">
     <h2>One-sample t-test</h2>
-<pre><code class="language-python">res = stats.ttest_1samp(samples, popmean=0)
-res.statistic, res.pvalue</code></pre>
-    <p>Use when you want to know whether a sample's mean differs significantly from a hypothesized value. We will lean on this in Week 3.</p>
+    <div class="ex-prompt">Use this when you want to know whether a sample's mean differs significantly from a hypothesised value. Returns a result object with <code>.statistic</code> and <code>.pvalue</code>. We will lean on this in Week 3.</div>
+<textarea class="ex-code">import numpy as np
+from scipy import stats
+
+rng = np.random.default_rng(0)
+samples = rng.normal(loc=2.0, scale=1.5, size=1000)
+
+res = stats.ttest_1samp(samples, popmean=0)
+print('t =', res.statistic, '  p =', res.pvalue)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,scipy">
@@ -218,13 +438,26 @@ print(t_stat, p_value)</script>
     <h1>Optimize + Grand Finale</h1>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,scipy">
     <h2>minimize — the engine under every model</h2>
-<pre><code class="language-python">res = optimize.minimize(rosen, x0=[0.0, 0.0])
-res.x       # argmin
-res.fun     # min value
-res.nit     # iterations used</code></pre>
-    <p class="callout">Every supervised model is "define a loss, call an optimizer." You just used both halves.</p>
+    <div class="ex-prompt">The Rosenbrock function is the classical test bed: a narrow curved valley with the minimum at <code>(1, 1)</code>. Every supervised model is "define a loss, call an optimizer" — <code>res.x</code> is the argmin, <code>res.fun</code> the minimum value, <code>res.nit</code> the iteration count.</div>
+<textarea class="ex-code">import numpy as np
+from scipy import optimize
+
+def rosen(x):
+    return (1 - x[0])**2 + 100 * (x[1] - x[0]**2)**2
+
+res = optimize.minimize(rosen, x0=[0.0, 0.0])
+print('x* =', res.x.round(4))
+print('f* =', res.fun)
+print('iters:', res.nit)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,scipy">
@@ -261,11 +494,31 @@ print(x_star, f_star)</script>
 <script type="text/x-explain">A convex quadratic has its minimum where the derivative vanishes: `2(x-3) = 0` ⇒ `x = 3`, giving `f(3) = 5`. `optimize.minimize` defaults to BFGS and converges in a handful of iterations.</script>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,scipy,matplotlib">
     <h2>The 1-D loss landscape</h2>
-<pre><code class="language-python">f = lambda x: (x - 3)**2 + np.sin(5 * x)
-res = optimize.minimize(f, x0=0.0)</code></pre>
-    <p class="muted">A 1-D plot is the cheapest sanity check you have. Always look at your loss surface when something feels off.</p>
+    <div class="ex-prompt">A 1-D plot is the cheapest sanity check you have — always look at your loss surface when something feels off. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy import optimize
+
+f = lambda x: (x - 3)**2 + np.sin(5 * x)
+xs = np.linspace(-2, 8, 400)
+fig, ax = plt.subplots()
+ax.plot(xs, f(xs))
+res = optimize.minimize(f, x0=0.0)
+ax.axvline(res.x[0], color='red', ls='--', label=f'min at x={res.x[0]:.3f}')
+ax.legend(); ax.set_title('A loss surface')
+plt.show()
+print('min at x =', res.x[0])
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,scipy">
@@ -315,6 +568,58 @@ print(x_opt, f_opt)</script>
       <li class="fragment fade-up">Refactor into a reusable function.</li>
     </ol>
     <p class="callout fragment fade-up">Every step uses a different course from this week.</p>
+  </section>
+
+  <section class="example" data-packages="numpy,pandas,matplotlib">
+    <h2>Grand Finale — load, clean, smooth, plot</h2>
+    <div class="ex-prompt">The Week 1 capstone in one block: inject NaNs, parse dates, forward-fill, compute a 7-day moving average with <code>np.convolve</code>, and plot raw + smoothed prices. (Real stock data isn't available in the browser, so we synthesise a random-walk price series.) Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+rng = np.random.default_rng(0)
+
+# Step 1 - synthetic 'stock-prices' + inject 5% NaNs
+dates = pd.date_range('2024-01-01', periods=120, freq='D')
+price = 100 + np.cumsum(rng.normal(0, 1, 120))
+df = pd.DataFrame({'date': dates, 'close': price})
+DATE, PRICE = df.columns[0], df.columns[1]
+mask = rng.random(len(df)) < 0.05
+df.loc[mask, PRICE] = np.nan
+print('shape:', df.shape, '  NaNs injected:', int(mask.sum()))
+
+# Step 2 - parse dates and sort
+df[DATE] = pd.to_datetime(df[DATE])
+df = df.sort_values(DATE).reset_index(drop=True)
+
+# Step 3 - clean: forward-fill the price
+df[PRICE] = df[PRICE].ffill()
+assert df[PRICE].isna().sum() == 0
+
+# Step 4 - NumPy 7-day moving average via convolution
+window = 7
+kernel = np.ones(window) / window
+ma = np.convolve(df[PRICE].values, kernel, mode='valid')
+ma_full = np.concatenate([np.full(window - 1, np.nan), ma])
+print('ma length matches df:', len(ma_full) == len(df))
+
+# Step 5 - plot
+fig, ax = plt.subplots(figsize=(10, 4))
+ax.plot(df[DATE], df[PRICE], label='price', alpha=0.5)
+ax.plot(df[DATE], ma_full, label='7-day MA', lw=2)
+ax.set_xlabel('date'); ax.set_ylabel(PRICE)
+ax.set_title('Synthetic series - closing price + 7-day moving average')
+ax.legend(); fig.autofmt_xdate()
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,pandas,matplotlib">

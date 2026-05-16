@@ -40,10 +40,55 @@
     <h1>Missing data & column ops</h1>
   </section>
 
-  <section>
+  <section class="example" data-packages="pandas,numpy">
+    <h2>Load the canonical messy dataset</h2>
+    <div class="ex-prompt">Titanic is the textbook dirty dataset — age and embarked have NaNs out of the box. Peek at the first rows before cleaning anything.</div>
+<textarea class="ex-code">import pandas as pd
+import numpy as np
+
+# Pyodide can't reach the shared loader, so inline a Titanic-shaped sample.
+titanic = pd.DataFrame({
+    'survived': [0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1],
+    'pclass':   [3, 1, 3, 1, 3, 3, 1, 3, 2, 3, 1, 2],
+    'sex':      ['male','female','female','female','male','male',
+                 'male','female','female','female','male','male'],
+    'age':      [22.0, 38.0, 26.0, 35.0, np.nan, 27.0,
+                 54.0, 4.0, np.nan, 14.0, 58.0, 20.0],
+    'fare':     [7.25, 71.28, 7.92, 53.1, 8.05, 8.46, 51.86, 16.7, 30.07, 11.13, 26.55, 13.0],
+    'embarked': ['S','C','S','S','S',np.nan,'S','S','C','S','S','S'],
+})
+titanic.head()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="pandas,numpy">
     <h2>Find the holes</h2>
-<pre><code class="language-python">titanic.isna().sum()       # NaNs per column</code></pre>
-    <p class="muted">Always start cleaning by counting. <code>isna().sum()</code> is your microscope.</p>
+    <div class="ex-prompt">Always start cleaning by counting. <code>isna().sum()</code> is your microscope — a per-column tally of NaNs.</div>
+<textarea class="ex-code">import pandas as pd
+import numpy as np
+
+titanic = pd.DataFrame({
+    'survived': [0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1],
+    'pclass':   [3, 1, 3, 1, 3, 3, 1, 3, 2, 3, 1, 2],
+    'age':      [22.0, 38.0, 26.0, 35.0, np.nan, 27.0,
+                 54.0, 4.0, np.nan, 14.0, 58.0, 20.0],
+    'embarked': ['S','C','S','S','S',np.nan,'S','S','C','S','S','S'],
+})
+
+titanic.isna().sum()       # NaNs per column
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,pandas">
@@ -93,6 +138,72 @@ print(na_counts)</script>
     </ul>
   </section>
 
+  <section class="example" data-packages="pandas,numpy">
+    <h2>Drop rows with NaN in a key column</h2>
+    <div class="ex-prompt">When a column is required and only a few rows are missing it, drop those rows. <code>dropna(subset=...)</code> is targeted — safer than a bare <code>dropna()</code>.</div>
+<textarea class="ex-code">import pandas as pd
+import numpy as np
+
+titanic = pd.DataFrame({
+    'survived': [0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1],
+    'age':      [22.0, 38.0, 26.0, 35.0, np.nan, 27.0,
+                 54.0, 4.0, np.nan, 14.0, 58.0, 20.0],
+    'embarked': ['S','C','S','S','S',np.nan,'S','S','C','S','S','S'],
+})
+
+clean = titanic.dropna(subset=['embarked'])
+print('rows lost:', len(titanic) - len(clean))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="pandas,numpy">
+    <h2>Fill with the column median</h2>
+    <div class="ex-prompt">When you can't afford to lose rows, impute. <code>assign</code> + <code>fillna</code> keeps the operation pure — a new frame, no in-place mutation.</div>
+<textarea class="ex-code">import pandas as pd
+import numpy as np
+
+titanic = pd.DataFrame({
+    'age': [22.0, 38.0, 26.0, 35.0, np.nan, 27.0,
+            54.0, 4.0, np.nan, 14.0, 58.0, 20.0],
+})
+
+filled = titanic.assign(age=titanic['age'].fillna(titanic['age'].median()))
+print('age NaNs after fillna:', filled['age'].isna().sum())
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="pandas,numpy">
+    <h2>Interpolate across columns</h2>
+    <div class="ex-prompt">When values are ordered with smooth structure (e.g. monthly bonuses), interpolate fills NaNs from neighbours. <code>axis=1</code> walks left-to-right across each row.</div>
+<textarea class="ex-code">import pandas as pd
+import numpy as np
+
+bonus = pd.DataFrame(
+    [[0, np.nan, 2], [np.nan, 1, 0], [0, 1, 0], [3, 3, 0]],
+    columns=['oct', 'nov', 'dec'],
+    index=['bob', 'colin', 'darwin', 'charles'])
+bonus.interpolate(axis=1)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
   <section class="exercise" data-packages="numpy,pandas">
     <h2>Exercise — Impute and drop</h2>
     <div class="ex-prompt">Fill missing <code>age</code> with the column's median into a new frame <code>filled</code>. Then build <code>clean</code> by dropping rows where <code>embarked</code> is NaN. <code>clean</code> should have zero NaNs in both columns.</div>
@@ -138,12 +249,33 @@ print(clean)</script>
 <script type="text/x-explain">`fillna` replaces NaNs in place of a column; wrapping it in `assign` keeps the operation pure. `dropna(subset=...)` drops rows only when the listed columns are NaN — much safer than a bare `dropna()`.</script>
   </section>
 
-  <section>
+  <section class="example" data-packages="pandas,numpy">
     <h2>Column ops — <code>assign</code> and <code>query</code></h2>
-<pre><code class="language-python">(tips
+    <div class="ex-prompt"><code>assign</code> adds a derived column without mutating; <code>query</code> filters with a string expression. Both chain cleanly.</div>
+<textarea class="ex-code">import pandas as pd
+
+# Synthetic tips frame (Pyodide can't reach seaborn datasets).
+tips = pd.DataFrame({
+    'total_bill': [16.99, 10.34, 21.01, 23.68, 24.59, 25.29, 8.77, 26.88,
+                   15.04, 14.78, 10.27, 35.26, 15.42, 18.43, 14.83, 21.58],
+    'tip':        [ 1.01,  1.66,  3.50,  3.31,  3.61,  4.71, 2.00,  3.12,
+                    1.96,  3.23,  1.71,  5.00,  1.57,  3.00,  3.02,  3.92],
+    'sex':        ['F','M','M','M','F','M','M','M','M','M','M','M','M','M','F','M'],
+    'time':       ['Dinner']*10 + ['Lunch']*3 + ['Dinner']*3,
+    'day':        ['Sun']*8 + ['Sat']*4 + ['Thur']*4,
+})
+
+(tips
    .assign(tip_pct=lambda df: df['tip'] / df['total_bill'])
-   .query('tip_pct &gt; 0.2 and time == "Dinner"'))</code></pre>
-    <p class="muted"><code>assign</code> adds a derived column without mutating; <code>query</code> filters with a string expression. Both chain.</p>
+   .query('tip_pct > 0.2 and time == "Dinner"')
+   .head())
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 </section>
 
@@ -153,11 +285,30 @@ print(clean)</script>
     <h1>Group, pivot, join</h1>
   </section>
 
-  <section>
+  <section class="example" data-packages="pandas,numpy">
     <h2>GroupBy — the workhorse</h2>
-<pre><code class="language-python">tips.groupby('day')['tip'].mean()
-tips.groupby(['day', 'sex'])['tip'].agg(['mean', 'count'])</code></pre>
-    <p class="muted">Split → apply → combine. Pass a single column or a list; pass a single agg or a list of aggs.</p>
+    <div class="ex-prompt">Split → apply → combine. One key or many; one aggregation or a list.</div>
+<textarea class="ex-code">import pandas as pd
+
+tips = pd.DataFrame({
+    'total_bill': [16.99, 10.34, 21.01, 23.68, 24.59, 25.29, 8.77, 26.88,
+                   15.04, 14.78, 10.27, 35.26, 15.42, 18.43, 14.83, 21.58],
+    'tip':        [ 1.01,  1.66,  3.50,  3.31,  3.61,  4.71, 2.00,  3.12,
+                    1.96,  3.23,  1.71,  5.00,  1.57,  3.00,  3.02,  3.92],
+    'sex':        ['F','M','M','M','F','M','M','M','M','M','M','M','M','M','F','M'],
+    'day':        ['Sun']*8 + ['Sat']*4 + ['Thur']*4,
+})
+
+print(tips.groupby('day', observed=False)['tip'].mean())
+print()
+print(tips.groupby(['day', 'sex'], observed=False)['tip'].agg(['mean', 'count']))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,pandas">
@@ -241,12 +392,27 @@ print(g)</script>
 <script type="text/x-explain">`assign` returns a new frame with the added column — chainable and non-mutating. Grouping by two keys produces a Series with a MultiIndex; one aggregation per group cell.</script>
   </section>
 
-  <section>
+  <section class="example" data-packages="pandas,numpy">
     <h2>Pivot — reshape from long to wide</h2>
-<pre><code class="language-python">pd.pivot_table(
-    more_grades,
-    index='name', columns='month', values='grade',
-    margins=True)</code></pre>
+    <div class="ex-prompt">Long-form data (one row per observation) becomes wide-form (a matrix) with one call. <code>margins=True</code> adds row/column totals — Geron's grade-book layout.</div>
+<textarea class="ex-code">import pandas as pd
+
+more = pd.DataFrame({
+    'name':   ['alice', 'alice', 'bob', 'bob', 'charles', 'charles'],
+    'month':  ['sep',   'oct',   'sep', 'oct', 'sep',     'oct'],
+    'grade':  [ 8,       8,       10,    9,    4,         8],
+})
+print(more)
+print()
+print(pd.pivot_table(more, index='name', values='grade',
+                     columns='month', margins=True))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,pandas">
@@ -293,18 +459,67 @@ print(top)</script>
 <script type="text/x-explain">`unstack` moves one level of a MultiIndex into columns — long-to-wide in one call. `idxmax` returns the *index label* (a tuple for a MultiIndex) at the maximum, not the value.</script>
   </section>
 
-  <section>
+  <section class="example" data-packages="pandas,numpy">
     <h2>Merge — SQL joins for DataFrames</h2>
-<pre><code class="language-python">pd.merge(city_loc, city_pop, on='city')             # INNER
-pd.merge(city_loc, city_pop, on='city', how='outer') # OUTER
-pd.merge(city_loc, city_pop, on='city', how='left')  # LEFT</code></pre>
-    <p>Same vocabulary as SQL. <code>how=</code> picks the join type.</p>
+    <div class="ex-prompt">Same vocabulary as SQL: inner, outer, left, right. <code>how=</code> picks the join type; <code>on=</code> picks the key.</div>
+<textarea class="ex-code">import pandas as pd
+
+city_loc = pd.DataFrame(
+    [['CA', 'San Francisco', 37.78, -122.42],
+     ['NY', 'New York',      40.71,  -74.01],
+     ['FL', 'Miami',         25.79,  -80.32]],
+    columns=['state', 'city', 'lat', 'lng'])
+
+city_pop = pd.DataFrame(
+    [[ 808976, 'San Francisco', 'California'],
+     [8363710, 'New York',      'New-York'],
+     [2242193, 'Houston',       'Texas']],
+    columns=['population', 'city', 'state'])
+
+print('INNER:')
+print(pd.merge(city_loc, city_pop, on='city'))
+print('\nOUTER:')
+print(pd.merge(city_loc, city_pop, on='city', how='outer'))
+print('\nLEFT:')
+print(pd.merge(city_loc, city_pop, on='city', how='left'))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="pandas,numpy">
     <h2>Concat — stack rows or columns</h2>
-<pre><code class="language-python">pd.concat([a, b], ignore_index=True)   # vertical
-pd.concat([a, b], axis=1)              # horizontal</code></pre>
+    <div class="ex-prompt"><code>concat</code> glues frames together. <code>axis=0</code> (default) stacks rows; <code>axis=1</code> aligns by index and stacks columns.</div>
+<textarea class="ex-code">import pandas as pd
+
+city_loc = pd.DataFrame(
+    [['CA', 'San Francisco', 37.78, -122.42],
+     ['NY', 'New York',      40.71,  -74.01],
+     ['FL', 'Miami',         25.79,  -80.32]],
+    columns=['state', 'city', 'lat', 'lng'])
+
+city_pop = pd.DataFrame(
+    [[ 808976, 'San Francisco', 'California'],
+     [8363710, 'New York',      'New-York'],
+     [2242193, 'Houston',       'Texas']],
+    columns=['population', 'city', 'state'])
+
+print('vertical:')
+print(pd.concat([city_loc, city_pop], ignore_index=True))
+print('\nhorizontal:')
+print(pd.concat([city_loc.set_index('city'),
+                 city_pop.set_index('city')], axis=1))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 </section>
 
@@ -314,29 +529,107 @@ pd.concat([a, b], axis=1)              # horizontal</code></pre>
     <h1>Time series</h1>
   </section>
 
-  <section>
+  <section class="example" data-packages="pandas,numpy">
     <h2>A DatetimeIndex is the whole game</h2>
-<pre><code class="language-python">dates = pd.date_range('2016-10-29 17:30', periods=12, freq='h')
-ts = pd.Series(temps, index=dates)</code></pre>
-    <p class="muted">Once the index is datetimes, every time-aware method unlocks: <code>.dt</code>, <code>.resample</code>, partial-string slicing.</p>
+    <div class="ex-prompt">Once the index is datetimes, every time-aware method unlocks: <code>.dt</code>, <code>.resample</code>, partial-string slicing. <code>pd.date_range</code> generates regular timestamps.</div>
+<textarea class="ex-code">import pandas as pd
+
+temps = [4.4, 5.1, 6.1, 6.2, 6.1, 6.1, 5.7, 5.2, 4.7, 4.1, 3.9, 3.5]
+dates = pd.date_range('2016-10-29 17:30', periods=12, freq='h')
+ts = pd.Series(temps, index=dates, name='Temperature')
+ts.head()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="pandas,numpy">
     <h2>Resample — change the frequency</h2>
-<pre><code class="language-python">ts.resample('2h').mean()             # downsample
-ts.resample('15min').interpolate()   # upsample</code></pre>
-    <p class="callout">Downsampling aggregates; upsampling interpolates. Pick the verb that matches your direction.</p>
+    <div class="ex-prompt">Downsampling aggregates (many rows → one); upsampling interpolates (one row → many). Same method, opposite directions.</div>
+<textarea class="ex-code">import pandas as pd
+
+temps = [4.4, 5.1, 6.1, 6.2, 6.1, 6.1, 5.7, 5.2, 4.7, 4.1, 3.9, 3.5]
+dates = pd.date_range('2016-10-29 17:30', periods=12, freq='h')
+ts = pd.Series(temps, index=dates, name='Temperature')
+
+print('downsample to 2h (mean):')
+print(ts.resample('2h').mean())
+print('\nupsample to 15min (cubic interpolation):')
+print(ts.resample('15min').interpolate(method='cubic').head())
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="pandas,numpy">
     <h2>Real CSV — stock-prices</h2>
-<pre><code class="language-python">sp = load_dataset('stock-prices')
-sp.columns                       # ['AAPL_x', 'AAPL_y']
-sp['AAPL_x'] = pd.to_datetime(sp['AAPL_x'])
-sp = sp.sort_values('AAPL_x').set_index('AAPL_x')
+    <div class="ex-prompt">The full pipeline: parse the date column, sort, set as index, then time-aware ops work. Pyodide can't reach the shared loader, so we inline a sample of 2014 AAPL closing prices here.</div>
+<textarea class="ex-code">import pandas as pd
 
-sp['AAPL_y'].resample('W').mean().plot()</code></pre>
-    <p class="muted">Load, parse, sort, set the index, resample, plot. Five lines.</p>
+# Inline sample mimicking Plotly's stock-prices file (AAPL_x / AAPL_y).
+sp = pd.DataFrame({
+    'AAPL_x': ['2014-03-05', '2014-01-10', '2014-02-14', '2014-01-17',
+               '2014-02-21', '2014-01-24', '2014-03-12', '2014-02-07',
+               '2014-01-31', '2014-02-28', '2014-03-19', '2014-03-26'],
+    'AAPL_y': [75.0, 76.5, 74.2, 78.1, 73.8, 77.0, 76.1, 72.4,
+               71.9, 75.8, 77.4, 78.9],
+})
+print(sp.columns.tolist())
+
+DATE  = sp.columns[0]
+PRICE = sp.columns[1]
+sp[DATE] = pd.to_datetime(sp[DATE])
+sp = sp.sort_values(DATE).set_index(DATE)
+sp.head()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="pandas,numpy,matplotlib">
+    <h2>Daily → weekly mean, then plot</h2>
+    <div class="ex-prompt">With a DatetimeIndex, weekly aggregation is a one-liner. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import pandas as pd
+import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+
+sp = pd.DataFrame({
+    'AAPL_x': ['2014-03-05', '2014-01-10', '2014-02-14', '2014-01-17',
+               '2014-02-21', '2014-01-24', '2014-03-12', '2014-02-07',
+               '2014-01-31', '2014-02-28', '2014-03-19', '2014-03-26'],
+    'AAPL_y': [75.0, 76.5, 74.2, 78.1, 73.8, 77.0, 76.1, 72.4,
+               71.9, 75.8, 77.4, 78.9],
+})
+DATE, PRICE = sp.columns[0], sp.columns[1]
+sp[DATE] = pd.to_datetime(sp[DATE])
+sp = sp.sort_values(DATE).set_index(DATE)
+
+weekly = sp[PRICE].resample('W').mean()
+print(weekly)
+
+ax = weekly.plot(title='AAPL - weekly mean closing price')
+ax.set_ylabel('USD')
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,pandas">

@@ -50,14 +50,52 @@
     <p class="muted">Every method follows from these three. <code>fig.savefig</code>, <code>ax.plot</code>, <code>ax.legend</code> — the prefix tells you who owns the action.</p>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,matplotlib">
+    <h2>A first Figure / Axes</h2>
+    <div class="ex-prompt">The smallest possible matplotlib program: ask for a Figure + Axes, then plot four points. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots()
+ax.plot([-3, -2, 5, 0], [1, 6, 4, 3])
+plt.show()
+print('Figure:', fig)
+print('Axes:', ax)
+print('Lines on the Axes:', len(ax.lines))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy,matplotlib">
     <h2>Your first plot, the right way</h2>
-<pre><code class="language-python">fig, ax = plt.subplots()
-ax.plot(x, x**2, label='y = x²')
-ax.set_xlabel('x'); ax.set_ylabel('y')
+    <div class="ex-prompt">Plot <code>y = x²</code> with labels, title, grid, and legend — everything goes through <code>ax</code>, not <code>plt</code>. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+
+x = np.linspace(-2, 2, 500)
+fig, ax = plt.subplots()
+ax.plot(x, x**2, label='y = x^2')
+ax.set_xlabel('x')
+ax.set_ylabel('y')
 ax.set_title('Square function')
-ax.grid(True); ax.legend()</code></pre>
-    <p class="muted">Notice: no <code>plt.</code> calls after <code>subplots()</code>. Everything goes through <code>ax</code> (or <code>fig</code>).</p>
+ax.grid(True)
+ax.legend()
+plt.show()
+print('xlabel:', ax.get_xlabel())
+print('title:', ax.get_title())
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,matplotlib">
@@ -103,11 +141,54 @@ ax.plot(x, np.cos(x), label='cos')</script>
 <script type="text/x-explain">Call <code>plt.subplots()</code> once to grab a Figure and an Axes, then call <code>ax.plot</code> twice — each call adds one Line2D artist to the same Axes.</script>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,matplotlib">
     <h2>Lines: style, color, marker</h2>
-<pre><code class="language-python">ax.plot(x, x**2, linestyle='--', color='C1',
-        marker='.', markevery=20, label='x²')</code></pre>
-    <p>Pass each property as a keyword. The shorthand string <code>'r--o'</code> works, but the kwargs read better.</p>
+    <div class="ex-prompt">Three curves on one Axes, each with a different linestyle; the cubic also gets a marker every 20 points. Pass styling as keyword arguments. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+
+x = np.linspace(-2, 2, 500)
+fig, ax = plt.subplots()
+ax.plot(x, x,        label='x',     linestyle='-')
+ax.plot(x, x**2,     label='x^2',   linestyle='--')
+ax.plot(x, x**3,     label='x^3',   linestyle=':', marker='.', markevery=20)
+ax.set_title('Powers of x')
+ax.legend()
+plt.show()
+print('linestyles:', [ln.get_linestyle() for ln in ax.lines])
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy,matplotlib">
+    <h2>Axis limits</h2>
+    <div class="ex-prompt">Use <code>ax.set_xlim</code> / <code>ax.set_ylim</code> to zoom into a region of the data without throwing away the underlying array. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+
+x = np.linspace(-2, 2, 500)
+fig, ax = plt.subplots()
+ax.plot(x, x**2)
+ax.set_xlim(-2.5, 2.5)
+ax.set_ylim(0, 5)
+ax.set_title('Zoomed')
+plt.show()
+print('xlim:', ax.get_xlim())
+print('ylim:', ax.get_ylim())
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,matplotlib">
@@ -172,11 +253,39 @@ ax.grid(True); ax.legend()</script>
     </ul>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,pandas,matplotlib">
     <h2>Scatter — colored by a category</h2>
-<pre><code class="language-python">codes = penguins['species'].astype('category').cat.codes
-ax.scatter(x, y, c=codes, cmap='viridis', s=30, alpha=0.7)</code></pre>
-    <p class="muted">Pass an array to <code>c=</code> and a categorical colormap to <code>cmap=</code>. <code>alpha</code> tames overplotting.</p>
+    <div class="ex-prompt">Scatter <code>bill_length_mm</code> vs <code>bill_depth_mm</code>, coloring each point by the categorical <code>species</code> via <code>cat.codes</code>. A tiny synthetic penguins frame stands in for the real dataset. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+rng = np.random.default_rng(0)
+species = np.array(['Adelie']*20 + ['Chinstrap']*20 + ['Gentoo']*20)
+bill_length = np.concatenate([rng.normal(39,2,20), rng.normal(49,2,20), rng.normal(47,2,20)])
+bill_depth  = np.concatenate([rng.normal(18,1,20), rng.normal(18,1,20), rng.normal(15,1,20)])
+penguins = pd.DataFrame({'species': species,
+                         'bill_length_mm': bill_length,
+                         'bill_depth_mm': bill_depth})
+
+fig, ax = plt.subplots()
+colors = penguins['species'].astype('category').cat.codes
+ax.scatter(penguins['bill_length_mm'],
+           penguins['bill_depth_mm'],
+           c=colors, cmap='viridis', s=30, alpha=0.7)
+ax.set_xlabel('bill length (mm)')
+ax.set_ylabel('bill depth (mm)')
+ax.set_title('Penguins - bill length vs depth')
+plt.show()
+print('points plotted:', len(penguins))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,matplotlib">
@@ -226,11 +335,61 @@ ax.set_ylabel('bill depth (mm)')</script>
 <script type="text/x-explain">Pass a numeric array to <code>c=</code> and matplotlib maps it through <code>cmap</code>. Each scatter call adds one PathCollection to the Axes — inspectable via <code>ax.collections</code>.</script>
   </section>
 
-  <section>
-    <h2>Histogram and boxplot</h2>
-<pre><code class="language-python">ax.hist(penguins['body_mass_g'], bins=30)
-ax.boxplot(groups_per_species)</code></pre>
-    <p>A histogram answers "where is the mass." A boxplot answers "where are the medians and outliers across groups."</p>
+  <section class="example" data-packages="numpy,pandas,matplotlib">
+    <h2>Histogram — shape of one distribution</h2>
+    <div class="ex-prompt">A histogram answers "where is the mass." Bin <code>body_mass_g</code> into 30 buckets. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+rng = np.random.default_rng(0)
+species = np.array(['Adelie']*20 + ['Chinstrap']*20 + ['Gentoo']*20)
+body_mass = np.concatenate([rng.normal(3700,400,20), rng.normal(3750,380,20), rng.normal(5100,500,20)])
+penguins = pd.DataFrame({'species': species, 'body_mass_g': body_mass})
+
+fig, ax = plt.subplots()
+ax.hist(penguins['body_mass_g'], bins=30, rwidth=0.9)
+ax.set_xlabel('body mass (g)')
+ax.set_ylabel('count')
+plt.show()
+print('bars drawn:', len(ax.patches))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy,pandas,matplotlib">
+    <h2>Boxplot — medians across groups</h2>
+    <div class="ex-prompt">A boxplot answers "where are the medians and outliers across groups." Group <code>body_mass_g</code> by species, pass one array per group to <code>ax.boxplot</code>. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+rng = np.random.default_rng(0)
+species = np.array(['Adelie']*20 + ['Chinstrap']*20 + ['Gentoo']*20)
+body_mass = np.concatenate([rng.normal(3700,400,20), rng.normal(3750,380,20), rng.normal(5100,500,20)])
+penguins = pd.DataFrame({'species': species, 'body_mass_g': body_mass})
+
+groups = [penguins.loc[penguins['species'] == s, 'body_mass_g']
+          for s in penguins['species'].unique()]
+fig, ax = plt.subplots()
+ax.boxplot(groups, tick_labels=list(penguins['species'].unique()))
+ax.set_ylabel('body mass (g)')
+plt.show()
+print('groups:', list(penguins['species'].unique()))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,matplotlib">
@@ -281,10 +440,31 @@ ax.legend()</script>
 <script type="text/x-explain"><code>ax.hist</code> returns counts and edges but its visual output is a set of <code>Rectangle</code> patches on the Axes. <code>axvline</code> adds a Line2D spanning the full y-range at a fixed x — perfect for marking summary statistics.</script>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,pandas,matplotlib">
     <h2>Bar — counts per category</h2>
-<pre><code class="language-python">counts = penguins['species'].value_counts()
-ax.bar(counts.index, counts.values)</code></pre>
+    <div class="ex-prompt"><code>value_counts</code> gives you category → count; feed its index and values straight into <code>ax.bar</code>. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+species = np.array(['Adelie']*20 + ['Chinstrap']*20 + ['Gentoo']*20)
+penguins = pd.DataFrame({'species': species})
+
+counts = penguins['species'].value_counts()
+fig, ax = plt.subplots()
+ax.bar(counts.index, counts.values)
+ax.set_ylabel('count')
+ax.set_title('Penguins per species')
+plt.show()
+print(counts)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 </section>
 
@@ -294,15 +474,30 @@ ax.bar(counts.index, counts.values)</code></pre>
     <h1>Subplots & saving</h1>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,matplotlib">
     <h2>A 2×2 grid in one call</h2>
-<pre><code class="language-python">fig, axes = plt.subplots(2, 2, figsize=(9, 6),
-                         sharex=True)
-axes[0, 0].plot(x, x);   axes[0, 0].set_title('x')
-axes[0, 1].plot(x, x**2);axes[0, 1].set_title('x²')
-fig.suptitle('Powers of x')
-fig.tight_layout()</code></pre>
-    <p class="muted"><code>axes</code> is a 2-D NumPy array of Axes. <code>sharex=True</code> aligns the x-axes across the grid.</p>
+    <div class="ex-prompt"><code>plt.subplots(2, 2)</code> returns a Figure and a 2-D NumPy array of Axes. <code>sharex=True</code> aligns the x-axes; <code>fig.tight_layout()</code> stops titles from colliding. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+
+fig, axes = plt.subplots(2, 2, figsize=(9, 6), sharex=True)
+x = np.linspace(-1.4, 1.4, 30)
+axes[0, 0].plot(x, x);     axes[0, 0].set_title('x')
+axes[0, 1].plot(x, x**2);  axes[0, 1].set_title('x^2')
+axes[1, 0].plot(x, x**3);  axes[1, 0].set_title('x^3')
+axes[1, 1].plot(x, x**4);  axes[1, 1].set_title('x^4')
+fig.suptitle('Powers of x - sharex=True')
+fig.tight_layout()
+plt.show()
+print('axes shape:', axes.shape)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,matplotlib">
@@ -349,17 +544,49 @@ fig.tight_layout()</script>
 <script type="text/x-explain"><code>plt.subplots(2, 2)</code> returns a Figure and a 2-D numpy array of Axes. Iterate with <code>axes.flat</code> or index by row/col. <code>fig.suptitle</code> sits above all subplots; <code>tight_layout</code> stops titles from colliding.</script>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,matplotlib">
     <h2>Saving to PNG</h2>
-<pre><code class="language-python">fig.savefig('out.png', dpi=120, bbox_inches='tight')</code></pre>
-    <p>Default DPI is too low for slides. Always pass <code>dpi=120</code> or higher and <code>bbox_inches='tight'</code> to trim whitespace.</p>
+    <div class="ex-prompt">Default DPI is too low for slides. Always pass <code>dpi=120</code> or higher and <code>bbox_inches='tight'</code> to trim whitespace. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+
+x = np.linspace(-1.4, 1.4, 30)
+fig, ax = plt.subplots()
+ax.plot(x, x**2)
+ax.set_title('Saved')
+fig.savefig('/tmp/square.png', dpi=120, bbox_inches='tight')
+print('wrote /tmp/square.png')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,matplotlib">
     <h2>Style sheets — change the look in one line</h2>
-<pre><code class="language-python">with plt.style.context('seaborn-v0_8-whitegrid'):
-    fig, ax = plt.subplots(); ax.plot(x, y)</code></pre>
-    <p class="muted">Built-in styles: <code>ggplot</code>, <code>dark_background</code>, <code>seaborn-v0_8-*</code>. Switch globally with <code>plt.style.use(...)</code>.</p>
+    <div class="ex-prompt">Built-in styles like <code>ggplot</code>, <code>dark_background</code>, and the <code>seaborn-v0_8-*</code> family change the whole vibe of a plot. Use <code>plt.style.context</code> for a one-off, <code>plt.style.use</code> globally. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+
+x = np.linspace(-1.4, 1.4, 30)
+with plt.style.context('seaborn-v0_8-whitegrid'):
+    fig, ax = plt.subplots()
+    ax.plot(x, np.sin(2 * np.pi * x))
+    ax.set_title('with seaborn-v0_8-whitegrid')
+plt.show()
+print('style applied inside the context manager')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 </section>
 

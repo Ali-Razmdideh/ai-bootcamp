@@ -40,36 +40,115 @@
     <h1>Series</h1>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,pandas">
     <h2>A Series is a NumPy array with a label index</h2>
-<pre><code class="language-python">s = pd.Series([2, -1, 3, 5])
-np.exp(s)                # ufuncs still work
-s + 1000                 # scalar broadcasts
-s &lt; 0                    # element-wise compare</code></pre>
-    <p class="muted">Everything you learned in NumPy still applies. Pandas just adds labels.</p>
+    <div class="ex-prompt">A Series is a 1-D labeled array. NumPy ufuncs, scalar broadcasting and element-wise comparison all still work — Pandas just adds labels on top.</div>
+<textarea class="ex-code">import pandas as pd
+import numpy as np
+
+s = pd.Series([2, -1, 3, 5])
+print(s)
+print()
+print('np.exp(s):')
+print(np.exp(s))             # ufuncs still work
+print()
+print('s + [1000, 2000, 3000, 4000]:')
+print(s + [1000, 2000, 3000, 4000])
+print()
+print('s + 1000 (scalar broadcasts):')
+print(s + 1000)
+print()
+print('s &lt; 0 (element-wise compare):')
+print(s &lt; 0)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,pandas">
     <h2>Label your rows</h2>
-<pre><code class="language-python">s2 = pd.Series([68, 83, 112, 68],
-               index=['alice', 'bob', 'charles', 'darwin'])
+    <div class="ex-prompt">An explicit index gives each entry a meaningful label. Access by label with <code>[k]</code> or <code>.loc[k]</code>; access by integer position with <code>.iloc[i]</code>.</div>
+<textarea class="ex-code">import pandas as pd
 
-s2['bob']      s2.loc['bob']     s2.iloc[1]</code></pre>
+s2 = pd.Series([68, 83, 112, 68], index=['alice', 'bob', 'charles', 'darwin'])
+print(s2)
+print()
+print("s2['bob']    ->", s2['bob'])
+print("s2.loc['bob']->", s2.loc['bob'])
+print("s2.iloc[1]   ->", s2.iloc[1])
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,pandas">
     <h2>Gotcha — default-int labels are <em>labels</em></h2>
-<pre><code class="language-python">s = pd.Series([1000, 1001, 1002, 1003])
-sl = s[2:]            # labels 2 and 3 only
-sl[0]                 # KeyError — there is no label 0!
-sl.iloc[0]            # 1002 — positional</code></pre>
-    <p class="callout">Use <code>.iloc</code> when you mean "position." Bare <code>[k]</code> means "label."</p>
+    <div class="ex-prompt">When a Series has the default 0..N-1 index, slicing keeps the original labels — so <code>slice_[0]</code> is a KeyError. Use <code>.iloc</code> whenever you mean "position."</div>
+<textarea class="ex-code">import pandas as pd
+
+surprise = pd.Series([1000, 1001, 1002, 1003])
+slice_ = surprise[2:]
+print(slice_)
+
+try:
+    slice_[0]
+except KeyError as e:
+    print('KeyError:', e)
+
+print('via iloc:', slice_.iloc[0])
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,pandas">
+    <h2>Build a Series from a dict</h2>
+    <div class="ex-prompt">Passing a dict to <code>pd.Series</code> uses the keys as the index — a quick way to build a labeled Series from name → value pairs.</div>
+<textarea class="ex-code">import pandas as pd
+
+weights = {'alice': 68, 'bob': 83, 'colin': 86, 'darwin': 68}
+s3 = pd.Series(weights)
+print(s3)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy,pandas">
     <h2>Automatic alignment</h2>
-<pre><code class="language-python">s2 + s3     # labels not in both -&gt; NaN</code></pre>
-    <p>This is the feature that makes Pandas Pandas. When you combine two Series, Pandas aligns by label first and only then arithmetic. Missing labels become NaN.</p>
+    <div class="ex-prompt">When you combine two Series, Pandas aligns by label first and only then does arithmetic. Labels missing from either operand become NaN. This is the feature that makes Pandas Pandas.</div>
+<textarea class="ex-code">import pandas as pd
+
+s2 = pd.Series([68, 83, 112, 68], index=['alice', 'bob', 'charles', 'darwin'])
+s3 = pd.Series({'alice': 68, 'bob': 83, 'colin': 86, 'darwin': 68})
+
+print('s2.index:', s2.index.tolist())
+print('s3.index:', s3.index.tolist())
+print()
+print(s2 + s3)         # labels not in both -> NaN
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,pandas">
@@ -129,23 +208,50 @@ print(df); print(ab); print(clean)</script>
     <h1>DataFrames</h1>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,pandas">
     <h2>Build from a dict of Series</h2>
-<pre><code class="language-python">people = pd.DataFrame({
-    'weight':    pd.Series([68, 83, 112], index=['a', 'b', 'c']),
+    <div class="ex-prompt">Each value in the dict becomes a column. Pandas aligns the Series by their index — different lengths or different orderings are fine; missing labels become NaN.</div>
+<textarea class="ex-code">import pandas as pd
+import numpy as np
+
+people_dict = {
+    'weight':    pd.Series([68, 83, 112], index=['alice', 'bob', 'charles']),
     'birthyear': pd.Series([1984, 1985, 1992],
-                           index=['b', 'a', 'c']),
-})</code></pre>
-    <p class="muted">Pandas aligns the Series by their index. Different-length, different-order — no problem.</p>
+                           index=['bob', 'alice', 'charles'], name='year'),
+    'children':  pd.Series([0, 3], index=['charles', 'bob']),
+    'hobby':     pd.Series(['Biking', 'Dancing'], index=['alice', 'bob']),
+}
+people = pd.DataFrame(people_dict)
+print(people)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,pandas">
     <h2>Or from values + columns + index</h2>
-<pre><code class="language-python">df = pd.DataFrame(
-    [[1985, np.nan, 'Biking', 68],
-     [1984, 3,      'Dancing', 83]],
-    columns=['birthyear', 'children', 'hobby', 'weight'],
-    index=['alice', 'bob'])</code></pre>
+    <div class="ex-prompt">A list-of-lists plus explicit <code>columns</code> and <code>index</code> gives you full control over the DataFrame layout — handy when you already have rectangular data.</div>
+<textarea class="ex-code">import pandas as pd
+import numpy as np
+
+values = [[1985, np.nan, 'Biking',  68],
+          [1984, 3,      'Dancing', 83],
+          [1992, 0,       np.nan,  112]]
+d3 = pd.DataFrame(values,
+                  columns=['birthyear', 'children', 'hobby', 'weight'],
+                  index=['alice', 'bob', 'charles'])
+print(d3)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,pandas">
@@ -184,21 +290,60 @@ print(grades)</script>
 <script type="text/x-explain">`df.mean(axis=1)` reduces along columns, producing one value per row. Assigning the result to a new column attaches it by row label automatically.</script>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,pandas">
     <h2>Or from a real CSV</h2>
-<pre><code class="language-python">from shared.data_utils import load_dataset
-penguins = load_dataset('penguins')
-penguins.head()</code></pre>
-    <p class="muted">All Week 1 datasets come through <code>load_dataset</code>: <code>penguins</code>, <code>titanic</code>, <code>tips</code>, <code>iris</code>, <code>stock-prices</code>.</p>
+    <div class="ex-prompt">In the notebook this comes from <code>load_dataset('penguins')</code>. Pyodide can't reach that helper, so here we build a small synthetic <code>penguins</code> with the same columns. <code>.head()</code> shows the first few rows.</div>
+<textarea class="ex-code">import pandas as pd
+import numpy as np
+
+penguins = pd.DataFrame({
+    'species': ['Adelie','Adelie','Adelie','Adelie','Gentoo','Gentoo','Gentoo','Chinstrap','Chinstrap','Adelie'],
+    'island':  ['Torgersen','Torgersen','Biscoe','Dream','Biscoe','Biscoe','Biscoe','Dream','Dream','Torgersen'],
+    'bill_length_mm':    [39.1, 39.5, 40.3, 38.9, 46.1, 50.0, 48.7, 46.5, 49.5, 41.1],
+    'bill_depth_mm':     [18.7, 17.4, 18.0, 17.8, 13.2, 15.0, 14.1, 17.9, 19.0, 17.6],
+    'flipper_length_mm': [181, 186, 195, 184, 211, 230, 210, 192, 196, 182],
+    'body_mass_g':       [3750, 3800, 3250, 3625, 4500, 6300, 5350, 3500, 6100, 3200],
+    'sex': ['Male','Female','Female','Female',None,'Male','Male','Female','Male','Female'],
+})
+print(penguins.head())
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,pandas">
     <h2>The first three things on any fresh dataset</h2>
-<pre><code class="language-python">df.shape
-df.dtypes
-df.info()
-df.describe(include='all')</code></pre>
-    <p class="callout">Always inspect before you operate. Shape, types, summary — every single time.</p>
+    <div class="ex-prompt">Always inspect before you operate. <code>shape</code> tells you size, <code>dtypes</code> / <code>info</code> tell you column types and missingness, <code>describe</code> gives a quick summary — every single time.</div>
+<textarea class="ex-code">import pandas as pd
+import numpy as np
+
+penguins = pd.DataFrame({
+    'species': ['Adelie','Adelie','Adelie','Adelie','Gentoo','Gentoo','Gentoo','Chinstrap','Chinstrap','Adelie'],
+    'island':  ['Torgersen','Torgersen','Biscoe','Dream','Biscoe','Biscoe','Biscoe','Dream','Dream','Torgersen'],
+    'bill_length_mm':    [39.1, 39.5, 40.3, 38.9, 46.1, 50.0, 48.7, 46.5, 49.5, 41.1],
+    'body_mass_g':       [3750, 3800, 3250, 3625, 4500, 6300, 5350, 3500, 6100, 3200],
+    'sex': ['Male','Female','Female','Female',None,'Male','Male','Female','Male','Female'],
+})
+
+print('shape:', penguins.shape)
+print()
+print('dtypes:')
+print(penguins.dtypes)
+print()
+penguins.info()
+print()
+print(penguins.describe(include='all'))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 </section>
 
@@ -208,26 +353,101 @@ df.describe(include='all')</code></pre>
     <h1>Indexing & filtering</h1>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,pandas">
     <h2>Column access</h2>
-<pre><code class="language-python">df['species']             # one column -&gt; Series
-df[['species', 'mass']]   # several   -&gt; DataFrame</code></pre>
+    <div class="ex-prompt">A single column name returns a Series; a list of names returns a DataFrame with just those columns — the standard projection idiom.</div>
+<textarea class="ex-code">import pandas as pd
+
+penguins = pd.DataFrame({
+    'species': ['Adelie','Adelie','Adelie','Gentoo','Gentoo','Chinstrap','Chinstrap','Adelie','Gentoo','Adelie'],
+    'island':  ['Torgersen','Torgersen','Biscoe','Biscoe','Biscoe','Dream','Dream','Torgersen','Biscoe','Dream'],
+    'body_mass_g': [3750, 3800, 3250, 4500, 6300, 3500, 6100, 3625, 5350, 3200],
+    'sex': ['Male','Female','Female',None,'Male','Female','Male','Female','Male','Female'],
+})
+
+print(penguins['species'].head())
+print()
+print(penguins[['species', 'body_mass_g']].head())
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,pandas">
     <h2>Row access: <code>.loc</code> vs <code>.iloc</code></h2>
-<pre><code class="language-python">df.loc[0]            # by label
-df.iloc[2]           # by position
-df.iloc[1:4]         # positional slice (endpoint exclusive)</code></pre>
-    <p>Stick to <code>.loc</code> and <code>.iloc</code>. Bare <code>df[k]</code> is for columns; bare <code>df[k:m]</code> is for rows. The split confuses everyone.</p>
+    <div class="ex-prompt">Stick to <code>.loc</code> (label) and <code>.iloc</code> (position). Bare <code>df[k]</code> is for columns; bare <code>df[k:m]</code> is for rows. The split confuses everyone — being explicit removes the ambiguity.</div>
+<textarea class="ex-code">import pandas as pd
+
+penguins = pd.DataFrame({
+    'species': ['Adelie','Adelie','Adelie','Gentoo','Gentoo','Chinstrap','Chinstrap','Adelie','Gentoo','Adelie'],
+    'body_mass_g': [3750, 3800, 3250, 4500, 6300, 3500, 6100, 3625, 5350, 3200],
+    'sex': ['Male','Female','Female',None,'Male','Female','Male','Female','Male','Female'],
+})
+
+print('penguins.loc[0]:')
+print(penguins.loc[0])               # by label (here labels are 0..N)
+print()
+print('penguins.iloc[2]:')
+print(penguins.iloc[2])              # always positional
+print()
+print('penguins.iloc[1:4]  (positional slice, endpoint exclusive):')
+print(penguins.iloc[1:4])
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,pandas">
     <h2>Boolean masks — the main filter</h2>
-<pre><code class="language-python">df[df['mass'] &gt; 6000]
-mask = (df['species'] == 'Adelie') &amp; (df['sex'] == 'Female')
-df[mask]</code></pre>
-    <p class="muted">Compose with <code>&amp;</code> / <code>|</code> / <code>~</code> — never with <code>and</code> / <code>or</code> / <code>not</code>.</p>
+    <div class="ex-prompt">A comparison produces a boolean Series aligned with the rows; indexing the DataFrame with it keeps only the True rows. Compose with <code>&amp;</code> / <code>|</code> / <code>~</code> — never with <code>and</code>/<code>or</code>/<code>not</code>.</div>
+<textarea class="ex-code">import pandas as pd
+
+penguins = pd.DataFrame({
+    'species': ['Adelie','Adelie','Adelie','Gentoo','Gentoo','Chinstrap','Chinstrap','Adelie','Gentoo','Adelie'],
+    'body_mass_g': [3750, 3800, 3250, 4500, 6300, 3500, 6100, 3625, 5350, 3200],
+    'sex': ['Male','Female','Female',None,'Male','Female','Male','Female','Male','Female'],
+})
+
+print(penguins[penguins['body_mass_g'] > 6000].head())
+print()
+mask = (penguins['species'] == 'Adelie') & (penguins['sex'] == 'Female')
+print(penguins[mask].head())
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy,pandas">
+    <h2>Compose with <code>&amp;</code>, <code>|</code>, <code>~</code></h2>
+    <div class="ex-prompt">The bitwise operators combine boolean Series element-wise. Here <code>~penguins['sex'].isna()</code> keeps only rows where <code>sex</code> is not missing.</div>
+<textarea class="ex-code">import pandas as pd
+
+penguins = pd.DataFrame({
+    'species': ['Adelie','Adelie','Adelie','Gentoo','Gentoo','Chinstrap','Chinstrap','Adelie','Gentoo','Adelie'],
+    'body_mass_g': [3750, 3800, 3250, 4500, 6300, 3500, 6100, 3625, 5350, 3200],
+    'sex': ['Male','Female','Female',None,'Male','Female','Male','Female','Male','Female'],
+})
+
+print(penguins[~penguins['sex'].isna()].head())
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,pandas">
@@ -273,12 +493,34 @@ print('n =', n_big)</script>
 <script type="text/x-explain">`tips['tip'] > 5` is a boolean Series aligned with the rows. Indexing the DataFrame with it keeps only the True rows. `len(df)` counts rows.</script>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,pandas">
     <h2>set_index, sort_values, sort_index</h2>
-<pre><code class="language-python">df.set_index(['day', 'time'])
-df.sort_values('tip', ascending=False)
-df.sort_index()</code></pre>
-    <p>Once you understand the index, half of Pandas becomes "pick the right index, then everything is a one-liner."</p>
+    <div class="ex-prompt">Once you understand the index, half of Pandas becomes "pick the right index, then everything is a one-liner." Here we set a multi-index, then sort by the index, then sort by a column.</div>
+<textarea class="ex-code">import pandas as pd
+
+tips = pd.DataFrame({
+    'total_bill': [16.99, 10.34, 21.01, 23.68, 24.59, 25.29, 8.77, 26.88, 15.04, 14.78],
+    'tip':        [ 1.01,  1.66,  3.50,  3.31,  3.61,  4.71, 2.00,  3.12,  1.96,  3.23],
+    'sex':        ['Female','Male','Male','Male','Female','Male','Male','Male','Male','Male'],
+    'day':        ['Sun','Sun','Sun','Sun','Sun','Sun','Sat','Thur','Sat','Thur'],
+    'time':       ['Dinner','Dinner','Dinner','Dinner','Dinner','Dinner','Dinner','Lunch','Dinner','Lunch'],
+})
+
+tips_idx = tips.set_index(['day', 'time'])
+print(tips_idx.head())
+print()
+print('sorted by index:')
+print(tips_idx.sort_index().head())
+print()
+print('sorted by tip desc:')
+print(tips.sort_values('tip', ascending=False).head())
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,pandas">

@@ -40,42 +40,112 @@
     <h1>Vectorize & ufuncs</h1>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy">
     <h2>The loop you stop writing</h2>
-<pre><code class="language-python">def slow(x):
+    <div class="ex-prompt">Same math, two implementations. The vectorized <code>fast</code> is typically 50–100× quicker than the Python loop — and shorter to read. (We time with <code>time.perf_counter</code> in place of Jupyter's <code>%timeit</code>.)</div>
+<textarea class="ex-code">import numpy as np
+from time import perf_counter
+
+rng = np.random.default_rng(0)
+x = rng.normal(size=200_000)
+
+def slow(x):
     out = np.empty_like(x)
     for i in range(len(x)):
         out[i] = x[i]**2 + 3*x[i]
     return out
 
 def fast(x):
-    return x**2 + 3*x</code></pre>
-    <p class="muted">On 1M elements, <code>fast</code> is typically 50-100x faster — and 5 characters shorter.</p>
+    return x**2 + 3*x
+
+t0 = perf_counter(); slow(x); t_slow = perf_counter() - t0
+t0 = perf_counter(); fast(x); t_fast = perf_counter() - t0
+print(f'slow: {t_slow*1000:.1f} ms')
+print(f'fast: {t_fast*1000:.1f} ms')
+print(f'speedup: {t_slow/t_fast:.1f}x')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy">
     <h2>Element-wise arithmetic on paired arrays</h2>
-<pre><code class="language-python">a + b      a - b      a * b      a / b
-np.maximum(a, b)        # cell-by-cell max
-np.greater(a, b)        # cell-by-cell &gt;</code></pre>
-    <p>If shapes match, every operator applies element-by-element. If they don't — broadcasting (next part) makes them match.</p>
+    <div class="ex-prompt">If shapes match, every operator applies element-by-element. If they don't, broadcasting (next part) makes them match.</div>
+<textarea class="ex-code">import numpy as np
+a = np.array([14, 23, 32, 41])
+b = np.array([5,  4,  3,  2])
+print(a + b)
+print(a - b)
+print(a * b)
+print(a / b)
+print(np.maximum(a, b))
+print(np.greater(a, b))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy">
     <h2>Universal functions — math everywhere</h2>
-<pre><code class="language-python">np.sqrt(a)        np.exp(a)         np.log(a)
-np.sin(a)         np.cos(a)
-np.maximum(a, 0)  # ReLU in one line</code></pre>
-    <p class="muted">A "ufunc" is a function that operates element-wise on any-shape array. Build your own with <code>np.vectorize</code> (slow) or just write the expression.</p>
+    <div class="ex-prompt">A "ufunc" operates element-wise on any-shape array. <code>np.maximum(a, 0)</code> is ReLU in one line; <code>np.clip</code> bounds values to a range.</div>
+<textarea class="ex-code">import numpy as np
+a = np.array([14, 23, 32, 41])
+print(np.sqrt(a))
+print(np.exp(a))
+print(np.sin(a))
+print(np.log(a))
+print(np.maximum(a, 0))     # ReLU in one line
+print(np.clip(a, 0, 30))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy">
     <h2>Reductions — and the axis mnemonic</h2>
-<pre><code class="language-python">a.mean()                  # collapse everything
-a.mean(axis=0)            # collapse axis 0 -> one row
-a.mean(axis=1)            # collapse axis 1 -> one column
-a.sum(axis=(0, 2))        # collapse two axes</code></pre>
-    <p class="callout">Mnemonic: <strong><code>axis=k</code> means "the axis k disappears."</strong> Repeat that to yourself.</p>
+    <div class="ex-prompt">Mnemonic: <code>axis=k</code> means "the axis k disappears." <code>mean()</code> with no axis collapses everything to a scalar.</div>
+<textarea class="ex-code">import numpy as np
+a = np.array([[-2.5, 3.1, 7], [10, 11, 12]])
+print('mean all :', a.mean())
+print('std all  :', a.std())
+print('min, max :', a.min(), a.max())
+print('argmax   :', a.argmax())
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy">
+    <h2>Reducing along specific axes</h2>
+    <div class="ex-prompt">On a 3-D array, <code>sum(axis=0)</code> collapses the leading axis; <code>sum(axis=(0, 2))</code> collapses two axes at once and leaves only axis 1.</div>
+<textarea class="ex-code">import numpy as np
+c = np.arange(24).reshape(2, 3, 4)
+print('sum axis 0 :', c.sum(axis=0).shape)   # collapse axis 0 -> (3, 4)
+print('sum axis 1 :', c.sum(axis=1).shape)   # collapse axis 1 -> (2, 4)
+print('sum (0, 2) :', c.sum(axis=(0, 2)).shape)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 </section>
 
@@ -92,19 +162,66 @@ a.sum(axis=(0, 2))        # collapse two axes</code></pre>
     <p class="muted" style="margin-top:1em;">A length-1 axis is stretched to match. A missing axis is treated as length 1.</p>
   </section>
 
-  <section>
-    <h2>Three live examples</h2>
-<pre><code class="language-python"># scalar
-(2, 3) + ()          ->  (2, 3)
+  <section class="example" data-packages="numpy">
+    <h2>Scalar broadcast</h2>
+    <div class="ex-prompt">A scalar has shape <code>()</code> — it broadcasts to every cell of the array. No loop, no copy of the scalar.</div>
+<textarea class="ex-code">import numpy as np
+a = np.arange(6).reshape(2, 3)
+print(a)
+print(a + 100)            # scalar broadcasts to every cell
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
 
-# row across rows
-(2, 3) + (3,)        ->  (2, 3)
+  <section class="example" data-packages="numpy">
+    <h2>Row vector across rows: (2,3) + (3,)</h2>
+    <div class="ex-prompt">A length-3 vector aligns with the trailing axis of a <code>(2, 3)</code> matrix and is reused across every row.</div>
+<textarea class="ex-code">import numpy as np
+a = np.arange(6).reshape(2, 3)
+print(a + np.array([100, 200, 300]))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
 
-# column across cols
-(2, 3) + (2, 1)      ->  (2, 3)
+  <section class="example" data-packages="numpy">
+    <h2>Column vector across columns: (2,3) + (2,1)</h2>
+    <div class="ex-prompt">A column vector shape <code>(2, 1)</code> stretches across the columns of a <code>(2, 3)</code> matrix.</div>
+<textarea class="ex-code">import numpy as np
+a = np.arange(6).reshape(2, 3)
+print(a + np.array([[100], [200]]))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
 
-# outer-sum
-(3, 1) + (1, 4)      ->  (3, 4)</code></pre>
+  <section class="example" data-packages="numpy">
+    <h2>Two compatible shapes: (3,1) + (1,4) → (3,4)</h2>
+    <div class="ex-prompt">When both operands have a length-1 axis in different places, broadcasting expands both — here producing a <code>(3, 4)</code> outer-sum.</div>
+<textarea class="ex-code">import numpy as np
+col = np.arange(3)[:, None]      # (3, 1)
+row = np.arange(4)[None, :]      # (1, 4)
+print(col + row)                 # (3, 4) outer-sum
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy">
@@ -152,11 +269,22 @@ print(D.shape)</script>
 <script type="text/x-explain">Insert a length-1 axis on each operand so they broadcast against each other: <code>pts[:, None, :]</code> is <code>(n, 1, 2)</code> and <code>pts[None, :, :]</code> is <code>(1, n, 2)</code>. Their difference is <code>(n, n, 2)</code>; squaring, summing over axis -1, and taking the square root gives the distance matrix in one expression.</script>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy">
     <h2>Standardize a data matrix in one line</h2>
-<pre><code class="language-python">Z = (X - X.mean(axis=0)) / X.std(axis=0)
-# X is (n, d). mean and std are (d,). They broadcast across rows.</code></pre>
-    <p class="muted">This single line — column-wise standardization — is one of the most-used preprocessing steps in all of ML.</p>
+    <div class="ex-prompt">Column-wise standardization — one of the most-used preprocessing steps in ML. <code>X</code> is <code>(n, d)</code>; <code>mean</code> and <code>std</code> are <code>(d,)</code>, which broadcast across rows.</div>
+<textarea class="ex-code">import numpy as np
+rng = np.random.default_rng(0)
+X = rng.normal(loc=5, scale=2, size=(200, 5))
+Z = (X - X.mean(axis=0)) / X.std(axis=0)
+print('column means ~0:', Z.mean(axis=0).round(4))
+print('column stds  ~1:', Z.std(axis=0).round(4))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy">
@@ -252,18 +380,38 @@ print(Zr.mean(axis=1)[:5].round(4))</script>
     <h1>Linear algebra & stacking</h1>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy">
     <h2>Matrix multiplication — the <code>@</code> operator</h2>
-<pre><code class="language-python">n1 = np.arange(10).reshape(2, 5)
+    <div class="ex-prompt"><code>@</code> calls <code>np.matmul</code> (equivalent to <code>.dot</code> for 2-D arrays). Never use <code>*</code> for matrix multiplication — that's element-wise.</div>
+<textarea class="ex-code">import numpy as np
+n1 = np.arange(10).reshape(2, 5)
 n2 = np.arange(15).reshape(5, 3)
-n1 @ n2                # shape (2, 3)</code></pre>
-    <p class="muted"><code>@</code> calls <code>np.matmul</code>. Use it; do not use <code>*</code> for matrix multiplication.</p>
+print(n1 @ n2)                # equivalent to n1.dot(n2)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
-    <h2>Solve a linear system</h2>
-<pre><code class="language-python">x = np.linalg.solve(A, b)     # Ax = b</code></pre>
-    <p>Always prefer <code>solve</code> over <code>inv(A) @ b</code> — it is faster and numerically more stable.</p>
+  <section class="example" data-packages="numpy">
+    <h2>Solve a linear system — <code>Ax = b</code></h2>
+    <div class="ex-prompt">Always prefer <code>np.linalg.solve</code> over <code>inv(A) @ b</code> — it uses LU factorization, so it's faster and numerically more stable.</div>
+<textarea class="ex-code">import numpy as np
+A = np.array([[2, 6], [5, 3]], dtype=float)
+b = np.array([6, -9], dtype=float)
+x = np.linalg.solve(A, b)
+print('x      =', x)
+print('A @ x  =', A @ x, '   should equal', b)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy">
@@ -312,13 +460,40 @@ print(x)</script>
 <script type="text/x-explain">Each row of <code>A</code> is the coefficients of one equation; <code>b</code> holds the right-hand sides. <code>np.linalg.solve</code> uses LU factorization — far faster and more numerically stable than computing <code>inv(A) @ b</code>.</script>
   </section>
 
-  <section>
-    <h2>Norms, inverse, determinant, eig</h2>
-<pre><code class="language-python">np.linalg.norm(m)        # Frobenius by default
-np.linalg.inv(m)         # full inverse
-np.linalg.det(m)         # determinant
-w, V = np.linalg.eig(S)  # eigenpairs</code></pre>
-    <p class="muted">All you need for PCA, basic optimization, and most "hand-rolled" ML math.</p>
+  <section class="example" data-packages="numpy">
+    <h2>Norms, inverse, determinant</h2>
+    <div class="ex-prompt">All you need for PCA, basic optimization, and most "hand-rolled" ML math. <code>norm</code> defaults to Frobenius.</div>
+<textarea class="ex-code">import numpy as np
+m = np.array([[1,  2,  3],
+              [5,  7, 11],
+              [21, 29, 31]], dtype=float)
+print('||m||_F =', np.linalg.norm(m))
+print('det m  =', np.linalg.det(m))
+print('inv m  =\n', np.linalg.inv(m).round(3))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy">
+    <h2>Eigendecomposition — one-liner</h2>
+    <div class="ex-prompt"><code>np.linalg.eig</code> returns eigenvalues and the matrix whose columns are eigenvectors — the building block of PCA and many other matrix factorizations.</div>
+<textarea class="ex-code">import numpy as np
+S = np.array([[4, 1], [1, 3]], dtype=float)
+w, V = np.linalg.eig(S)
+print('eigvals:', w)
+print('eigvecs:\n', V.round(3))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy">
@@ -361,12 +536,39 @@ print(x_inv, match)
 <script type="text/x-explain">Both methods give the same answer on this well-conditioned system, but forming <code>inv(A)</code> explicitly is wasteful and accumulates more rounding error. Rule of thumb: if you only need <code>A⁻¹b</code>, call <code>solve</code>; never compute an inverse you don't actually need.</script>
   </section>
 
-  <section>
-    <h2>Stack & split — assemble bigger arrays</h2>
-<pre><code class="language-python">np.concatenate([a, b], axis=0)   # vstack
-np.concatenate([a, b], axis=1)   # hstack
-np.stack([a, b])                 # new leading axis
-np.split(big, 2, axis=1)         # two halves</code></pre>
+  <section class="example" data-packages="numpy">
+    <h2>Stack — assemble bigger arrays</h2>
+    <div class="ex-prompt"><code>concatenate</code> joins along an existing axis (vstack / hstack); <code>stack</code> creates a new leading axis. Pick the one that matches the shape you want.</div>
+<textarea class="ex-code">import numpy as np
+a = np.array([[1, 2], [3, 4]])
+b = np.array([[5, 6], [7, 8]])
+print(np.concatenate([a, b], axis=0))   # vstack
+print(np.concatenate([a, b], axis=1))   # hstack
+print(np.stack([a, b]).shape)           # new axis -> (2, 2, 2)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy">
+    <h2>Split — the inverse of stack</h2>
+    <div class="ex-prompt"><code>np.split</code> divides an array into equal pieces along a given axis. Here we split a <code>(3, 4)</code> array into two <code>(3, 2)</code> halves along the columns.</div>
+<textarea class="ex-code">import numpy as np
+big = np.arange(12).reshape(3, 4)
+left, right = np.split(big, 2, axis=1)
+print(left)
+print(right)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 </section>
 
