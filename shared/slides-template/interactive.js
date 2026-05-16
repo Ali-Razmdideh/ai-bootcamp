@@ -98,17 +98,18 @@
   function codeBlock(text) { return el('pre', { text }); }
 
   async function runExercise(section) {
+    const isExample = section.classList.contains('example');
     const textarea = section.querySelector('textarea.ex-code');
     const output = section.querySelector('.ex-output');
     const feedback = section.querySelector('.ex-feedback');
     const userCode = textarea.value;
-    const checkCode = getScriptText(section, 'check');
+    const checkCode = isExample ? '' : getScriptText(section, 'check');
     const solution = getScriptText(section, 'solution');
     const explain = getScriptText(section, 'explain');
     const pkgs = (section.dataset.packages || 'numpy').split(',').map(s => s.trim()).filter(Boolean);
 
     output.textContent = '';
-    renderFeedback(feedback, '', []);
+    if (feedback) renderFeedback(feedback, '', []);
     setStatus(section, 'loading Python…', 'loading');
 
     let py;
@@ -117,7 +118,7 @@
       await ensurePackages(py, pkgs);
     } catch (e) {
       setStatus(section, 'failed to load runtime');
-      renderFeedback(feedback, 'err', [
+      if (feedback) renderFeedback(feedback, 'err', [
         para('', 'Could not load the in-browser Python runtime: ' + e.message),
       ]);
       return;
@@ -134,6 +135,12 @@
     } catch (e) {
       output.textContent = buf.out;
       setStatus(section, '');
+      if (isExample) {
+        // For examples, just surface the error in the output pane.
+        output.textContent = (buf.out + '\n' + e.message.split('\n').slice(-6).join('\n')).trimStart();
+        ns.destroy();
+        return;
+      }
       const parts = [
         header('Your code raised an error'),
         codeBlock(e.message.split('\n').slice(-6).join('\n')),
@@ -156,6 +163,12 @@
     }
     output.textContent = buf.out;
     setStatus(section, '');
+
+    if (isExample) {
+      // No check, no feedback — just the printed output.
+      ns.destroy();
+      return;
+    }
 
     if (checkError) {
       const m = checkError.match(/AssertionError:?\s*(.*?)(?:\n|$)/);
@@ -204,7 +217,8 @@
     if (resetBtn) resetBtn.addEventListener('click', () => {
       if (textarea) textarea.value = starter;
       section.querySelector('.ex-output').textContent = '';
-      renderFeedback(section.querySelector('.ex-feedback'), '', []);
+      const fb = section.querySelector('.ex-feedback');
+      if (fb) renderFeedback(fb, '', []);
     });
     if (showBtn) showBtn.addEventListener('click', () => {
       const solution = getScriptText(section, 'solution');
@@ -220,7 +234,7 @@
   }
 
   function init() {
-    document.querySelectorAll('section.exercise').forEach(wireExercise);
+    document.querySelectorAll('section.exercise, section.example').forEach(wireExercise);
   }
 
   if (document.readyState === 'loading') {
