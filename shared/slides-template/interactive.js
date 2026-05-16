@@ -50,9 +50,31 @@
 
   async function ensurePackages(py, pkgs) {
     const needed = pkgs.filter(p => p && !loadedPackages.has(p));
-    if (needed.length) {
+    if (!needed.length) return;
+    // Try loadPackage first (built-in Pyodide packages); fall back to
+    // micropip per-package for anything Pyodide doesn't ship as a wheel
+    // (e.g. seaborn on some Pyodide builds).
+    try {
       await py.loadPackage(needed);
       needed.forEach(p => loadedPackages.add(p));
+      return;
+    } catch (e) {
+      // Retry individually, falling back to micropip on miss.
+      if (!loadedPackages.has('micropip')) {
+        await py.loadPackage(['micropip']);
+        loadedPackages.add('micropip');
+      }
+      for (const p of needed) {
+        if (loadedPackages.has(p)) continue;
+        try {
+          await py.loadPackage([p]);
+        } catch (_) {
+          await py.runPythonAsync(
+            `import micropip\nawait micropip.install(${JSON.stringify(p)})`
+          );
+        }
+        loadedPackages.add(p);
+      }
     }
   }
 
@@ -117,10 +139,13 @@
       py = await loadPyodide();
       await ensurePackages(py, pkgs);
     } catch (e) {
-      setStatus(section, 'failed to load runtime');
-      if (feedback) renderFeedback(feedback, 'err', [
-        para('', 'Could not load the in-browser Python runtime: ' + e.message),
-      ]);
+      setStatus(section, 'runtime error');
+      const msg = 'Could not load the in-browser Python runtime: ' + (e && e.message ? e.message : String(e));
+      if (isExample) {
+        output.textContent = msg;
+      } else if (feedback) {
+        renderFeedback(feedback, 'err', [para('', msg)]);
+      }
       return;
     }
     setStatus(section, 'running…', 'loading');
