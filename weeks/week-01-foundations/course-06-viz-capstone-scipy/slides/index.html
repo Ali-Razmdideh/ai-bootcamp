@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/interactive.css" />
 </head>
 <body>
 <div class="reveal"><div class="slides">
@@ -88,11 +89,126 @@ stats.chi2.cdf(x, df=3)</code></pre>
     <p class="muted">Maximum-likelihood by default. Overlay the fitted PDF on a histogram to eyeball goodness.</p>
   </section>
 
+  <section class="exercise" data-packages="numpy,scipy">
+    <h2>Exercise — Fit a Normal</h2>
+    <div class="ex-prompt">A small synthetic sample of <code>total_bill</code> values is provided. Use <code>scipy.stats.norm.fit</code> to estimate the parameters. Assign the results to <code>mu</code> and <code>sigma</code>.</div>
+<textarea class="ex-code">import numpy as np
+from scipy import stats
+
+rng = np.random.default_rng(7)
+vals = rng.normal(loc=19.8, scale=8.9, size=500)
+
+mu = None
+sigma = None
+print(mu, sigma)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+from scipy import stats
+assert mu is not None and sigma is not None, "Assign mu and sigma."
+exp_mu, exp_sigma = stats.norm.fit(vals)
+assert np.isclose(float(mu), exp_mu, atol=1e-6), f"mu should be {exp_mu:.4f}, got {float(mu):.4f}."
+assert np.isclose(float(sigma), exp_sigma, atol=1e-6), f"sigma should be {exp_sigma:.4f}, got {float(sigma):.4f}."
+</script>
+<script type="text/x-solution">mu, sigma = stats.norm.fit(vals)
+print(mu, sigma)</script>
+<script type="text/x-explain">`stats.norm.fit` returns the maximum-likelihood `(loc, scale)` — for a Normal that is the sample mean and the (biased) standard deviation. Every distribution in `scipy.stats` exposes the same `.fit` method.</script>
+  </section>
+
+  <section class="exercise" data-packages="numpy,scipy,matplotlib">
+    <h2>Exercise — Overlay the fitted PDF</h2>
+    <div class="ex-prompt">Plot a density histogram of <code>vals</code> (30 bins) and overlay the fitted Normal PDF. Use the supplied <code>fig, ax</code>; produce the PDF curve on a 200-point grid spanning the data range and assign that curve's y-values to <code>pdf_y</code>.</div>
+<textarea class="ex-code">import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy import stats
+
+rng = np.random.default_rng(7)
+vals = rng.normal(loc=19.8, scale=8.9, size=500)
+mu, sigma = stats.norm.fit(vals)
+
+fig, ax = plt.subplots()
+xs = np.linspace(vals.min(), vals.max(), 200)
+pdf_y = None   # PDF values for xs under the fitted Normal
+
+# 1) plot density histogram of vals (bins=30)
+# 2) plot xs vs pdf_y
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+from scipy import stats
+assert pdf_y is not None, "Assign pdf_y."
+expected = stats.norm.pdf(xs, mu, sigma)
+assert np.allclose(np.asarray(pdf_y), expected, atol=1e-9), "pdf_y should be the fitted Normal PDF on xs."
+# at least 2 children: hist patches + line
+assert len(ax.lines) >= 1, "Plot the PDF line on ax."
+assert len(ax.patches) >= 1, "Plot the density histogram on ax."
+</script>
+<script type="text/x-solution">pdf_y = stats.norm.pdf(xs, mu, sigma)
+ax.hist(vals, bins=30, density=True, alpha=0.5)
+ax.plot(xs, pdf_y, lw=2, label='fitted')
+ax.legend()</script>
+<script type="text/x-explain">A density histogram (`density=True`) normalizes area to 1 so it can be compared directly with a PDF. If the fitted curve hugs the histogram, the distribution choice is reasonable.</script>
+  </section>
+
   <section>
     <h2>One-sample t-test</h2>
 <pre><code class="language-python">res = stats.ttest_1samp(samples, popmean=0)
 res.statistic, res.pvalue</code></pre>
     <p>Use when you want to know whether a sample's mean differs significantly from a hypothesized value. We will lean on this in Week 3.</p>
+  </section>
+
+  <section class="exercise" data-packages="numpy,scipy">
+    <h2>Exercise — One-sample t-test</h2>
+    <div class="ex-prompt">Test whether the mean of <code>samples</code> differs from <code>0</code>. Assign the t-statistic to <code>t_stat</code> and the p-value to <code>p_value</code> using <code>stats.ttest_1samp</code>.</div>
+<textarea class="ex-code">import numpy as np
+from scipy import stats
+
+rng = np.random.default_rng(0)
+samples = rng.normal(loc=2.0, scale=1.5, size=1000)
+
+t_stat = None
+p_value = None
+print(t_stat, p_value)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+from scipy import stats
+assert t_stat is not None and p_value is not None, "Assign t_stat and p_value."
+exp = stats.ttest_1samp(samples, popmean=0)
+assert np.isclose(float(t_stat), exp.statistic, atol=1e-9), f"t_stat should be {exp.statistic:.4f}."
+assert np.isclose(float(p_value), exp.pvalue, atol=1e-12), "p_value mismatch."
+assert float(p_value) < 0.001, "With this sample p should be tiny — mean clearly differs from 0."
+</script>
+<script type="text/x-solution">res = stats.ttest_1samp(samples, popmean=0)
+t_stat, p_value = res.statistic, res.pvalue
+print(t_stat, p_value)</script>
+<script type="text/x-explain">`ttest_1samp` returns a result object with `.statistic` and `.pvalue`. With true mean 2.0 and n=1000 the null (mean = 0) is rejected at any reasonable threshold — p is essentially zero.</script>
   </section>
 </section>
 
@@ -111,11 +227,81 @@ res.nit     # iterations used</code></pre>
     <p class="callout">Every supervised model is "define a loss, call an optimizer." You just used both halves.</p>
   </section>
 
+  <section class="exercise" data-packages="numpy,scipy">
+    <h2>Exercise — Minimize a quadratic</h2>
+    <div class="ex-prompt">Define <code>f(x) = (x - 3)**2 + 5</code> and minimize it from <code>x0 = 0.0</code> using <code>scipy.optimize.minimize</code>. Assign the minimizer (scalar) to <code>x_star</code> and the minimum value to <code>f_star</code>.</div>
+<textarea class="ex-code">import numpy as np
+from scipy import optimize
+
+def f(x):
+    return (x - 3)**2 + 5
+
+x_star = None
+f_star = None
+print(x_star, f_star)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+assert x_star is not None and f_star is not None, "Assign x_star and f_star."
+assert np.isclose(float(x_star), 3.0, atol=1e-3), f"x_star should be ~3.0, got {float(x_star)}."
+assert np.isclose(float(f_star), 5.0, atol=1e-5), f"f_star should be ~5.0, got {float(f_star)}."
+</script>
+<script type="text/x-solution">res = optimize.minimize(f, x0=0.0)
+x_star = float(res.x[0])
+f_star = float(res.fun)
+print(x_star, f_star)</script>
+<script type="text/x-explain">A convex quadratic has its minimum where the derivative vanishes: `2(x-3) = 0` ⇒ `x = 3`, giving `f(3) = 5`. `optimize.minimize` defaults to BFGS and converges in a handful of iterations.</script>
+  </section>
+
   <section>
     <h2>The 1-D loss landscape</h2>
 <pre><code class="language-python">f = lambda x: (x - 3)**2 + np.sin(5 * x)
 res = optimize.minimize(f, x0=0.0)</code></pre>
     <p class="muted">A 1-D plot is the cheapest sanity check you have. Always look at your loss surface when something feels off.</p>
+  </section>
+
+  <section class="exercise" data-packages="numpy,scipy">
+    <h2>Exercise — Rosenbrock in 2-D</h2>
+    <div class="ex-prompt">Minimize the classical Rosenbrock function starting from the origin. Assign the optimal point (length-2 array) to <code>x_opt</code> and the minimum value to <code>f_opt</code>.</div>
+<textarea class="ex-code">import numpy as np
+from scipy import optimize
+
+def rosen(x):
+    return (1 - x[0])**2 + 100 * (x[1] - x[0]**2)**2
+
+x_opt = None
+f_opt = None
+print(x_opt, f_opt)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+assert x_opt is not None and f_opt is not None, "Assign x_opt and f_opt."
+arr = np.asarray(x_opt, dtype=float).ravel()
+assert arr.shape == (2,), f"x_opt should have shape (2,), got {arr.shape}."
+assert np.allclose(arr, [1.0, 1.0], atol=1e-3), f"x_opt should be ~[1, 1], got {arr}."
+assert float(f_opt) < 1e-6, f"f_opt should be ~0, got {float(f_opt)}."
+</script>
+<script type="text/x-solution">res = optimize.minimize(rosen, x0=[0.0, 0.0])
+x_opt = res.x
+f_opt = float(res.fun)
+print(x_opt, f_opt)</script>
+<script type="text/x-explain">The Rosenbrock function has its global minimum at `(1, 1)` with value `0`, inside a narrow curved valley. BFGS handles it well from the origin — every supervised model trains the same way: define loss, call optimizer.</script>
   </section>
 
   <section>
@@ -129,6 +315,60 @@ res = optimize.minimize(f, x0=0.0)</code></pre>
       <li class="fragment fade-up">Refactor into a reusable function.</li>
     </ol>
     <p class="callout fragment fade-up">Every step uses a different course from this week.</p>
+  </section>
+
+  <section class="exercise" data-packages="numpy,pandas,matplotlib">
+    <h2>Exercise — Grand Finale: smooth + plot</h2>
+    <div class="ex-prompt">Forward-fill missing prices, compute a 7-day moving average via <code>np.convolve</code> (left-padded with NaN), and plot price + MA on <code>ax</code>. Assign the padded MA array to <code>ma_full</code>.</div>
+<textarea class="ex-code">import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+# synthetic stock-prices with ~5% NaNs
+rng = np.random.default_rng(0)
+dates = pd.date_range('2024-01-01', periods=60, freq='D')
+price = 100 + np.cumsum(rng.normal(0, 1, 60))
+price[rng.random(60) < 0.05] = np.nan
+df = pd.DataFrame({'date': dates, 'price': price})
+
+window = 7
+ma_full = None   # length-60 array, first window-1 entries NaN
+
+fig, ax = plt.subplots()
+# 1) forward-fill df['price'] in place
+# 2) compute moving average with np.convolve(mode='valid') and pad left with NaN
+# 3) plot df['date'] vs price and vs ma_full
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+assert ma_full is not None, "Assign ma_full."
+arr = np.asarray(ma_full, dtype=float)
+assert arr.shape == (60,), f"ma_full length should be 60, got {arr.shape}."
+assert np.all(np.isnan(arr[:window-1])), "First window-1 entries of ma_full should be NaN."
+filled = df['price'].ffill().values
+kernel = np.ones(window) / window
+expected_tail = np.convolve(filled, kernel, mode='valid')
+assert np.allclose(arr[window-1:], expected_tail, atol=1e-9), "MA values don't match the 7-day rolling mean."
+assert len(ax.lines) >= 2, "Plot both the price line and the MA line on ax."
+</script>
+<script type="text/x-solution">df['price'] = df['price'].ffill()
+kernel = np.ones(window) / window
+ma = np.convolve(df['price'].values, kernel, mode='valid')
+ma_full = np.concatenate([np.full(window - 1, np.nan), ma])
+ax.plot(df['date'], df['price'], label='price', alpha=0.5)
+ax.plot(df['date'], ma_full, label='7-day MA', lw=2)
+ax.legend()</script>
+<script type="text/x-explain">`ffill` propagates the last observation forward to fill NaNs. Convolving with a uniform kernel of length `w` gives a length-`(n-w+1)` valid output; pad the front with NaN so the result aligns with the original timeline. This single pipeline — load, clean, smooth, plot — is the shape of every Week 1 analysis.</script>
   </section>
 </section>
 
@@ -148,6 +388,7 @@ res = optimize.minimize(f, x0=0.0)</code></pre>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="../../../../shared/slides-template/interactive.js"></script>
 <script>
   Reveal.initialize({
     hash: true, slideNumber: 'c/t', transition: 'slide',

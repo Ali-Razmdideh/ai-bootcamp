@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/interactive.css" />
 </head>
 <body>
 <div class="reveal"><div class="slides">
@@ -59,11 +60,99 @@ ax.grid(True); ax.legend()</code></pre>
     <p class="muted">Notice: no <code>plt.</code> calls after <code>subplots()</code>. Everything goes through <code>ax</code> (or <code>fig</code>).</p>
   </section>
 
+  <section class="exercise" data-packages="numpy,matplotlib">
+    <h2>Exercise — Sine &amp; cosine on one axes</h2>
+    <div class="ex-prompt">Plot <code>sin(x)</code> and <code>cos(x)</code> on the same axes for <code>x</code> in <code>[-2π, 2π]</code> (400 points via <code>np.linspace</code>). Use the explicit API: assign <code>fig, ax = plt.subplots()</code> and draw both lines on <code>ax</code>.</div>
+<textarea class="ex-code">import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+
+x = np.linspace(-2*np.pi, 2*np.pi, 400)
+fig = None
+ax = None
+# plot sin(x) and cos(x) on the same ax
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import matplotlib.pyplot as plt
+import numpy as np
+assert ax is not None, "Assign `fig, ax = plt.subplots()`."
+assert isinstance(ax, plt.Axes), "`ax` must be a matplotlib Axes."
+assert len(ax.lines) == 2, f"Expected 2 lines on the axes, got {len(ax.lines)}."
+xd0 = ax.lines[0].get_xdata()
+assert len(xd0) == 400, f"Expected 400 x points, got {len(xd0)}."
+assert abs(xd0.min() + 2*np.pi) < 1e-6 and abs(xd0.max() - 2*np.pi) < 1e-6, "x range should be [-2π, 2π]."
+ys = [ax.lines[0].get_ydata(), ax.lines[1].get_ydata()]
+sin_x = np.sin(xd0); cos_x = np.cos(xd0)
+ok = (np.allclose(ys[0], sin_x) and np.allclose(ys[1], cos_x)) or \
+     (np.allclose(ys[0], cos_x) and np.allclose(ys[1], sin_x))
+assert ok, "One line should be sin(x), the other cos(x)."
+</script>
+<script type="text/x-solution">x = np.linspace(-2*np.pi, 2*np.pi, 400)
+fig, ax = plt.subplots()
+ax.plot(x, np.sin(x), label='sin')
+ax.plot(x, np.cos(x), label='cos')</script>
+<script type="text/x-explain">Call <code>plt.subplots()</code> once to grab a Figure and an Axes, then call <code>ax.plot</code> twice — each call adds one Line2D artist to the same Axes.</script>
+  </section>
+
   <section>
     <h2>Lines: style, color, marker</h2>
 <pre><code class="language-python">ax.plot(x, x**2, linestyle='--', color='C1',
         marker='.', markevery=20, label='x²')</code></pre>
     <p>Pass each property as a keyword. The shorthand string <code>'r--o'</code> works, but the kwargs read better.</p>
+  </section>
+
+  <section class="exercise" data-packages="numpy,matplotlib">
+    <h2>Exercise — Labels, legend, grid, linestyles</h2>
+    <div class="ex-prompt">Same two curves as before, but: solid line for sin, dashed for cos, both with labels. Set xlabel <code>'x'</code>, ylabel <code>'y'</code>, title <code>'sin and cos'</code>, turn on the grid, and show a legend.</div>
+<textarea class="ex-code">import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+
+x = np.linspace(-2*np.pi, 2*np.pi, 400)
+fig = None
+ax = None
+# build the styled plot
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import matplotlib.pyplot as plt
+assert ax is not None and isinstance(ax, plt.Axes), "Assign `fig, ax = plt.subplots()`."
+assert len(ax.lines) == 2, "Expected exactly 2 lines."
+assert ax.get_xlabel() == 'x', f"xlabel should be 'x', got '{ax.get_xlabel()}'."
+assert ax.get_ylabel() == 'y', f"ylabel should be 'y', got '{ax.get_ylabel()}'."
+assert ax.get_title() == 'sin and cos', f"title should be 'sin and cos', got '{ax.get_title()}'."
+styles = sorted([ln.get_linestyle() for ln in ax.lines])
+assert '--' in styles and '-' in styles, f"Need one solid '-' and one dashed '--' line, got {styles}."
+assert ax.get_legend() is not None, "Add a legend via ax.legend()."
+# grid: at least one major gridline visible
+xgrid = ax.xaxis._major_tick_kw.get('gridOn', False) or any(l.get_visible() for l in ax.get_xgridlines())
+assert xgrid, "Turn the grid on with ax.grid(True)."
+</script>
+<script type="text/x-solution">x = np.linspace(-2*np.pi, 2*np.pi, 400)
+fig, ax = plt.subplots()
+ax.plot(x, np.sin(x), '-',  label='sin')
+ax.plot(x, np.cos(x), '--', label='cos')
+ax.set_xlabel('x'); ax.set_ylabel('y')
+ax.set_title('sin and cos')
+ax.grid(True); ax.legend()</script>
+<script type="text/x-explain">Each styling method sits on the Axes: <code>set_xlabel</code>, <code>set_title</code>, <code>grid</code>, <code>legend</code>. Pass <code>linestyle</code> via the shorthand positional arg or the kwarg.</script>
   </section>
 </section>
 
@@ -90,11 +179,106 @@ ax.scatter(x, y, c=codes, cmap='viridis', s=30, alpha=0.7)</code></pre>
     <p class="muted">Pass an array to <code>c=</code> and a categorical colormap to <code>cmap=</code>. <code>alpha</code> tames overplotting.</p>
   </section>
 
+  <section class="exercise" data-packages="numpy,matplotlib">
+    <h2>Exercise — Scatter with a category color</h2>
+    <div class="ex-prompt">Tiny synthetic penguin data is provided. Make a scatter of <code>bill_length</code> vs <code>bill_depth</code> on <code>ax</code>, colored by the numeric <code>species_code</code>. Set xlabel <code>'bill length (mm)'</code> and ylabel <code>'bill depth (mm)'</code>.</div>
+<textarea class="ex-code">import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+
+rng = np.random.default_rng(0)
+bill_length  = np.concatenate([rng.normal(39,2,20), rng.normal(49,2,20), rng.normal(47,2,20)])
+bill_depth   = np.concatenate([rng.normal(18,1,20), rng.normal(18,1,20), rng.normal(15,1,20)])
+species_code = np.array([0]*20 + [1]*20 + [2]*20)
+
+fig = None
+ax = None
+# scatter colored by species_code, set the two axis labels
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import matplotlib.pyplot as plt
+import numpy as np
+assert ax is not None and isinstance(ax, plt.Axes), "Assign `fig, ax = plt.subplots()`."
+assert len(ax.collections) >= 1, "Use ax.scatter(...) — no PathCollection found."
+pc = ax.collections[0]
+offsets = pc.get_offsets()
+assert offsets.shape == (60, 2), f"Expected 60 scattered points, got {offsets.shape}."
+assert np.allclose(np.sort(offsets[:,0]), np.sort(bill_length)), "x data should be bill_length."
+assert np.allclose(np.sort(offsets[:,1]), np.sort(bill_depth)), "y data should be bill_depth."
+arr = pc.get_array()
+assert arr is not None and len(arr) == 60, "Pass c=species_code so points are colored by category."
+assert ax.get_xlabel() == 'bill length (mm)', "xlabel must be 'bill length (mm)'."
+assert ax.get_ylabel() == 'bill depth (mm)', "ylabel must be 'bill depth (mm)'."
+</script>
+<script type="text/x-solution">fig, ax = plt.subplots()
+ax.scatter(bill_length, bill_depth, c=species_code, cmap='viridis', s=30, alpha=0.8)
+ax.set_xlabel('bill length (mm)')
+ax.set_ylabel('bill depth (mm)')</script>
+<script type="text/x-explain">Pass a numeric array to <code>c=</code> and matplotlib maps it through <code>cmap</code>. Each scatter call adds one PathCollection to the Axes — inspectable via <code>ax.collections</code>.</script>
+  </section>
+
   <section>
     <h2>Histogram and boxplot</h2>
 <pre><code class="language-python">ax.hist(penguins['body_mass_g'], bins=30)
 ax.boxplot(groups_per_species)</code></pre>
     <p>A histogram answers "where is the mass." A boxplot answers "where are the medians and outliers across groups."</p>
+  </section>
+
+  <section class="exercise" data-packages="numpy,matplotlib">
+    <h2>Exercise — Histogram with mean line</h2>
+    <div class="ex-prompt">Plot a 30-bin histogram of <code>total_bill</code> on <code>ax</code>, then overlay a vertical red dashed line at the mean using <code>ax.axvline</code>, with a legend label like <code>f'mean = {mu:.2f}'</code>. Add a legend.</div>
+<textarea class="ex-code">import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+
+rng = np.random.default_rng(1)
+total_bill = rng.gamma(shape=4.0, scale=5.0, size=244)
+
+fig = None
+ax = None
+mu = None
+# build histogram + axvline at mu, add legend
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import matplotlib.pyplot as plt
+import numpy as np
+assert ax is not None and isinstance(ax, plt.Axes), "Assign `fig, ax = plt.subplots()`."
+assert mu is not None and abs(mu - total_bill.mean()) < 1e-9, "Set mu to total_bill.mean()."
+# histogram = patches on the axes
+assert len(ax.patches) == 30, f"Expected 30 histogram bars, got {len(ax.patches)}."
+# axvline is a Line2D with constant x
+vlines = [ln for ln in ax.lines if np.allclose(ln.get_xdata(), ln.get_xdata()[0])]
+assert vlines, "Add a vertical line via ax.axvline(mu, ...)."
+v = vlines[0]
+assert abs(v.get_xdata()[0] - mu) < 1e-9, "The vertical line should sit at the mean."
+assert v.get_linestyle() in ('--', 'dashed'), "Use a dashed linestyle for the mean line."
+assert ax.get_legend() is not None, "Call ax.legend() so the mean line is labeled."
+</script>
+<script type="text/x-solution">fig, ax = plt.subplots()
+ax.hist(total_bill, bins=30, rwidth=0.9)
+mu = total_bill.mean()
+ax.axvline(mu, color='red', linestyle='--', label=f'mean = {mu:.2f}')
+ax.set_xlabel('total_bill ($)'); ax.set_ylabel('count')
+ax.legend()</script>
+<script type="text/x-explain"><code>ax.hist</code> returns counts and edges but its visual output is a set of <code>Rectangle</code> patches on the Axes. <code>axvline</code> adds a Line2D spanning the full y-range at a fixed x — perfect for marking summary statistics.</script>
   </section>
 
   <section>
@@ -119,6 +303,50 @@ axes[0, 1].plot(x, x**2);axes[0, 1].set_title('x²')
 fig.suptitle('Powers of x')
 fig.tight_layout()</code></pre>
     <p class="muted"><code>axes</code> is a 2-D NumPy array of Axes. <code>sharex=True</code> aligns the x-axes across the grid.</p>
+  </section>
+
+  <section class="exercise" data-packages="numpy,matplotlib">
+    <h2>Exercise — A 2×2 subplot grid</h2>
+    <div class="ex-prompt">Create a 2×2 grid with <code>plt.subplots(2, 2)</code>. In each cell plot <code>x</code>, <code>x²</code>, <code>x³</code>, <code>x⁴</code> respectively (row-major order). Title each Axes <code>'x'</code>, <code>'x^2'</code>, <code>'x^3'</code>, <code>'x^4'</code>. Then set <code>fig.suptitle('Powers of x')</code>.</div>
+<textarea class="ex-code">import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+
+x = np.linspace(-1.4, 1.4, 30)
+fig = None
+axes = None
+# build the 2x2 grid, plot powers, set titles + suptitle
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import matplotlib.pyplot as plt
+import numpy as np
+assert axes is not None, "Assign `fig, axes = plt.subplots(2, 2)`."
+assert hasattr(axes, 'shape') and axes.shape == (2, 2), f"axes should be a (2,2) array, got shape {getattr(axes,'shape',None)}."
+expected = [('x', x), ('x^2', x**2), ('x^3', x**3), ('x^4', x**4)]
+for ax_i, (title, ydata) in zip(axes.flat, expected):
+    assert ax_i.get_title() == title, f"Axes title should be '{title}', got '{ax_i.get_title()}'."
+    assert len(ax_i.lines) >= 1, f"No line drawn on the '{title}' Axes."
+    assert np.allclose(ax_i.lines[0].get_ydata(), ydata), f"Y-data for the '{title}' Axes does not match."
+assert fig._suptitle is not None and fig._suptitle.get_text() == 'Powers of x', "Set fig.suptitle('Powers of x')."
+</script>
+<script type="text/x-solution">x = np.linspace(-1.4, 1.4, 30)
+fig, axes = plt.subplots(2, 2, figsize=(9, 6))
+axes[0, 0].plot(x, x);    axes[0, 0].set_title('x')
+axes[0, 1].plot(x, x**2); axes[0, 1].set_title('x^2')
+axes[1, 0].plot(x, x**3); axes[1, 0].set_title('x^3')
+axes[1, 1].plot(x, x**4); axes[1, 1].set_title('x^4')
+fig.suptitle('Powers of x')
+fig.tight_layout()</script>
+<script type="text/x-explain"><code>plt.subplots(2, 2)</code> returns a Figure and a 2-D numpy array of Axes. Iterate with <code>axes.flat</code> or index by row/col. <code>fig.suptitle</code> sits above all subplots; <code>tight_layout</code> stops titles from colliding.</script>
   </section>
 
   <section>
@@ -151,6 +379,7 @@ fig.tight_layout()</code></pre>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="../../../../shared/slides-template/interactive.js"></script>
 <script>
   Reveal.initialize({
     hash: true, slideNumber: 'c/t', transition: 'slide',

@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/interactive.css" />
 </head>
 <body>
 <div class="reveal"><div class="slides">
@@ -121,6 +122,70 @@ np.squeeze(...)           # drop length-1 axes</code></pre>
     <p>You will use these constantly for broadcasting (next course) and for matching tensor shapes in deep learning.</p>
   </section>
 
+  <section class="exercise" data-packages="numpy">
+    <h2>Exercise — Multiplication table</h2>
+    <div class="ex-prompt">Build a <code>5×5</code> multiplication table where entry <code>(i, j)</code> equals <code>(i+1) * (j+1)</code>. Use <code>np.arange</code> and broadcasting — no Python loops. Assign the result to <code>table</code>.</div>
+<textarea class="ex-code">import numpy as np
+
+# assign the 5x5 multiplication table to `table`
+table = None
+print(table)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+assert 'table' in dir(), "Define a variable named `table`."
+assert table is not None, "`table` is still None — assign your answer to it."
+arr = np.asarray(table)
+assert arr.shape == (5, 5), f"Expected shape (5, 5), got {arr.shape}."
+expected = np.arange(1, 6)[:, None] * np.arange(1, 6)[None, :]
+assert np.array_equal(arr, expected), "Values don't match the multiplication table."
+</script>
+<script type="text/x-solution">row = np.arange(1, 6)
+table = row[:, None] * row[None, :]
+print(table)</script>
+<script type="text/x-explain">Make a 1-D vector [1..5], then multiply a column-shape (5,1) by a row-shape (1,5). Broadcasting produces the (5,5) outer product without any loops.</script>
+  </section>
+
+  <section class="exercise" data-packages="numpy">
+    <h2>Exercise — Reshape &amp; new axis</h2>
+    <div class="ex-prompt">Reshape the 8×4 array <code>M</code> into a 4×8 array <code>R</code>. Then promote <code>M</code> to a 3-D array <code>E</code> of shape <code>(8, 4, 1)</code> using <code>np.newaxis</code> (no <code>reshape</code>).</div>
+<textarea class="ex-code">import numpy as np
+rng = np.random.default_rng(0)
+M = rng.random((8, 4))
+
+R = None    # reshape M to (4, 8)
+E = None    # add a trailing axis: shape (8, 4, 1)
+
+print(R.shape if R is not None else None, E.shape if E is not None else None)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+assert R is not None and E is not None, "Assign R and E."
+assert np.asarray(R).shape == (4, 8), f"R shape should be (4, 8), got {np.asarray(R).shape}."
+assert np.array_equal(np.asarray(R), M.reshape(4, 8)), "R values should match M.reshape(4, 8)."
+assert np.asarray(E).shape == (8, 4, 1), f"E shape should be (8, 4, 1), got {np.asarray(E).shape}."
+</script>
+<script type="text/x-solution">R = M.reshape(4, 8)
+E = M[:, :, np.newaxis]</script>
+<script type="text/x-explain">`reshape` only succeeds if the new shape has the same total element count (8*4 == 4*8). `np.newaxis` (alias for `None`) inserts a length-1 axis — the buffer is unchanged, only the strides.</script>
+  </section>
+
   <section>
     <h2>C-order vs F-order — a one-slide footnote</h2>
     <p>NumPy stores arrays row-by-row by default (C-order). Transposing flips to F-order without copying. You rarely care, until you do.</p>
@@ -153,12 +218,76 @@ b[::-1]            # reverse rows</code></pre>
     <p class="muted">The third number in a slice is the <em>step</em>. <code>::-1</code> reverses; <code>::2</code> takes every other.</p>
   </section>
 
+  <section class="exercise" data-packages="numpy">
+    <h2>Exercise — Strided slicing</h2>
+    <div class="ex-prompt">Given the 8×4 array <code>M</code>, assign every other row (rows 0, 2, 4, 6) to <code>even_rows</code> using a single slice. Then reverse the column order of <code>M</code> into <code>mirrored</code>.</div>
+<textarea class="ex-code">import numpy as np
+rng = np.random.default_rng(0)
+M = rng.random((8, 4))
+
+even_rows = None   # rows 0, 2, 4, 6 of M (slice, not fancy index)
+mirrored = None    # M with column order reversed
+
+print(even_rows.shape if even_rows is not None else None)
+print(mirrored.shape if mirrored is not None else None)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+assert even_rows is not None and mirrored is not None, "Assign even_rows and mirrored."
+assert np.array_equal(np.asarray(even_rows), M[::2]), "even_rows should equal M[::2]."
+assert np.array_equal(np.asarray(mirrored), M[:, ::-1]), "mirrored should equal M[:, ::-1]."
+</script>
+<script type="text/x-solution">even_rows = M[::2]
+mirrored = M[:, ::-1]</script>
+<script type="text/x-explain">The slice step is the third number in `start:stop:step`. `M[::2]` keeps every other row; `M[:, ::-1]` walks columns backwards. Both are views over the same buffer — cheap.</script>
+  </section>
+
   <section>
     <h2>Fancy (integer-array) indexing</h2>
 <pre><code class="language-python">b[(0, 2), 2:5]                       # rows 0 and 2
 b[:, (-1, 2, -1)]                    # cols last, 2, last
 b[(-1, 2, -1, 2), (5, 9, 1, 9)]      # 4 paired cells</code></pre>
     <p>Pass lists of indices to pick any rows/columns/cells. Always returns a <em>copy</em>.</p>
+  </section>
+
+  <section class="exercise" data-packages="numpy">
+    <h2>Exercise — Diagonal via fancy indexing</h2>
+    <div class="ex-prompt">Given the 5×5 multiplication <code>table</code>, extract its diagonal as a 1-D array <code>diag</code> using <strong>one fancy-index expression</strong> (no <code>np.diag</code>, no loops).</div>
+<textarea class="ex-code">import numpy as np
+row = np.arange(1, 6)
+table = row[:, None] * row[None, :]
+
+# assign the diagonal to `diag` using one fancy-index expression
+diag = None
+print(diag)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+assert diag is not None, "Assign your answer to `diag`."
+arr = np.asarray(diag)
+assert arr.shape == (5,), f"Expected shape (5,), got {arr.shape}."
+assert np.array_equal(arr, np.array([1, 4, 9, 16, 25])), "Diagonal values should be [1, 4, 9, 16, 25]."
+</script>
+<script type="text/x-solution">ix = np.arange(5)
+diag = table[ix, ix]
+print(diag)</script>
+<script type="text/x-explain">Paired index arrays pick one cell per pair. Passing the same array twice — `table[ix, ix]` — selects (0,0), (1,1), (2,2), … which is exactly the diagonal.</script>
   </section>
 
   <section>
@@ -176,6 +305,42 @@ b[b % 3 == 1]              # every cell where x%3 == 1</code></pre>
     <p class="muted">Vectorized if/else. The shape of all three arguments must broadcast together.</p>
   </section>
 
+  <section class="exercise" data-packages="numpy">
+    <h2>Exercise — Masks &amp; <code>np.where</code></h2>
+    <div class="ex-prompt">Build <code>v</code> as integers 1..30. Use a boolean mask to assign the multiples of 3 to <code>mult3</code>. Then build <code>out</code> by replacing every multiple of 3 in <code>v</code> with <code>0</code> using <code>np.where</code>.</div>
+<textarea class="ex-code">import numpy as np
+
+v = None       # the integers 1..30
+mult3 = None   # values in v divisible by 3
+out = None     # v with multiples of 3 replaced by 0
+
+print(v)
+print(mult3)
+print(out)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+assert v is not None and mult3 is not None and out is not None, "Assign v, mult3, and out."
+assert np.array_equal(np.asarray(v), np.arange(1, 31)), "v must be the integers 1..30 inclusive."
+assert np.array_equal(np.asarray(mult3), np.arange(3, 31, 3)), "mult3 must be every multiple of 3 in v."
+expected_out = np.where(np.arange(1, 31) % 3 == 0, 0, np.arange(1, 31))
+assert np.array_equal(np.asarray(out), expected_out), "out should be v with multiples of 3 set to 0."
+</script>
+<script type="text/x-solution">v = np.arange(1, 31)
+mult3 = v[v % 3 == 0]
+out = np.where(v % 3 == 0, 0, v)
+print(v); print(mult3); print(out)</script>
+<script type="text/x-explain">`np.arange(1, 31)` is 1..30 (stop is exclusive). `v % 3 == 0` is a boolean mask of the same shape; indexing `v[mask]` pulls the matching values. `np.where(cond, a, b)` returns a new array picking from `a` where `cond` is true and `b` otherwise.</script>
+  </section>
+
   <section>
     <h2>Gotcha — slices are views</h2>
 <pre><code class="language-python">view = a[:2, :2]
@@ -184,6 +349,7 @@ print(a)            # the source mutated!</code></pre>
     <p>Modifying a slice modifies the original. Use <code>.copy()</code> when you want independence.</p>
   </section>
 </section>
+
 
 <section class="title-slide">
   <span class="kicker">Recap</span>
@@ -201,6 +367,7 @@ print(a)            # the source mutated!</code></pre>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="../../../../shared/slides-template/interactive.js"></script>
 <script>
   Reveal.initialize({
     hash: true, slideNumber: 'c/t', transition: 'slide',

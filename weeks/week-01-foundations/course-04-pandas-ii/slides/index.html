@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/interactive.css" />
 </head>
 <body>
 <div class="reveal"><div class="slides">
@@ -45,6 +46,44 @@
     <p class="muted">Always start cleaning by counting. <code>isna().sum()</code> is your microscope.</p>
   </section>
 
+  <section class="exercise" data-packages="numpy,pandas">
+    <h2>Exercise — Count the NaNs</h2>
+    <div class="ex-prompt">Given a small Titanic-style DataFrame <code>titanic</code>, compute a Series <code>na_counts</code> whose index is the column names and whose values are the number of NaNs per column. Use <code>isna().sum()</code>.</div>
+<textarea class="ex-code">import pandas as pd
+import numpy as np
+
+titanic = pd.DataFrame({
+    'survived': [0, 1, 1, 0, 1, 0],
+    'pclass':   [3, 1, 3, 1, 2, 3],
+    'age':      [22.0, 38.0, np.nan, 35.0, np.nan, 27.0],
+    'embarked': ['S', 'C', 'S', np.nan, 'S', 'Q'],
+})
+
+# Count NaNs per column. Result is a pandas Series.
+na_counts = None
+print(na_counts)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import pandas as pd
+assert na_counts is not None, "Assign your answer to `na_counts`."
+assert isinstance(na_counts, pd.Series), "`na_counts` must be a pandas Series (returned by .isna().sum())."
+assert int(na_counts['age']) == 2, "Expected 2 NaNs in age."
+assert int(na_counts['embarked']) == 1, "Expected 1 NaN in embarked."
+assert int(na_counts['survived']) == 0 and int(na_counts['pclass']) == 0, "survived/pclass should have 0 NaNs."
+</script>
+<script type="text/x-solution">na_counts = titanic.isna().sum()
+print(na_counts)</script>
+<script type="text/x-explain">`isna()` returns a boolean DataFrame with the same shape; summing it along axis 0 (the default) counts True per column. Always your first cleaning step.</script>
+  </section>
+
   <section>
     <h2>Three responses to a NaN</h2>
     <ul>
@@ -52,6 +91,51 @@
       <li class="fragment fade-up"><strong>Fill</strong> — <code>fillna(df['age'].median())</code>. Use when you can't afford to lose rows.</li>
       <li class="fragment fade-up"><strong>Interpolate</strong> — <code>interpolate(axis=1)</code>. Use for ordered data with smooth structure.</li>
     </ul>
+  </section>
+
+  <section class="exercise" data-packages="numpy,pandas">
+    <h2>Exercise — Impute and drop</h2>
+    <div class="ex-prompt">Fill missing <code>age</code> with the column's median into a new frame <code>filled</code>. Then build <code>clean</code> by dropping rows where <code>embarked</code> is NaN. <code>clean</code> should have zero NaNs in both columns.</div>
+<textarea class="ex-code">import pandas as pd
+import numpy as np
+
+titanic = pd.DataFrame({
+    'survived': [0, 1, 1, 0, 1, 0],
+    'pclass':   [3, 1, 3, 1, 2, 3],
+    'age':      [22.0, 38.0, np.nan, 35.0, np.nan, 27.0],
+    'embarked': ['S', 'C', 'S', np.nan, 'S', 'Q'],
+})
+
+filled = None   # titanic with age NaNs replaced by the median age
+clean  = None   # filled with rows where embarked is NaN dropped
+
+print(filled)
+print(clean)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import pandas as pd
+import numpy as np
+assert filled is not None and clean is not None, "Assign both `filled` and `clean`."
+assert isinstance(filled, pd.DataFrame) and isinstance(clean, pd.DataFrame), "Both must be DataFrames."
+assert int(filled['age'].isna().sum()) == 0, "filled['age'] must have no NaNs."
+expected_median = float(np.nanmedian([22.0, 38.0, 35.0, 27.0]))
+assert np.isclose(filled.loc[2, 'age'], expected_median), f"Imputed value should be the median ({expected_median})."
+assert len(clean) == 5, f"clean should have 5 rows (one dropped), got {len(clean)}."
+assert int(clean['embarked'].isna().sum()) == 0, "clean must have no NaNs in embarked."
+</script>
+<script type="text/x-solution">filled = titanic.assign(age=titanic['age'].fillna(titanic['age'].median()))
+clean = filled.dropna(subset=['embarked'])
+print(filled)
+print(clean)</script>
+<script type="text/x-explain">`fillna` replaces NaNs in place of a column; wrapping it in `assign` keeps the operation pure. `dropna(subset=...)` drops rows only when the listed columns are NaN — much safer than a bare `dropna()`.</script>
   </section>
 
   <section>
@@ -76,12 +160,137 @@ tips.groupby(['day', 'sex'])['tip'].agg(['mean', 'count'])</code></pre>
     <p class="muted">Split → apply → combine. Pass a single column or a list; pass a single agg or a list of aggs.</p>
   </section>
 
+  <section class="exercise" data-packages="numpy,pandas">
+    <h2>Exercise — Survival rate by class</h2>
+    <div class="ex-prompt">Using <code>groupby</code>, compute the mean of <code>survived</code> per <code>pclass</code>. Assign the resulting Series to <code>rate</code>. Its index should be the three pclass values, sorted.</div>
+<textarea class="ex-code">import pandas as pd
+
+titanic = pd.DataFrame({
+    'survived': [0, 1, 1, 0, 1, 0, 1, 0, 1, 0],
+    'pclass':   [3, 1, 3, 1, 2, 3, 2, 3, 1, 2],
+})
+
+# survival rate per pclass
+rate = None
+print(rate)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import pandas as pd
+import numpy as np
+assert rate is not None, "Assign your result to `rate`."
+assert isinstance(rate, pd.Series), "`rate` must be a Series (groupby(col)[other].mean())."
+expected = titanic.groupby('pclass')['survived'].mean()
+assert sorted(rate.index.tolist()) == [1, 2, 3], "Index should be pclass values 1, 2, 3."
+for k in expected.index:
+    assert np.isclose(rate.loc[k], expected.loc[k]), f"Wrong rate for pclass={k}."
+</script>
+<script type="text/x-solution">rate = titanic.groupby('pclass')['survived'].mean()
+print(rate)</script>
+<script type="text/x-explain">Because `survived` is 0/1, its mean inside each group is the fraction that survived. Split → apply → combine in a single chained expression.</script>
+  </section>
+
+  <section class="exercise" data-packages="numpy,pandas">
+    <h2>Exercise — tip_pct and groupby</h2>
+    <div class="ex-prompt">Use <code>assign</code> to add a <code>tip_pct = tip / total_bill</code> column to <code>tips</code> as <code>tips2</code>. Then group by <code>day</code> and <code>sex</code> and compute the mean <code>tip_pct</code> as a Series <code>g</code>.</div>
+<textarea class="ex-code">import pandas as pd
+
+tips = pd.DataFrame({
+    'total_bill': [10.0, 20.0, 15.0, 25.0, 30.0, 12.0, 40.0, 18.0],
+    'tip':        [ 1.5,  3.0,  3.0,  4.0,  6.0,  3.0,  5.0,  2.0],
+    'day':        ['Sun','Sun','Sat','Sat','Sun','Sat','Sun','Sat'],
+    'sex':        ['M','F','M','F','M','F','F','M'],
+})
+
+tips2 = None   # tips with a new tip_pct column
+g     = None   # Series: mean tip_pct grouped by (day, sex)
+
+print(tips2.head())
+print(g)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import pandas as pd
+import numpy as np
+assert tips2 is not None and g is not None, "Assign both `tips2` and `g`."
+assert 'tip_pct' in tips2.columns, "tips2 must contain a tip_pct column."
+assert np.allclose(tips2['tip_pct'], tips['tip'] / tips['total_bill']), "tip_pct should equal tip/total_bill."
+assert isinstance(g, pd.Series), "`g` must be a Series from groupby(...)['tip_pct'].mean()."
+expected = tips2.groupby(['day', 'sex'])['tip_pct'].mean()
+for k in expected.index:
+    assert np.isclose(g.loc[k], expected.loc[k]), f"Wrong mean for {k}."
+</script>
+<script type="text/x-solution">tips2 = tips.assign(tip_pct=tips['tip'] / tips['total_bill'])
+g = tips2.groupby(['day', 'sex'])['tip_pct'].mean()
+print(tips2.head())
+print(g)</script>
+<script type="text/x-explain">`assign` returns a new frame with the added column — chainable and non-mutating. Grouping by two keys produces a Series with a MultiIndex; one aggregation per group cell.</script>
+  </section>
+
   <section>
     <h2>Pivot — reshape from long to wide</h2>
 <pre><code class="language-python">pd.pivot_table(
     more_grades,
     index='name', columns='month', values='grade',
     margins=True)</code></pre>
+  </section>
+
+  <section class="exercise" data-packages="numpy,pandas">
+    <h2>Exercise — Pivot and argmax</h2>
+    <div class="ex-prompt">Take the grouped Series <code>g</code> and reshape it with <code>unstack('sex')</code> so that <code>day</code> is the index and <code>sex</code> are columns — assign to <code>pv</code>. Then find the <code>(day, sex)</code> pair with the highest <code>tip_pct</code> as a tuple <code>top</code>.</div>
+<textarea class="ex-code">import pandas as pd
+
+tips = pd.DataFrame({
+    'total_bill': [10.0, 20.0, 15.0, 25.0, 30.0, 12.0, 40.0, 18.0],
+    'tip':        [ 1.5,  3.0,  3.0,  4.0,  6.0,  3.0,  5.0,  2.0],
+    'day':        ['Sun','Sun','Sat','Sat','Sun','Sat','Sun','Sat'],
+    'sex':        ['M','F','M','F','M','F','F','M'],
+}).assign(tip_pct=lambda d: d['tip'] / d['total_bill'])
+
+g = tips.groupby(['day', 'sex'])['tip_pct'].mean()
+
+pv  = None    # g reshaped: index=day, columns=sex
+top = None    # tuple (day, sex) with the largest tip_pct in g
+
+print(pv)
+print(top)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import pandas as pd
+assert pv is not None and top is not None, "Assign both `pv` and `top`."
+assert isinstance(pv, pd.DataFrame), "`pv` must be a DataFrame (use unstack)."
+assert pv.index.name == 'day', "pv index should be 'day'."
+assert set(pv.columns) == set(g.index.get_level_values('sex').unique()), "pv columns should be the sex values."
+expected_top = g.idxmax()
+assert tuple(top) == tuple(expected_top), f"`top` should be the (day, sex) where tip_pct is max: {expected_top}."
+</script>
+<script type="text/x-solution">pv = g.unstack('sex')
+top = g.idxmax()
+print(pv)
+print(top)</script>
+<script type="text/x-explain">`unstack` moves one level of a MultiIndex into columns — long-to-wide in one call. `idxmax` returns the *index label* (a tuple for a MultiIndex) at the maximum, not the value.</script>
   </section>
 
   <section>
@@ -129,6 +338,50 @@ sp = sp.sort_values('AAPL_x').set_index('AAPL_x')
 sp['AAPL_y'].resample('W').mean().plot()</code></pre>
     <p class="muted">Load, parse, sort, set the index, resample, plot. Five lines.</p>
   </section>
+
+  <section class="exercise" data-packages="numpy,pandas">
+    <h2>Exercise — Resample to weekly</h2>
+    <div class="ex-prompt">The frame <code>sp</code> has a string <code>date</code> column and a numeric <code>price</code>. Build <code>sp2</code> by parsing <code>date</code> to datetime, sorting by it, and setting it as the index. Then compute the weekly mean of <code>price</code> as a Series <code>weekly</code> using <code>resample('W').mean()</code>.</div>
+<textarea class="ex-code">import pandas as pd
+
+sp = pd.DataFrame({
+    'date':  ['2014-03-05', '2014-01-10', '2014-02-14', '2014-01-17',
+              '2014-02-21', '2014-01-24', '2014-03-12', '2014-02-07'],
+    'price': [75.0, 76.5, 74.2, 78.1, 73.8, 77.0, 76.1, 72.4],
+})
+
+sp2    = None   # sp with date parsed, sorted, set as index
+weekly = None   # weekly mean of the price column
+
+print(sp2.head())
+print(weekly)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import pandas as pd
+import numpy as np
+assert sp2 is not None and weekly is not None, "Assign both `sp2` and `weekly`."
+assert isinstance(sp2.index, pd.DatetimeIndex), "sp2 must have a DatetimeIndex."
+assert sp2.index.is_monotonic_increasing, "sp2 should be sorted ascending by date."
+assert 'price' in sp2.columns, "sp2 should still have a price column."
+assert isinstance(weekly, pd.Series), "`weekly` must be a Series."
+expected = sp2['price'].resample('W').mean()
+assert len(weekly) == len(expected), f"weekly length {len(weekly)} != expected {len(expected)}."
+assert np.allclose(weekly.values, expected.values, equal_nan=True), "weekly values should match resample('W').mean()."
+</script>
+<script type="text/x-solution">sp2 = sp.assign(date=pd.to_datetime(sp['date'])).sort_values('date').set_index('date')
+weekly = sp2['price'].resample('W').mean()
+print(sp2.head())
+print(weekly)</script>
+<script type="text/x-explain">Once the index is a DatetimeIndex, `resample` works like a time-aware groupby: it buckets rows into the requested frequency (`'W'` = weekly, Sunday-anchored) and applies the aggregation.</script>
+  </section>
 </section>
 
 <section class="title-slide">
@@ -147,6 +400,7 @@ sp['AAPL_y'].resample('W').mean().plot()</code></pre>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="../../../../shared/slides-template/interactive.js"></script>
 <script>
   Reveal.initialize({
     hash: true, slideNumber: 'c/t', transition: 'slide',

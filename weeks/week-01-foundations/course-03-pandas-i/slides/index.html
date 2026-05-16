@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/interactive.css" />
 </head>
 <body>
 <div class="reveal"><div class="slides">
@@ -70,6 +71,56 @@ sl.iloc[0]            # 1002 — positional</code></pre>
 <pre><code class="language-python">s2 + s3     # labels not in both -&gt; NaN</code></pre>
     <p>This is the feature that makes Pandas Pandas. When you combine two Series, Pandas aligns by label first and only then arithmetic. Missing labels become NaN.</p>
   </section>
+
+  <section class="exercise" data-packages="numpy,pandas">
+    <h2>Exercise — Series alignment</h2>
+    <div class="ex-prompt">Build the three Series <code>a</code>, <code>b</code>, <code>c</code> shown in the starter. Combine them into a DataFrame <code>df</code> (one column per Series). Compute <code>ab</code> = <code>a + b</code>. Finally, drop rows containing any NaN into <code>clean</code>.</div>
+<textarea class="ex-code">import pandas as pd
+import numpy as np
+
+a = pd.Series([1, 2, 3], index=['x', 'y', 'z'])
+b = pd.Series([10, 20, 30], index=['y', 'z', 'w'])
+c = pd.Series([100, 200], index=['x', 'w'])
+
+df = None     # DataFrame with columns 'a', 'b', 'c' built from the Series above
+ab = None     # a + b
+clean = None  # df with rows containing any NaN dropped
+
+print(df)
+print(ab)
+print(clean)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import pandas as pd
+import numpy as np
+assert df is not None and ab is not None and clean is not None, "Assign df, ab, and clean."
+expected_df = pd.DataFrame({'a': a, 'b': b, 'c': c})
+assert list(df.columns) == ['a', 'b', 'c'], f"Columns should be ['a','b','c'], got {list(df.columns)}."
+assert set(df.index) == set(expected_df.index), "Index labels should be the union of all three Series indices."
+df_sorted = df.sort_index()
+exp_sorted = expected_df.sort_index()
+assert df_sorted.equals(exp_sorted), "DataFrame values/alignment don't match expected."
+expected_ab = a + b
+assert isinstance(ab, pd.Series), "`ab` must be a Series."
+assert set(ab.index) == set(expected_ab.index), "`ab` should have the union of a's and b's labels (with NaN where missing)."
+assert ab.sort_index().equals(expected_ab.sort_index()), "`ab` values don't match a + b."
+expected_clean = expected_df.dropna()
+assert clean.shape == expected_clean.shape, f"`clean` shape should be {expected_clean.shape}, got {clean.shape}."
+</script>
+<script type="text/x-solution">df = pd.DataFrame({'a': a, 'b': b, 'c': c})
+ab = a + b
+clean = df.dropna()
+print(df); print(ab); print(clean)</script>
+<script type="text/x-explain">Pandas aligns by index label before doing arithmetic or stacking columns. Labels missing from one operand become NaN. `dropna()` removes any row with at least one NaN.</script>
+  </section>
 </section>
 
 <section>
@@ -95,6 +146,42 @@ sl.iloc[0]            # 1002 — positional</code></pre>
      [1984, 3,      'Dancing', 83]],
     columns=['birthyear', 'children', 'hobby', 'weight'],
     index=['alice', 'bob'])</code></pre>
+  </section>
+
+  <section class="exercise" data-packages="numpy,pandas">
+    <h2>Exercise — Class grades + row mean</h2>
+    <div class="ex-prompt">Build the <code>grades</code> DataFrame shown in the starter (4 students × 3 subjects). Then add a new column <code>average</code> equal to each student's row mean across the three subjects.</div>
+<textarea class="ex-code">import pandas as pd
+import numpy as np
+
+grades = pd.DataFrame(
+    [[15, 17, 12], [10, 13, 16], [19, 18, 14], [12, 14, 11]],
+    columns=['math', 'science', 'history'],
+    index=['alice', 'bob', 'charles', 'darwin'])
+
+# add an 'average' column to `grades` containing each row's mean
+# (modify grades in place)
+print(grades)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import pandas as pd
+import numpy as np
+assert 'average' in grades.columns, "Add an 'average' column to `grades`."
+expected = pd.Series([(15+17+12)/3, (10+13+16)/3, (19+18+14)/3, (12+14+11)/3],
+                     index=['alice', 'bob', 'charles', 'darwin'])
+assert np.allclose(grades['average'].values, expected.values), "`average` should be the row mean across math, science, history."
+</script>
+<script type="text/x-solution">grades['average'] = grades.mean(axis=1)
+print(grades)</script>
+<script type="text/x-explain">`df.mean(axis=1)` reduces along columns, producing one value per row. Assigning the result to a new column attaches it by row label automatically.</script>
   </section>
 
   <section>
@@ -143,12 +230,133 @@ df[mask]</code></pre>
     <p class="muted">Compose with <code>&amp;</code> / <code>|</code> / <code>~</code> — never with <code>and</code> / <code>or</code> / <code>not</code>.</p>
   </section>
 
+  <section class="exercise" data-packages="numpy,pandas">
+    <h2>Exercise — Filter tips by tip amount</h2>
+    <div class="ex-prompt">Given the small <code>tips</code> DataFrame below, assign to <code>big</code> the rows where <code>tip &gt; 5</code>, and to <code>n_big</code> the number of such rows.</div>
+<textarea class="ex-code">import pandas as pd
+import numpy as np
+
+tips = pd.DataFrame({
+    'total_bill': [16.99, 24.59, 39.42, 23.68, 35.26, 48.27, 10.07, 30.06],
+    'tip':        [ 1.01,  3.61,  7.58,  3.31,  5.00,  6.73,  1.83,  2.00],
+    'day':        ['Sun', 'Sun', 'Sat', 'Sun', 'Sun', 'Sat', 'Sat', 'Sat'],
+})
+
+big = None     # rows of tips where tip > 5
+n_big = None   # how many such rows
+
+print(big)
+print('n =', n_big)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import pandas as pd
+assert big is not None and n_big is not None, "Assign both `big` and `n_big`."
+expected = tips[tips['tip'] > 5]
+assert isinstance(big, pd.DataFrame), "`big` must be a DataFrame."
+assert big.shape == expected.shape, f"Expected shape {expected.shape}, got {big.shape}."
+assert list(big.index) == list(expected.index), "Rows of `big` don't match the expected filter."
+assert (big['tip'] > 5).all(), "All rows in `big` must have tip > 5."
+assert int(n_big) == len(expected), f"`n_big` should be {len(expected)}."
+</script>
+<script type="text/x-solution">big = tips[tips['tip'] > 5]
+n_big = len(big)
+print(big)
+print('n =', n_big)</script>
+<script type="text/x-explain">`tips['tip'] > 5` is a boolean Series aligned with the rows. Indexing the DataFrame with it keeps only the True rows. `len(df)` counts rows.</script>
+  </section>
+
   <section>
     <h2>set_index, sort_values, sort_index</h2>
 <pre><code class="language-python">df.set_index(['day', 'time'])
 df.sort_values('tip', ascending=False)
 df.sort_index()</code></pre>
     <p>Once you understand the index, half of Pandas becomes "pick the right index, then everything is a one-liner."</p>
+  </section>
+
+  <section class="exercise" data-packages="numpy,pandas">
+    <h2>Exercise — Project columns and sort</h2>
+    <div class="ex-prompt">Starting from the same <code>tips</code>, build <code>result</code>: only the columns <code>total_bill</code>, <code>tip</code>, <code>day</code> for rows where <code>tip &gt; 5</code>, sorted by <code>total_bill</code> ascending.</div>
+<textarea class="ex-code">import pandas as pd
+
+tips = pd.DataFrame({
+    'total_bill': [16.99, 24.59, 39.42, 23.68, 35.26, 48.27, 10.07, 30.06],
+    'tip':        [ 1.01,  3.61,  7.58,  3.31,  5.00,  6.73,  1.83,  2.00],
+    'day':        ['Sun', 'Sun', 'Sat', 'Sun', 'Sun', 'Sat', 'Sat', 'Sat'],
+})
+
+result = None   # subset columns, filter tip > 5, sort by total_bill ascending
+print(result)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import pandas as pd
+assert result is not None, "Assign `result`."
+expected = tips[tips['tip'] > 5][['total_bill', 'tip', 'day']].sort_values('total_bill')
+assert isinstance(result, pd.DataFrame), "`result` must be a DataFrame."
+assert list(result.columns) == ['total_bill', 'tip', 'day'], f"Columns should be ['total_bill', 'tip', 'day'], got {list(result.columns)}."
+assert result.shape == expected.shape, f"Expected shape {expected.shape}, got {result.shape}."
+assert list(result['total_bill']) == list(expected['total_bill']), "Rows are not sorted by total_bill ascending."
+</script>
+<script type="text/x-solution">result = (tips[tips['tip'] > 5]
+          [['total_bill', 'tip', 'day']]
+          .sort_values('total_bill'))
+print(result)</script>
+<script type="text/x-explain">Chain the operations: filter rows with a boolean mask, project to a column subset with a list, then `sort_values` on the column you care about. Each step returns a new DataFrame.</script>
+  </section>
+
+  <section class="exercise" data-packages="numpy,pandas">
+    <h2>Exercise — Sort and find the top student</h2>
+    <div class="ex-prompt">Using the <code>grades</code> DataFrame with the <code>average</code> column, build <code>ranked</code> by sorting on <code>average</code> descending. Then assign to <code>top_science</code> the label of the student with the highest <code>science</code> grade (use <code>idxmax</code>).</div>
+<textarea class="ex-code">import pandas as pd
+import numpy as np
+
+grades = pd.DataFrame(
+    [[15, 17, 12], [10, 13, 16], [19, 18, 14], [12, 14, 11]],
+    columns=['math', 'science', 'history'],
+    index=['alice', 'bob', 'charles', 'darwin'])
+grades['average'] = grades.mean(axis=1)
+
+ranked = None        # grades sorted by 'average' descending
+top_science = None   # student label with the highest 'science' grade
+
+print(ranked)
+print('top science:', top_science)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import pandas as pd
+assert ranked is not None and top_science is not None, "Assign both `ranked` and `top_science`."
+expected_ranked = grades.sort_values('average', ascending=False)
+assert list(ranked.index) == list(expected_ranked.index), "`ranked` should be sorted by 'average' descending."
+assert top_science == 'charles', f"`top_science` should be 'charles', got {top_science!r}."
+</script>
+<script type="text/x-solution">ranked = grades.sort_values('average', ascending=False)
+top_science = grades['science'].idxmax()
+print(ranked)
+print('top science:', top_science)</script>
+<script type="text/x-explain">`sort_values` returns a new DataFrame ordered by the chosen column. `idxmax` on a Series returns the index label (not the position) of the maximum — exactly what you want for "who scored highest".</script>
   </section>
 </section>
 
@@ -168,6 +376,7 @@ df.sort_index()</code></pre>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="../../../../shared/slides-template/interactive.js"></script>
 <script>
   Reveal.initialize({
     hash: true, slideNumber: 'c/t', transition: 'slide',

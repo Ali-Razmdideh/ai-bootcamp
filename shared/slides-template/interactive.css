@@ -1,0 +1,118 @@
+/* Interactive exercise styling for Reveal.js slides */
+.reveal .exercise {
+  text-align: left;
+  font-size: 0.45em;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
+}
+.reveal .exercise h2 {
+  text-align: left;
+  margin: 0 0 0.2em;
+  font-size: 1.6em;
+}
+.reveal .exercise .ex-prompt {
+  margin: 0 0 0.4em;
+  line-height: 1.35;
+  font-size: 1.05em;
+}
+.reveal .exercise textarea.ex-code {
+  width: 100%;
+  height: 90px;
+  min-height: 60px;
+  font-family: 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.95em;
+  line-height: 1.3;
+  padding: 0.4em 0.6em;
+  border: 1px solid #cfd6dc;
+  border-radius: 5px;
+  background: #fafbfc;
+  resize: vertical;
+  box-sizing: border-box;
+  color: #222;
+}
+.reveal .exercise textarea.ex-code:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: -1px;
+}
+.reveal .exercise .ex-controls {
+  display: flex;
+  gap: 0.4em;
+  margin: 0.3em 0;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.reveal .exercise button {
+  font-size: 0.9em;
+  padding: 0.25em 0.7em;
+  border: 1px solid #cfd6dc;
+  border-radius: 6px;
+  background: #fff;
+  color: #222;
+  cursor: pointer;
+  font-family: inherit;
+}
+.reveal .exercise button.ex-run {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+.reveal .exercise button.ex-run:hover { background: #1d4ed8; }
+.reveal .exercise button:disabled { opacity: 0.5; cursor: not-allowed; }
+.reveal .exercise .ex-output {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 0.35em 0.6em;
+  border-radius: 5px;
+  font-family: 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.85em;
+  line-height: 1.3;
+  white-space: pre-wrap;
+  max-height: 90px;
+  overflow: auto;
+  margin: 0.3em 0;
+}
+.reveal .exercise .ex-output:empty { display: none; }
+.reveal .exercise .ex-feedback {
+  margin-top: 0.3em;
+  padding: 0.4em 0.6em;
+  border-radius: 5px;
+  font-size: 0.9em;
+  line-height: 1.35;
+  max-height: 200px;
+  overflow: auto;
+}
+.reveal .exercise .ex-feedback:empty { display: none; }
+.reveal .exercise .ex-feedback.ok {
+  background: #ecfdf5;
+  border: 1px solid #10b981;
+  color: #065f46;
+}
+.reveal .exercise .ex-feedback.err {
+  background: #fef2f2;
+  border: 1px solid #ef4444;
+  color: #7f1d1d;
+}
+.reveal .exercise .ex-feedback h4 {
+  margin: 0 0 0.2em;
+  font-size: 1em;
+}
+.reveal .exercise .ex-feedback pre {
+  background: #fff;
+  border: 1px solid #fecaca;
+  padding: 0.3em 0.5em;
+  margin: 0.25em 0;
+  border-radius: 4px;
+  font-size: 0.9em;
+  overflow: auto;
+  white-space: pre-wrap;
+}
+.reveal .exercise .ex-feedback p { margin: 0.15em 0; }
+.reveal .exercise .ex-status {
+  font-size: 0.85em;
+  color: #6b7280;
+  margin-left: auto;
+  align-self: center;
+}
+.reveal .exercise .ex-status.loading { color: #2563eb; }

@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/interactive.css" />
 </head>
 <body>
 <div class="reveal"><div class="slides">
@@ -106,6 +107,51 @@ a.sum(axis=(0, 2))        # collapse two axes</code></pre>
 (3, 1) + (1, 4)      ->  (3, 4)</code></pre>
   </section>
 
+  <section class="exercise" data-packages="numpy">
+    <h2>Exercise — Vectorize pairwise distances</h2>
+    <div class="ex-prompt">Given <code>pts</code> of shape <code>(50, 2)</code>, write a vectorized <code>fast(pts)</code> that returns the full <code>(50, 50)</code> pairwise Euclidean distance matrix using broadcasting — no Python loops. Assign the resulting matrix to <code>D</code>.</div>
+<textarea class="ex-code">import numpy as np
+rng = np.random.default_rng(0)
+pts = rng.normal(size=(50, 2))
+
+def fast(pts):
+    # return the (n, n) pairwise distance matrix using broadcasting
+    return None
+
+D = None   # D = fast(pts)
+
+print(D.shape if D is not None else None)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+assert D is not None, "Assign D = fast(pts)."
+D_arr = np.asarray(D)
+assert D_arr.shape == (50, 50), f"D should be (50, 50), got {D_arr.shape}."
+def _naive(p):
+    n = len(p); out = np.empty((n, n))
+    for i in range(n):
+        for j in range(n):
+            out[i, j] = np.sqrt(((p[i] - p[j])**2).sum())
+    return out
+assert np.allclose(D_arr, _naive(pts)), "D values should match the naive pairwise-distance loop."
+</script>
+<script type="text/x-solution">def fast(pts):
+    diff = pts[:, None, :] - pts[None, :, :]
+    return np.sqrt((diff**2).sum(axis=-1))
+
+D = fast(pts)
+print(D.shape)</script>
+<script type="text/x-explain">Insert a length-1 axis on each operand so they broadcast against each other: <code>pts[:, None, :]</code> is <code>(n, 1, 2)</code> and <code>pts[None, :, :]</code> is <code>(1, n, 2)</code>. Their difference is <code>(n, n, 2)</code>; squaring, summing over axis -1, and taking the square root gives the distance matrix in one expression.</script>
+  </section>
+
   <section>
     <h2>Standardize a data matrix in one line</h2>
 <pre><code class="language-python">Z = (X - X.mean(axis=0)) / X.std(axis=0)
@@ -113,10 +159,90 @@ a.sum(axis=(0, 2))        # collapse two axes</code></pre>
     <p class="muted">This single line — column-wise standardization — is one of the most-used preprocessing steps in all of ML.</p>
   </section>
 
+  <section class="exercise" data-packages="numpy">
+    <h2>Exercise — Column-standardize</h2>
+    <div class="ex-prompt">Compute the per-column mean <code>mu</code> and standard deviation <code>sd</code> of <code>X</code> (each a length-3 vector). Then use broadcasting to produce <code>Z</code> where every column has mean 0 and std 1.</div>
+<textarea class="ex-code">import numpy as np
+rng = np.random.default_rng(0)
+X = rng.normal(loc=5, scale=2, size=(100, 3))
+
+mu = None   # per-column mean, shape (3,)
+sd = None   # per-column std,  shape (3,)
+Z  = None   # standardized X, shape (100, 3)
+
+print(mu, sd)
+print(Z.shape if Z is not None else None)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+assert mu is not None and sd is not None and Z is not None, "Assign mu, sd, and Z."
+assert np.asarray(mu).shape == (3,), f"mu should be shape (3,), got {np.asarray(mu).shape}."
+assert np.asarray(sd).shape == (3,), f"sd should be shape (3,), got {np.asarray(sd).shape}."
+assert np.allclose(mu, X.mean(axis=0)), "mu should be X.mean(axis=0)."
+assert np.allclose(sd, X.std(axis=0)), "sd should be X.std(axis=0)."
+Z_arr = np.asarray(Z)
+assert Z_arr.shape == (100, 3), f"Z should be (100, 3), got {Z_arr.shape}."
+assert np.allclose(Z_arr.mean(axis=0), 0, atol=1e-8), "Each column of Z should have mean ~0."
+assert np.allclose(Z_arr.std(axis=0), 1, atol=1e-8), "Each column of Z should have std ~1."
+</script>
+<script type="text/x-solution">mu = X.mean(axis=0)
+sd = X.std(axis=0)
+Z  = (X - mu) / sd
+print(Z.mean(axis=0).round(4), Z.std(axis=0).round(4))</script>
+<script type="text/x-explain">Reducing over <code>axis=0</code> collapses the 100 rows and leaves a length-3 vector per statistic. That vector aligns right-to-left with <code>X</code>'s trailing axis, so <code>(X - mu) / sd</code> broadcasts across every row — column-wise standardization in one expression.</script>
+  </section>
+
   <section>
     <h2>The "where did this shape come from" debug move</h2>
 <pre><code class="language-python">print(a.shape, b.shape, (a + b).shape)</code></pre>
     <p>When a broadcast surprises you, print the shapes. The bug is always in one of them.</p>
+  </section>
+
+  <section class="exercise" data-packages="numpy">
+    <h2>Exercise — Row-standardize</h2>
+    <div class="ex-prompt">Now standardize <em>rows</em> instead: each row of <code>Zr</code> should have mean 0 and std 1. The trick is keeping a trailing length-1 axis on the per-row statistics so broadcasting still works.</div>
+<textarea class="ex-code">import numpy as np
+rng = np.random.default_rng(0)
+X = rng.normal(loc=5, scale=2, size=(100, 3))
+
+mu_r = None   # per-row mean, shape (100, 1)
+sd_r = None   # per-row std,  shape (100, 1)
+Zr   = None   # row-standardized X, shape (100, 3)
+
+print(mu_r.shape if mu_r is not None else None,
+      sd_r.shape if sd_r is not None else None)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+assert mu_r is not None and sd_r is not None and Zr is not None, "Assign mu_r, sd_r, and Zr."
+assert np.asarray(mu_r).shape == (100, 1), f"mu_r should be (100, 1), got {np.asarray(mu_r).shape}."
+assert np.asarray(sd_r).shape == (100, 1), f"sd_r should be (100, 1), got {np.asarray(sd_r).shape}."
+Zr_arr = np.asarray(Zr)
+assert Zr_arr.shape == (100, 3), f"Zr should be (100, 3), got {Zr_arr.shape}."
+assert np.allclose(Zr_arr.mean(axis=1), 0, atol=1e-8), "Each row of Zr should have mean ~0."
+assert np.allclose(Zr_arr.std(axis=1), 1, atol=1e-8), "Each row of Zr should have std ~1."
+</script>
+<script type="text/x-solution">mu_r = X.mean(axis=1, keepdims=True)
+sd_r = X.std(axis=1, keepdims=True)
+Zr   = (X - mu_r) / sd_r
+print(Zr.mean(axis=1)[:5].round(4))</script>
+<script type="text/x-explain">Without <code>keepdims=True</code>, <code>X.mean(axis=1)</code> is shape <code>(100,)</code> — that broadcasts against <em>columns</em>, not rows. Keeping the reduced axis as length 1 (shape <code>(100, 1)</code>) makes it line up with <code>X</code>'s rows so subtraction works per-row.</script>
   </section>
 </section>
 
@@ -140,6 +266,52 @@ n1 @ n2                # shape (2, 3)</code></pre>
     <p>Always prefer <code>solve</code> over <code>inv(A) @ b</code> — it is faster and numerically more stable.</p>
   </section>
 
+  <section class="exercise" data-packages="numpy">
+    <h2>Exercise — Solve a 3×3 linear system</h2>
+    <div class="ex-prompt">Build the coefficient matrix <code>A</code> and right-hand-side <code>b</code> for<br/>
+    &nbsp;&nbsp;<code>2x + y − z = 8</code><br/>
+    &nbsp;&nbsp;<code>−3x − y + 2z = −11</code><br/>
+    &nbsp;&nbsp;<code>−2x + y + 2z = −3</code><br/>
+    then solve for <code>x</code> using <code>np.linalg.solve</code>.</div>
+<textarea class="ex-code">import numpy as np
+
+A = None   # 3x3 coefficient matrix (use dtype=float)
+b = None   # length-3 right-hand-side vector
+x = None   # solution from np.linalg.solve(A, b)
+
+print(x)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+assert A is not None and b is not None and x is not None, "Assign A, b, and x."
+A_arr = np.asarray(A, dtype=float)
+b_arr = np.asarray(b, dtype=float)
+assert A_arr.shape == (3, 3), f"A should be 3x3, got {A_arr.shape}."
+assert b_arr.shape == (3,), f"b should be length 3, got {b_arr.shape}."
+expected_A = np.array([[2, 1, -1], [-3, -1, 2], [-2, 1, 2]], dtype=float)
+expected_b = np.array([8, -11, -3], dtype=float)
+assert np.allclose(A_arr, expected_A), "A entries don't match the system above."
+assert np.allclose(b_arr, expected_b), "b entries don't match the system above."
+x_arr = np.asarray(x, dtype=float)
+assert np.allclose(A_arr @ x_arr, b_arr), "A @ x should equal b — did you call np.linalg.solve(A, b)?"
+</script>
+<script type="text/x-solution">A = np.array([[ 2,  1, -1],
+              [-3, -1,  2],
+              [-2,  1,  2]], dtype=float)
+b = np.array([8, -11, -3], dtype=float)
+x = np.linalg.solve(A, b)
+print(x)</script>
+<script type="text/x-explain">Each row of <code>A</code> is the coefficients of one equation; <code>b</code> holds the right-hand sides. <code>np.linalg.solve</code> uses LU factorization — far faster and more numerically stable than computing <code>inv(A) @ b</code>.</script>
+  </section>
+
   <section>
     <h2>Norms, inverse, determinant, eig</h2>
 <pre><code class="language-python">np.linalg.norm(m)        # Frobenius by default
@@ -147,6 +319,46 @@ np.linalg.inv(m)         # full inverse
 np.linalg.det(m)         # determinant
 w, V = np.linalg.eig(S)  # eigenpairs</code></pre>
     <p class="muted">All you need for PCA, basic optimization, and most "hand-rolled" ML math.</p>
+  </section>
+
+  <section class="exercise" data-packages="numpy">
+    <h2>Exercise — solve vs. inv</h2>
+    <div class="ex-prompt">Using the same <code>A</code> and <code>b</code>, also compute <code>x_inv = np.linalg.inv(A) @ b</code> and verify the two solutions agree with <code>np.allclose</code>. Set <code>match</code> to the boolean result.</div>
+<textarea class="ex-code">import numpy as np
+
+A = np.array([[ 2,  1, -1],
+              [-3, -1,  2],
+              [-2,  1,  2]], dtype=float)
+b = np.array([8, -11, -3], dtype=float)
+x = np.linalg.solve(A, b)
+
+x_inv = None   # solve via the explicit matrix inverse
+match = None   # bool: np.allclose(x, x_inv)
+
+print(x_inv, match)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+assert x_inv is not None and match is not None, "Assign x_inv and match."
+x_inv_arr = np.asarray(x_inv, dtype=float)
+assert x_inv_arr.shape == (3,), f"x_inv should be length 3, got {x_inv_arr.shape}."
+assert np.allclose(x_inv_arr, np.linalg.inv(A) @ b), "x_inv should equal np.linalg.inv(A) @ b."
+assert bool(match) is True, "match should be True — both methods give the same x here."
+</script>
+<script type="text/x-solution">x_inv = np.linalg.inv(A) @ b
+match = np.allclose(x, x_inv)
+print(x_inv, match)
+# Prefer np.linalg.solve: it never forms the inverse explicitly,
+# so it's faster and numerically more stable.</script>
+<script type="text/x-explain">Both methods give the same answer on this well-conditioned system, but forming <code>inv(A)</code> explicitly is wasteful and accumulates more rounding error. Rule of thumb: if you only need <code>A⁻¹b</code>, call <code>solve</code>; never compute an inverse you don't actually need.</script>
   </section>
 
   <section>
@@ -174,6 +386,7 @@ np.split(big, 2, axis=1)         # two halves</code></pre>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="../../../../shared/slides-template/interactive.js"></script>
 <script>
   Reveal.initialize({
     hash: true, slideNumber: 'c/t', transition: 'slide',
