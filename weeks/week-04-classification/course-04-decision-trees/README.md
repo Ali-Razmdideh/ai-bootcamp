@@ -13,8 +13,7 @@
 
 ## Files
 
-- `slides/index.html` — Reveal.js deck. Open it in a browser; append
-  `?showNotes` to see the speaker notes.
+- `slides/index.html` — Reveal.js deck. Open it in a browser; every notebook example becomes a runnable Pyodide block (prefilled answer + *Run*), and every exercise becomes a checked challenge (starter code + *Run & Check* + reference solution on failure). Append `?showNotes` to see the speaker notes.
 - `lecture.ipynb` — live-coding notebook that mirrors the slides one-for-one,
   followed by three exercises (each with its solution).
 

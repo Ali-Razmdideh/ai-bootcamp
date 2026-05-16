@@ -38,6 +38,18 @@ Ridge/Lasso). The narrative flows: features → fit → validate → shrink.
 ISLP CSVs (`Auto`, `Boston`, `Hitters`) are fetched once and cached via
 `shared.data_utils.load_dataset(name)` — same pattern as Week 1.
 
+## Interactive slides
+
+Every course's `slides/index.html` is a self-contained Reveal.js deck where
+each notebook code cell appears as a **runnable example** (prefilled answer
++ description + *Run* button) and each notebook exercise appears as a
+**checked exercise** (starter code + *Run & Check* + reference solution on
+failure). Code runs in the browser via Pyodide, which lazy-loads
+scikit-learn / pandas / matplotlib on first use. ISLP datasets (Boston,
+Hitters, Auto, …) that the notebooks load via `shared.data_utils` are
+inlined as small seeded synthetic DataFrames in the slide examples so they
+work without filesystem access.
+
 ## Running everything
 
 ```bash

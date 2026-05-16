@@ -49,6 +49,14 @@ All notebooks load data via `shared.data_utils.load_dataset(name)`, which
 caches CSVs to `~/.cache/ai-bootcamp/`. The Week 1 keys are:
 `penguins`, `titanic`, `tips`, `iris`, `stock-prices`.
 
+## Interactive slides
+
+Every course's `slides/index.html` is a self-contained Reveal.js deck where
+each notebook code cell appears as a **runnable example** (prefilled answer
++ description + *Run* button) and each notebook exercise appears as a
+**checked exercise** (starter code + *Run & Check* + reference solution on
+failure). Code runs in the browser via Pyodide — no install, no kernel.
+
 ## Running everything
 
 From the repo root:

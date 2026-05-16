@@ -16,7 +16,7 @@ problems. This is the fluency every later ML library assumes you have.
 
 ## Files
 
-- `slides/index.html` — Reveal.js deck.
+- `slides/index.html` — Reveal.js deck. Every notebook example becomes a runnable Pyodide block (prefilled answer + *Run*), and every exercise becomes a checked challenge (starter + *Run & Check* + reference solution on failure).
 - `lecture.ipynb` — live-coding notebook + three exercises with solutions.
 
 ## Learning outcomes
