@@ -67,10 +67,97 @@
 <p style="text-align:center;font-size:1.3em;">Y = Xβ + ε,  β̂ = (XᵀX)⁻¹ Xᵀ Y</p><p class="muted">One predictor or one hundred — the formula is the same. The expensive bit is the matrix inverse, but n ≪ 10⁴ → microseconds.</p>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,pandas,scikit-learn">
+    <h2>Fit medv on all 12 predictors</h2>
+    <div class="ex-prompt">Boston housing: predict median home value <code>medv</code> from every other column at once. We use a small synthetic Boston-like frame so the example runs in the browser; the API call is the same one you'd use on the real 506-row dataset.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+
+rng = np.random.default_rng(0)
+n = 60
+crim = rng.exponential(3, n)
+zn = rng.uniform(0, 100, n)
+indus = rng.uniform(0, 28, n)
+chas = rng.integers(0, 2, n).astype(float)
+nox = rng.uniform(0.4, 0.9, n)
+rm = rng.normal(6.3, 0.7, n)
+age = rng.uniform(2, 100, n)
+dis = rng.uniform(1, 12, n)
+rad = rng.integers(1, 25, n).astype(float)
+tax = 200 + 5 * rad + rng.normal(0, 30, n)   # correlated with rad
+nox_2 = 0.4 + 0.01 * indus + rng.normal(0, 0.05, n)  # collinear-ish
+ptratio = rng.uniform(12, 22, n)
+lstat = rng.uniform(2, 35, n)
+medv = (
+    25 - 0.3*lstat + 4*rm - 0.05*age - 0.2*ptratio
+    - 0.1*crim + 0.5*chas + rng.normal(0, 3, n)
+)
+boston = pd.DataFrame({
+    'crim': crim, 'zn': zn, 'indus': indus, 'chas': chas,
+    'nox': nox_2, 'rm': rm, 'age': age, 'dis': dis,
+    'rad': rad, 'tax': tax, 'ptratio': ptratio,
+    'lstat': lstat, 'medv': medv,
+})
+
+X = boston.drop(columns=['medv'])
+y = boston['medv']
+m = LinearRegression().fit(X, y)
+coefs = pd.Series(m.coef_, index=X.columns).round(4)
+print(coefs.to_string())
+print(f'R^2 = {m.score(X, y):.4f}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy,pandas,scikit-learn">
     <h2>Collinearity flips signs</h2>
-<p>If predictor j is well predicted by the others, its coefficient becomes unstable.</p><p style="text-align:center;font-size:1.2em;">VIF<sub>j</sub> = 1 / (1 − R²<sub>j</sub>)</p><p>VIF > 5–10 is a red flag. Drop one of the correlated pair, or use Ridge (Course 6) to stabilize.</p>
-    <aside class="notes">Run VIF in the notebook on Boston; tax, rad, nox are biggest offenders.</aside>
+    <div class="ex-prompt">Variance Inflation Factor: for predictor j, fit <code>x_j ~ rest</code>, get R²_j, then VIF_j = 1/(1 − R²_j). Anything above 5–10 is collinear with the rest of the design. On Boston, <code>tax</code>, <code>rad</code>, <code>nox</code> are the biggest offenders — coefficient signs in collinear models can flip when you add or drop a feature.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+
+rng = np.random.default_rng(0)
+n = 60
+crim = rng.exponential(3, n)
+zn = rng.uniform(0, 100, n)
+indus = rng.uniform(0, 28, n)
+chas = rng.integers(0, 2, n).astype(float)
+rm = rng.normal(6.3, 0.7, n)
+age = rng.uniform(2, 100, n)
+dis = rng.uniform(1, 12, n)
+rad = rng.integers(1, 25, n).astype(float)
+tax = 200 + 5 * rad + rng.normal(0, 30, n)
+nox = 0.4 + 0.01 * indus + rng.normal(0, 0.05, n)
+ptratio = rng.uniform(12, 22, n)
+lstat = rng.uniform(2, 35, n)
+X = pd.DataFrame({
+    'crim': crim, 'zn': zn, 'indus': indus, 'chas': chas,
+    'nox': nox, 'rm': rm, 'age': age, 'dis': dis,
+    'rad': rad, 'tax': tax, 'ptratio': ptratio, 'lstat': lstat,
+})
+
+def vif(X: pd.DataFrame) -> pd.Series:
+    out = {}
+    for col in X.columns:
+        others = X.drop(columns=[col])
+        r2 = LinearRegression().fit(others, X[col]).score(others, X[col])
+        out[col] = 1.0 / (1.0 - r2)
+    return pd.Series(out).sort_values(ascending=False)
+
+print(vif(X).round(2).to_string())
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,pandas,scikit-learn">
@@ -155,9 +242,60 @@ print(vifs.round(2))</script>
 </ul>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,pandas,scikit-learn,scipy,matplotlib">
     <h2>Leverage — the hat matrix</h2>
-<p style="text-align:center;font-size:1.2em;">H = X(XᵀX)⁻¹Xᵀ,  hᵢ = Hᵢᵢ</p><p>A high <code>hᵢ</code> means observation i has unusual <em>predictor</em> values — it pulls the fit toward itself. Combined with a big residual = Cook's distance = trouble.</p>
+    <div class="ex-prompt">Build the 2×2 diagnostic panel: residuals vs fitted, Q-Q, scale-location, and residuals vs leverage. Leverage is <code>diag(H)</code> with H = X(XᵀX)⁻¹Xᵀ; combined with a big residual it gives Cook's distance. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from scipy import stats
+
+rng = np.random.default_rng(0)
+n = 80
+rm = rng.normal(6.3, 0.7, n)
+lstat = rng.uniform(2, 35, n)
+ptratio = rng.uniform(12, 22, n)
+medv = 25 + 4*rm - 0.3*lstat - 0.2*ptratio + rng.normal(0, 3, n)
+X = pd.DataFrame({'rm': rm, 'lstat': lstat, 'ptratio': ptratio})
+y = pd.Series(medv)
+
+m = LinearRegression().fit(X, y)
+y_hat = m.predict(X)
+resid = y - y_hat
+std_resid = resid / resid.std()
+
+fig, axes = plt.subplots(2, 2, figsize=(10, 7))
+axes[0, 0].scatter(y_hat, resid, s=8, alpha=0.6)
+axes[0, 0].axhline(0, color='C3'); axes[0, 0].set_title('Residuals vs Fitted')
+axes[0, 0].set_xlabel('fitted'); axes[0, 0].set_ylabel('residual')
+
+stats.probplot(resid, plot=axes[0, 1])
+axes[0, 1].set_title('Q-Q')
+
+axes[1, 0].scatter(y_hat, np.sqrt(np.abs(std_resid)), s=8, alpha=0.6)
+axes[1, 0].set_title('Scale-Location'); axes[1, 0].set_xlabel('fitted')
+axes[1, 0].set_ylabel(r'$\sqrt{|standardized\ resid|}$')
+
+# Leverage: diag of the hat matrix H = X(X'X)^{-1} X'
+X_aug = np.column_stack([np.ones(len(X)), X.to_numpy()])
+H_diag = np.einsum('ij,ji->i', X_aug @ np.linalg.inv(X_aug.T @ X_aug), X_aug.T)
+axes[1, 1].scatter(H_diag, std_resid, s=8, alpha=0.6)
+axes[1, 1].axhline(0, color='C3')
+axes[1, 1].set_title('Residuals vs Leverage')
+axes[1, 1].set_xlabel('leverage'); axes[1, 1].set_ylabel('std residual')
+plt.tight_layout(); plt.show()
+print('Top 5 leverage values:', np.sort(H_diag)[-5:].round(3))
+print('Max |std residual|:', float(np.abs(std_resid).max().round(3)))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
 </section>
@@ -167,11 +305,86 @@ print(vifs.round(2))</script>
     <h1>Categoricals & interactions</h1>
     <p class="muted">one-hot and products</p>
   </section>
-  <section>
+  <section class="example" data-packages="pandas,numpy">
+    <h2>Carseats: inspect the categorical predictors</h2>
+    <div class="ex-prompt">Before one-hot encoding, look at the dtypes and the three categorical columns of the Carseats frame: <code>ShelveLoc</code>, <code>Urban</code>, <code>US</code>. We build a small synthetic Carseats-like frame so the rest of Part 3 stays self-contained.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+
+rng = np.random.default_rng(1)
+n = 50
+carseats = pd.DataFrame({
+    'CompPrice': rng.integers(80, 180, n),
+    'Income': rng.integers(20, 130, n),
+    'Advertising': rng.integers(0, 30, n),
+    'Population': rng.integers(50, 500, n),
+    'Price': rng.integers(50, 200, n),
+    'ShelveLoc': rng.choice(['Bad', 'Good', 'Medium'], size=n),
+    'Age': rng.integers(25, 80, n),
+    'Education': rng.integers(10, 18, n),
+    'Urban': rng.choice(['Yes', 'No'], size=n),
+    'US': rng.choice(['Yes', 'No'], size=n),
+})
+carseats['Sales'] = (
+    10 - 0.05 * carseats['Price']
+    + 0.02 * carseats['Income']
+    + 1.5 * (carseats['ShelveLoc'] == 'Good')
+    + rng.normal(0, 1.5, n)
+)
+
+print(carseats.dtypes)
+print(carseats[['ShelveLoc', 'Urban', 'US']].head())
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="pandas,numpy,scikit-learn">
     <h2>One-hot encoding</h2>
-<pre><code class="language-python">df = pd.get_dummies(carseats,
-    columns=[&#x27;ShelveLoc&#x27;,&#x27;Urban&#x27;,&#x27;US&#x27;],
-    drop_first=True, dtype=float)</code></pre><p class="muted">drop_first=True avoids the dummy-variable trap (perfect collinearity with the intercept).</p>
+    <div class="ex-prompt"><code>pd.get_dummies</code> turns each categorical level into a 0/1 column; <code>drop_first=True</code> drops one level per categorical to avoid the dummy-variable trap (perfect collinearity with the intercept). Then <code>LinearRegression</code> handles the mixed numeric + dummy design uniformly.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+
+rng = np.random.default_rng(1)
+n = 50
+carseats = pd.DataFrame({
+    'CompPrice': rng.integers(80, 180, n),
+    'Income': rng.integers(20, 130, n),
+    'Advertising': rng.integers(0, 30, n),
+    'Population': rng.integers(50, 500, n),
+    'Price': rng.integers(50, 200, n),
+    'ShelveLoc': rng.choice(['Bad', 'Good', 'Medium'], size=n),
+    'Age': rng.integers(25, 80, n),
+    'Education': rng.integers(10, 18, n),
+    'Urban': rng.choice(['Yes', 'No'], size=n),
+    'US': rng.choice(['Yes', 'No'], size=n),
+})
+carseats['Sales'] = (
+    10 - 0.05 * carseats['Price']
+    + 0.02 * carseats['Income']
+    + 1.5 * (carseats['ShelveLoc'] == 'Good')
+    + rng.normal(0, 1.5, n)
+)
+
+df = pd.get_dummies(carseats, columns=['ShelveLoc', 'Urban', 'US'],
+                    drop_first=True, dtype=float)
+X = df.drop(columns=['Sales'])
+y = df['Sales']
+m = LinearRegression().fit(X, y)
+print(pd.Series(m.coef_, index=X.columns).round(3).to_string())
+print(f'R^2 = {m.score(X, y):.4f}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,pandas,scikit-learn">
@@ -234,9 +447,50 @@ print(f'R^2 = {r2:.4f}')</script>
 <script type="text/x-explain">One-hot encoding turns each categorical level into a 0/1 column; <code>drop_first=True</code> drops one to avoid perfect collinearity with the intercept. Once everything is numeric, <code>LinearRegression</code> handles categoricals and continuous predictors uniformly.</script>
   </section>
 
-  <section>
+  <section class="example" data-packages="pandas,numpy,scikit-learn">
     <h2>Interactions are just products</h2>
-<pre><code class="language-python">df[&#x27;Price_x_Urban&#x27;] = df[&#x27;Price&#x27;] * df[&#x27;Urban_Yes&#x27;]</code></pre><p>The coefficient on the product term tells you how the effect of Price <em>changes</em> when Urban switches from No to Yes.</p>
+    <div class="ex-prompt">Add a <code>Price × Urban</code> interaction by literally multiplying the two columns. The coefficient on the product term tells you how the effect of Price <em>changes</em> when Urban switches from No to Yes.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+
+rng = np.random.default_rng(1)
+n = 50
+carseats = pd.DataFrame({
+    'CompPrice': rng.integers(80, 180, n),
+    'Income': rng.integers(20, 130, n),
+    'Advertising': rng.integers(0, 30, n),
+    'Population': rng.integers(50, 500, n),
+    'Price': rng.integers(50, 200, n),
+    'ShelveLoc': rng.choice(['Bad', 'Good', 'Medium'], size=n),
+    'Age': rng.integers(25, 80, n),
+    'Education': rng.integers(10, 18, n),
+    'Urban': rng.choice(['Yes', 'No'], size=n),
+    'US': rng.choice(['Yes', 'No'], size=n),
+})
+carseats['Sales'] = (
+    10 - 0.05 * carseats['Price']
+    + 0.02 * carseats['Income']
+    + 1.5 * (carseats['ShelveLoc'] == 'Good')
+    + rng.normal(0, 1.5, n)
+)
+df = pd.get_dummies(carseats, columns=['ShelveLoc', 'Urban', 'US'],
+                    drop_first=True, dtype=float)
+y = df['Sales']
+
+df['Price_x_Urban'] = df['Price'] * df['Urban_Yes']
+X2 = df.drop(columns=['Sales'])
+m2 = LinearRegression().fit(X2, y)
+print('coef on Price:           ', m2.coef_[X2.columns.get_loc('Price')].round(4))
+print('coef on Price_x_Urban:   ', m2.coef_[X2.columns.get_loc('Price_x_Urban')].round(4))
+print(f'R^2 with interaction:    {m2.score(X2, y):.4f}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,pandas,scikit-learn">

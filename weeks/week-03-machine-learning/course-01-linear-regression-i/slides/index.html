@@ -59,6 +59,35 @@
     </div>
     <p class="muted" style="margin-top:1em;">Even if we knew f exactly, we would still miss Y by ε. That's why test error never goes to zero.</p>
   </section>
+  <section class="example" data-packages="numpy,pandas">
+    <h2>The Boston dataset</h2>
+    <div class="ex-prompt">A peek at the Boston housing data we will regress: shape, columns, and quick summary stats for <code>lstat</code> (% lower status) and <code>medv</code> (median home value, $1000s). A tiny synthetic slice is inlined here so the example runs in the browser.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+
+# small synthetic Boston-like slice (lstat -> medv has a real negative slope)
+rng = np.random.default_rng(0)
+lstat = rng.uniform(2, 35, 30)
+medv = 35 - 0.95 * lstat + rng.normal(0, 3, 30)
+boston = pd.DataFrame({
+    'crim': rng.uniform(0, 10, 30),
+    'rm': rng.normal(6.3, 0.7, 30),
+    'age': rng.uniform(20, 100, 30),
+    'lstat': lstat,
+    'medv': medv,
+})
+
+print(boston.shape)
+print(boston.columns.tolist())
+print(boston[['lstat', 'medv']].describe().round(2))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
   <section>
     <h2>Running example — the Advertising data</h2>
     <p>200 markets. For each market we observe:</p>
@@ -87,19 +116,88 @@
     <aside class="notes">Loss + closed-form solution. The point: every later model just changes the loss or the model class.</aside>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,pandas">
     <h2>Closed form — both coefficients</h2>
-<p style="text-align:center;font-size:1.25em;">β̂₁ = Σᵢ (xᵢ − x̄)(yᵢ − ȳ) / Σᵢ (xᵢ − x̄)²</p><p style="text-align:center;font-size:1.25em;">β̂₀ = ȳ − β̂₁ x̄</p><p class="muted" style="margin-top:1em;">Two summations, no iteration. Compare with the iterative optimizers next month for neural nets.</p>
+    <div class="ex-prompt">β̂₁ = Σ (xᵢ−x̄)(yᵢ−ȳ) / Σ (xᵢ−x̄)², β̂₀ = ȳ − β̂₁ x̄. Two summations, no iteration. Run it by hand on the inlined Boston slice.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+
+rng = np.random.default_rng(0)
+lstat = rng.uniform(2, 35, 30)
+medv = 35 - 0.95 * lstat + rng.normal(0, 3, 30)
+boston = pd.DataFrame({'lstat': lstat, 'medv': medv})
+
+x = boston['lstat'].to_numpy()
+y = boston['medv'].to_numpy()
+x_bar, y_bar = x.mean(), y.mean()
+b1 = ((x - x_bar) * (y - y_bar)).sum() / ((x - x_bar)**2).sum()
+b0 = y_bar - b1 * x_bar
+print(f'by hand: intercept={b0:.4f}, slope={b1:.4f}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,pandas,scikit-learn">
     <h2>Sklearn in three lines</h2>
-<pre><code class="language-python">from sklearn.linear_model import LinearRegression
-X = boston[[&#x27;lstat&#x27;]]
-y = boston[&#x27;medv&#x27;]
+    <div class="ex-prompt">The same fit via <code>LinearRegression</code>. The intercept and slope should match the by-hand calculation to many decimal places.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+
+rng = np.random.default_rng(0)
+lstat = rng.uniform(2, 35, 30)
+medv = 35 - 0.95 * lstat + rng.normal(0, 3, 30)
+boston = pd.DataFrame({'lstat': lstat, 'medv': medv})
+y = boston['medv'].to_numpy()
+
+X = boston[['lstat']]
 model = LinearRegression().fit(X, y)
-print(model.intercept_, model.coef_)</code></pre>
-    <aside class="notes">Live in notebook: derive by hand, then sklearn. Should match to 4 decimal places.</aside>
+print(f'sklearn: intercept={model.intercept_:.4f}, slope={model.coef_[0]:.4f}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+  <section class="example" data-packages="numpy,pandas,scikit-learn,matplotlib">
+    <h2>Plot the data and the fit</h2>
+    <div class="ex-prompt">Scatter <code>lstat</code> vs <code>medv</code> and overlay the fitted line. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+rng = np.random.default_rng(0)
+lstat = rng.uniform(2, 35, 30)
+medv = 35 - 0.95 * lstat + rng.normal(0, 3, 30)
+x = lstat
+y = medv
+x_bar, y_bar = x.mean(), y.mean()
+b1 = ((x - x_bar) * (y - y_bar)).sum() / ((x - x_bar)**2).sum()
+b0 = y_bar - b1 * x_bar
+
+fig, ax = plt.subplots(figsize=(6, 4))
+ax.scatter(x, y, s=10, alpha=0.6)
+x_line = np.linspace(x.min(), x.max(), 100)
+ax.plot(x_line, b0 + b1 * x_line, color='C3', linewidth=2)
+ax.set_xlabel('lstat (% lower status)'); ax.set_ylabel('medv ($1000s)')
+ax.set_title('Boston: medv ~ lstat'); plt.show()
+print(f'drew {len(x)} points + fitted line (slope={b1:.3f})')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,pandas,scikit-learn">
@@ -180,9 +278,95 @@ print(f"intercept={intercept:.2f}  slope={slope:.2f} g/mm  R^2={r2:.4f}")</scrip
 </ul>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,pandas,scikit-learn">
+    <h2>Predictions and residuals</h2>
+    <div class="ex-prompt">After fitting, every observation gets a prediction ŷ and a residual y − ŷ. Print the first five of each.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+
+rng = np.random.default_rng(0)
+lstat = rng.uniform(2, 35, 30)
+medv = 35 - 0.95 * lstat + rng.normal(0, 3, 30)
+boston = pd.DataFrame({'lstat': lstat, 'medv': medv})
+X = boston[['lstat']]
+y = boston['medv'].to_numpy()
+model = LinearRegression().fit(X, y)
+
+y_hat = model.predict(X)
+resid = y - y_hat
+print('first 5 predictions:', y_hat[:5].round(2))
+print('first 5 residuals: ', resid[:5].round(2))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+  <section class="example" data-packages="numpy,pandas,scikit-learn">
+    <h2>R² and RMSE</h2>
+    <div class="ex-prompt">Two numbers summarize fit. R² is the fraction of variance explained; RMSE is the typical miss, in the units of y.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score, mean_squared_error
+
+rng = np.random.default_rng(0)
+lstat = rng.uniform(2, 35, 30)
+medv = 35 - 0.95 * lstat + rng.normal(0, 3, 30)
+boston = pd.DataFrame({'lstat': lstat, 'medv': medv})
+X = boston[['lstat']]
+y = boston['medv'].to_numpy()
+model = LinearRegression().fit(X, y)
+y_hat = model.predict(X)
+
+r2 = r2_score(y, y_hat)
+rmse = np.sqrt(mean_squared_error(y, y_hat))
+print(f'R^2  = {r2:.4f}   (fraction of variance explained)')
+print(f'RMSE = {rmse:.4f} (in same units as medv: $1000s)')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+  <section class="example" data-packages="numpy,pandas,scikit-learn,matplotlib">
     <h2>Residuals reveal everything</h2>
-<p>If residuals show a curve → the relationship is not linear.</p><p>If residuals fan out → the variance is not constant (heteroscedasticity).</p><p>If residuals cluster by some category → there is a missing predictor.</p><p class="callout">A residual plot is the cheapest model-criticism tool you have. Run it every time.</p>
+    <div class="ex-prompt">Curves mean nonlinearity, funnels mean non-constant variance, clusters mean a missing predictor. The cheapest model-criticism tool you have — run it every time. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+
+rng = np.random.default_rng(0)
+lstat = rng.uniform(2, 35, 30)
+medv = 35 - 0.95 * lstat + rng.normal(0, 3, 30)
+boston = pd.DataFrame({'lstat': lstat, 'medv': medv})
+X = boston[['lstat']]
+y = boston['medv'].to_numpy()
+model = LinearRegression().fit(X, y)
+y_hat = model.predict(X)
+resid = y - y_hat
+
+fig, ax = plt.subplots(figsize=(6, 3.5))
+ax.scatter(y_hat, resid, s=10, alpha=0.6)
+ax.axhline(0, color='C3', linewidth=1)
+ax.set_xlabel('fitted'); ax.set_ylabel('residual')
+ax.set_title('Residuals vs fitted — curvature is a red flag'); plt.show()
+print(f'residual range: [{resid.min():.2f}, {resid.max():.2f}]')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,pandas,scikit-learn,matplotlib">
@@ -252,18 +436,108 @@ plt.show()</script>
     <h1>Inference for β</h1>
     <p class="muted">is the slope real?</p>
   </section>
-  <section>
+  <section class="example" data-packages="numpy,pandas,scikit-learn">
     <h2>Standard error and the t-statistic</h2>
-<p style="text-align:center;font-size:1.2em;">t = β̂₁ / SE(β̂₁)</p><p>If |t| is big (typically > 2), the slope is significantly different from zero. Sklearn does not report this; statsmodels does — but in this course we prefer the bootstrap.</p>
+    <div class="ex-prompt">t = β̂₁ / SE(β̂₁). If |t| is big (typically &gt; 2) the slope is reliably non-zero. Sklearn doesn't report this — compute it directly from the residuals.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+
+rng = np.random.default_rng(0)
+lstat = rng.uniform(2, 35, 30)
+medv = 35 - 0.95 * lstat + rng.normal(0, 3, 30)
+boston = pd.DataFrame({'lstat': lstat, 'medv': medv})
+X = boston[['lstat']]
+y = boston['medv'].to_numpy()
+x = boston['lstat'].to_numpy()
+x_bar = x.mean()
+
+model = LinearRegression().fit(X, y)
+y_hat = model.predict(X)
+resid = y - y_hat
+b1 = model.coef_[0]
+
+n, p = len(y), 1
+rss = (resid**2).sum()
+sigma2 = rss / (n - p - 1)
+se_b1 = np.sqrt(sigma2 / ((x - x_bar)**2).sum())
+t = b1 / se_b1
+print(f'SE(beta1) = {se_b1:.4f}')
+print(f't-stat    = {t:.2f}   (huge -> reject beta1 = 0)')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,pandas">
     <h2>The bootstrap — a CI for anything</h2>
-<pre><code class="language-python">for k in range(2000):
-    idx = rng.choice(n, n, replace=True)
-    b1_boot[k] = slope(x[idx], y[idx])
-lo, hi = np.quantile(b1_boot, [0.025, 0.975])</code></pre>
-    <aside class="notes">The bootstrap was Bradley Efron&#x27;s gift to applied stats. No formulas, no distributional assumptions, just resample with replacement.</aside>
+    <div class="ex-prompt">Resample rows with replacement, recompute the slope, repeat 2000 times, take the middle 95%. No distributional assumptions — just trust the sample looks like the population.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+
+rng = np.random.default_rng(0)
+lstat = rng.uniform(2, 35, 30)
+medv = 35 - 0.95 * lstat + rng.normal(0, 3, 30)
+x = lstat
+y = medv
+n = len(y)
+
+n_boot = 2000
+b1_boot = np.empty(n_boot)
+idx = np.arange(n)
+for k in range(n_boot):
+    sample = rng.choice(idx, n, replace=True)
+    xb, yb = x[sample], y[sample]
+    b1_boot[k] = ((xb - xb.mean()) * (yb - yb.mean())).sum() / ((xb - xb.mean())**2).sum()
+lo, hi = np.quantile(b1_boot, [0.025, 0.975])
+print(f'95% bootstrap CI for slope: [{lo:.4f}, {hi:.4f}]')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+  <section class="example" data-packages="numpy,pandas,matplotlib">
+    <h2>The bootstrap distribution</h2>
+    <div class="ex-prompt">Histogram of the 2000 resampled slopes, with the point estimate marked. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+
+rng = np.random.default_rng(0)
+lstat = rng.uniform(2, 35, 30)
+medv = 35 - 0.95 * lstat + rng.normal(0, 3, 30)
+x = lstat; y = medv
+x_bar, y_bar = x.mean(), y.mean()
+b1 = ((x - x_bar) * (y - y_bar)).sum() / ((x - x_bar)**2).sum()
+
+n = len(y)
+n_boot = 2000
+b1_boot = np.empty(n_boot)
+for k in range(n_boot):
+    sample = rng.choice(n, n, replace=True)
+    xb, yb = x[sample], y[sample]
+    b1_boot[k] = ((xb - xb.mean()) * (yb - yb.mean())).sum() / ((xb - xb.mean())**2).sum()
+
+fig, ax = plt.subplots(figsize=(6, 3))
+ax.hist(b1_boot, bins=40, color='C0', alpha=0.7)
+ax.axvline(b1, color='C3', label='point estimate')
+ax.set_xlabel('bootstrapped slope'); ax.legend(); plt.show()
+print(f'point estimate slope = {b1:.4f}; bootstrap mean = {b1_boot.mean():.4f}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,pandas">
@@ -353,6 +627,37 @@ print(f"95% CI for slope: [{lo:.2f}, {hi:.2f}] g/mm")</script>
   <li class="fragment fade-up"><strong>Independence</strong> — observations not autocorrelated.</li>
   <li class="fragment fade-up"><strong>Normality of errors</strong> — Q-Q plot of residuals is straight.</li>
 </ul>
+  </section>
+  <section class="example" data-packages="numpy,pandas,scikit-learn,scipy,matplotlib">
+    <h2>Q-Q plot of residuals</h2>
+    <div class="ex-prompt">A quantile-quantile plot checks normality of residuals — points on a straight line mean the normality assumption holds. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+from scipy import stats
+
+rng = np.random.default_rng(0)
+lstat = rng.uniform(2, 35, 30)
+medv = 35 - 0.95 * lstat + rng.normal(0, 3, 30)
+X = pd.DataFrame({'lstat': lstat})
+y = medv
+model = LinearRegression().fit(X, y)
+resid = y - model.predict(X)
+
+fig, ax = plt.subplots(figsize=(5, 4))
+stats.probplot(resid, plot=ax)
+ax.set_title('Q-Q plot of residuals'); plt.show()
+print(f'shapiro test p-value = {stats.shapiro(resid).pvalue:.4f}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
 </section>

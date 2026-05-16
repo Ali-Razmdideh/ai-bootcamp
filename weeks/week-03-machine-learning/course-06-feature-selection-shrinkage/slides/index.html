@@ -62,9 +62,102 @@
     </ul>
     <p class="muted">Ridge wins biggest when OLS is high-variance: many predictors, modest n, collinearity. On Credit the gain is small; in genomics with p &gt; n it is decisive.</p>
   </section>
-  <section>
+  <section class="example" data-packages="numpy,pandas,scikit-learn,matplotlib">
     <h2>Coefficient paths</h2>
-<p>Plot every β<sub>j</sub> versus α (log axis). All paths shrink toward zero, none reach exactly zero.</p><p class="muted">Pick α with GridSearchCV over a log grid (e.g. np.logspace(-2, 4, 50)).</p>
+    <div class="ex-prompt">Sweep α on a log grid, fit Ridge at each value, and plot every β<sub>j</sub> versus α. All paths shrink toward zero, none reach exactly zero. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd
+import matplotlib; matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+from sklearn.linear_model import Ridge
+from sklearn.preprocessing import StandardScaler
+
+rng = np.random.RandomState(0)
+n = 60
+df = pd.DataFrame({
+    'AtBat': rng.randint(100,650,n), 'Hits': rng.randint(20,220,n),
+    'HmRun': rng.randint(0,40,n), 'Runs': rng.randint(10,120,n),
+    'RBI': rng.randint(10,120,n), 'Walks': rng.randint(0,100,n),
+    'Years': rng.randint(1,25,n), 'CAtBat': rng.randint(100,15000,n),
+    'CHits': rng.randint(20,4500,n), 'CHmRun': rng.randint(0,550,n),
+    'CRuns': rng.randint(10,2200,n), 'CRBI': rng.randint(10,2000,n),
+    'CWalks': rng.randint(0,1400,n),
+    'PutOuts': rng.randint(0,1400,n), 'Assists': rng.randint(0,500,n),
+    'Errors': rng.randint(0,35,n),
+    'League_N': rng.randint(0,2,n).astype(float),
+    'Division_W': rng.randint(0,2,n).astype(float),
+    'NewLeague_N': rng.randint(0,2,n).astype(float),
+})
+true = np.array([0.5,3,5,1,2,1.5,10,0.01,0.1,0.5,0.05,0.1,0.05,0.01,0,0,20,-15,5])
+X = df.to_numpy(); feat_names = df.columns.tolist()
+y = X @ true + rng.randn(n)*50 + 200
+
+alphas = np.logspace(-2, 4, 80)
+coef_paths = np.empty((len(alphas), len(feat_names)))
+scaler = StandardScaler().fit(X)
+Xs = scaler.transform(X)
+for i, a in enumerate(alphas):
+    coef_paths[i] = Ridge(alpha=a).fit(Xs, y).coef_
+
+fig, ax = plt.subplots(figsize=(7, 4.5))
+for j, name in enumerate(feat_names):
+    ax.plot(alphas, coef_paths[:, j], label=name)
+ax.set_xscale('log'); ax.set_xlabel(r'$\alpha$'); ax.set_ylabel('coefficient')
+ax.set_title('Ridge coefficient paths on Hitters'); plt.show()
+print('alpha range:', alphas[0], '...', alphas[-1])
+print('coef at smallest alpha:', np.round(coef_paths[0], 2))
+print('coef at largest alpha :', np.round(coef_paths[-1], 4))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy,pandas,scikit-learn">
+    <h2>Pick α with CV</h2>
+    <div class="ex-prompt">Wrap <code>StandardScaler</code> and <code>Ridge</code> in a <code>Pipeline</code> and grid-search <code>alpha</code> on a log grid with 5-fold CV. The CV-MSE U-curve picks the sweet spot between bias and variance.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd
+from sklearn.linear_model import Ridge
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV, KFold
+
+rng = np.random.RandomState(0)
+n = 60
+df = pd.DataFrame({
+    'AtBat': rng.randint(100,650,n), 'Hits': rng.randint(20,220,n),
+    'HmRun': rng.randint(0,40,n), 'Runs': rng.randint(10,120,n),
+    'RBI': rng.randint(10,120,n), 'Walks': rng.randint(0,100,n),
+    'Years': rng.randint(1,25,n), 'CAtBat': rng.randint(100,15000,n),
+    'CHits': rng.randint(20,4500,n), 'CHmRun': rng.randint(0,550,n),
+    'CRuns': rng.randint(10,2200,n), 'CRBI': rng.randint(10,2000,n),
+    'CWalks': rng.randint(0,1400,n),
+    'PutOuts': rng.randint(0,1400,n), 'Assists': rng.randint(0,500,n),
+    'Errors': rng.randint(0,35,n),
+    'League_N': rng.randint(0,2,n).astype(float),
+    'Division_W': rng.randint(0,2,n).astype(float),
+    'NewLeague_N': rng.randint(0,2,n).astype(float),
+})
+true = np.array([0.5,3,5,1,2,1.5,10,0.01,0.1,0.5,0.05,0.1,0.05,0.01,0,0,20,-15,5])
+X = df.to_numpy()
+y = X @ true + rng.randn(n)*50 + 200
+
+pipe = Pipeline([('s', StandardScaler()), ('r', Ridge())])
+grid = GridSearchCV(pipe, {'r__alpha': np.logspace(-2, 4, 25)},
+                    cv=KFold(5, shuffle=True, random_state=0),
+                    scoring='neg_mean_squared_error')
+grid.fit(X, y)
+print(f'best alpha = {grid.best_params_["r__alpha"]:.3f}')
+print(f'CV MSE     = {-grid.best_score_:.0f}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
 </section>
@@ -79,10 +172,66 @@
 <p style="text-align:center;font-size:1.25em;">minimize Σᵢ (yᵢ − ŷᵢ)² + <span style="color:#c33;">α Σⱼ |βⱼ|</span></p><p>The L1 penalty creates a <em>corner</em> at zero — some coefficients land exactly there.</p>
   </section>
 
+  <section class="example" data-packages="numpy,pandas,scikit-learn,matplotlib">
+    <h2>Lasso paths and sparsity</h2>
+    <div class="ex-prompt">Sweep α for Lasso. The left panel shows coefficient paths; the right panel counts how many coefficients are non-zero. As α grows, features get killed off one by one. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd
+import matplotlib; matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+from sklearn.linear_model import Lasso
+from sklearn.preprocessing import StandardScaler
+
+rng = np.random.RandomState(0)
+n = 60
+df = pd.DataFrame({
+    'AtBat': rng.randint(100,650,n), 'Hits': rng.randint(20,220,n),
+    'HmRun': rng.randint(0,40,n), 'Runs': rng.randint(10,120,n),
+    'RBI': rng.randint(10,120,n), 'Walks': rng.randint(0,100,n),
+    'Years': rng.randint(1,25,n), 'CAtBat': rng.randint(100,15000,n),
+    'CHits': rng.randint(20,4500,n), 'CHmRun': rng.randint(0,550,n),
+    'CRuns': rng.randint(10,2200,n), 'CRBI': rng.randint(10,2000,n),
+    'CWalks': rng.randint(0,1400,n),
+    'PutOuts': rng.randint(0,1400,n), 'Assists': rng.randint(0,500,n),
+    'Errors': rng.randint(0,35,n),
+    'League_N': rng.randint(0,2,n).astype(float),
+    'Division_W': rng.randint(0,2,n).astype(float),
+    'NewLeague_N': rng.randint(0,2,n).astype(float),
+})
+true = np.array([0.5,3,5,1,2,1.5,10,0.01,0.1,0.5,0.05,0.1,0.05,0.01,0,0,20,-15,5])
+X = df.to_numpy(); feat_names = df.columns.tolist()
+y = X @ true + rng.randn(n)*50 + 200
+Xs = StandardScaler().fit_transform(X)
+
+alphas = np.logspace(-1, 3, 60)
+nz_count = []; coef_paths_l = np.empty((len(alphas), len(feat_names)))
+for i, a in enumerate(alphas):
+    m = Lasso(alpha=a, max_iter=20000).fit(Xs, y)
+    coef_paths_l[i] = m.coef_
+    nz_count.append(int((m.coef_ != 0).sum()))
+
+fig, axes = plt.subplots(1, 2, figsize=(11, 4))
+for j in range(len(feat_names)):
+    axes[0].plot(alphas, coef_paths_l[:, j])
+axes[0].set_xscale('log'); axes[0].set_xlabel(r'$\alpha$')
+axes[0].set_ylabel('coefficient'); axes[0].set_title('Lasso paths')
+axes[1].plot(alphas, nz_count, marker='o')
+axes[1].set_xscale('log'); axes[1].set_xlabel(r'$\alpha$')
+axes[1].set_ylabel('# non-zero coefficients'); axes[1].set_title('Sparsity')
+plt.tight_layout(); plt.show()
+print('non-zero counts across alpha grid:', nz_count[::10])
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
   <section>
     <h2>Why does Lasso zero out, Ridge not?</h2>
-    <p>Both are constrained optimization: minimize RSS subject to a penalty budget on the β's. The <em>shape</em> of the budget region is everything.</p>
-    <svg class="diagram" viewBox="0 0 480 220" width="540" height="260">
+    <p class="muted" style="font-size:0.75em;">Both minimize RSS subject to a penalty budget on the β's. The <em>shape</em> of the budget region is everything.</p>
+    <svg class="diagram" viewBox="0 0 480 220" width="440" height="200">
       <g transform="translate(60, 20)">
         <text x="80" y="-2" text-anchor="middle" font-weight="600">Lasso (ℓ₁): diamond</text>
         <line x1="0" y1="90" x2="160" y2="90" stroke="#64748b"/>
@@ -108,7 +257,7 @@
         <text x="108" y="63" font-size="10" fill="#b91c1c">both ≠ 0</text>
       </g>
     </svg>
-    <p class="muted">The orange ellipses are RSS contours. The blue region is the budget. The optimum sits where the smallest ellipse first touches the budget. The diamond has <strong>corners</strong> on the axes — contours hit them often, killing one coefficient. The disc has no corners — almost always a non-axis tangent.</p>
+    <p class="muted" style="font-size:0.75em;">Orange ellipses = RSS contours; blue = budget. The optimum is where the smallest ellipse first touches the budget. The diamond has <strong>corners</strong> on the axes — contours hit them often, killing a coefficient. The disc has no corners.</p>
   </section>
   <section>
     <h2>Lasso is a feature selector</h2>
@@ -279,6 +428,53 @@ print('Lasso exact zeros:', lasso_zeros)
     </ol>
     <p class="muted">sklearn ships <code>LassoCV</code> and <code>RidgeCV</code> that do this in one line.</p>
   </section>
+
+  <section class="example" data-packages="numpy,pandas,scikit-learn">
+    <h2>Tuned Lasso — survivors</h2>
+    <div class="ex-prompt">Grid-search Lasso's α inside a scaling pipeline, then list the feature names that survived (non-zero coefficient). Lasso plays the role of both regularizer and feature selector in one fit.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd
+from sklearn.linear_model import Lasso
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV, KFold
+
+rng = np.random.RandomState(0)
+n = 60
+df = pd.DataFrame({
+    'AtBat': rng.randint(100,650,n), 'Hits': rng.randint(20,220,n),
+    'HmRun': rng.randint(0,40,n), 'Runs': rng.randint(10,120,n),
+    'RBI': rng.randint(10,120,n), 'Walks': rng.randint(0,100,n),
+    'Years': rng.randint(1,25,n), 'CAtBat': rng.randint(100,15000,n),
+    'CHits': rng.randint(20,4500,n), 'CHmRun': rng.randint(0,550,n),
+    'CRuns': rng.randint(10,2200,n), 'CRBI': rng.randint(10,2000,n),
+    'CWalks': rng.randint(0,1400,n),
+    'PutOuts': rng.randint(0,1400,n), 'Assists': rng.randint(0,500,n),
+    'Errors': rng.randint(0,35,n),
+    'League_N': rng.randint(0,2,n).astype(float),
+    'Division_W': rng.randint(0,2,n).astype(float),
+    'NewLeague_N': rng.randint(0,2,n).astype(float),
+})
+true = np.array([0.5,3,5,1,2,1.5,10,0.01,0.1,0.5,0.05,0.1,0.05,0.01,0,0,20,-15,5])
+X = df.to_numpy(); feat_names = df.columns.tolist()
+y = X @ true + rng.randn(n)*50 + 200
+
+pipe = Pipeline([('s', StandardScaler()), ('l', Lasso(max_iter=20000))])
+grid = GridSearchCV(pipe, {'l__alpha': np.logspace(-1, 3, 30)},
+                    cv=KFold(5, shuffle=True, random_state=0),
+                    scoring='neg_mean_squared_error')
+grid.fit(X, y)
+best = grid.best_estimator_.named_steps['l']
+active = [n for n, c in zip(feat_names, best.coef_) if c != 0]
+print(f'best alpha = {grid.best_params_["l__alpha"]:.3f}')
+print(f'survivors  = {active}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
   <section class="exercise" data-packages="numpy,scikit-learn">
     <h2>Exercise — Tune a Lasso with 5-fold CV</h2>
     <div class="ex-prompt">On the synthetic sparse problem, build a <code>Pipeline</code> of <code>StandardScaler</code> + <code>Lasso</code>, grid-search <code>alpha</code> over <code>np.logspace(-2, 1, 25)</code> with <code>KFold(5, shuffle=True, random_state=0)</code> and <code>neg_mean_squared_error</code>. Set <code>best_alpha</code> to the chosen α and <code>survivors</code> to the sorted list of indices with non-zero coefficients.</div>
@@ -366,15 +562,56 @@ print('survivors  =', survivors)
 </ul>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,pandas,scikit-learn">
     <h2>End-to-end pipeline + CV</h2>
-<pre><code class="language-python">Pipeline([
-    (&#x27;scale&#x27;, StandardScaler()),
-    (&#x27;poly&#x27;, PolynomialFeatures(2, interaction_only=True)),
-    (&#x27;lasso&#x27;, Lasso(max_iter=20000)),
+    <div class="ex-prompt">Chain <code>StandardScaler</code> → <code>PolynomialFeatures</code> (interactions) → <code>Lasso</code>, then grid-search α with 5-fold CV. Lasso prunes the explosion of interaction terms down to a handful that actually help.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd
+from sklearn.linear_model import Lasso
+from sklearn.preprocessing import StandardScaler, PolynomialFeatures
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV, KFold
+
+rng = np.random.RandomState(0)
+n = 60
+df = pd.DataFrame({
+    'AtBat': rng.randint(100,650,n), 'Hits': rng.randint(20,220,n),
+    'HmRun': rng.randint(0,40,n), 'Runs': rng.randint(10,120,n),
+    'RBI': rng.randint(10,120,n), 'Walks': rng.randint(0,100,n),
+    'Years': rng.randint(1,25,n), 'CAtBat': rng.randint(100,15000,n),
+    'CHits': rng.randint(20,4500,n), 'CHmRun': rng.randint(0,550,n),
+    'CRuns': rng.randint(10,2200,n), 'CRBI': rng.randint(10,2000,n),
+    'CWalks': rng.randint(0,1400,n),
+    'PutOuts': rng.randint(0,1400,n), 'Assists': rng.randint(0,500,n),
+    'Errors': rng.randint(0,35,n),
+    'League_N': rng.randint(0,2,n).astype(float),
+    'Division_W': rng.randint(0,2,n).astype(float),
+    'NewLeague_N': rng.randint(0,2,n).astype(float),
+})
+true = np.array([0.5,3,5,1,2,1.5,10,0.01,0.1,0.5,0.05,0.1,0.05,0.01,0,0,20,-15,5])
+X = df.to_numpy()
+y = X @ true + rng.randn(n)*50 + 200
+
+pipe = Pipeline([
+    ('scale', StandardScaler()),
+    ('poly', PolynomialFeatures(2, interaction_only=True, include_bias=False)),
+    ('lasso', Lasso(max_iter=20000)),
 ])
-GridSearchCV(pipe, {&#x27;lasso__alpha&#x27;: np.logspace(-1, 2, 12)},
-             cv=5, scoring=&#x27;neg_mean_squared_error&#x27;)</code></pre>
+grid = GridSearchCV(pipe, {'lasso__alpha': np.logspace(-1, 2, 12)},
+                    cv=KFold(5, shuffle=True, random_state=0),
+                    scoring='neg_mean_squared_error')
+grid.fit(X, y)
+best = grid.best_estimator_.named_steps['lasso']
+n_active = int((best.coef_ != 0).sum())
+print(f'best alpha = {grid.best_params_["lasso__alpha"]:.3f}')
+print(f'CV MSE     = {-grid.best_score_:.0f}')
+print(f'{n_active} non-zero coefs out of {best.coef_.size} (poly features)')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
 </section>

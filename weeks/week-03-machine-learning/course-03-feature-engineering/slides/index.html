@@ -46,23 +46,108 @@
 </ul>
   </section>
 
-  <section>
+  <section class="example" data-packages="pandas,numpy">
+    <h2>Why scale at all? — Auto column ranges</h2>
+    <div class="ex-prompt">On the Auto dataset, <code>weight</code> ranges in the thousands while <code>acceleration</code> is in the teens. Any distance-based or regularized model will let weight dominate unless we standardize.</div>
+<textarea class="ex-code">import pandas as pd
+import numpy as np
+
+# small synthetic Auto-like slice (mpg, weight, acceleration, horsepower)
+auto = pd.DataFrame({
+    'mpg':          [18,15,18,16,17,15,14,14,14,15,15,14,15,14,24,22,18,21,27,26,25,24,25,26,21,10,10,11,9,27],
+    'weight':       [3504,3693,3436,3433,3449,4341,4354,4312,4425,3850,3563,3609,3761,3086,2372,2833,2774,2587,2130,1835,2672,2430,2375,2234,2648,4615,4376,4382,4732,2130],
+    'acceleration': [12.0,11.5,11.0,12.0,10.5,10.0,9.0,8.5,10.0,8.5,10.0,8.0,9.5,10.0,15.0,15.5,15.5,16.0,14.5,17.5,14.5,14.5,17.5,12.5,13.5,14.0,15.0,13.5,11.5,17.0],
+    'horsepower':   [130,165,150,150,140,198,220,215,225,190,170,160,150,225,95,95,97,85,88,46,87,90,95,113,90,200,210,193,200,75],
+})
+
+print('weight: min={:.0f}  max={:.0f}'.format(auto['weight'].min(), auto['weight'].max()))
+print('accel : min={:.0f}  max={:.0f}'.format(auto['acceleration'].min(), auto['acceleration'].max()))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="pandas,numpy,scikit-learn">
+    <h2>StandardScaler — center and unit-variance</h2>
+    <div class="ex-prompt">Fit a <code>StandardScaler</code> on numeric columns. After transforming, each column has mean ~0 and std ~1 — putting weight and acceleration on equal footing.</div>
+<textarea class="ex-code">import pandas as pd
+from sklearn.preprocessing import StandardScaler
+
+auto = pd.DataFrame({
+    'weight':       [3504,3693,3436,3433,3449,4341,4354,4312,4425,3850,3563,3609,3761,3086,2372,2833,2774,2587,2130,1835,2672,2430,2375,2234,2648,4615,4376,4382,4732,2130],
+    'acceleration': [12.0,11.5,11.0,12.0,10.5,10.0,9.0,8.5,10.0,8.5,10.0,8.0,9.5,10.0,15.0,15.5,15.5,16.0,14.5,17.5,14.5,14.5,17.5,12.5,13.5,14.0,15.0,13.5,11.5,17.0],
+})
+
+scaler = StandardScaler()
+Z = scaler.fit_transform(auto[['weight', 'acceleration']])
+print('after scaling mean/std:', Z.mean(axis=0).round(2), Z.std(axis=0).round(2))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="pandas,numpy,scikit-learn">
     <h2>Pipeline = scaler + estimator, one object</h2>
-<pre><code class="language-python">from sklearn.pipeline import Pipeline
+    <div class="ex-prompt">A <code>Pipeline</code> bundles preprocessing with the estimator so the scaler fits on training data only, surviving any future train/test split or cross-validation.</div>
+<textarea class="ex-code">import pandas as pd
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression
 
-pipe = Pipeline([
-    (&#x27;scale&#x27;, StandardScaler()),
-    (&#x27;lr&#x27;, LinearRegression()),
-])
-pipe.fit(X_train, y_train)
-pipe.score(X_test, y_test)</code></pre><p class="muted">Pipelines survive train/test splits — they fit the scaler on train only.</p>
+auto = pd.DataFrame({
+    'mpg':          [18,15,18,16,17,15,14,14,14,15,15,14,15,14,24,22,18,21,27,26,25,24,25,26,21,10,10,11,9,27],
+    'weight':       [3504,3693,3436,3433,3449,4341,4354,4312,4425,3850,3563,3609,3761,3086,2372,2833,2774,2587,2130,1835,2672,2430,2375,2234,2648,4615,4376,4382,4732,2130],
+    'acceleration': [12.0,11.5,11.0,12.0,10.5,10.0,9.0,8.5,10.0,8.5,10.0,8.0,9.5,10.0,15.0,15.5,15.5,16.0,14.5,17.5,14.5,14.5,17.5,12.5,13.5,14.0,15.0,13.5,11.5,17.0],
+})
+
+pipe = Pipeline([('scale', StandardScaler()), ('lr', LinearRegression())])
+X = auto[['weight', 'acceleration']]
+y = auto['mpg']
+pipe.fit(X, y)
+print(f'R^2 = {pipe.score(X, y):.4f}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="pandas,numpy,matplotlib">
     <h2>Skew? log1p it.</h2>
-<p>Many natural features (income, counts, prices) are right-skewed.</p><p style="text-align:center;font-size:1.2em;">log1p(x) = log(1 + x)</p><p class="muted">log1p handles zeros (unlike plain log). Always sanity-check with a histogram.</p>
+    <div class="ex-prompt">Right-skewed features (income, prices, horsepower) become symmetric under <code>log1p(x) = log(1 + x)</code>, which handles zeros gracefully. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import pandas as pd
+import numpy as np
+import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+
+auto = pd.DataFrame({
+    'horsepower': [130,165,150,150,140,198,220,215,225,190,170,160,150,225,95,95,97,85,88,46,87,90,95,113,90,200,210,193,200,75],
+})
+
+fig, axes = plt.subplots(1, 2, figsize=(9, 3))
+axes[0].hist(auto['horsepower'], bins=10); axes[0].set_title('horsepower (raw)')
+axes[1].hist(np.log1p(auto['horsepower']), bins=10); axes[1].set_title('log1p(horsepower)')
+plt.show()
+print('raw  mean/std:', round(auto['horsepower'].mean(), 2), round(auto['horsepower'].std(), 2))
+print('log1p mean/std:', round(np.log1p(auto['horsepower']).mean(), 2), round(np.log1p(auto['horsepower']).std(), 2))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
 </section>
@@ -88,9 +173,8 @@ PolynomialFeatures(degree=3).fit_transform(X)
   <section>
     <h2>Polynomial regression — degree 4 on wage ~ age</h2>
     <p>Replace <code>age</code> with <code>[age, age², age³, age⁴]</code> and fit by least squares.</p>
-    <p>Resulting fit: rises steeply, levels off around 45, dips after 60. R² and residual plot far better than the linear fit. <em>Still</em> linear regression — just on engineered columns.</p>
-    <div class="warn"><strong>Tail trouble.</strong> Polynomials have notorious tail behavior. A degree-14 polynomial on the wage data looks reasonable in the middle but explodes near age 18 and age 80. The fit at the boundary can be absurd.</div>
-    <p class="muted">This is the famous ISLR comparison: degree-14 polynomial vs a natural cubic spline — same number of degrees of freedom, dramatically different edge behavior. Splines win.</p>
+    <p>The fit rises steeply, levels off around 45, dips after 60 — R² and residual plot both far better than the linear fit. <em>Still</em> linear regression, just on engineered columns.</p>
+    <div class="warn"><strong>Tail trouble.</strong> A degree-14 polynomial on wage looks fine in the middle but explodes near age 18 and 80. The fit at the boundary can be absurd.</div>
   </section>
   <section>
     <h2>Step functions — cut age into bins</h2>
@@ -108,6 +192,7 @@ PolynomialFeatures(degree=3).fit_transform(X)
       <li class="fragment fade-up"><strong>Smoothing spline</strong> — a knot at every observation, with a roughness penalty λ∫f''(x)² dx. Pick λ by CV.</li>
     </ul>
     <p class="callout">For visualization, sklearn's <code>SplineTransformer</code> gives you natural cubic splines as plain features — fit ordinary LR on top.</p>
+    <p class="muted">The famous ISLR comparison: a degree-14 polynomial vs a natural cubic spline with the same df behave dramatically differently at the edges. Splines win.</p>
   </section>
   <section>
     <h2>GAMs — the generalization</h2>
@@ -127,6 +212,47 @@ PolynomialFeatures(degree=3).fit_transform(X)
 </ul><p class="callout">How do you pick d without eyeballing? Cross-validation, next course.</p>
   </section>
 
+  <section class="example" data-packages="pandas,numpy,scikit-learn,matplotlib">
+    <h2>Underfit, fit, overfit — four degrees on mpg ~ horsepower</h2>
+    <div class="ex-prompt">Fit polynomial regressions of degree 1, 2, 5, 15 on the same data. d=1 is too straight; d=15 wags at the edges. Same model class, just different feature columns. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import pandas as pd
+import numpy as np
+import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LinearRegression
+
+auto = pd.DataFrame({
+    'mpg':        [18,15,18,16,17,15,14,14,14,15,15,14,15,14,24,22,18,21,27,26,25,24,25,26,21,10,10,11,9,27,30,32,35,18,16,14,38,32,28,26],
+    'horsepower': [130,165,150,150,140,198,220,215,225,190,170,160,150,225,95,95,97,85,88,46,87,90,95,113,90,200,210,193,200,75,70,65,55,180,175,205,52,68,80,95],
+})
+x = auto[['horsepower']].to_numpy()
+y = auto['mpg'].to_numpy()
+order = np.argsort(x.ravel())
+xs = x.ravel()[order]; ys = y[order]
+
+fig, ax = plt.subplots(figsize=(7, 4.5))
+ax.scatter(xs, ys, s=10, alpha=0.4, color='gray')
+x_grid = np.linspace(xs.min(), xs.max(), 200).reshape(-1, 1)
+for d, color in zip([1, 2, 5, 15], ['C0', 'C1', 'C2', 'C3']):
+    poly = PolynomialFeatures(degree=d, include_bias=False)
+    pipe = Pipeline([('p', poly), ('lr', LinearRegression())])
+    pipe.fit(x, y)
+    print(f'd = {d:2d}  training R^2 = {pipe.score(x, y):.4f}')
+    ax.plot(x_grid, pipe.predict(x_grid), label=f'd = {d}', color=color)
+ax.set_xlabel('horsepower'); ax.set_ylabel('mpg'); ax.legend()
+ax.set_title('Polynomial fits: d=1 underfit, d=15 overfit'); plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
 </section>
 <section>
   <section class="title-slide">
@@ -134,12 +260,91 @@ PolynomialFeatures(degree=3).fit_transform(X)
     <h1>Encoding & interactions</h1>
     <p class="muted">ColumnTransformer is your friend</p>
   </section>
-  <section>
+  <section class="example" data-packages="pandas,numpy,scikit-learn">
+    <h2>One-hot encoding — categories to columns</h2>
+    <div class="ex-prompt"><code>OneHotEncoder</code> turns each category level into its own 0/1 column. <code>drop='first'</code> drops one level per feature to avoid the dummy-variable trap.</div>
+<textarea class="ex-code">import pandas as pd
+from sklearn.preprocessing import OneHotEncoder
+
+tips = pd.DataFrame({
+    'day':  ['Sun']*5 + ['Sat']*5 + ['Thur']*5 + ['Fri']*5,
+    'time': ['Dinner']*5 + ['Dinner']*5 + ['Lunch']*5 + ['Lunch']*3 + ['Dinner']*2,
+})
+
+oh = OneHotEncoder(sparse_output=False, drop='first')
+encoded = oh.fit_transform(tips[['day', 'time']])
+print('OneHot columns:', oh.get_feature_names_out().tolist())
+print(encoded[:3])
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="pandas,numpy,scikit-learn">
+    <h2>Ordinal encoding — only when categories have an order</h2>
+    <div class="ex-prompt"><code>OrdinalEncoder</code> maps categories to integers in a user-specified order. Use it only when ordering is meaningful (e.g. <em>low &lt; medium &lt; high</em>), not for nominal categories where it would invent a fake order.</div>
+<textarea class="ex-code">import pandas as pd
+from sklearn.preprocessing import OrdinalEncoder
+
+tips = pd.DataFrame({
+    'day': ['Sun', 'Sat', 'Thur', 'Fri', 'Sun', 'Sat', 'Thur'],
+})
+
+# pretend day-of-week is ordered Thur < Fri < Sat < Sun
+ord_enc = OrdinalEncoder(categories=[['Thur', 'Fri', 'Sat', 'Sun']])
+print(ord_enc.fit_transform(tips[['day']])[:5].ravel())
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="pandas,numpy,scikit-learn">
     <h2>Different transforms for different columns</h2>
-<pre><code class="language-python">ColumnTransformer([
-    (&#x27;num&#x27;, StandardScaler(), numeric_cols),
-    (&#x27;cat&#x27;, OneHotEncoder(drop=&#x27;first&#x27;), categorical_cols),
-])</code></pre>
+    <div class="ex-prompt"><code>ColumnTransformer</code> routes numeric and categorical columns through different preprocessors in a single expression, ready to drop into a <code>Pipeline</code>.</div>
+<textarea class="ex-code">import pandas as pd
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LinearRegression
+
+tips = pd.DataFrame({
+    'total_bill': [16.99,10.34,21.01,23.68,24.59,25.29,8.77,26.88,15.04,14.78,
+                   10.27,35.26,15.42,18.43,14.83,21.58,10.33,16.29,16.97,20.65,
+                   17.92,20.29,15.77,39.42,19.82,17.81,13.37,12.69,21.7,19.65],
+    'size':       [2,3,3,2,4,4,2,4,2,2, 2,4,2,4,2,3,2,3,3,3, 2,2,2,4,2,4,2,2,2,2],
+    'day':  ['Sun']*8 + ['Sat']*8 + ['Thur']*7 + ['Fri']*7,
+    'time': ['Dinner']*16 + ['Lunch']*10 + ['Dinner']*4,
+    'sex':  (['Male','Female']*15),
+    'smoker': (['No','Yes']*15),
+    'tip':  [1.01,1.66,3.5,3.31,3.61,4.71,2.0,3.12,1.96,3.23,
+             1.71,5.0,1.57,3.0,3.02,3.92,1.67,3.71,3.5,3.35,
+             4.08,2.75,2.23,7.58,3.18,2.34,2.0,2.0,4.3,3.0],
+})
+
+num = ['total_bill', 'size']
+cat = ['day', 'time', 'sex', 'smoker']
+preproc = ColumnTransformer([
+    ('num', StandardScaler(), num),
+    ('cat', OneHotEncoder(drop='first'), cat),
+])
+pipe = Pipeline([('prep', preproc), ('lr', LinearRegression())])
+pipe.fit(tips[num + cat], tips['tip'])
+print(f'R^2 (tip ~ everything) = {pipe.score(tips[num + cat], tips["tip"]):.4f}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,pandas,scikit-learn">
@@ -208,10 +413,34 @@ print(f'R^2 = {result:.4f}')</script>
 <script type="text/x-explain">A Pipeline keeps the scaler and the model glued together so that, under a future train/test split or cross-validation, the scaler will fit on training data only. ColumnTransformer routes numeric and categorical columns through different preprocessors in one expression.</script>
   </section>
 
-  <section>
+  <section class="example" data-packages="pandas,numpy,scikit-learn">
     <h2>Interactions in bulk</h2>
-<pre><code class="language-python">PolynomialFeatures(interaction_only=True, include_bias=False)
-# adds every x_i * x_j pair</code></pre><p class="muted">Combinatorial explosion ahead — combine with Lasso (Course 6) to keep only the useful interactions.</p>
+    <div class="ex-prompt"><code>PolynomialFeatures(interaction_only=True)</code> adds every pairwise product <em>x<sub>i</sub> · x<sub>j</sub></em>. The column count explodes fast — combine with Lasso (Course 6) to keep only the useful ones.</div>
+<textarea class="ex-code">import pandas as pd
+from sklearn.preprocessing import PolynomialFeatures
+
+tips = pd.DataFrame({
+    'total_bill': [16.99,10.34,21.01,23.68,24.59,25.29,8.77,26.88,15.04,14.78,
+                   17.92,20.29,15.77,39.42,19.82,17.81,13.37,12.69,21.7,19.65],
+    'size':       [2,3,3,2,4,4,2,4,2,2, 2,2,2,4,2,4,2,2,2,2],
+    'day':  ['Sun']*5 + ['Sat']*5 + ['Thur']*5 + ['Fri']*5,
+    'time': ['Dinner']*10 + ['Lunch']*5 + ['Dinner']*5,
+    'sex':  ['Male','Female']*10,
+})
+
+X = pd.get_dummies(tips[['day', 'time', 'sex']], drop_first=True, dtype=float)
+X['total_bill'] = tips['total_bill']
+X['size'] = tips['size']
+poly = PolynomialFeatures(interaction_only=True, include_bias=False)
+X_int = poly.fit_transform(X)
+print(f'before: {X.shape[1]} cols, after pairwise interactions: {X_int.shape[1]}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,pandas,scikit-learn">

@@ -59,6 +59,48 @@
 <p>Adding a predictor can never <em>increase</em> training RSS. So we cannot pick model size by raw RSS.</p><p>We need a criterion that <em>penalizes</em> size: AIC, BIC, Cp, adjusted R², or — best — held-out CV error.</p>
   </section>
 
+  <section class="example" data-packages="numpy,pandas,scikit-learn">
+    <h2>Best-subset on 5 predictors</h2>
+    <div class="ex-prompt">Enumerate every non-empty subset of the first 5 predictors and keep the one with smallest training RSS at each size k. With only 5 predictors that's 2<sup>5</sup>−1 = 31 fits — fine. At p = 19 it would be 524,288. RSS strictly decreases as k grows, which is precisely why raw RSS can't pick a size.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+from itertools import combinations
+from sklearn.linear_model import LinearRegression
+
+# Synthetic Hitters-like data (deterministic)
+rng = np.random.default_rng(0)
+n = 200
+AtBat   = rng.normal(400, 150, n)
+Hits    = 0.27 * AtBat + rng.normal(0, 15, n)
+HmRun   = 0.04 * AtBat + rng.normal(0, 5, n)
+Runs    = 0.13 * AtBat + rng.normal(0, 10, n)
+RBI     = 0.13 * AtBat + rng.normal(0, 10, n)
+Walks   = 0.10 * AtBat + rng.normal(0, 12, n)
+Salary  = 3 * Hits + 8 * HmRun + 2 * Runs + 4 * RBI + 5 * Walks + rng.normal(0, 60, n)
+
+X = pd.DataFrame({'AtBat': AtBat, 'Hits': Hits, 'HmRun': HmRun,
+                  'Runs': Runs, 'RBI': RBI, 'Walks': Walks})
+y = Salary
+small = X.columns[:5].tolist()
+
+for k in range(1, len(small) + 1):
+    best_rss, best_combo = float('inf'), None
+    for combo in combinations(small, k):
+        Xs = X[list(combo)].to_numpy()
+        m = LinearRegression().fit(Xs, y)
+        rss = ((y - m.predict(Xs)) ** 2).sum()
+        if rss < best_rss:
+            best_rss, best_combo = rss, combo
+    print(f'k={k}: RSS={best_rss:.0f}  cols={best_combo}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
 </section>
 <section>
   <section class="title-slide">
@@ -103,17 +145,111 @@
 </ul>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,pandas,scikit-learn">
     <h2>From scratch in 12 lines</h2>
-<pre><code class="language-python">while remaining:
-    best_col, best_mse = None, inf
+    <div class="ex-prompt">Forward stepwise: at every step, try adding each remaining predictor and keep the one with smallest 5-fold CV-MSE. O(p²) fits instead of best-subset's 2<sup>p</sup>. The trace shows which predictor was added at each step and the CV-MSE after it joined.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import cross_val_score, KFold
+
+rng = np.random.default_rng(0)
+n = 200
+AtBat = rng.normal(400, 150, n)
+Hits  = 0.27 * AtBat + rng.normal(0, 15, n)
+HmRun = 0.04 * AtBat + rng.normal(0, 5, n)
+Runs  = 0.13 * AtBat + rng.normal(0, 10, n)
+RBI   = 0.13 * AtBat + rng.normal(0, 10, n)
+Walks = 0.10 * AtBat + rng.normal(0, 12, n)
+Years = rng.integers(1, 20, n).astype(float)
+Salary = 3*Hits + 8*HmRun + 2*Runs + 4*RBI + 5*Walks + 30*Years + rng.normal(0, 60, n)
+
+X = pd.DataFrame({'AtBat': AtBat, 'Hits': Hits, 'HmRun': HmRun,
+                  'Runs': Runs, 'RBI': RBI, 'Walks': Walks, 'Years': Years})
+y = Salary
+
+def forward_stepwise(X, y, n_folds=5):
+    remaining = list(X.columns); chosen = []; trace = []
+    cv = KFold(n_folds, shuffle=True, random_state=0)
+    while remaining:
+        best_col, best_mse = None, float('inf')
+        for col in remaining:
+            cols = chosen + [col]
+            scores = cross_val_score(LinearRegression(), X[cols].to_numpy(), y,
+                                     cv=cv, scoring='neg_mean_squared_error')
+            mse = -scores.mean()
+            if mse < best_mse:
+                best_mse, best_col = mse, col
+        chosen.append(best_col); remaining.remove(best_col)
+        trace.append((best_col, best_mse))
+    return trace
+
+trace = forward_stepwise(X, y)
+for i, (col, mse) in enumerate(trace, 1):
+    print(f'{i:2d}. add {col:8s}  CV-MSE = {mse:.0f}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy,pandas,scikit-learn,matplotlib">
+    <h2>CV-MSE vs model size</h2>
+    <div class="ex-prompt">Plot the forward-stepwise CV-MSE curve and mark its minimum. The U-shape (or hockey-stick) is the classic bias–variance tradeoff: too few predictors underfit, too many overfit. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import cross_val_score, KFold
+
+rng = np.random.default_rng(0)
+n = 200
+AtBat = rng.normal(400, 150, n)
+Hits  = 0.27 * AtBat + rng.normal(0, 15, n)
+HmRun = 0.04 * AtBat + rng.normal(0, 5, n)
+Runs  = 0.13 * AtBat + rng.normal(0, 10, n)
+RBI   = 0.13 * AtBat + rng.normal(0, 10, n)
+Walks = 0.10 * AtBat + rng.normal(0, 12, n)
+Years = rng.integers(1, 20, n).astype(float)
+Salary = 3*Hits + 8*HmRun + 2*Runs + 4*RBI + 5*Walks + 30*Years + rng.normal(0, 60, n)
+
+X = pd.DataFrame({'AtBat': AtBat, 'Hits': Hits, 'HmRun': HmRun,
+                  'Runs': Runs, 'RBI': RBI, 'Walks': Walks, 'Years': Years})
+y = Salary
+
+cv = KFold(5, shuffle=True, random_state=0)
+remaining = list(X.columns); chosen = []; trace = []
+while remaining:
+    best_col, best_mse = None, float('inf')
     for col in remaining:
-        mse = -cross_val_score(LinearRegression(),
-                  X[chosen+[col]], y,
-                  cv=5, scoring=&#x27;neg_mean_squared_error&#x27;).mean()
-        if mse &lt; best_mse:
-            best_col, best_mse = col, mse
-    chosen.append(best_col); remaining.remove(best_col)</code></pre>
+        s = -cross_val_score(LinearRegression(), X[chosen+[col]].to_numpy(), y,
+                             cv=cv, scoring='neg_mean_squared_error').mean()
+        if s < best_mse: best_mse, best_col = s, col
+    chosen.append(best_col); remaining.remove(best_col)
+    trace.append((best_col, best_mse))
+
+sizes = list(range(1, len(trace) + 1))
+mses = [m for _, m in trace]
+fig, ax = plt.subplots(figsize=(7, 4))
+ax.plot(sizes, mses, marker='o')
+best = int(np.argmin(mses)) + 1
+ax.axvline(best, color='C3', linestyle='--', label=f'best = {best}')
+ax.set_xlabel('model size'); ax.set_ylabel('5-fold CV MSE')
+ax.set_title('Forward stepwise'); ax.legend()
+plt.show()
+print('best size =', best, '  CV-MSE =', round(min(mses), 1))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,pandas,scikit-learn">
@@ -203,6 +339,146 @@ print([round(m, 2) for m in mses])</script>
   <section>
     <h2>Four formulas, four answers</h2>
 <p style="font-family:monospace;font-size:0.95em;">AIC = n log(RSS/n) + 2p</p><p style="font-family:monospace;font-size:0.95em;">BIC = n log(RSS/n) + p log n</p><p style="font-family:monospace;font-size:0.95em;">Cp  = (RSS + 2 p σ²)/n</p><p style="font-family:monospace;font-size:0.95em;">adj-R² = 1 − (1−R²)(n−1)/(n−p−1)</p>
+  </section>
+
+  <section class="example" data-packages="numpy,pandas,scikit-learn">
+    <h2>Compute AIC, BIC, Cp, adj-R² for each size</h2>
+    <div class="ex-prompt">Walk down the forward-stepwise order and, at each prefix size, refit the model and compute all four criteria. Watch how each criterion bottoms out (or peaks) at a different size — they're literally measuring different tradeoffs.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import cross_val_score, KFold
+
+rng = np.random.default_rng(0)
+n = 200
+AtBat = rng.normal(400, 150, n)
+Hits  = 0.27 * AtBat + rng.normal(0, 15, n)
+HmRun = 0.04 * AtBat + rng.normal(0, 5, n)
+Runs  = 0.13 * AtBat + rng.normal(0, 10, n)
+RBI   = 0.13 * AtBat + rng.normal(0, 10, n)
+Walks = 0.10 * AtBat + rng.normal(0, 12, n)
+Years = rng.integers(1, 20, n).astype(float)
+Salary = 3*Hits + 8*HmRun + 2*Runs + 4*RBI + 5*Walks + 30*Years + rng.normal(0, 60, n)
+
+X = pd.DataFrame({'AtBat': AtBat, 'Hits': Hits, 'HmRun': HmRun,
+                  'Runs': Runs, 'RBI': RBI, 'Walks': Walks, 'Years': Years})
+y = Salary
+
+# Reproduce forward-stepwise order
+cv = KFold(5, shuffle=True, random_state=0)
+remaining = list(X.columns); trace = []; chosen_order = []
+while remaining:
+    best_col, best_mse = None, float('inf')
+    for col in remaining:
+        s = -cross_val_score(LinearRegression(), X[chosen_order+[col]].to_numpy(), y,
+                             cv=cv, scoring='neg_mean_squared_error').mean()
+        if s < best_mse: best_mse, best_col = s, col
+    chosen_order.append(best_col); remaining.remove(best_col)
+    trace.append((best_col, best_mse))
+
+def info_criteria(Xa, y):
+    n, p = Xa.shape
+    m = LinearRegression().fit(Xa, y)
+    rss = ((y - m.predict(Xa)) ** 2).sum()
+    r2 = m.score(Xa, y)
+    sigma2 = rss / (n - p - 1)
+    return dict(
+        aic = n * np.log(rss / n) + 2 * p,
+        bic = n * np.log(rss / n) + p * np.log(n),
+        cp  = (rss + 2 * p * sigma2) / n,
+        adj_r2 = 1 - (1 - r2) * (n - 1) / (n - p - 1),
+    )
+
+rows = []
+chosen = []
+for col, _ in trace:
+    chosen.append(col)
+    ic = info_criteria(X[chosen].to_numpy(), y)
+    ic['size'] = len(chosen)
+    rows.append(ic)
+ic_df = pd.DataFrame(rows).set_index('size')
+print(ic_df.round(2).to_string())
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy,pandas,scikit-learn,matplotlib">
+    <h2>Plot the four criteria side-by-side</h2>
+    <div class="ex-prompt">Four panels, one per criterion, each with a dashed line at its argmin (or argmax for adjusted R²). The picks usually disagree by 1–2 predictors — that's the whole point of having multiple criteria. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import cross_val_score, KFold
+
+rng = np.random.default_rng(0)
+n = 200
+AtBat = rng.normal(400, 150, n)
+Hits  = 0.27 * AtBat + rng.normal(0, 15, n)
+HmRun = 0.04 * AtBat + rng.normal(0, 5, n)
+Runs  = 0.13 * AtBat + rng.normal(0, 10, n)
+RBI   = 0.13 * AtBat + rng.normal(0, 10, n)
+Walks = 0.10 * AtBat + rng.normal(0, 12, n)
+Years = rng.integers(1, 20, n).astype(float)
+Salary = 3*Hits + 8*HmRun + 2*Runs + 4*RBI + 5*Walks + 30*Years + rng.normal(0, 60, n)
+
+X = pd.DataFrame({'AtBat': AtBat, 'Hits': Hits, 'HmRun': HmRun,
+                  'Runs': Runs, 'RBI': RBI, 'Walks': Walks, 'Years': Years})
+y = Salary
+
+cv = KFold(5, shuffle=True, random_state=0)
+remaining = list(X.columns); chosen_order = []
+while remaining:
+    best_col, best_mse = None, float('inf')
+    for col in remaining:
+        s = -cross_val_score(LinearRegression(), X[chosen_order+[col]].to_numpy(), y,
+                             cv=cv, scoring='neg_mean_squared_error').mean()
+        if s < best_mse: best_mse, best_col = s, col
+    chosen_order.append(best_col); remaining.remove(best_col)
+
+rows = []
+chosen = []
+for col in chosen_order:
+    chosen.append(col)
+    Xa = X[chosen].to_numpy()
+    nn, pp = Xa.shape
+    m = LinearRegression().fit(Xa, y)
+    rss = ((y - m.predict(Xa)) ** 2).sum()
+    r2 = m.score(Xa, y)
+    sigma2 = rss / (nn - pp - 1)
+    rows.append(dict(
+        size=len(chosen),
+        aic=nn*np.log(rss/nn) + 2*pp,
+        bic=nn*np.log(rss/nn) + pp*np.log(nn),
+        cp=(rss + 2*pp*sigma2)/nn,
+        adj_r2=1 - (1 - r2)*(nn - 1)/(nn - pp - 1),
+    ))
+ic_df = pd.DataFrame(rows).set_index('size')
+
+fig, axes = plt.subplots(1, 4, figsize=(14, 3.5))
+for ax, col in zip(axes, ['aic', 'bic', 'cp', 'adj_r2']):
+    ax.plot(ic_df.index, ic_df[col], marker='o')
+    pick = ic_df[col].idxmin() if col != 'adj_r2' else ic_df[col].idxmax()
+    ax.axvline(pick, color='C3', linestyle='--')
+    ax.set_title(f'{col} (picks size {pick})')
+    ax.set_xlabel('model size')
+plt.tight_layout(); plt.show()
+print({c: (ic_df[c].idxmin() if c != 'adj_r2' else ic_df[c].idxmax())
+       for c in ['aic', 'bic', 'cp', 'adj_r2']})
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section>

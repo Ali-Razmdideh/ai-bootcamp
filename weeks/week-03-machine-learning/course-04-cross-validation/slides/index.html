@@ -65,12 +65,53 @@
 </ul>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,scikit-learn,matplotlib">
     <h2>Live demo</h2>
-<pre><code class="language-python">for seed in range(10):
-    Xtr, Xte, ytr, yte = train_test_split(
-        x, y, test_size=0.5, random_state=seed)
-    # …pick best degree from this single split…</code></pre>
+    <div class="ex-prompt">Ten different 50/50 splits of Auto mpg ~ horsepower give ten different "best" degrees — that spread is noise, not signal. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+
+# Small seeded synthetic stand-in for Auto's mpg ~ horsepower (mpg falls with hp).
+rng = np.random.default_rng(0)
+n = 80
+hp = rng.uniform(50, 220, size=n)
+mpg = 45 - 0.15 * hp + 0.0004 * (hp - 100) ** 2 + rng.normal(0, 3, size=n)
+x = hp.reshape(-1, 1)
+y = mpg
+
+degrees = range(1, 11)
+test_mse_runs = np.empty((10, len(degrees)))
+for r, seed in enumerate(range(10)):
+    xtr, xte, ytr, yte = train_test_split(x, y, test_size=0.5, random_state=seed)
+    for j, d in enumerate(degrees):
+        pipe = Pipeline([('p', PolynomialFeatures(d, include_bias=False)),
+                         ('lr', LinearRegression())])
+        pipe.fit(xtr, ytr)
+        test_mse_runs[r, j] = mean_squared_error(yte, pipe.predict(xte))
+
+best_per_run = np.argmin(test_mse_runs, axis=1) + 1
+print('best degree per split:', best_per_run.tolist())
+
+fig, ax = plt.subplots(figsize=(7, 4))
+for r in range(10):
+    ax.plot(list(degrees), test_mse_runs[r], color='gray', linewidth=1, alpha=0.7)
+ax.set_xlabel('polynomial degree'); ax.set_ylabel('held-out MSE')
+ax.set_title('10 different validation splits, 10 different "best" degrees')
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
 </section>
@@ -157,6 +198,34 @@ print(f'5-fold CV MSE = {result:.4f}')</script>
     <p>where h_i is the i-th diagonal of the hat matrix H = X(XᵀX)⁻¹Xᵀ. Fit the model <em>once</em>, divide each residual by (1 − h_i), square, average. Done.</p>
     <p class="muted">For arbitrary models (random forests, neural nets), there is no shortcut — LOOCV genuinely costs n fits, which is why we use 5- or 10-fold by default.</p>
   </section>
+  <section class="example" data-packages="numpy,scikit-learn">
+    <h2>LOOCV — k equals n</h2>
+    <div class="ex-prompt">LeaveOneOut is just K-fold with K = n. Cheap here because the model is a degree-2 polynomial linear regression. Reports the mean MSE across all n single-row holdouts.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score, LeaveOneOut
+
+rng = np.random.default_rng(0)
+n = 200
+hp = rng.uniform(50, 220, size=n)
+mpg = 45 - 0.15 * hp + 0.0004 * (hp - 100) ** 2 + rng.normal(0, 3, size=n)
+x = hp.reshape(-1, 1); y = mpg
+
+pipe = Pipeline([('p', PolynomialFeatures(2, include_bias=False)),
+                 ('lr', LinearRegression())])
+loo_scores = cross_val_score(pipe, x, y, cv=LeaveOneOut(),
+                              scoring='neg_mean_squared_error')
+print(f'LOOCV MSE (d=2) = {-loo_scores.mean():.4f}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
   <section>
     <h2>K = 5 or 10 is the sweet spot</h2>
     <ul>
@@ -170,6 +239,51 @@ print(f'5-fold CV MSE = {result:.4f}')</script>
     <h2>The CV curve</h2>
 <p>Plot CV error vs the hyperparameter (polynomial degree, α, λ, k, …). Pick the minimum.</p><p class="muted">For Auto mpg, the CV curve picks a stable d ≈ 2.</p>
     <aside class="notes">Reproduce ISLP Fig 5.4. Stable winner across folds = trustworthy choice.</aside>
+  </section>
+  <section class="example" data-packages="numpy,scikit-learn,matplotlib">
+    <h2>K-fold via <code>cross_val_score</code></h2>
+    <div class="ex-prompt">Loop polynomial degrees 1–10, score each with 10-fold CV, and find the stable winner. Compare with the noisy ten-split picture from Part 1. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score, KFold
+
+rng = np.random.default_rng(0)
+n = 200
+hp = rng.uniform(50, 220, size=n)
+mpg = 45 - 0.15 * hp + 0.0004 * (hp - 100) ** 2 + rng.normal(0, 3, size=n)
+x = hp.reshape(-1, 1); y = mpg
+
+degrees = range(1, 11)
+cv_mse = []
+for d in degrees:
+    pipe = Pipeline([('p', PolynomialFeatures(d, include_bias=False)),
+                     ('lr', LinearRegression())])
+    scores = cross_val_score(pipe, x, y,
+                              cv=KFold(n_splits=10, shuffle=True, random_state=0),
+                              scoring='neg_mean_squared_error')
+    cv_mse.append(-scores.mean())
+
+best = int(np.argmin(cv_mse)) + 1
+print('CV MSE per degree:', [round(v, 3) for v in cv_mse])
+print('best degree =', best)
+
+fig, ax = plt.subplots(figsize=(7, 4))
+ax.plot(list(degrees), cv_mse, marker='o')
+ax.axvline(best, color='C3', linestyle='--', label=f'best d = {best}')
+ax.set_xlabel('degree'); ax.set_ylabel('10-fold CV MSE'); ax.legend()
+ax.set_title('ISLP Fig 5.4 style: CV picks a stable winner'); plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
 </section>
@@ -247,13 +361,69 @@ print("estimate, use NESTED cross-validation: an outer loop estimates test")
 print("error while an inner loop tunes the hyperparameter on training folds only.")</script>
 <script type="text/x-explain">This task has no auto-check — it is a conceptual gotcha. The point is that training R² always over-states quality (the model fit the data) and that picking a hyperparameter on the full dataset means the chosen value is itself a function of the data. Nested CV separates tuning from evaluation.</script>
   </section>
-  <section>
+  <section class="example" data-packages="numpy,scikit-learn">
     <h2>Bootstrap = sampling-distribution emulator</h2>
-<pre><code class="language-python">for k in range(B):
+    <div class="ex-prompt">Estimate the standard error and a 95% CI of a regression slope by resampling the data 1000 times with replacement and refitting. Works for any statistic — slope, median, ratio, correlation — without distributional assumptions.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.linear_model import LinearRegression
+
+rng = np.random.default_rng(0)
+n = 200
+hp = rng.uniform(50, 220, size=n)
+mpg = 45 - 0.15 * hp + 0.0004 * (hp - 100) ** 2 + rng.normal(0, 3, size=n)
+x = hp.reshape(-1, 1); y = mpg
+
+B = 1000
+slopes = np.empty(B)
+for k in range(B):
     idx = rng.choice(n, n, replace=True)
-    theta_boot[k] = compute_statistic(data[idx])
-se = theta_boot.std()
-lo, hi = np.quantile(theta_boot, [0.025, 0.975])</code></pre><p class="muted">Works for any statistic — slope, median, ratio, correlation — without distributional assumptions.</p>
+    m = LinearRegression().fit(x[idx], y[idx])
+    slopes[k] = m.coef_[0]
+print(f'bootstrap mean slope = {slopes.mean():.4f}')
+print(f'bootstrap SE        = {slopes.std(ddof=1):.4f}')
+lo, hi = np.quantile(slopes, [0.025, 0.975])
+print(f'95% CI              = [{lo:.4f}, {hi:.4f}]')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+  <section class="example" data-packages="numpy,scikit-learn,matplotlib">
+    <h2>Bootstrap — the sampling distribution</h2>
+    <div class="ex-prompt">Plot a histogram of the 1000 bootstrapped slopes. The spread is the SE; the 2.5%/97.5% quantiles are the CI. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+
+rng = np.random.default_rng(0)
+n = 200
+hp = rng.uniform(50, 220, size=n)
+mpg = 45 - 0.15 * hp + 0.0004 * (hp - 100) ** 2 + rng.normal(0, 3, size=n)
+x = hp.reshape(-1, 1); y = mpg
+
+B = 1000
+slopes = np.empty(B)
+for k in range(B):
+    idx = rng.choice(n, n, replace=True)
+    slopes[k] = LinearRegression().fit(x[idx], y[idx]).coef_[0]
+
+print(f'min={slopes.min():.4f}  max={slopes.max():.4f}  mean={slopes.mean():.4f}')
+
+fig, ax = plt.subplots(figsize=(6, 3))
+ax.hist(slopes, bins=40, alpha=0.7); ax.set_xlabel('bootstrapped slope')
+ax.set_title('1000 resamples — sampling distribution of the slope'); plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,scikit-learn">
