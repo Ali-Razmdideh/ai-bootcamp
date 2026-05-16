@@ -77,6 +77,66 @@ m.classes_                    # column ordering</code></pre>
     <p class="muted">In Week 8 (deep learning) the very last layer of a classification network is a softmax — same math, learned features.</p>
   </section>
 
+  <section class="example" data-packages="numpy,scikit-learn">
+    <h2>Multinomial LR on iris</h2>
+    <div class="ex-prompt">Fit a softmax LR on two iris features and inspect <code>coef_</code> — there's one weight row per class (shape <code>(3, 2)</code>). Training accuracy is high because petal_length/width nearly separate the three species.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.datasets import load_iris
+from sklearn.linear_model import LogisticRegression
+
+iris = load_iris(as_frame=True)
+X = iris.data[['petal length (cm)', 'petal width (cm)']].to_numpy()
+y = iris.target  # 0=setosa, 1=versicolor, 2=virginica
+
+m = LogisticRegression(max_iter=2000).fit(X, y)
+print('coef shape:', m.coef_.shape)  # (3, 2) — one row per class
+print(f'training accuracy = {m.score(X, y):.4f}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy,scikit-learn,matplotlib">
+    <h2>Decision regions on iris</h2>
+    <div class="ex-prompt">Build a grid over the petal-length / petal-width plane and color each point by the model's prediction. The three colored regions are split by straight lines — that's softmax: linear boundaries between every pair of classes. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_iris
+from sklearn.linear_model import LogisticRegression
+
+iris = load_iris(as_frame=True)
+X = iris.data[['petal length (cm)', 'petal width (cm)']].to_numpy()
+y = iris.target
+classes = iris.target_names
+m = LogisticRegression(max_iter=2000).fit(X, y)
+
+x_min, x_max = X[:,0].min()-0.5, X[:,0].max()+0.5
+y_min, y_max = X[:,1].min()-0.5, X[:,1].max()+0.5
+xx, yy = np.meshgrid(np.linspace(x_min, x_max, 200),
+                     np.linspace(y_min, y_max, 200))
+Z = m.predict(np.c_[xx.ravel(), yy.ravel()]).reshape(xx.shape)
+fig, ax = plt.subplots(figsize=(6, 5))
+ax.contourf(xx, yy, Z, alpha=0.25, levels=[-0.5,0.5,1.5,2.5])
+for cls in range(3):
+    ax.scatter(X[y==cls,0], X[y==cls,1], label=classes[cls], s=20)
+ax.set_xlabel('petal_length'); ax.set_ylabel('petal_width'); ax.legend()
+ax.set_title('Multinomial LR on iris'); plt.show()
+print('grid prediction counts:', np.bincount(Z.ravel()))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
   <section class="exercise" data-packages="numpy,pandas,scikit-learn">
     <h2>Exercise — Multinomial LR on penguins</h2>
     <div class="ex-prompt">Fit a standardized multinomial <code>LogisticRegression</code> pipeline on the four numeric measurements and report 5-fold CV accuracy. Assign the mean accuracy to <code>result</code>.</div>
@@ -156,6 +216,49 @@ print(f"CV accuracy = {result:.4f}")</script>
       </div>
     </div>
     <p class="callout">Regularization is one idea applied to many losses: OLS → ridge/lasso; MLE → L2/L1 logistic.</p>
+  </section>
+
+  <section class="example" data-packages="numpy,scikit-learn,matplotlib">
+    <h2>L1 vs L2 coefficient paths</h2>
+    <div class="ex-prompt">Sweep <code>C</code> over five orders of magnitude and record each coefficient. L2 (left) shrinks every β smoothly toward zero; L1 (right) drives some coefficients to exactly zero — that's the sparsity story from Lasso, applied to the LR log-likelihood. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_iris
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+
+iris = load_iris(as_frame=True)
+X4 = iris.data.to_numpy()
+y = iris.target
+Cs = np.logspace(-3, 2, 30)
+paths_l2 = np.empty((len(Cs), 3, 4))
+paths_l1 = np.empty((len(Cs), 3, 4))
+Xs = StandardScaler().fit_transform(X4)
+for i, C in enumerate(Cs):
+    paths_l2[i] = LogisticRegression(C=C, max_iter=3000).fit(Xs, y).coef_
+    paths_l1[i] = LogisticRegression(C=C, penalty='l1', solver='saga',
+                                     max_iter=3000).fit(Xs, y).coef_
+
+fig, axes = plt.subplots(1, 2, figsize=(11, 4), sharey=True)
+feat = ['sepal_len', 'sepal_wid', 'petal_len', 'petal_wid']
+for ax, paths, title in zip(axes, [paths_l2, paths_l1], ['L2', 'L1']):
+    for j in range(4):
+        ax.plot(Cs, paths[:, 0, j], label=feat[j])
+    ax.set_xscale('log'); ax.set_xlabel('C (= 1/lambda)')
+    ax.set_title(f'{title} coefficient paths (class: setosa)')
+    ax.legend(fontsize=8)
+plt.tight_layout(); plt.show()
+print('L1 zeros at smallest C (class 0):', int((paths_l1[0, 0] == 0).sum()))
+print('L2 zeros at smallest C (class 0):', int((paths_l2[0, 0] == 0).sum()))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,pandas,scikit-learn">
@@ -369,39 +472,53 @@ for C, a in zip([0.001, 0.01, 0.1, 1, 10], result):
     <p class="muted">two moons + the road to non-linear</p>
   </section>
 
-  <section>
+  <section class="example" data-packages="scikit-learn">
     <h2>The <code>make_moons</code> dataset</h2>
-    <div class="two-col">
-      <div>
-        <svg viewBox="0 0 240 200" style="width:100%;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
-          <!-- top moon (blue) -->
-          <path d="M40,120 A60,60 0 0 1 160,120" stroke="none" fill="none"/>
-          <g fill="#2563eb" opacity="0.7">
-            <circle cx="50"  cy="115" r="3"/><circle cx="70"  cy="85"  r="3"/>
-            <circle cx="95"  cy="65"  r="3"/><circle cx="125" cy="58"  r="3"/>
-            <circle cx="150" cy="70"  r="3"/><circle cx="170" cy="95"  r="3"/>
-            <circle cx="185" cy="125" r="3"/>
-          </g>
-          <!-- bottom moon (red) -->
-          <g fill="#b91c1c" opacity="0.7">
-            <circle cx="85"  cy="120" r="3"/><circle cx="110" cy="135" r="3"/>
-            <circle cx="135" cy="140" r="3"/><circle cx="160" cy="135" r="3"/>
-            <circle cx="180" cy="120" r="3"/><circle cx="200" cy="140" r="3"/>
-            <circle cx="220" cy="150" r="3"/>
-          </g>
-          <!-- linear boundary attempt -->
-          <line x1="40" y1="180" x2="220" y2="20" stroke="#0f172a" stroke-dasharray="3 3"/>
-        </svg>
-      </div>
-      <div>
-        <pre><code class="language-python">from sklearn.datasets import make_moons
-X, y = make_moons(n_samples=400,
-                  noise=0.25,
-                  random_state=0)</code></pre>
-        <p>Two interleaved half-moons. <strong>No straight line</strong> separates them.</p>
-        <p class="muted">LR (and LDA) plateau around 85% accuracy — they cannot bend.</p>
-      </div>
+    <div class="ex-prompt">Two interleaved half-moons — no straight line can separate them. Fit a plain logistic regression and watch the accuracy plateau around 85%: the model isn't broken, the hypothesis class is too narrow.</div>
+<textarea class="ex-code">from sklearn.datasets import make_moons
+from sklearn.linear_model import LogisticRegression
+
+Xm, ym = make_moons(n_samples=400, noise=0.25, random_state=0)
+m = LogisticRegression(max_iter=2000).fit(Xm, ym)
+print(f'LR on moons: accuracy = {m.score(Xm, ym):.4f}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
     </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy,scikit-learn,matplotlib">
+    <h2>A line cannot separate two moons</h2>
+    <div class="ex-prompt">Plot the predicted-class regions over the data: the boundary is a single straight cut, so one moon is always partly miscolored. This is the wall that motivates Day 2 — non-linear features (kernels) or non-linear models (trees, ensembles). Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_moons
+from sklearn.linear_model import LogisticRegression
+
+Xm, ym = make_moons(n_samples=400, noise=0.25, random_state=0)
+m = LogisticRegression(max_iter=2000).fit(Xm, ym)
+
+xx, yy = np.meshgrid(np.linspace(Xm[:,0].min()-0.5, Xm[:,0].max()+0.5, 200),
+                     np.linspace(Xm[:,1].min()-0.5, Xm[:,1].max()+0.5, 200))
+Z = m.predict(np.c_[xx.ravel(), yy.ravel()]).reshape(xx.shape)
+fig, ax = plt.subplots(figsize=(6, 5))
+ax.contourf(xx, yy, Z, alpha=0.25)
+ax.scatter(Xm[ym==0,0], Xm[ym==0,1], s=10)
+ax.scatter(Xm[ym==1,0], Xm[ym==1,1], s=10, color='C3')
+ax.set_title('A line cannot separate two moons'); plt.show()
+print('miscolored points:', int((m.predict(Xm) != ym).sum()), 'of', len(ym))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section>

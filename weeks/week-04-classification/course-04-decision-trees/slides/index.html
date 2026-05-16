@@ -147,6 +147,42 @@
       </div>
     </div>
   </section>
+
+  <section class="example" data-packages="numpy,pandas,scikit-learn">
+    <h2>Fit an unpruned regression tree</h2>
+    <div class="ex-prompt">Fit a default <code>DecisionTreeRegressor</code> on a synthetic Boston-like housing dataset and report its depth and test MSE. With no depth cap the tree grows until leaves are pure — a textbook overfit.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+
+rng = np.random.default_rng(0)
+n = 200
+boston = pd.DataFrame({
+    'rm':    rng.normal(6.3, 0.7, n),
+    'lstat': rng.uniform(2, 35, n),
+    'crim':  rng.exponential(3, n),
+    'age':   rng.uniform(20, 100, n),
+    'dis':   rng.uniform(1, 12, n),
+})
+boston['medv'] = (
+    5 * boston['rm'] - 0.5 * boston['lstat'] - 0.1 * boston['crim']
+    - 0.02 * boston['age'] + 0.3 * boston['dis']
+    + rng.normal(0, 2, n) + 10
+)
+Xb = boston.drop(columns=['medv']); yb = boston['medv']
+Xtr, Xte, ytr, yte = train_test_split(Xb, yb, test_size=0.3, random_state=0)
+tree = DecisionTreeRegressor(random_state=0).fit(Xtr, ytr)
+print(f'unpruned depth = {tree.get_depth()}, test MSE = {mean_squared_error(yte, tree.predict(Xte)):.2f}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
 </section>
 
 <!-- ============================================================ PART 2 -->
@@ -178,6 +214,104 @@
       </div>
     </div>
     <p class="callout">Gini and entropy are smooth and pick more informative splits than raw error rate. In practice they agree on almost everything.</p>
+  </section>
+
+  <section class="example" data-packages="numpy,pandas,scikit-learn">
+    <h2>Classification tree on Carseats</h2>
+    <div class="ex-prompt">Build the binary target <code>High = Sales &gt; 8</code> on a synthetic Carseats-like dataset, one-hot encode the categoricals, and fit a depth-3 <code>DecisionTreeClassifier</code>. The shallow tree gives you something you can actually read.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split
+
+rng = np.random.default_rng(0)
+n = 200
+carseats = pd.DataFrame({
+    'CompPrice': rng.integers(80, 180, n),
+    'Income':    rng.integers(20, 130, n),
+    'Advertising': rng.integers(0, 30, n),
+    'Population':  rng.integers(50, 510, n),
+    'Price':       rng.integers(50, 200, n),
+    'ShelveLoc':   rng.choice(['Bad','Medium','Good'], n),
+    'Age':         rng.integers(25, 80, n),
+    'Education':   rng.integers(10, 19, n),
+    'Urban':       rng.choice(['Yes','No'], n),
+    'US':          rng.choice(['Yes','No'], n),
+})
+# manufacture a Sales response that depends on Price, ShelveLoc, Advertising
+shelve_bonus = carseats['ShelveLoc'].map({'Bad':-2,'Medium':0,'Good':3})
+carseats['Sales'] = (
+    15 - 0.05 * carseats['Price'] + 0.1 * carseats['Advertising']
+    + shelve_bonus + rng.normal(0, 1.5, n)
+)
+
+c = carseats.copy()
+c['High'] = (c['Sales'] > 8).astype(int)
+c = pd.get_dummies(c.drop(columns=['Sales']), columns=['ShelveLoc','Urban','US'],
+                    drop_first=True, dtype=float)
+X = c.drop(columns=['High']); y = c['High']
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=0, stratify=y)
+tree = DecisionTreeClassifier(max_depth=3, random_state=0).fit(Xtr, ytr)
+print(f'depth-3 tree test accuracy = {tree.score(Xte, yte):.4f}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy,pandas,scikit-learn,matplotlib">
+    <h2>Visualize the fitted tree</h2>
+    <div class="ex-prompt">Use <code>plot_tree</code> to draw the depth-3 Carseats tree with feature names and Gini-coloured leaves. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+from sklearn.tree import DecisionTreeClassifier, plot_tree
+from sklearn.model_selection import train_test_split
+
+rng = np.random.default_rng(0)
+n = 200
+carseats = pd.DataFrame({
+    'CompPrice': rng.integers(80, 180, n),
+    'Income':    rng.integers(20, 130, n),
+    'Advertising': rng.integers(0, 30, n),
+    'Population':  rng.integers(50, 510, n),
+    'Price':       rng.integers(50, 200, n),
+    'ShelveLoc':   rng.choice(['Bad','Medium','Good'], n),
+    'Age':         rng.integers(25, 80, n),
+    'Education':   rng.integers(10, 19, n),
+    'Urban':       rng.choice(['Yes','No'], n),
+    'US':          rng.choice(['Yes','No'], n),
+})
+shelve_bonus = carseats['ShelveLoc'].map({'Bad':-2,'Medium':0,'Good':3})
+carseats['Sales'] = (
+    15 - 0.05 * carseats['Price'] + 0.1 * carseats['Advertising']
+    + shelve_bonus + rng.normal(0, 1.5, n)
+)
+c = carseats.copy()
+c['High'] = (c['Sales'] > 8).astype(int)
+c = pd.get_dummies(c.drop(columns=['Sales']), columns=['ShelveLoc','Urban','US'],
+                    drop_first=True, dtype=float)
+X = c.drop(columns=['High']); y = c['High']
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=0, stratify=y)
+tree = DecisionTreeClassifier(max_depth=3, random_state=0).fit(Xtr, ytr)
+
+fig, ax = plt.subplots(figsize=(11, 6))
+plot_tree(tree, feature_names=list(X.columns), class_names=['Low','High'],
+          filled=True, ax=ax, fontsize=8)
+plt.show()
+print('root split feature:', X.columns[tree.tree_.feature[0]])
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,pandas,scikit-learn">
@@ -356,10 +490,60 @@ print('root split feature:', result)</script>
         <p class="muted">Collapse to root — predict the mean.</p>
       </div>
     </div>
-    <pre><code class="language-python">from sklearn.tree import DecisionTreeRegressor
-path  = DecisionTreeRegressor().cost_complexity_pruning_path(X, y)
-alphas = path.ccp_alphas               # candidate αs
-# pick best with CV: GridSearchCV(..., {'ccp_alpha': alphas})</code></pre>
+  </section>
+
+  <section class="example" data-packages="numpy,pandas,scikit-learn,matplotlib">
+    <h2>Cost-complexity pruning path</h2>
+    <div class="ex-prompt">Walk the cost-complexity path on a regression tree (synthetic Boston-like data), 5-fold CV each α, pick the α that minimizes CV MSE, and refit. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.metrics import mean_squared_error
+
+rng = np.random.default_rng(0)
+n = 200
+boston = pd.DataFrame({
+    'rm':    rng.normal(6.3, 0.7, n),
+    'lstat': rng.uniform(2, 35, n),
+    'crim':  rng.exponential(3, n),
+    'age':   rng.uniform(20, 100, n),
+    'dis':   rng.uniform(1, 12, n),
+})
+boston['medv'] = (
+    5 * boston['rm'] - 0.5 * boston['lstat'] - 0.1 * boston['crim']
+    - 0.02 * boston['age'] + 0.3 * boston['dis']
+    + rng.normal(0, 2, n) + 10
+)
+Xb = boston.drop(columns=['medv']); yb = boston['medv']
+Xtr, Xte, ytr, yte = train_test_split(Xb, yb, test_size=0.3, random_state=0)
+tree = DecisionTreeRegressor(random_state=0).fit(Xtr, ytr)
+
+path = tree.cost_complexity_pruning_path(Xtr, ytr)
+alphas = path.ccp_alphas[:-1]  # drop the trivial root-only tree
+cv_mse = []
+for a in alphas:
+    m = DecisionTreeRegressor(random_state=0, ccp_alpha=a)
+    cv_mse.append(-cross_val_score(m, Xtr, ytr, cv=5,
+                                    scoring='neg_mean_squared_error').mean())
+fig, ax = plt.subplots(figsize=(7, 4))
+ax.plot(alphas, cv_mse, marker='.')
+best_a = alphas[int(np.argmin(cv_mse))]
+ax.axvline(best_a, color='C3', linestyle='--', label=f'best a = {best_a:.3f}')
+ax.set_xlabel('ccp_alpha'); ax.set_ylabel('5-fold CV MSE'); ax.legend()
+ax.set_title('Cost-complexity pruning path'); plt.show()
+pruned = DecisionTreeRegressor(random_state=0, ccp_alpha=best_a).fit(Xtr, ytr)
+print(f'pruned depth={pruned.get_depth()}  test MSE = {mean_squared_error(yte, pruned.predict(Xte)):.2f}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section>
@@ -513,6 +697,66 @@ print(f'best alpha = {best_a:.4f}  test accuracy = {result:.4f}')</script>
       <li class="fragment fade-up">Borderline cases jump between leaves — predictions wobble.</li>
     </ul>
     <p class="mistake">A single tree is <em>unstable</em>. The greedy top-down search is sensitive to small changes in the data.</p>
+  </section>
+
+  <section class="example" data-packages="numpy,pandas,scikit-learn,matplotlib">
+    <h2>Bootstrap → four different trees</h2>
+    <div class="ex-prompt">Refit a depth-3 classifier on four bootstrap resamples of the same Carseats-like data. Same data, four different first splits — that variance is what ensembles attack next course. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+from sklearn.tree import DecisionTreeClassifier, plot_tree
+from sklearn.model_selection import train_test_split
+
+rng = np.random.default_rng(0)
+n = 200
+carseats = pd.DataFrame({
+    'CompPrice': rng.integers(80, 180, n),
+    'Income':    rng.integers(20, 130, n),
+    'Advertising': rng.integers(0, 30, n),
+    'Population':  rng.integers(50, 510, n),
+    'Price':       rng.integers(50, 200, n),
+    'ShelveLoc':   rng.choice(['Bad','Medium','Good'], n),
+    'Age':         rng.integers(25, 80, n),
+    'Education':   rng.integers(10, 19, n),
+    'Urban':       rng.choice(['Yes','No'], n),
+    'US':          rng.choice(['Yes','No'], n),
+})
+shelve_bonus = carseats['ShelveLoc'].map({'Bad':-2,'Medium':0,'Good':3})
+carseats['Sales'] = (
+    15 - 0.05 * carseats['Price'] + 0.1 * carseats['Advertising']
+    + shelve_bonus + rng.normal(0, 1.5, n)
+)
+c = carseats.copy()
+c['High'] = (c['Sales'] > 8).astype(int)
+c = pd.get_dummies(c.drop(columns=['Sales']), columns=['ShelveLoc','Urban','US'],
+                    drop_first=True, dtype=float)
+X = c.drop(columns=['High']); y = c['High']
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=0, stratify=y)
+
+fig, axes = plt.subplots(2, 2, figsize=(11, 8))
+roots = []
+for ax, seed in zip(axes.ravel(), [0, 1, 2, 3]):
+    rng2 = np.random.default_rng(seed)
+    idx = rng2.choice(len(Xtr), len(Xtr), replace=True)
+    t = DecisionTreeClassifier(max_depth=3, random_state=seed)
+    Xc_tr = Xtr.iloc[idx]; yc_tr = ytr.iloc[idx]
+    t.fit(Xc_tr, yc_tr)
+    plot_tree(t, feature_names=list(Xtr.columns), class_names=['Low','High'],
+              filled=True, ax=ax, fontsize=6)
+    ax.set_title(f'bootstrap seed = {seed}')
+    roots.append(Xtr.columns[t.tree_.feature[0]])
+plt.tight_layout(); plt.show()
+print('root splits across bootstraps:', roots)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section>

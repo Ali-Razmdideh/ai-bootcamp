@@ -105,6 +105,30 @@
     </div>
   </section>
 
+  <section class="example" data-packages="numpy,matplotlib">
+    <h2>The sigmoid — drawn from scratch</h2>
+    <div class="ex-prompt">Plot σ(z) = 1 / (1 + e<sup>−z</sup>) over a grid of log-odds values to see the S-shape that maps any real number into [0, 1]. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib; matplotlib.use('AGG'); import matplotlib.pyplot as plt
+
+z = np.linspace(-6, 6, 200)
+fig, ax = plt.subplots(figsize=(6, 3.5))
+ax.plot(z, 1/(1+np.exp(-z)))
+ax.set_xlabel(r'$\beta_0 + \beta_1 x$ (log-odds)')
+ax.set_ylabel('p(x)'); ax.set_title('The sigmoid')
+plt.show()
+print('sigmoid(0) =', 1/(1+np.exp(-0)))
+print('sigmoid(2) =', round(1/(1+np.exp(-2)), 4))
+print('sigmoid(-2) =', round(1/(1+np.exp(2)), 4))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
   <section>
     <h2>Fit by maximum likelihood, not OLS</h2>
     <p>Choose β to make the observed labels as probable as possible:</p>
@@ -132,6 +156,70 @@
     </div>
   </section>
 
+  <section class="example" data-packages="numpy,pandas,scikit-learn">
+    <h2>Default → balance only — fit it</h2>
+    <div class="ex-prompt">Fit an (essentially) unregularized logistic regression of <code>default</code> on <code>balance</code> using a synthetic Default-like dataset. Inspect the intercept, slope, and the odds-ratio per +1 and per +100 units of balance.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd
+from sklearn.linear_model import LogisticRegression
+
+rng = np.random.default_rng(0)
+n = 4000
+balance = np.clip(rng.normal(900, 480, n), 0, 2700)
+logit = -10.6 + 0.0055 * balance
+p = 1/(1+np.exp(-logit))
+y = (rng.uniform(size=n) < p).astype(int)
+d = pd.DataFrame({'balance': balance, 'y': y})
+
+X = d[['balance']].to_numpy(); y = d['y'].to_numpy()
+m = LogisticRegression(C=1e6, max_iter=2000).fit(X, y)  # huge C -> ~unregularized
+print(f'intercept = {m.intercept_[0]:.4f}')
+print(f'slope     = {m.coef_[0][0]:.6f}')
+print(f'odds ratio per +1 unit of balance: {np.exp(m.coef_[0][0]):.6f}')
+print(f'odds ratio per +100 units:          {np.exp(100*m.coef_[0][0]):.4f}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy,pandas,scikit-learn,matplotlib">
+    <h2>Default → balance — visualize the fit</h2>
+    <div class="ex-prompt">Overlay the fitted sigmoid on the 0/1 outcomes to see the S-shape in probability that linear regression couldn't draw. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd
+import matplotlib; matplotlib.use('AGG'); import matplotlib.pyplot as plt
+from sklearn.linear_model import LogisticRegression
+
+rng = np.random.default_rng(0)
+n = 4000
+balance = np.clip(rng.normal(900, 480, n), 0, 2700)
+logit = -10.6 + 0.0055 * balance
+p = 1/(1+np.exp(-logit))
+y = (rng.uniform(size=n) < p).astype(int)
+
+X = balance.reshape(-1, 1)
+m = LogisticRegression(C=1e6, max_iter=2000).fit(X, y)
+
+xs = np.linspace(0, 2700, 200).reshape(-1, 1)
+ps = m.predict_proba(xs)[:, 1]
+fig, ax = plt.subplots(figsize=(6, 4))
+ax.scatter(X.ravel(), y, s=4, alpha=0.2)
+ax.plot(xs, ps, color='C3', linewidth=2)
+ax.set_xlabel('balance'); ax.set_ylabel('P(default)')
+ax.set_title('Logistic fit'); plt.show()
+print('P(default | balance=1000) =', round(m.predict_proba([[1000]])[0,1], 4))
+print('P(default | balance=2000) =', round(m.predict_proba([[2000]])[0,1], 4))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
   <section>
     <h2>Interpreting coefficients — odds ratios</h2>
     <p>A unit change in <em>X</em><sub>j</sub> multiplies the odds by <span style="white-space:nowrap;">e<sup>β<sub>j</sub></sup></span>.</p>
@@ -152,13 +240,69 @@
     <p class="muted">when a coefficient flips sign</p>
   </section>
 
-  <section>
-    <h2>Add more predictors</h2>
-    <p style="font-size:1.1em;text-align:center;">log[ P / (1−P) ] = β₀ + β₁X₁ + ⋯ + β<sub>p</sub>X<sub>p</sub></p>
-    <pre><code class="language-python">from sklearn.linear_model import LogisticRegression
-m = LogisticRegression(max_iter=2000).fit(
-    X[['balance', 'income', 'student']], y)</code></pre>
-    <p class="muted">Same model, more columns. Each β<sub>j</sub> is the effect of X<sub>j</sub> <em>holding the rest fixed</em>.</p>
+  <section class="example" data-packages="numpy,pandas,scikit-learn">
+    <h2>Add more predictors — Smarket lags</h2>
+    <div class="ex-prompt">Same model, more columns: log[P/(1−P)] = β₀ + β₁X₁ + … + β<sub>p</sub>X<sub>p</sub>. Predict <code>Direction</code> from the five lag returns plus <code>Volume</code> — <em>not</em> <code>Today</code>, which would leak the answer. Tiny coefficients and accuracy barely above 50% are the headline: markets are hard.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd
+from sklearn.linear_model import LogisticRegression
+
+rng = np.random.default_rng(0)
+n = 1250
+smarket = pd.DataFrame({
+    'Lag1':   rng.normal(0, 1.1, n),
+    'Lag2':   rng.normal(0, 1.1, n),
+    'Lag3':   rng.normal(0, 1.1, n),
+    'Lag4':   rng.normal(0, 1.1, n),
+    'Lag5':   rng.normal(0, 1.1, n),
+    'Volume': np.clip(rng.normal(1.5, 0.4, n), 0.5, 3.0),
+})
+smarket['Direction'] = np.where(rng.uniform(size=n) < 0.515, 'Up', 'Down')
+
+Xs = smarket[['Lag1', 'Lag2', 'Lag3', 'Lag4', 'Lag5', 'Volume']]
+ys = (smarket['Direction'] == 'Up').astype(int)
+m = LogisticRegression(C=1e6, max_iter=2000).fit(Xs, ys)
+print(pd.Series(m.coef_[0], index=Xs.columns).round(4).to_string())
+print(f'training accuracy = {m.score(Xs, ys):.4f}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy,pandas,scikit-learn">
+    <h2>Smarket — stratified held-out check</h2>
+    <div class="ex-prompt">Training accuracy near 50% could still be noise that happens to overfit. A stratified 70/30 split confirms there's no signal to find — held-out accuracy stays around chance.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+
+rng = np.random.default_rng(0)
+n = 1250
+smarket = pd.DataFrame({
+    'Lag1':   rng.normal(0, 1.1, n),
+    'Lag2':   rng.normal(0, 1.1, n),
+    'Lag3':   rng.normal(0, 1.1, n),
+    'Lag4':   rng.normal(0, 1.1, n),
+    'Lag5':   rng.normal(0, 1.1, n),
+    'Volume': np.clip(rng.normal(1.5, 0.4, n), 0.5, 3.0),
+})
+smarket['Direction'] = np.where(rng.uniform(size=n) < 0.515, 'Up', 'Down')
+Xs = smarket[['Lag1', 'Lag2', 'Lag3', 'Lag4', 'Lag5', 'Volume']]
+ys = (smarket['Direction'] == 'Up').astype(int)
+
+Xtr, Xte, ytr, yte = train_test_split(Xs, ys, test_size=0.3, random_state=0, stratify=ys)
+m = LogisticRegression(C=1e6, max_iter=2000).fit(Xtr, ytr)
+print(f'held-out accuracy = {m.score(Xte, yte):.4f}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section>
@@ -344,12 +488,74 @@ print(f"with x-int AUC = {auc_int:.4f}")</script>
     <p class="muted">probabilities are the real output</p>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,pandas,scikit-learn">
     <h2><code>predict_proba</code> vs <code>predict</code></h2>
-    <p>Logistic regression's native output is a probability. <code>predict</code> applies a 0.5 cutoff — rarely optimal on imbalanced data.</p>
-    <pre><code class="language-python">proba = model.predict_proba(X_test)[:, 1]   # column for class 1
-pred  = (proba >= 0.5).astype(int)            # default threshold</code></pre>
-    <p class="muted">Default at threshold 0.5 → confusion matrix that misses three-quarters of true defaulters.</p>
+    <div class="ex-prompt">Logistic regression's native output is a probability — <code>predict_proba</code> column 1. <code>predict</code> just thresholds at 0.5, which is rarely optimal on imbalanced data like Default. Inspect the first few probabilities and the implied 0.5 predictions on a held-out slice.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+
+rng = np.random.default_rng(0)
+n = 4000
+balance = np.clip(rng.normal(900, 480, n), 0, 2700)
+income  = np.clip(rng.normal(35000, 12000, n), 5000, 90000)
+logit = -10.6 + 0.0055 * balance + 1e-6 * income
+p = 1/(1+np.exp(-logit))
+y = (rng.uniform(size=n) < p).astype(int)
+d = pd.DataFrame({'balance': balance, 'income': income, 'y': y})
+
+X = d[['balance', 'income']].to_numpy(); y = d['y'].to_numpy()
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=0, stratify=y)
+m = LogisticRegression(max_iter=2000).fit(Xtr, ytr)
+proba = m.predict_proba(Xte)[:, 1]
+print('first 5 probs :', proba[:5].round(3))
+print('first 5 preds :', (proba >= 0.5).astype(int)[:5])
+print('share predicted positive at t=0.5:', round((proba >= 0.5).mean(), 4))
+print('base rate of defaulters         :', round(yte.mean(), 4))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy,pandas,scikit-learn,matplotlib">
+    <h2>ROC curve on Default</h2>
+    <div class="ex-prompt">Sweep every threshold to trace the FPR/TPR trade-off; AUC summarizes the whole curve in one threshold-free number. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd
+import matplotlib; matplotlib.use('AGG'); import matplotlib.pyplot as plt
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_curve, auc
+
+rng = np.random.default_rng(0)
+n = 4000
+balance = np.clip(rng.normal(900, 480, n), 0, 2700)
+income  = np.clip(rng.normal(35000, 12000, n), 5000, 90000)
+logit = -10.6 + 0.0055 * balance + 1e-6 * income
+p = 1/(1+np.exp(-logit))
+y = (rng.uniform(size=n) < p).astype(int)
+
+X = np.column_stack([balance, income])
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=0, stratify=y)
+m = LogisticRegression(max_iter=2000).fit(Xtr, ytr)
+proba = m.predict_proba(Xte)[:, 1]
+
+fpr, tpr, thr = roc_curve(yte, proba)
+fig, ax = plt.subplots(figsize=(5, 5))
+ax.plot(fpr, tpr); ax.plot([0,1], [0,1], 'k--', alpha=0.4)
+ax.set_xlabel('FPR'); ax.set_ylabel('TPR')
+ax.set_title(f'ROC - AUC = {auc(fpr, tpr):.4f}'); plt.show()
+print(f'AUC = {auc(fpr, tpr):.4f}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section>
@@ -366,18 +572,44 @@ pred  = (proba >= 0.5).astype(int)            # default threshold</code></pre>
     <p class="muted" style="text-align:center;">Lower threshold → catch more defaulters (recall ↑) but flag more honest customers (precision ↓).</p>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,pandas,scikit-learn,matplotlib">
     <h2>Tune the threshold for F1</h2>
-    <pre><code class="language-python">import numpy as np
-from sklearn.metrics import f1_score, confusion_matrix
+    <div class="ex-prompt">Sweep candidate thresholds, score F1 at each, and pick the maximum. On Default the best cutoff lands well below 0.5 because positives are rare — recall climbs at a modest precision cost. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd
+import matplotlib; matplotlib.use('AGG'); import matplotlib.pyplot as plt
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import f1_score
 
-ts = np.linspace(0.05, 0.6, 50)
-f1s = [f1_score(y_test, (proba >= t)) for t in ts]
-best_t = ts[int(np.argmax(f1s))]
+rng = np.random.default_rng(0)
+n = 4000
+balance = np.clip(rng.normal(900, 480, n), 0, 2700)
+income  = np.clip(rng.normal(35000, 12000, n), 5000, 90000)
+logit = -10.6 + 0.0055 * balance + 1e-6 * income
+p = 1/(1+np.exp(-logit))
+y = (rng.uniform(size=n) < p).astype(int)
 
-print(f"F1-optimal threshold: {best_t:.2f}")
-print(confusion_matrix(y_test, proba >= best_t))</code></pre>
-    <aside class="notes">On Default the F1-optimal threshold lands near 0.15. Recall jumps from ~30% (at 0.5) to ~70% (at 0.15), with precision trading down accordingly.</aside>
+X = np.column_stack([balance, income])
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=0, stratify=y)
+m = LogisticRegression(max_iter=2000).fit(Xtr, ytr)
+proba = m.predict_proba(Xte)[:, 1]
+
+ts = np.linspace(0.02, 0.6, 50)
+f1s = [f1_score(yte, (proba >= t).astype(int)) for t in ts]
+fig, ax = plt.subplots(figsize=(6, 3.5))
+ax.plot(ts, f1s); best_t = ts[int(np.argmax(f1s))]
+ax.axvline(best_t, color='C3', linestyle='--', label=f'best t = {best_t:.2f}')
+ax.set_xlabel('threshold'); ax.set_ylabel('F1'); ax.legend()
+ax.set_title('Threshold tuning'); plt.show()
+print(f'F1 at default t=0.5: {f1_score(yte, (proba>=0.5).astype(int)):.4f}')
+print(f'F1 at best t = {best_t:.2f}: {max(f1s):.4f}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,pandas,scikit-learn">

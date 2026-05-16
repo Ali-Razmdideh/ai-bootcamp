@@ -99,6 +99,45 @@
     </div>
   </section>
 
+  <section class="example" data-packages="numpy,scikit-learn,matplotlib">
+    <h2>Infinitely many lines separate — pick the best</h2>
+    <div class="ex-prompt">Fit a hard-margin linear SVM on two well-separated blobs and inspect the support vectors that define the boundary. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+from sklearn.svm import SVC
+from sklearn.datasets import make_blobs
+
+X, y = make_blobs(n_samples=80, centers=2, cluster_std=0.8, random_state=0)
+svc = SVC(kernel='linear', C=100).fit(X, y)
+
+# Plot data, boundary, margins, and support vectors
+xx = np.linspace(X[:,0].min()-1, X[:,0].max()+1, 200)
+w = svc.coef_[0]; b = svc.intercept_[0]
+yy = -(w[0] * xx + b) / w[1]
+margin = 1 / np.linalg.norm(w)
+yy_up = yy + margin * np.sqrt(1 + (w[0]/w[1])**2)
+yy_dn = yy - margin * np.sqrt(1 + (w[0]/w[1])**2)
+
+fig, ax = plt.subplots(figsize=(7, 5))
+ax.scatter(X[y==0,0], X[y==0,1], s=30, label='class 0')
+ax.scatter(X[y==1,0], X[y==1,1], s=30, color='C3', label='class 1')
+ax.plot(xx, yy, 'k-'); ax.plot(xx, yy_up, 'k--', alpha=0.5)
+ax.plot(xx, yy_dn, 'k--', alpha=0.5)
+ax.scatter(svc.support_vectors_[:,0], svc.support_vectors_[:,1],
+            s=120, facecolors='none', edgecolors='black', label='SV')
+ax.legend(); ax.set_title('Maximum-margin classifier'); plt.show()
+print(f'#support vectors: {svc.n_support_}  ->  total {len(svc.support_vectors_)}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
   <section>
     <h2>The optimization</h2>
     <p style="text-align:center;font-size:1.05em;">maximize M s.t. y<sub>i</sub>(β₀ + β·x<sub>i</sub>) ≥ M, &nbsp;‖β‖ = 1</p>
@@ -193,6 +232,40 @@
         <p class="muted">Local bumps. Implicit feature space is infinite-dimensional. The default.</p>
       </div>
     </div>
+  </section>
+
+  <section class="example" data-packages="numpy,scikit-learn,matplotlib">
+    <h2>Three kernels on the moons dataset</h2>
+    <div class="ex-prompt">Compare linear, polynomial, and RBF kernels on a curved (moons) boundary. Linear can't bend; polynomial bends rigidly; RBF curves to fit almost exactly. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.datasets import make_moons
+
+Xm, ym = make_moons(n_samples=200, noise=0.3, random_state=0)
+fig, axes = plt.subplots(1, 3, figsize=(13, 4), sharey=True)
+for ax, kernel in zip(axes, ['linear', 'poly', 'rbf']):
+    svc = Pipeline([('s', StandardScaler()),
+                    ('svc', SVC(kernel=kernel, degree=3, C=1, gamma='scale'))]).fit(Xm, ym)
+    xx, yy = np.meshgrid(np.linspace(Xm[:,0].min()-0.3, Xm[:,0].max()+0.3, 200),
+                          np.linspace(Xm[:,1].min()-0.3, Xm[:,1].max()+0.3, 200))
+    Z = svc.predict(np.c_[xx.ravel(), yy.ravel()]).reshape(xx.shape)
+    ax.contourf(xx, yy, Z, alpha=0.25)
+    ax.scatter(Xm[ym==0,0], Xm[ym==0,1], s=12)
+    ax.scatter(Xm[ym==1,0], Xm[ym==1,1], s=12, color='C3')
+    ax.set_title(f'{kernel} kernel — acc={svc.score(Xm, ym):.3f}')
+plt.tight_layout(); plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section>
@@ -439,22 +512,117 @@ print(f"best CV acc = {grid.best_score_:.4f}")</script>
 
   <section>
     <h2>Khan — 63 patients, 2 308 genes, 4 cancer subtypes</h2>
-    <div class="two-col">
-      <div>
-        <ul>
-          <li>p (genes) ≫ n (patients): the classic genomics setup.</li>
-          <li>Unregularized LR diverges — perfect separation in 2 308-D.</li>
-          <li>Linear SVM thrives — the margin objective is itself a form of regularization.</li>
-          <li>RBF is overkill here: 2 308 raw dimensions already give plenty of flexibility.</li>
-        </ul>
-      </div>
-      <div>
-        <pre><code class="language-python">from sklearn.svm import SVC
-svc = SVC(kernel='linear', C=10).fit(X_train, y_train)
-print(svc.score(X_test, y_test))   # often perfect</code></pre>
-        <p class="tip">Rule of thumb: <strong>p ≫ n → linear kernel.</strong> Switch to RBF only when n is large and features are dense.</p>
-      </div>
+    <ul>
+      <li>p (genes) ≫ n (patients): the classic genomics setup.</li>
+      <li>Unregularized LR diverges — perfect separation in 2 308-D.</li>
+      <li>Linear SVM thrives — the margin objective is itself a form of regularization.</li>
+      <li>RBF is overkill here: 2 308 raw dimensions already give plenty of flexibility.</li>
+    </ul>
+    <p class="tip">Rule of thumb: <strong>p ≫ n → linear kernel.</strong> Switch to RBF only when n is large and features are dense.</p>
+  </section>
+
+  <section class="example" data-packages="numpy">
+    <h2>Khan — load and inspect the gene-expression data</h2>
+    <div class="ex-prompt">In the lecture this is the real Khan dataset (63 train × 2308 genes, 4 cancer subtypes). Here we generate a seeded synthetic p ≫ n surrogate with the same shape so the rest of the workflow runs offline.</div>
+<textarea class="ex-code">import numpy as np
+
+# Synthetic Khan-shaped data: 63 train, 20 test, 2308 features, 4 classes.
+rng = np.random.default_rng(0)
+n_features = 2308
+classes = np.array([1, 2, 3, 4])
+centers = rng.normal(0, 0.6, size=(4, n_features))
+
+def sample(per_class):
+    Xs, ys = [], []
+    for k, n in enumerate(per_class):
+        Xs.append(centers[k] + rng.normal(0, 1.0, size=(n, n_features)))
+        ys.append(np.full(n, classes[k]))
+    return np.vstack(Xs), np.concatenate(ys)
+
+xtr, ytr = sample([8, 23, 12, 20])   # 63 total, mirrors Khan class sizes
+xte, yte = sample([3, 6, 6, 5])      # 20 test points
+
+print('train:', xtr.shape, '  test:', xte.shape)
+print('classes:', np.bincount(ytr)[1:])  # subtypes labelled 1..4
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
     </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy,scikit-learn">
+    <h2>Linear SVM on Khan (p ≫ n)</h2>
+    <div class="ex-prompt">Fit a linear-kernel SVM with C=10 on the p ≫ n data and check train/test accuracy plus the confusion matrix. Linear SVM is the right tool when features outnumber samples.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.svm import SVC
+from sklearn.metrics import confusion_matrix
+
+# Self-contained Khan-shaped synthetic data
+rng = np.random.default_rng(0)
+n_features = 2308
+classes = np.array([1, 2, 3, 4])
+centers = rng.normal(0, 0.6, size=(4, n_features))
+
+def sample(per_class):
+    Xs, ys = [], []
+    for k, n in enumerate(per_class):
+        Xs.append(centers[k] + rng.normal(0, 1.0, size=(n, n_features)))
+        ys.append(np.full(n, classes[k]))
+    return np.vstack(Xs), np.concatenate(ys)
+
+xtr, ytr = sample([8, 23, 12, 20])
+xte, yte = sample([3, 6, 6, 5])
+
+svc = SVC(kernel='linear', C=10).fit(xtr, ytr)
+print(f'train accuracy = {svc.score(xtr, ytr):.4f}')
+print(f'test accuracy  = {svc.score(xte, yte):.4f}')
+print('confusion matrix on test:')
+print(confusion_matrix(yte, svc.predict(xte)))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy,scikit-learn">
+    <h2>Tune C with a small grid (cv=3 because n=63)</h2>
+    <div class="ex-prompt">With only 63 training cases, a 3-fold grid over C ∈ {0.1, 1, 10, 100} is the right amount of tuning — anything heavier overfits the CV estimate itself.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.svm import SVC
+from sklearn.model_selection import GridSearchCV
+
+rng = np.random.default_rng(0)
+n_features = 2308
+classes = np.array([1, 2, 3, 4])
+centers = rng.normal(0, 0.6, size=(4, n_features))
+
+def sample(per_class):
+    Xs, ys = [], []
+    for k, n in enumerate(per_class):
+        Xs.append(centers[k] + rng.normal(0, 1.0, size=(n, n_features)))
+        ys.append(np.full(n, classes[k]))
+    return np.vstack(Xs), np.concatenate(ys)
+
+xtr, ytr = sample([8, 23, 12, 20])
+xte, yte = sample([3, 6, 6, 5])
+
+grid = GridSearchCV(SVC(kernel='linear'), {'C': [0.1, 1, 10, 100]},
+                     cv=3, n_jobs=-1).fit(xtr, ytr)
+print(f'best C = {grid.best_params_["C"]}  CV acc = {grid.best_score_:.4f}')
+print(f'test acc with best C = {grid.best_estimator_.score(xte, yte):.4f}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section>

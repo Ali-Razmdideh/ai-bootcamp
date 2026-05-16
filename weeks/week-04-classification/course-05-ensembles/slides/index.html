@@ -107,26 +107,52 @@
     </ul>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,pandas,scikit-learn">
     <h2>OOB error — cross-validation for free</h2>
-    <div class="two-col">
-      <div>
-        <ul>
-          <li>A bootstrap sample uses ~63% of rows.</li>
-          <li>The other ~37% are <strong>out-of-bag</strong> — unseen by that tree.</li>
-          <li>For each row, average predictions only from trees that didn't see it.</li>
-          <li>That's a near-LOO CV estimate, free of charge.</li>
-        </ul>
-      </div>
-      <div>
-        <pre><code class="language-python">from sklearn.ensemble import RandomForestClassifier
-rf = RandomForestClassifier(
-    n_estimators=500,
-    oob_score=True,
-).fit(X, y)
-print(rf.oob_score_)        # ≈ generalization accuracy</code></pre>
-      </div>
+    <div class="ex-prompt">A bootstrap sample uses ~63% of rows; the other ~37% are out-of-bag for that tree. Averaging OOB predictions per row gives a near-LOO CV estimate for free. Here we compare a single tree to a 300-tree random forest on a Carseats-shaped synthetic dataset and read off <code>oob_score_</code>.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+
+rng = np.random.RandomState(0)
+n = 300
+CompPrice = rng.uniform(80, 180, n)
+Income = rng.uniform(20, 120, n)
+Advertising = rng.uniform(0, 30, n)
+Population = rng.uniform(10, 500, n)
+Price = rng.uniform(50, 200, n)
+Age = rng.uniform(25, 80, n)
+Education = rng.randint(10, 19, n)
+ShelveLoc_Good = rng.binomial(1, 0.25, n)
+ShelveLoc_Medium = rng.binomial(1, 0.5, n)
+Urban_Yes = rng.binomial(1, 0.7, n)
+US_Yes = rng.binomial(1, 0.65, n)
+Sales = (10 - 0.05*Price + 0.04*Advertising + 2*ShelveLoc_Good
+         + 0.02*Income - 0.03*Age + rng.normal(0, 2, n))
+X = pd.DataFrame({
+    'CompPrice': CompPrice, 'Income': Income, 'Advertising': Advertising,
+    'Population': Population, 'Price': Price, 'Age': Age, 'Education': Education,
+    'ShelveLoc_Good': ShelveLoc_Good, 'ShelveLoc_Medium': ShelveLoc_Medium,
+    'Urban_Yes': Urban_Yes, 'US_Yes': US_Yes,
+}).astype(float)
+y = (Sales > 8).astype(int)
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=0, stratify=y)
+
+tree = DecisionTreeClassifier(random_state=0).fit(Xtr, ytr)
+rf = RandomForestClassifier(n_estimators=300, max_features='sqrt',
+                            oob_score=True, n_jobs=-1, random_state=0).fit(Xtr, ytr)
+print(f'single tree test acc = {tree.score(Xte, yte):.4f}')
+print(f'random forest test  = {rf.score(Xte, yte):.4f}')
+print(f'OOB error           = {1 - rf.oob_score_:.4f}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
     </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section>
@@ -184,6 +210,53 @@ print(rf.oob_score_)        # ≈ generalization accuracy</code></pre>
         </ul>
       </div>
     </div>
+  </section>
+
+  <section class="example" data-packages="numpy,pandas,scikit-learn,matplotlib">
+    <h2>Feature importance (Gini / MDI)</h2>
+    <div class="ex-prompt">Fit a regression forest on a Boston-shaped synthetic dataset and rank features by Gini importance. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
+
+rng = np.random.RandomState(0)
+n = 300
+crim = rng.exponential(3, n)
+zn = rng.uniform(0, 100, n)
+indus = rng.uniform(0, 28, n)
+chas = rng.binomial(1, 0.07, n)
+nox = rng.uniform(0.38, 0.87, n)
+rm = rng.normal(6.3, 0.7, n)
+age = rng.uniform(2, 100, n)
+dis = rng.uniform(1, 12, n)
+rad = rng.randint(1, 25, n)
+tax = rng.uniform(180, 720, n)
+ptratio = rng.uniform(12, 22, n)
+lstat = rng.uniform(1, 38, n)
+Xb = pd.DataFrame({
+    'crim': crim, 'zn': zn, 'indus': indus, 'chas': chas, 'nox': nox,
+    'rm': rm, 'age': age, 'dis': dis, 'rad': rad, 'tax': tax,
+    'ptratio': ptratio, 'lstat': lstat,
+})
+yb = (22 + 6*(rm - 6.3) - 0.3*lstat - 8*nox - 0.05*crim
+      + rng.normal(0, 3, n))
+
+rfr = RandomForestRegressor(n_estimators=300, n_jobs=-1, random_state=0).fit(Xb, yb)
+imp = pd.Series(rfr.feature_importances_, index=Xb.columns).sort_values()
+fig, ax = plt.subplots(figsize=(6, 4))
+imp.plot.barh(ax=ax); ax.set_title('RF feature importance on Boston')
+ax.set_xlabel('importance'); plt.show()
+print(imp.sort_values(ascending=False))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section class="exercise" data-packages="numpy,pandas,scikit-learn,matplotlib">
@@ -248,12 +321,53 @@ print(imp)</script>
 <script type="text/x-explain">Gini importance sums the impurity decrease attributed to each feature across all trees. Sorting and showing the top-k turns an opaque 300-tree forest into a one-glance ranking — the cheapest first pass at explainability.</script>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,pandas,scikit-learn,matplotlib">
     <h2>Partial dependence plots (PDPs)</h2>
-    <p>For feature j: sweep j across its range, average predictions over the marginal of the rest. The shape of the model's relationship with j.</p>
-    <pre><code class="language-python">from sklearn.inspection import PartialDependenceDisplay
-PartialDependenceDisplay.from_estimator(rf, X, features=['balance', 'income'])</code></pre>
-    <p class="muted">Even a 500-tree forest gives a clean S-shape or saturation curve via PDP. The model becomes explainable again.</p>
+    <div class="ex-prompt">For feature j: sweep j across its range, average predictions over the marginal of the rest — the shape of the model's relationship with j. Here we PDP the two most-important features of the Boston-shaped forest. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+<textarea class="ex-code">import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.inspection import PartialDependenceDisplay
+
+rng = np.random.RandomState(0)
+n = 300
+crim = rng.exponential(3, n)
+zn = rng.uniform(0, 100, n)
+indus = rng.uniform(0, 28, n)
+chas = rng.binomial(1, 0.07, n)
+nox = rng.uniform(0.38, 0.87, n)
+rm = rng.normal(6.3, 0.7, n)
+age = rng.uniform(2, 100, n)
+dis = rng.uniform(1, 12, n)
+rad = rng.randint(1, 25, n)
+tax = rng.uniform(180, 720, n)
+ptratio = rng.uniform(12, 22, n)
+lstat = rng.uniform(1, 38, n)
+Xb = pd.DataFrame({
+    'crim': crim, 'zn': zn, 'indus': indus, 'chas': chas, 'nox': nox,
+    'rm': rm, 'age': age, 'dis': dis, 'rad': rad, 'tax': tax,
+    'ptratio': ptratio, 'lstat': lstat,
+})
+yb = (22 + 6*(rm - 6.3) - 0.3*lstat - 8*nox - 0.05*crim
+      + rng.normal(0, 3, n))
+
+rfr = RandomForestRegressor(n_estimators=300, n_jobs=-1, random_state=0).fit(Xb, yb)
+imp = pd.Series(rfr.feature_importances_, index=Xb.columns).sort_values()
+top2 = imp.tail(2).index.tolist()
+print('PDP features:', top2)
+fig, ax = plt.subplots(figsize=(10, 4))
+PartialDependenceDisplay.from_estimator(rfr, Xb, top2, ax=ax)
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section>
@@ -317,6 +431,57 @@ PartialDependenceDisplay.from_estimator(rf, X, features=['balance', 'income'])</
       </div>
     </div>
     <p class="tip">Sweet spot: λ ≈ 0.05, depth 3-6, n_estimators chosen by early stopping. Most defaults beat hand-tuned RFs.</p>
+  </section>
+
+  <section class="example" data-packages="numpy,pandas,scikit-learn">
+    <h2>Three knobs that matter</h2>
+    <div class="ex-prompt">Grid-search <code>learning_rate</code> × <code>n_estimators</code> on a Carseats-shaped binary target. Watch how small lr + many trees usually edges out big lr + few, at the cost of fit time.</div>
+<textarea class="ex-code">import time
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.model_selection import train_test_split
+
+rng = np.random.RandomState(0)
+n = 300
+CompPrice = rng.uniform(80, 180, n)
+Income = rng.uniform(20, 120, n)
+Advertising = rng.uniform(0, 30, n)
+Population = rng.uniform(10, 500, n)
+Price = rng.uniform(50, 200, n)
+Age = rng.uniform(25, 80, n)
+Education = rng.randint(10, 19, n)
+ShelveLoc_Good = rng.binomial(1, 0.25, n)
+ShelveLoc_Medium = rng.binomial(1, 0.5, n)
+Urban_Yes = rng.binomial(1, 0.7, n)
+US_Yes = rng.binomial(1, 0.65, n)
+Sales = (10 - 0.05*Price + 0.04*Advertising + 2*ShelveLoc_Good
+         + 0.02*Income - 0.03*Age + rng.normal(0, 2, n))
+X = pd.DataFrame({
+    'CompPrice': CompPrice, 'Income': Income, 'Advertising': Advertising,
+    'Population': Population, 'Price': Price, 'Age': Age, 'Education': Education,
+    'ShelveLoc_Good': ShelveLoc_Good, 'ShelveLoc_Medium': ShelveLoc_Medium,
+    'Urban_Yes': Urban_Yes, 'US_Yes': US_Yes,
+}).astype(float)
+y = (Sales > 8).astype(int)
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=0, stratify=y)
+
+results = []
+for lr in [0.01, 0.1]:
+    for nn in [100, 500]:
+        t0 = time.perf_counter()
+        m = GradientBoostingClassifier(learning_rate=lr, n_estimators=nn,
+                                       max_depth=3, random_state=0).fit(Xtr, ytr)
+        acc = m.score(Xte, yte)
+        results.append((lr, nn, acc, time.perf_counter() - t0))
+        print(f'lr={lr:.2f}  n={nn:4d}  acc={acc:.4f}  t={results[-1][3]:.2f}s')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <section>
