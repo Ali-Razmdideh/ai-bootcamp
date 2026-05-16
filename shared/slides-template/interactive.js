@@ -48,6 +48,50 @@
     return pyodidePromise;
   }
 
+  // Python snippet that closes any open matplotlib figures and returns
+  // the most recent ones as base64-encoded PNGs. Safe to run even when
+  // matplotlib was never imported by the user code.
+  const COLLECT_FIGS_PY = `\
+import sys as _sys
+_figs_b64 = []
+if 'matplotlib' in _sys.modules:
+    import io as _io, base64 as _b64
+    from matplotlib import pyplot as _plt
+    for _n in _plt.get_fignums():
+        _f = _plt.figure(_n)
+        _buf = _io.BytesIO()
+        try:
+            _f.savefig(_buf, format='png', dpi=110, bbox_inches='tight')
+            _figs_b64.append(_b64.b64encode(_buf.getvalue()).decode('ascii'))
+        except Exception:
+            pass
+    _plt.close('all')
+_figs_b64
+`;
+
+  async function renderFigures(py, section) {
+    let result;
+    try {
+      result = await py.runPythonAsync(COLLECT_FIGS_PY);
+    } catch (_) { return; }
+    let imgs = [];
+    try { imgs = result.toJs ? result.toJs() : Array.from(result); } catch (_) { imgs = []; }
+    try { result.destroy && result.destroy(); } catch (_) {}
+    let container = section.querySelector('.ex-figures');
+    if (!container) {
+      container = el('div', { cls: 'ex-figures' });
+      const out = section.querySelector('.ex-output');
+      out.parentNode.insertBefore(container, out.nextSibling);
+    }
+    clear(container);
+    imgs.forEach(b64 => {
+      const img = document.createElement('img');
+      img.src = 'data:image/png;base64,' + b64;
+      img.alt = 'figure';
+      container.appendChild(img);
+    });
+  }
+
   async function ensurePackages(py, pkgs) {
     const needed = pkgs.filter(p => p && !loadedPackages.has(p));
     if (!needed.length) return;
@@ -188,9 +232,10 @@
     }
     output.textContent = buf.out;
     setStatus(section, '');
+    await renderFigures(py, section);
 
     if (isExample) {
-      // No check, no feedback — just the printed output.
+      // No check, no feedback — just the printed output and any figures.
       ns.destroy();
       return;
     }
@@ -244,6 +289,8 @@
       section.querySelector('.ex-output').textContent = '';
       const fb = section.querySelector('.ex-feedback');
       if (fb) renderFeedback(fb, '', []);
+      const figs = section.querySelector('.ex-figures');
+      if (figs) clear(figs);
     });
     if (showBtn) showBtn.addEventListener('click', () => {
       const solution = getScriptText(section, 'solution');

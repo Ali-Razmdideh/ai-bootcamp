@@ -87,6 +87,25 @@
 }
 .reveal .exercise .ex-output:empty,
 .reveal .example .ex-output:empty { display: none; }
+.reveal .exercise .ex-figures,
+.reveal .example .ex-figures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em;
+  margin: 0.3em 0;
+  max-height: 260px;
+  overflow: auto;
+}
+.reveal .exercise .ex-figures:empty,
+.reveal .example .ex-figures:empty { display: none; }
+.reveal .exercise .ex-figures img,
+.reveal .example .ex-figures img {
+  max-width: 100%;
+  max-height: 240px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+}
 .reveal .exercise .ex-feedback {
   margin-top: 0.3em;
   padding: 0.4em 0.6em;
