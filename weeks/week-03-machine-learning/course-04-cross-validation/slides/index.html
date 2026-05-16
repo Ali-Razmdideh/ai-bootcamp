@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/interactive.css" />
 </head>
 <body>
 <div class="reveal"><div class="slides">
@@ -94,6 +95,61 @@
 </ul>
   </section>
 
+  <section class="exercise" data-packages="numpy,scikit-learn">
+    <h2>Exercise — 5-fold CV MSE on iris</h2>
+    <div class="ex-prompt">Treat <code>iris</code> as a regression problem: predict <code>petal_length</code> from <code>sepal_length</code>, <code>sepal_width</code>, and <code>petal_width</code>. Run 5-fold CV with <code>shuffle=True, random_state=0</code> on plain <code>LinearRegression</code>. Assign the mean CV MSE (a positive number) to <code>result</code>.</div>
+<textarea class="ex-code">from sklearn.datasets import load_iris
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import cross_val_score, KFold
+import numpy as np
+
+data = load_iris(as_frame=True).frame
+# columns: sepal length (cm), sepal width (cm), petal length (cm), petal width (cm)
+X = data[['sepal length (cm)', 'sepal width (cm)', 'petal width (cm)']]
+y = data['petal length (cm)']
+
+result = None
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+from sklearn.datasets import load_iris
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import cross_val_score, KFold
+assert result is not None, "Assign your mean 5-fold CV MSE to `result`."
+_d = load_iris(as_frame=True).frame
+_X = _d[['sepal length (cm)', 'sepal width (cm)', 'petal width (cm)']]
+_y = _d['petal length (cm)']
+_s = cross_val_score(LinearRegression(), _X, _y,
+                     cv=KFold(5, shuffle=True, random_state=0),
+                     scoring='neg_mean_squared_error')
+_expected = -_s.mean()
+assert np.isclose(float(result), _expected, atol=1e-6), \
+    f"Expected ~{_expected:.6f}, got {float(result):.6f}. Use KFold(5, shuffle=True, random_state=0) and report the positive mean MSE."
+</script>
+<script type="text/x-solution">from sklearn.datasets import load_iris
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import cross_val_score, KFold
+
+data = load_iris(as_frame=True).frame
+X = data[['sepal length (cm)', 'sepal width (cm)', 'petal width (cm)']]
+y = data['petal length (cm)']
+
+scores = cross_val_score(LinearRegression(), X, y,
+                          cv=KFold(5, shuffle=True, random_state=0),
+                          scoring='neg_mean_squared_error')
+result = -scores.mean()
+print(f'5-fold CV MSE = {result:.4f}')</script>
+<script type="text/x-explain">cross_val_score returns negative MSE because scikit-learn treats higher = better; flip the sign to report MSE. Averaging across 5 folds smooths out the split-to-split noise we saw on a single train/test split.</script>
+  </section>
+
   <section>
     <h2>LOOCV — the magic shortcut for linear models</h2>
     <p>K = n looks expensive — n model fits. For linear regression, there's an exact one-pass formula:</p>
@@ -147,6 +203,50 @@
     </div>
     <div class="mistake">Every preprocessing step that uses y — feature screening, target encoding, supervised PCA — must live <strong>inside</strong> the CV loop. Otherwise the held-out fold has already leaked.</div>
   </section>
+  <section class="exercise" data-packages="numpy,scikit-learn">
+    <h2>Exercise — why training R² after CV is misleading</h2>
+    <div class="ex-prompt">Tune polynomial degree (1–5) with 5-fold CV on the <em>whole</em> iris dataset (predict <code>petal_length</code> from the other three features), refit the winner on all rows, then report training-set R². Why is this R² misleading? Run the code, then click <strong>Show solution</strong> for the canonical explanation.</div>
+<textarea class="ex-code">from sklearn.datasets import load_iris
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score, KFold
+
+data = load_iris(as_frame=True).frame
+X = data[['sepal length (cm)', 'sepal width (cm)', 'petal width (cm)']]
+y = data['petal length (cm)']
+
+best_d, best_mse = None, float('inf')
+for d in range(1, 6):
+    pipe = Pipeline([('p', PolynomialFeatures(d, include_bias=False)),
+                     ('lr', LinearRegression())])
+    mse = -cross_val_score(pipe, X, y,
+                            cv=KFold(5, shuffle=True, random_state=0),
+                            scoring='neg_mean_squared_error').mean()
+    if mse < best_mse:
+        best_d, best_mse = d, mse
+
+final = Pipeline([('p', PolynomialFeatures(best_d, include_bias=False)),
+                  ('lr', LinearRegression())]).fit(X, y)
+print(f'CV picked d = {best_d}; training R^2 = {final.score(X, y):.4f}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-solution">print("Training R^2 is computed on the same rows the model was fit on,")
+print("so it is optimistically biased — especially for higher-degree")
+print("polynomials that can hug the data. Worse, the *degree itself* was")
+print("chosen using those same rows via CV, so any 'best' degree is partly")
+print("chasing noise in this particular dataset. For an honest performance")
+print("estimate, use NESTED cross-validation: an outer loop estimates test")
+print("error while an inner loop tunes the hyperparameter on training folds only.")</script>
+<script type="text/x-explain">This task has no auto-check — it is a conceptual gotcha. The point is that training R² always over-states quality (the model fit the data) and that picking a hyperparameter on the full dataset means the chosen value is itself a function of the data. Nested CV separates tuning from evaluation.</script>
+  </section>
   <section>
     <h2>Bootstrap = sampling-distribution emulator</h2>
 <pre><code class="language-python">for k in range(B):
@@ -154,6 +254,75 @@
     theta_boot[k] = compute_statistic(data[idx])
 se = theta_boot.std()
 lo, hi = np.quantile(theta_boot, [0.025, 0.975])</code></pre><p class="muted">Works for any statistic — slope, median, ratio, correlation — without distributional assumptions.</p>
+  </section>
+
+  <section class="exercise" data-packages="numpy,scikit-learn">
+    <h2>Exercise — bootstrap a 95% CI for a coefficient</h2>
+    <div class="ex-prompt">Fit <code>LinearRegression</code> on iris (predict <code>petal_length</code> from the three other features). Bootstrap 1000 resamples with <code>np.random.default_rng(0)</code> to estimate a 95% CI for the coefficient on <code>petal_width</code>. Assign <code>result = (lo, hi)</code> using the 2.5% and 97.5% quantiles.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.datasets import load_iris
+from sklearn.linear_model import LinearRegression
+
+data = load_iris(as_frame=True).frame
+feature_cols = ['sepal length (cm)', 'sepal width (cm)', 'petal width (cm)']
+X = data[feature_cols].to_numpy()
+y = data['petal length (cm)'].to_numpy()
+j = feature_cols.index('petal width (cm)')
+
+rng = np.random.default_rng(0)
+n = len(X)
+B = 1000
+
+result = None
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+from sklearn.datasets import load_iris
+from sklearn.linear_model import LinearRegression
+assert result is not None, "Assign `result = (lo, hi)`."
+assert len(result) == 2, "Expected a (lo, hi) pair."
+_lo, _hi = float(result[0]), float(result[1])
+_d = load_iris(as_frame=True).frame
+_cols = ['sepal length (cm)', 'sepal width (cm)', 'petal width (cm)']
+_X = _d[_cols].to_numpy(); _y = _d['petal length (cm)'].to_numpy()
+_j = _cols.index('petal width (cm)')
+_rng = np.random.default_rng(0)
+_n = len(_X); _B = 1000
+_coefs = np.empty(_B)
+for _k in range(_B):
+    _idx = _rng.choice(_n, _n, replace=True)
+    _coefs[_k] = LinearRegression().fit(_X[_idx], _y[_idx]).coef_[_j]
+_elo, _ehi = np.quantile(_coefs, [0.025, 0.975])
+assert np.isclose(_lo, _elo, atol=0.05) and np.isclose(_hi, _ehi, atol=0.05), \
+    f"Expected CI ~[{_elo:.3f}, {_ehi:.3f}], got [{_lo:.3f}, {_hi:.3f}]. Pin np.random.default_rng(0) and use 1000 resamples."
+</script>
+<script type="text/x-solution">import numpy as np
+from sklearn.datasets import load_iris
+from sklearn.linear_model import LinearRegression
+
+data = load_iris(as_frame=True).frame
+cols = ['sepal length (cm)', 'sepal width (cm)', 'petal width (cm)']
+X = data[cols].to_numpy(); y = data['petal length (cm)'].to_numpy()
+j = cols.index('petal width (cm)')
+
+rng = np.random.default_rng(0)
+n, B = len(X), 1000
+coefs = np.empty(B)
+for k in range(B):
+    idx = rng.choice(n, n, replace=True)
+    coefs[k] = LinearRegression().fit(X[idx], y[idx]).coef_[j]
+lo, hi = np.quantile(coefs, [0.025, 0.975])
+result = (lo, hi)
+print(f'95% CI on petal_width coef: [{lo:.3f}, {hi:.3f}]')</script>
+<script type="text/x-explain">Each bootstrap resample draws n rows with replacement from the original data and refits the model. The spread of the 1000 coefficient estimates is the bootstrap sampling distribution; the 2.5%/97.5% quantiles give a non-parametric 95% CI — no normality assumption needed.</script>
   </section>
 
   <section>
@@ -191,6 +360,7 @@ lo, hi = np.quantile(theta_boot, [0.025, 0.975])</code></pre><p class="muted">Wo
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="../../../../shared/slides-template/interactive.js"></script>
 <script>
   Reveal.initialize({
     hash: true, slideNumber: 'c/t', transition: 'slide',

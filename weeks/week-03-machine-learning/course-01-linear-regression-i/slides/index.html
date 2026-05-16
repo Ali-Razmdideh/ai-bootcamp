@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/interactive.css" />
 </head>
 <body>
 <div class="reveal"><div class="slides">
@@ -101,6 +102,56 @@ print(model.intercept_, model.coef_)</code></pre>
     <aside class="notes">Live in notebook: derive by hand, then sklearn. Should match to 4 decimal places.</aside>
   </section>
 
+  <section class="exercise" data-packages="numpy,pandas,scikit-learn">
+    <h2>Exercise — Fit a simple linear regression</h2>
+    <div class="ex-prompt">Fit <code>body_mass_g ~ flipper_length_mm</code> on the small penguins sample below. Assign the intercept to <code>intercept</code>, the slope to <code>slope</code>, and the training R² to <code>r2</code>.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+
+flipper = np.array([181,186,195,193,190,181,195,193,190,186,
+                    180,182,191,198,185,195,197,184,194,174,
+                    180,189,185,180,187,183,187,172,180,178,
+                    215,210,210,211,219,209,215,214,216,214])
+mass    = np.array([3750,3800,3250,3450,3650,3625,4675,3475,4250,3300,
+                    3700,3200,3800,4400,3700,3450,4500,3325,4200,3400,
+                    3600,3800,3950,3800,3800,3550,3200,3150,3950,3250,
+                    4650,5700,5400,5200,5150,5550,5850,5850,5550,5850])
+df = pd.DataFrame({"flipper_length_mm": flipper, "body_mass_g": mass})
+
+intercept = None
+slope = None
+r2 = None
+# your code here
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+from sklearn.linear_model import LinearRegression
+assert intercept is not None and slope is not None and r2 is not None, "Assign intercept, slope, and r2."
+_X = df[["flipper_length_mm"]]; _y = df["body_mass_g"]
+_m = LinearRegression().fit(_X, _y)
+assert np.isclose(intercept, _m.intercept_, atol=1e-6), f"intercept should be {_m.intercept_:.4f}"
+assert np.isclose(slope, _m.coef_[0], atol=1e-6), f"slope should be {_m.coef_[0]:.4f}"
+assert np.isclose(r2, _m.score(_X, _y), atol=1e-6), f"r2 should be {_m.score(_X, _y):.4f}"
+</script>
+<script type="text/x-solution">X = df[["flipper_length_mm"]]
+y = df["body_mass_g"]
+m = LinearRegression().fit(X, y)
+intercept = m.intercept_
+slope = m.coef_[0]
+r2 = m.score(X, y)
+print(f"intercept={intercept:.2f}  slope={slope:.2f} g/mm  R^2={r2:.4f}")</script>
+<script type="text/x-explain">A simple LR returns the line that minimizes RSS. The slope (~50 g/mm) says each extra mm of flipper buys ~50 g of body mass on average; R² tells you how much of mass variation that single line explains.</script>
+  </section>
+
 </section>
 <section>
   <section class="title-slide">
@@ -134,6 +185,57 @@ print(model.intercept_, model.coef_)</code></pre>
 <p>If residuals show a curve → the relationship is not linear.</p><p>If residuals fan out → the variance is not constant (heteroscedasticity).</p><p>If residuals cluster by some category → there is a missing predictor.</p><p class="callout">A residual plot is the cheapest model-criticism tool you have. Run it every time.</p>
   </section>
 
+  <section class="exercise" data-packages="numpy,pandas,scikit-learn,matplotlib">
+    <h2>Exercise — Plot residuals vs fitted</h2>
+    <div class="ex-prompt">Fit the same penguins model, then build a residuals-vs-fitted scatter on <code>ax</code>. Use <code>ax.scatter(fitted, residuals)</code> and add a horizontal zero line with <code>ax.axhline(0)</code>. Label x as <code>"fitted"</code> and y as <code>"residual"</code>.</div>
+<textarea class="ex-code">import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+
+flipper = np.array([181,186,195,193,190,181,195,193,190,186,
+                    180,182,191,198,185,195,197,184,194,174,
+                    180,189,185,180,187,183,187,172,180,178,
+                    215,210,210,211,219,209,215,214,216,214])
+mass    = np.array([3750,3800,3250,3450,3650,3625,4675,3475,4250,3300,
+                    3700,3200,3800,4400,3700,3450,4500,3325,4200,3400,
+                    3600,3800,3950,3800,3800,3550,3200,3150,3950,3250,
+                    4650,5700,5400,5200,5150,5550,5850,5850,5550,5850])
+df = pd.DataFrame({"flipper_length_mm": flipper, "body_mass_g": mass})
+
+fig, ax = plt.subplots()
+# your code here: fit model, compute residuals, draw the diagnostic plot
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+assert len(ax.collections) >= 1, "Use ax.scatter(fitted, residuals)."
+assert len(ax.lines) >= 1, "Add a horizontal zero line with ax.axhline(0)."
+assert ax.get_xlabel().lower() == "fitted", "Set xlabel to 'fitted'."
+assert ax.get_ylabel().lower() == "residual", "Set ylabel to 'residual'."
+_pts = ax.collections[0].get_offsets()
+assert _pts.shape[0] == len(df), "Plot one point per observation."
+</script>
+<script type="text/x-solution">X = df[["flipper_length_mm"]]
+y = df["body_mass_g"].to_numpy()
+m = LinearRegression().fit(X, y)
+y_hat = m.predict(X)
+resid = y - y_hat
+ax.scatter(y_hat, resid, s=20, alpha=0.7)
+ax.axhline(0, color='C3')
+ax.set_xlabel('fitted'); ax.set_ylabel('residual')
+plt.show()</script>
+<script type="text/x-explain">A band of noise around zero is what you want — it means the line captured the systematic part. Curves, funnels, or stripes by group all flag the model is missing something.</script>
+  </section>
+
   <section>
     <h2>R² is not the whole story</h2>
 <p class="muted">A model with R² = 0.95 can still be useless if:</p><ul>
@@ -162,6 +264,61 @@ print(model.intercept_, model.coef_)</code></pre>
     b1_boot[k] = slope(x[idx], y[idx])
 lo, hi = np.quantile(b1_boot, [0.025, 0.975])</code></pre>
     <aside class="notes">The bootstrap was Bradley Efron&#x27;s gift to applied stats. No formulas, no distributional assumptions, just resample with replacement.</aside>
+  </section>
+
+  <section class="exercise" data-packages="numpy,pandas">
+    <h2>Exercise — Bootstrap a 95% CI for the slope</h2>
+    <div class="ex-prompt">Draw 2000 bootstrap resamples (sample rows with replacement) of the penguins data, recompute the slope each time, then take the 2.5% and 97.5% quantiles. Assign them to <code>lo</code> and <code>hi</code>. Use <code>np.random.default_rng(0)</code>.</div>
+<textarea class="ex-code">import numpy as np
+
+flipper = np.array([181,186,195,193,190,181,195,193,190,186,
+                    180,182,191,198,185,195,197,184,194,174,
+                    180,189,185,180,187,183,187,172,180,178,
+                    215,210,210,211,219,209,215,214,216,214])
+mass    = np.array([3750,3800,3250,3450,3650,3625,4675,3475,4250,3300,
+                    3700,3200,3800,4400,3700,3450,4500,3325,4200,3400,
+                    3600,3800,3950,3800,3800,3550,3200,3150,3950,3250,
+                    4650,5700,5400,5200,5150,5550,5850,5850,5550,5850])
+x = flipper.astype(float)
+y = mass.astype(float)
+rng = np.random.default_rng(0)
+
+lo = None
+hi = None
+# your code here: 2000 bootstrap resamples of the slope, then quantiles
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+assert lo is not None and hi is not None, "Assign lo and hi to the 2.5% and 97.5% quantiles."
+_rng = np.random.default_rng(0)
+_n = len(x)
+_slopes = np.empty(2000)
+for _k in range(2000):
+    _idx = _rng.choice(_n, _n, replace=True)
+    _xb = x[_idx]; _yb = y[_idx]
+    _slopes[_k] = ((_xb - _xb.mean()) * (_yb - _yb.mean())).sum() / ((_xb - _xb.mean())**2).sum()
+_lo, _hi = np.quantile(_slopes, [0.025, 0.975])
+assert lo < hi, "lo must be below hi."
+assert np.isclose(lo, _lo, atol=0.05) and np.isclose(hi, _hi, atol=0.05), \
+    f"Expected ~[{_lo:.3f}, {_hi:.3f}]. Did you seed with default_rng(0) and use 2000 resamples?"
+</script>
+<script type="text/x-solution">n = len(x)
+slopes = np.empty(2000)
+for k in range(2000):
+    idx = rng.choice(n, n, replace=True)
+    xb, yb = x[idx], y[idx]
+    slopes[k] = ((xb - xb.mean()) * (yb - yb.mean())).sum() / ((xb - xb.mean())**2).sum()
+lo, hi = np.quantile(slopes, [0.025, 0.975])
+print(f"95% CI for slope: [{lo:.2f}, {hi:.2f}] g/mm")</script>
+<script type="text/x-explain">The bootstrap turns one dataset into a sampling distribution by resampling rows with replacement. The middle 95% of recomputed slopes is a CI that needs no normal-theory assumption — it just trusts that your sample looks like the population.</script>
   </section>
 
   <section>
@@ -215,6 +372,7 @@ lo, hi = np.quantile(b1_boot, [0.025, 0.975])</code></pre>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="../../../../shared/slides-template/interactive.js"></script>
 <script>
   Reveal.initialize({
     hash: true, slideNumber: 'c/t', transition: 'slide',

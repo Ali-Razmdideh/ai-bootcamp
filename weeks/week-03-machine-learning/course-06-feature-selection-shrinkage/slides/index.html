@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/interactive.css" />
 </head>
 <body>
 <div class="reveal"><div class="slides">
@@ -118,6 +119,80 @@
 </ul><p class="callout">Comparison with forward stepwise: usually similar features. Lasso is faster and one-shot.</p>
   </section>
 
+  <section class="exercise" data-packages="numpy,scikit-learn">
+    <h2>Exercise — Compare Lasso survivors to forward stepwise</h2>
+    <div class="ex-prompt">On a synthetic regression problem where only the first 3 of 10 features carry signal, fit a tuned <code>Lasso</code> and a greedy forward-stepwise <code>LinearRegression</code>. Set <code>lasso_keep</code> and <code>fwd_keep</code> to the lists of surviving feature indices (sorted), and <code>overlap</code> to the count in both.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.linear_model import Lasso, LinearRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV, KFold, cross_val_score
+
+rng = np.random.RandomState(0)
+n, p = 200, 10
+X = rng.randn(n, p)
+true_beta = np.array([3.0, -2.0, 1.5, 0, 0, 0, 0, 0, 0, 0])
+y = X @ true_beta + rng.randn(n) * 0.5
+
+# 1) Tune Lasso, collect non-zero indices into lasso_keep (sorted list of ints).
+# 2) Forward stepwise with 5-fold CV MSE: greedily add features until MSE stops
+#    improving; collect the chosen indices into fwd_keep (sorted list of ints).
+# 3) Set overlap = number of indices shared by both.
+lasso_keep = None
+fwd_keep = None
+overlap = None
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+assert lasso_keep is not None and fwd_keep is not None and overlap is not None, "Assign lasso_keep, fwd_keep, overlap."
+assert sorted(lasso_keep) == [0, 1, 2], f"Lasso should keep indices [0,1,2]; got {lasso_keep}"
+assert set([0, 1, 2]).issubset(set(fwd_keep)), f"Forward stepwise should at least pick [0,1,2]; got {fwd_keep}"
+assert overlap == len(set(lasso_keep) & set(fwd_keep)), "overlap must equal |lasso ∩ forward|."
+</script>
+<script type="text/x-solution">import numpy as np
+from sklearn.linear_model import Lasso, LinearRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV, KFold, cross_val_score
+
+rng = np.random.RandomState(0)
+n, p = 200, 10
+X = rng.randn(n, p)
+true_beta = np.array([3.0, -2.0, 1.5, 0, 0, 0, 0, 0, 0, 0])
+y = X @ true_beta + rng.randn(n) * 0.5
+
+pipe = Pipeline([('s', StandardScaler()), ('l', Lasso(max_iter=20000))])
+grid = GridSearchCV(pipe, {'l__alpha': np.logspace(-2, 1, 20)},
+                    cv=KFold(5, shuffle=True, random_state=0),
+                    scoring='neg_mean_squared_error').fit(X, y)
+best = grid.best_estimator_.named_steps['l']
+lasso_keep = sorted(int(i) for i, c in enumerate(best.coef_) if c != 0)
+
+remaining = list(range(p)); chosen = []; mses = []
+while remaining:
+    best_col, best_mse = None, float('inf')
+    for col in remaining:
+        s = -cross_val_score(LinearRegression(), X[:, chosen+[col]], y,
+                             cv=KFold(5, shuffle=True, random_state=0),
+                             scoring='neg_mean_squared_error').mean()
+        if s < best_mse: best_mse, best_col = s, col
+    chosen.append(best_col); remaining.remove(best_col); mses.append(best_mse)
+fwd_keep = sorted(chosen[: mses.index(min(mses)) + 1])
+
+overlap = len(set(lasso_keep) & set(fwd_keep))
+print('lasso_keep =', lasso_keep)
+print('fwd_keep   =', fwd_keep)
+print('overlap    =', overlap)
+</script>
+<script type="text/x-explain">Both methods aim for the same target — a small set of relevant predictors — but get there differently. Lasso solves one convex problem; forward stepwise greedily searches. On a clean sparse signal they usually agree on the truly relevant features.</script>
+  </section>
   <section>
     <h2>When Lasso beats Ridge, and vice versa</h2>
     <div class="two-col">
@@ -134,6 +209,66 @@
     </div>
     <p class="callout">You usually don't know which world you're in. That's why Elastic Net — a convex combination — is the safe default.</p>
   </section>
+  <section class="exercise" data-packages="numpy,scikit-learn">
+    <h2>Exercise — Contrast Ridge and Lasso on the same data</h2>
+    <div class="ex-prompt">Reuse the synthetic sparse problem. Tune both <code>Ridge</code> and <code>Lasso</code> with 5-fold CV. Set <code>ridge_zeros</code> and <code>lasso_zeros</code> to the count of <em>exactly</em> zero coefficients each model produces.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.linear_model import Ridge, Lasso
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV, KFold
+
+rng = np.random.RandomState(0)
+n, p = 200, 10
+X = rng.randn(n, p)
+true_beta = np.array([3.0, -2.0, 1.5, 0, 0, 0, 0, 0, 0, 0])
+y = X @ true_beta + rng.randn(n) * 0.5
+
+# Build a StandardScaler -> Ridge pipeline, grid-search alpha with KFold(5,
+# shuffle=True, random_state=0), and count exact-zero coefficients.
+# Repeat for Lasso. Assign ridge_zeros and lasso_zeros.
+ridge_zeros = None
+lasso_zeros = None
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+assert ridge_zeros is not None and lasso_zeros is not None, "Assign both ridge_zeros and lasso_zeros."
+assert ridge_zeros == 0, f"Ridge should produce 0 exact zeros; got {ridge_zeros}"
+assert lasso_zeros >= 5, f"Lasso should zero out most noise features (>= 5); got {lasso_zeros}"
+</script>
+<script type="text/x-solution">import numpy as np
+from sklearn.linear_model import Ridge, Lasso
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV, KFold
+
+rng = np.random.RandomState(0)
+n, p = 200, 10
+X = rng.randn(n, p)
+true_beta = np.array([3.0, -2.0, 1.5, 0, 0, 0, 0, 0, 0, 0])
+y = X @ true_beta + rng.randn(n) * 0.5
+
+cv = KFold(5, shuffle=True, random_state=0)
+pipe_r = Pipeline([('s', StandardScaler()), ('r', Ridge())])
+gr = GridSearchCV(pipe_r, {'r__alpha': np.logspace(-2, 4, 25)},
+                  cv=cv, scoring='neg_mean_squared_error').fit(X, y)
+pipe_l = Pipeline([('s', StandardScaler()), ('l', Lasso(max_iter=20000))])
+gl = GridSearchCV(pipe_l, {'l__alpha': np.logspace(-2, 1, 25)},
+                  cv=cv, scoring='neg_mean_squared_error').fit(X, y)
+ridge_zeros = int((gr.best_estimator_.named_steps['r'].coef_ == 0).sum())
+lasso_zeros = int((gl.best_estimator_.named_steps['l'].coef_ == 0).sum())
+print('Ridge exact zeros:', ridge_zeros)
+print('Lasso exact zeros:', lasso_zeros)
+</script>
+<script type="text/x-explain">Ridge never produces exact zeros — its L2 penalty is smooth at the origin. Lasso's L1 penalty has a corner at zero, so the optimum lands on the axes and irrelevant coefficients are dropped entirely.</script>
+  </section>
   <section>
     <h2>Picking λ by cross-validation</h2>
     <p>Same recipe as Course 4. For Lasso on Credit:</p>
@@ -143,6 +278,62 @@
       <li>Plot CV-MSE vs log(λ). Pick the minimum — or, by the one-SE rule, the largest λ within 1 SE of the minimum (sparser, stabler).</li>
     </ol>
     <p class="muted">sklearn ships <code>LassoCV</code> and <code>RidgeCV</code> that do this in one line.</p>
+  </section>
+  <section class="exercise" data-packages="numpy,scikit-learn">
+    <h2>Exercise — Tune a Lasso with 5-fold CV</h2>
+    <div class="ex-prompt">On the synthetic sparse problem, build a <code>Pipeline</code> of <code>StandardScaler</code> + <code>Lasso</code>, grid-search <code>alpha</code> over <code>np.logspace(-2, 1, 25)</code> with <code>KFold(5, shuffle=True, random_state=0)</code> and <code>neg_mean_squared_error</code>. Set <code>best_alpha</code> to the chosen α and <code>survivors</code> to the sorted list of indices with non-zero coefficients.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.linear_model import Lasso
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV, KFold
+
+rng = np.random.RandomState(0)
+n, p = 200, 10
+X = rng.randn(n, p)
+true_beta = np.array([3.0, -2.0, 1.5, 0, 0, 0, 0, 0, 0, 0])
+y = X @ true_beta + rng.randn(n) * 0.5
+
+best_alpha = None
+survivors = None
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+assert best_alpha is not None and survivors is not None, "Assign best_alpha and survivors."
+assert 0.001 < float(best_alpha) < 1.0, f"best_alpha out of expected range: {best_alpha}"
+assert sorted(survivors) == [0, 1, 2], f"Expected survivors [0,1,2]; got {survivors}"
+</script>
+<script type="text/x-solution">import numpy as np
+from sklearn.linear_model import Lasso
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV, KFold
+
+rng = np.random.RandomState(0)
+n, p = 200, 10
+X = rng.randn(n, p)
+true_beta = np.array([3.0, -2.0, 1.5, 0, 0, 0, 0, 0, 0, 0])
+y = X @ true_beta + rng.randn(n) * 0.5
+
+pipe = Pipeline([('s', StandardScaler()), ('l', Lasso(max_iter=20000))])
+grid = GridSearchCV(pipe, {'l__alpha': np.logspace(-2, 1, 25)},
+                    cv=KFold(5, shuffle=True, random_state=0),
+                    scoring='neg_mean_squared_error').fit(X, y)
+best = grid.best_estimator_.named_steps['l']
+best_alpha = grid.best_params_['l__alpha']
+survivors = sorted(int(i) for i, c in enumerate(best.coef_) if c != 0)
+print('best_alpha =', best_alpha)
+print('survivors  =', survivors)
+</script>
+<script type="text/x-explain">CV picks the α that minimizes out-of-sample MSE — typically the value that zeros out the noise predictors while keeping the true signal. Scaling inside the pipeline is essential: Lasso's L1 penalty is not scale-invariant.</script>
   </section>
   <section>
     <h2>PCR and PLS — a brief contrast</h2>
@@ -203,6 +394,7 @@ GridSearchCV(pipe, {&#x27;lasso__alpha&#x27;: np.logspace(-1, 2, 12)},
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="../../../../shared/slides-template/interactive.js"></script>
 <script>
   Reveal.initialize({
     hash: true, slideNumber: 'c/t', transition: 'slide',

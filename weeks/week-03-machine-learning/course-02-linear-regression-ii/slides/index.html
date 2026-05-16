@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/interactive.css" />
 </head>
 <body>
 <div class="reveal"><div class="slides">
@@ -72,6 +73,62 @@
     <aside class="notes">Run VIF in the notebook on Boston; tax, rad, nox are biggest offenders.</aside>
   </section>
 
+  <section class="exercise" data-packages="numpy,pandas,scikit-learn">
+    <h2>Exercise — Compute VIF for penguin predictors</h2>
+    <div class="ex-prompt">For the three numeric columns <code>bill_length_mm</code>, <code>bill_depth_mm</code>, <code>flipper_length_mm</code>, compute the VIF of each by regressing it on the other two. Assign a <code>pandas.Series</code> indexed by column name to <code>vifs</code>.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+
+rng = np.random.default_rng(0)
+n = 120
+flipper = rng.normal(200, 14, n)
+bill_len = 0.18 * flipper + rng.normal(0, 3, n)
+bill_dep = -0.05 * flipper + 28 + rng.normal(0, 1.2, n)
+df = pd.DataFrame({
+    'bill_length_mm': bill_len,
+    'bill_depth_mm':  bill_dep,
+    'flipper_length_mm': flipper,
+})
+
+# TODO: for each column, fit it on the other two and compute 1 / (1 - R^2)
+vifs = None
+print(vifs)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np, pandas as pd
+from sklearn.linear_model import LinearRegression
+assert vifs is not None, "Assign your answer to `vifs`."
+assert isinstance(vifs, pd.Series), "`vifs` must be a pandas Series."
+cols = ['bill_length_mm', 'bill_depth_mm', 'flipper_length_mm']
+for c in cols:
+    assert c in vifs.index, f"Missing VIF for {c}."
+expected = {}
+for c in cols:
+    others = df.drop(columns=[c])
+    r2 = LinearRegression().fit(others, df[c]).score(others, df[c])
+    expected[c] = 1.0 / (1.0 - r2)
+for c in cols:
+    assert np.isclose(vifs[c], expected[c], atol=1e-6), f"VIF[{c}] off: got {vifs[c]:.4f}, expected {expected[c]:.4f}"
+</script>
+<script type="text/x-solution">vifs = {}
+for col in df.columns:
+    others = df.drop(columns=[col])
+    r2 = LinearRegression().fit(others, df[col]).score(others, df[col])
+    vifs[col] = 1.0 / (1.0 - r2)
+vifs = pd.Series(vifs)
+print(vifs.round(2))</script>
+<script type="text/x-explain">VIF measures how much variance of a coefficient is inflated by collinearity. Fitting each predictor on the others gives R²_j; VIF_j = 1/(1 − R²_j). Values above 5–10 mean that predictor adds little independent information.</script>
+  </section>
+
   <section>
     <h2>Never read a coefficient in isolation</h2>
 <ul>
@@ -117,9 +174,128 @@
     drop_first=True, dtype=float)</code></pre><p class="muted">drop_first=True avoids the dummy-variable trap (perfect collinearity with the intercept).</p>
   </section>
 
+  <section class="exercise" data-packages="numpy,pandas,scikit-learn">
+    <h2>Exercise — One-hot &amp; fit penguins body mass</h2>
+    <div class="ex-prompt">One-hot encode <code>species</code> and <code>sex</code> (use <code>drop_first=True</code>), then fit a <code>LinearRegression</code> predicting <code>body_mass_g</code> from every other column. Assign the trained model to <code>m</code> and its R² to <code>r2</code>.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+
+rng = np.random.default_rng(0)
+n = 120
+species = rng.choice(['Adelie', 'Chinstrap', 'Gentoo'], size=n)
+sex = rng.choice(['male', 'female'], size=n)
+flipper = rng.normal(200, 14, n)
+bill_len = 0.18 * flipper + rng.normal(0, 3, n)
+bill_dep = -0.05 * flipper + 28 + rng.normal(0, 1.2, n)
+mass = (
+    30 * flipper
+    + 200 * (species == 'Gentoo')
+    + 250 * (sex == 'male')
+    + rng.normal(0, 150, n)
+)
+df = pd.DataFrame({
+    'species': species, 'sex': sex,
+    'bill_length_mm': bill_len, 'bill_depth_mm': bill_dep,
+    'flipper_length_mm': flipper, 'body_mass_g': mass,
+})
+
+# TODO: one-hot encode species and sex (drop_first=True, dtype=float),
+# fit body_mass_g on the rest, assign model -> m and R^2 -> r2
+m = None
+r2 = None
+print(r2)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np, pandas as pd
+from sklearn.linear_model import LinearRegression
+assert m is not None, "Assign your fitted model to `m`."
+assert r2 is not None, "Assign your R^2 to `r2`."
+df2 = pd.get_dummies(df, columns=['species', 'sex'], drop_first=True, dtype=float)
+Xe = df2.drop(columns=['body_mass_g'])
+ye = df2['body_mass_g']
+expected = LinearRegression().fit(Xe, ye).score(Xe, ye)
+assert np.isclose(r2, expected, atol=1e-6), f"R^2 off: got {r2:.4f}, expected {expected:.4f}"
+</script>
+<script type="text/x-solution">df2 = pd.get_dummies(df, columns=['species', 'sex'], drop_first=True, dtype=float)
+X = df2.drop(columns=['body_mass_g'])
+y = df2['body_mass_g']
+m = LinearRegression().fit(X, y)
+r2 = m.score(X, y)
+print(f'R^2 = {r2:.4f}')</script>
+<script type="text/x-explain">One-hot encoding turns each categorical level into a 0/1 column; <code>drop_first=True</code> drops one to avoid perfect collinearity with the intercept. Once everything is numeric, <code>LinearRegression</code> handles categoricals and continuous predictors uniformly.</script>
+  </section>
+
   <section>
     <h2>Interactions are just products</h2>
 <pre><code class="language-python">df[&#x27;Price_x_Urban&#x27;] = df[&#x27;Price&#x27;] * df[&#x27;Urban_Yes&#x27;]</code></pre><p>The coefficient on the product term tells you how the effect of Price <em>changes</em> when Urban switches from No to Yes.</p>
+  </section>
+
+  <section class="exercise" data-packages="numpy,pandas,scikit-learn">
+    <h2>Exercise — Add a flipper × species interaction</h2>
+    <div class="ex-prompt">Starting from the one-hot encoded penguin frame, add a new column <code>flipper_x_chinstrap = flipper_length_mm * species_Chinstrap</code>, refit, and store the new R² in <code>r2_interaction</code>.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+
+rng = np.random.default_rng(0)
+n = 120
+species = rng.choice(['Adelie', 'Chinstrap', 'Gentoo'], size=n)
+sex = rng.choice(['male', 'female'], size=n)
+flipper = rng.normal(200, 14, n)
+bill_len = 0.18 * flipper + rng.normal(0, 3, n)
+bill_dep = -0.05 * flipper + 28 + rng.normal(0, 1.2, n)
+mass = (
+    30 * flipper
+    + 200 * (species == 'Gentoo')
+    + 250 * (sex == 'male')
+    + 5 * flipper * (species == 'Chinstrap')
+    + rng.normal(0, 150, n)
+)
+df = pd.DataFrame({
+    'species': species, 'sex': sex,
+    'bill_length_mm': bill_len, 'bill_depth_mm': bill_dep,
+    'flipper_length_mm': flipper, 'body_mass_g': mass,
+})
+df = pd.get_dummies(df, columns=['species', 'sex'], drop_first=True, dtype=float)
+
+# TODO: create df['flipper_x_chinstrap'], refit, store new R^2 in r2_interaction
+r2_interaction = None
+print(r2_interaction)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+from sklearn.linear_model import LinearRegression
+assert r2_interaction is not None, "Assign your answer to `r2_interaction`."
+assert 'flipper_x_chinstrap' in df.columns, "Add a 'flipper_x_chinstrap' column to df."
+X = df.drop(columns=['body_mass_g'])
+y = df['body_mass_g']
+expected = LinearRegression().fit(X, y).score(X, y)
+assert np.isclose(r2_interaction, expected, atol=1e-6), f"R^2 off: got {r2_interaction:.4f}, expected {expected:.4f}"
+</script>
+<script type="text/x-solution">df['flipper_x_chinstrap'] = df['flipper_length_mm'] * df['species_Chinstrap']
+X = df.drop(columns=['body_mass_g'])
+y = df['body_mass_g']
+m = LinearRegression().fit(X, y)
+r2_interaction = m.score(X, y)
+print(f'R^2 with interaction = {r2_interaction:.4f}')</script>
+<script type="text/x-explain">An interaction term is just the product of two predictors. The coefficient on <code>flipper × species_Chinstrap</code> measures how the slope of body mass on flipper length <em>differs</em> for Chinstrap penguins versus the baseline species — a different slope, not a different intercept.</script>
   </section>
 
   <section>
@@ -182,6 +358,7 @@
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="../../../../shared/slides-template/interactive.js"></script>
 <script>
   Reveal.initialize({
     hash: true, slideNumber: 'c/t', transition: 'slide',

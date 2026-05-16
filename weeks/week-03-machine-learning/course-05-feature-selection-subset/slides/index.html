@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/interactive.css" />
 </head>
 <body>
 <div class="reveal"><div class="slides">
@@ -115,6 +116,83 @@
     chosen.append(best_col); remaining.remove(best_col)</code></pre>
   </section>
 
+  <section class="exercise" data-packages="numpy,pandas,scikit-learn">
+    <h2>Exercise — Forward stepwise on a small dataset</h2>
+    <div class="ex-prompt">Implement forward stepwise on the inline <code>df</code> to predict <code>fare</code>. Record the 5-fold CV-MSE at each step in a list <code>mses</code> (in the order predictors are added) using <code>KFold(5, shuffle=True, random_state=0)</code>. Also record the order of added columns in <code>chosen</code>.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import cross_val_score, KFold
+
+# Synthetic titanic-like data (deterministic)
+rng = np.random.default_rng(0)
+n = 80
+pclass = rng.integers(1, 4, n)
+age = rng.normal(30, 12, n).clip(1, 75)
+sibsp = rng.integers(0, 4, n)
+parch = rng.integers(0, 3, n)
+sex_male = rng.integers(0, 2, n).astype(float)
+embarked_S = rng.integers(0, 2, n).astype(float)
+# fare is mostly driven by pclass (inverse) and age
+fare = 80.0 / pclass + 0.3 * age + 2 * sibsp + rng.normal(0, 3, n)
+
+df = pd.DataFrame({
+    'fare': fare, 'pclass': pclass.astype(float), 'age': age,
+    'sibsp': sibsp.astype(float), 'parch': parch.astype(float),
+    'sex_male': sex_male, 'embarked_S': embarked_S,
+})
+y = df['fare'].to_numpy()
+X = df.drop(columns=['fare'])
+
+chosen = None   # list of column names in order added
+mses = None     # list of CV-MSE at each step
+
+print(chosen, mses)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import cross_val_score, KFold
+assert chosen is not None and mses is not None, "Assign both `chosen` and `mses`."
+assert len(chosen) == X.shape[1], "chosen should contain all predictors in the order added."
+assert len(mses) == X.shape[1], "mses should have one entry per step."
+# Reproduce the canonical forward-stepwise trace and compare
+cv = KFold(5, shuffle=True, random_state=0)
+remaining = list(X.columns); ref_chosen = []; ref_mses = []
+while remaining:
+    best_col, best_mse = None, float('inf')
+    for col in remaining:
+        s = -cross_val_score(LinearRegression(), X[ref_chosen+[col]].to_numpy(), y,
+                             cv=cv, scoring='neg_mean_squared_error').mean()
+        if s < best_mse: best_mse, best_col = s, col
+    ref_chosen.append(best_col); remaining.remove(best_col); ref_mses.append(best_mse)
+assert list(chosen) == ref_chosen, f"chosen order should be {ref_chosen}, got {list(chosen)}"
+assert np.allclose(mses, ref_mses, atol=1e-6), "CV-MSEs don't match — check your KFold seed."
+</script>
+<script type="text/x-solution">cv = KFold(5, shuffle=True, random_state=0)
+remaining = list(X.columns); chosen = []; mses = []
+while remaining:
+    best_col, best_mse = None, float('inf')
+    for col in remaining:
+        s = -cross_val_score(LinearRegression(),
+                             X[chosen+[col]].to_numpy(), y,
+                             cv=cv, scoring='neg_mean_squared_error').mean()
+        if s < best_mse:
+            best_mse, best_col = s, col
+    chosen.append(best_col); remaining.remove(best_col); mses.append(best_mse)
+print(chosen)
+print([round(m, 2) for m in mses])</script>
+<script type="text/x-explain">Forward stepwise greedily picks, at each step, the single new predictor whose addition most lowers cross-validated error. It is O(p^2) instead of best subset's 2^p — almost always good enough, and the only feasible option once p gets above ~30.</script>
+  </section>
+
 </section>
 <section>
   <section class="title-slide">
@@ -157,6 +235,144 @@
 </ul>
   </section>
 
+  <section class="exercise" data-packages="numpy,pandas,scikit-learn">
+    <h2>Exercise — Find the BIC-optimal size</h2>
+    <div class="ex-prompt">Using the forward-stepwise order <code>chosen</code> from the synthetic dataset below, compute <code>BIC = n*log(RSS/n) + k*log(n)</code> for each prefix size k. Assign the size minimising BIC to <code>bic_best</code>.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import cross_val_score, KFold
+
+rng = np.random.default_rng(0)
+n = 80
+pclass = rng.integers(1, 4, n)
+age = rng.normal(30, 12, n).clip(1, 75)
+sibsp = rng.integers(0, 4, n)
+parch = rng.integers(0, 3, n)
+sex_male = rng.integers(0, 2, n).astype(float)
+embarked_S = rng.integers(0, 2, n).astype(float)
+fare = 80.0 / pclass + 0.3 * age + 2 * sibsp + rng.normal(0, 3, n)
+df = pd.DataFrame({
+    'fare': fare, 'pclass': pclass.astype(float), 'age': age,
+    'sibsp': sibsp.astype(float), 'parch': parch.astype(float),
+    'sex_male': sex_male, 'embarked_S': embarked_S,
+})
+y = df['fare'].to_numpy()
+X = df.drop(columns=['fare'])
+
+# Reproduce forward-stepwise order
+cv = KFold(5, shuffle=True, random_state=0)
+remaining = list(X.columns); chosen = []
+while remaining:
+    best_col, best_mse = None, float('inf')
+    for col in remaining:
+        s = -cross_val_score(LinearRegression(), X[chosen+[col]].to_numpy(), y,
+                             cv=cv, scoring='neg_mean_squared_error').mean()
+        if s < best_mse: best_mse, best_col = s, col
+    chosen.append(best_col); remaining.remove(best_col)
+
+bic_best = None    # integer model size with smallest BIC
+print(bic_best)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+from sklearn.linear_model import LinearRegression
+assert bic_best is not None, "Assign your answer to `bic_best`."
+N = len(y)
+bics = []
+for k in range(1, len(chosen)+1):
+    Xk = X[chosen[:k]].to_numpy()
+    m = LinearRegression().fit(Xk, y)
+    rss = ((y - m.predict(Xk))**2).sum()
+    bics.append(N*np.log(rss/N) + k*np.log(N))
+ref = int(np.argmin(bics)) + 1
+assert int(bic_best) == ref, f"BIC picks size {ref}, you returned {bic_best}."
+</script>
+<script type="text/x-solution">N = len(y)
+bics = []
+for k in range(1, len(chosen)+1):
+    Xk = X[chosen[:k]].to_numpy()
+    m = LinearRegression().fit(Xk, y)
+    rss = ((y - m.predict(Xk))**2).sum()
+    bics.append(N*np.log(rss/N) + k*np.log(N))
+bic_best = int(np.argmin(bics)) + 1
+print('BIC picks size =', bic_best)</script>
+<script type="text/x-explain">BIC adds a log(n) penalty per parameter — heavier than AIC's 2 per parameter once n > 7. So BIC almost always prefers a smaller, more parsimonious model than AIC or Cp on the same data.</script>
+  </section>
+
+  <section class="exercise" data-packages="numpy,pandas,scikit-learn">
+    <h2>Exercise — Compare CV-best with BIC-best</h2>
+    <div class="ex-prompt">Do CV-MSE and BIC pick the same model size on this dataset? Compute both <code>cv_best</code> (the size minimising CV-MSE from forward stepwise) and <code>bic_best</code> (size minimising BIC). No auto-check — click <em>Show solution</em> to read the canonical answer.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import cross_val_score, KFold
+
+rng = np.random.default_rng(0)
+n = 80
+pclass = rng.integers(1, 4, n)
+age = rng.normal(30, 12, n).clip(1, 75)
+sibsp = rng.integers(0, 4, n)
+parch = rng.integers(0, 3, n)
+sex_male = rng.integers(0, 2, n).astype(float)
+embarked_S = rng.integers(0, 2, n).astype(float)
+fare = 80.0 / pclass + 0.3 * age + 2 * sibsp + rng.normal(0, 3, n)
+df = pd.DataFrame({
+    'fare': fare, 'pclass': pclass.astype(float), 'age': age,
+    'sibsp': sibsp.astype(float), 'parch': parch.astype(float),
+    'sex_male': sex_male, 'embarked_S': embarked_S,
+})
+y = df['fare'].to_numpy()
+X = df.drop(columns=['fare'])
+
+# your code: compute cv_best and bic_best
+cv_best = None
+bic_best = None
+
+print('CV picks', cv_best, 'BIC picks', bic_best)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-solution">cv = KFold(5, shuffle=True, random_state=0)
+remaining = list(X.columns); chosen = []; mses = []
+while remaining:
+    best_col, best_mse = None, float('inf')
+    for col in remaining:
+        s = -cross_val_score(LinearRegression(), X[chosen+[col]].to_numpy(), y,
+                             cv=cv, scoring='neg_mean_squared_error').mean()
+        if s < best_mse: best_mse, best_col = s, col
+    chosen.append(best_col); remaining.remove(best_col); mses.append(best_mse)
+
+N = len(y)
+bics = []
+for k in range(1, len(chosen)+1):
+    Xk = X[chosen[:k]].to_numpy()
+    m = LinearRegression().fit(Xk, y)
+    rss = ((y - m.predict(Xk))**2).sum()
+    bics.append(N*np.log(rss/N) + k*np.log(N))
+
+cv_best = mses.index(min(mses)) + 1
+bic_best = int(np.argmin(bics)) + 1
+print(f'CV picks size = {cv_best}, BIC picks size = {bic_best}')
+print('CV is the more honest test-error estimate;')
+print('BIC is faster but assumes the linear model is correctly specified.')</script>
+<script type="text/x-explain">CV directly estimates held-out prediction error, so it's the more honest test-error proxy. BIC is much cheaper (no refitting on folds) but relies on the assumption that the linear-Gaussian model is correctly specified — when it isn't, BIC's penalty can be miscalibrated. No auto-check on this one; the goal is to compare answers and reason about which to trust.</script>
+  </section>
+
 </section>
 <section class="title-slide">
   <span class="kicker">Recap</span>
@@ -174,6 +390,7 @@
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="../../../../shared/slides-template/interactive.js"></script>
 <script>
   Reveal.initialize({
     hash: true, slideNumber: 'c/t', transition: 'slide',

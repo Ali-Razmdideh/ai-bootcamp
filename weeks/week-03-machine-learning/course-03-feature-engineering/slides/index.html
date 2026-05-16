@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/interactive.css" />
 </head>
 <body>
 <div class="reveal"><div class="slides">
@@ -141,10 +142,201 @@ PolynomialFeatures(degree=3).fit_transform(X)
 ])</code></pre>
   </section>
 
+  <section class="exercise" data-packages="numpy,pandas,scikit-learn">
+    <h2>Exercise — Build a tips pipeline</h2>
+    <div class="ex-prompt">Build a <code>Pipeline</code> on the tips data: <code>StandardScaler</code> for <code>total_bill</code> and <code>size</code>, <code>OneHotEncoder(drop='first')</code> for <code>day</code> and <code>time</code>, then <code>LinearRegression</code> predicting <code>tip</code>. Assign training R&#xb2; to <code>result</code>.</div>
+<textarea class="ex-code">import pandas as pd
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LinearRegression
+
+tips = pd.DataFrame({
+    'total_bill': [16.99,10.34,21.01,23.68,24.59,25.29,8.77,26.88,15.04,14.78,
+                   10.27,35.26,15.42,18.43,14.83,21.58,10.33,16.29,16.97,20.65,
+                   17.92,20.29,15.77,39.42,19.82,17.81,13.37,12.69,21.7,19.65,
+                   9.55,18.35,15.06,20.69,17.78,24.06,16.31,16.93,18.69,31.27],
+    'size':       [2,3,3,2,4,4,2,4,2,2, 2,4,2,4,2,3,2,3,3,3, 2,2,2,4,2,4,2,2,2,2, 2,4,2,5,2,3,3,3,3,3],
+    'day':  ['Sun']*10 + ['Sat']*10 + ['Thur']*10 + ['Fri']*10,
+    'time': ['Dinner']*10 + ['Dinner']*10 + ['Lunch']*10 + ['Lunch']*5 + ['Dinner']*5,
+    'tip':  [1.01,1.66,3.5,3.31,3.61,4.71,2.0,3.12,1.96,3.23,
+             1.71,5.0,1.57,3.0,3.02,3.92,1.67,3.71,3.5,3.35,
+             4.08,2.75,2.23,7.58,3.18,2.34,2.0,2.0,4.3,3.0,
+             1.45,2.5,3.0,5.0,3.27,3.6,2.0,3.07,2.31,5.0],
+})
+
+# build pre, pipe, fit, score
+result = None
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+assert result is not None, "Assign training R^2 to `result`."
+assert isinstance(result, float), "`result` should be a float."
+# Deterministic linear regression on fixed data — pin tight.
+assert 0.0 <= result <= 1.0, "R^2 should be between 0 and 1 here."
+# Expected fitted R^2 with the spec'd pipeline on this data:
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LinearRegression
+pre_ = ColumnTransformer([
+    ('num', StandardScaler(), ['total_bill', 'size']),
+    ('cat', OneHotEncoder(drop='first'), ['day', 'time']),
+])
+pipe_ = Pipeline([('pre', pre_), ('lr', LinearRegression())])
+pipe_.fit(tips[['total_bill','size','day','time']], tips['tip'])
+expected = float(pipe_.score(tips[['total_bill','size','day','time']], tips['tip']))
+assert np.isclose(result, expected, atol=1e-6), f"R^2 should be {expected:.4f}, got {result:.4f}."
+</script>
+<script type="text/x-solution">pre = ColumnTransformer([
+    ('num', StandardScaler(), ['total_bill', 'size']),
+    ('cat', OneHotEncoder(drop='first'), ['day', 'time']),
+])
+pipe = Pipeline([('pre', pre), ('lr', LinearRegression())])
+X = tips[['total_bill', 'size', 'day', 'time']]
+pipe.fit(X, tips['tip'])
+result = float(pipe.score(X, tips['tip']))
+print(f'R^2 = {result:.4f}')</script>
+<script type="text/x-explain">A Pipeline keeps the scaler and the model glued together so that, under a future train/test split or cross-validation, the scaler will fit on training data only. ColumnTransformer routes numeric and categorical columns through different preprocessors in one expression.</script>
+  </section>
+
   <section>
     <h2>Interactions in bulk</h2>
 <pre><code class="language-python">PolynomialFeatures(interaction_only=True, include_bias=False)
 # adds every x_i * x_j pair</code></pre><p class="muted">Combinatorial explosion ahead — combine with Lasso (Course 6) to keep only the useful interactions.</p>
+  </section>
+
+  <section class="exercise" data-packages="numpy,pandas,scikit-learn">
+    <h2>Exercise — Add a day &times; time interaction</h2>
+    <div class="ex-prompt">Build the dummy matrix for <code>day</code> and <code>time</code> (with <code>drop_first=True</code>), add <code>total_bill</code> and <code>size</code>, then manually create every <code>day_* &times; time_*</code> product column. Fit <code>LinearRegression</code> on the result and assign training R&#xb2; to <code>result</code>.</div>
+<textarea class="ex-code">import pandas as pd
+from sklearn.linear_model import LinearRegression
+
+tips = pd.DataFrame({
+    'total_bill': [16.99,10.34,21.01,23.68,24.59,25.29,8.77,26.88,15.04,14.78,
+                   10.27,35.26,15.42,18.43,14.83,21.58,10.33,16.29,16.97,20.65,
+                   17.92,20.29,15.77,39.42,19.82,17.81,13.37,12.69,21.7,19.65,
+                   9.55,18.35,15.06,20.69,17.78,24.06,16.31,16.93,18.69,31.27],
+    'size':       [2,3,3,2,4,4,2,4,2,2, 2,4,2,4,2,3,2,3,3,3, 2,2,2,4,2,4,2,2,2,2, 2,4,2,5,2,3,3,3,3,3],
+    'day':  ['Sun']*10 + ['Sat']*10 + ['Thur']*10 + ['Fri']*10,
+    'time': ['Dinner']*10 + ['Dinner']*10 + ['Lunch']*10 + ['Lunch']*5 + ['Dinner']*5,
+    'tip':  [1.01,1.66,3.5,3.31,3.61,4.71,2.0,3.12,1.96,3.23,
+             1.71,5.0,1.57,3.0,3.02,3.92,1.67,3.71,3.5,3.35,
+             4.08,2.75,2.23,7.58,3.18,2.34,2.0,2.0,4.3,3.0,
+             1.45,2.5,3.0,5.0,3.27,3.6,2.0,3.07,2.31,5.0],
+})
+
+# build X with dummies, add total_bill and size, then add day_* x time_* columns
+result = None
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+assert result is not None, "Assign training R^2 with interactions to `result`."
+X_ = pd.get_dummies(tips[['day', 'time']], drop_first=True, dtype=float)
+for c1 in [c for c in X_.columns if c.startswith('day')]:
+    for c2 in [c for c in X_.columns if c.startswith('time')]:
+        X_[f'{c1}_x_{c2}'] = X_[c1] * X_[c2]
+X_['total_bill'] = tips['total_bill']; X_['size'] = tips['size']
+expected = float(LinearRegression().fit(X_, tips['tip']).score(X_, tips['tip']))
+assert np.isclose(result, expected, atol=1e-6), f"R^2 should be {expected:.4f}, got {result:.4f}."
+</script>
+<script type="text/x-solution">X = pd.get_dummies(tips[['day', 'time']], drop_first=True, dtype=float)
+for c1 in [c for c in X.columns if c.startswith('day')]:
+    for c2 in [c for c in X.columns if c.startswith('time')]:
+        X[f'{c1}_x_{c2}'] = X[c1] * X[c2]
+X['total_bill'] = tips['total_bill']; X['size'] = tips['size']
+m = LinearRegression().fit(X, tips['tip'])
+result = float(m.score(X, tips['tip']))
+print(f'R^2 with interactions = {result:.4f}')</script>
+<script type="text/x-explain">Interaction columns let the model say "the effect of being on a Sunday depends on whether it's lunch or dinner." Training R&#xb2; can only go up when you add columns; whether the model actually learned anything generalizable is a held-out question.</script>
+  </section>
+
+  <section class="exercise" data-packages="numpy,pandas,scikit-learn">
+    <h2>Exercise — Held-out R&#xb2; before vs after</h2>
+    <div class="ex-prompt">Compare held-out R&#xb2; on a fixed split (<code>test_size=0.3</code>, <code>random_state=0</code>) between the baseline design and the design with <code>day &times; time</code> interactions. Assign <code>result = (baseline_r2, interaction_r2)</code>.</div>
+<textarea class="ex-code">import pandas as pd
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+
+tips = pd.DataFrame({
+    'total_bill': [16.99,10.34,21.01,23.68,24.59,25.29,8.77,26.88,15.04,14.78,
+                   10.27,35.26,15.42,18.43,14.83,21.58,10.33,16.29,16.97,20.65,
+                   17.92,20.29,15.77,39.42,19.82,17.81,13.37,12.69,21.7,19.65,
+                   9.55,18.35,15.06,20.69,17.78,24.06,16.31,16.93,18.69,31.27],
+    'size':       [2,3,3,2,4,4,2,4,2,2, 2,4,2,4,2,3,2,3,3,3, 2,2,2,4,2,4,2,2,2,2, 2,4,2,5,2,3,3,3,3,3],
+    'day':  ['Sun']*10 + ['Sat']*10 + ['Thur']*10 + ['Fri']*10,
+    'time': ['Dinner']*10 + ['Dinner']*10 + ['Lunch']*10 + ['Lunch']*5 + ['Dinner']*5,
+    'tip':  [1.01,1.66,3.5,3.31,3.61,4.71,2.0,3.12,1.96,3.23,
+             1.71,5.0,1.57,3.0,3.02,3.92,1.67,3.71,3.5,3.35,
+             4.08,2.75,2.23,7.58,3.18,2.34,2.0,2.0,4.3,3.0,
+             1.45,2.5,3.0,5.0,3.27,3.6,2.0,3.07,2.31,5.0],
+})
+
+# build X0 (baseline) and X1 (with day*time interactions), split with random_state=0
+result = None
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+assert result is not None, "Assign `result = (baseline_r2, interaction_r2)`."
+assert len(result) == 2, "`result` must be a 2-tuple of held-out R^2 values."
+X0 = pd.get_dummies(tips[['day', 'time']], drop_first=True, dtype=float)
+X0['total_bill'] = tips['total_bill']; X0['size'] = tips['size']
+X1 = X0.copy()
+for c1 in [c for c in X0.columns if c.startswith('day')]:
+    for c2 in [c for c in X0.columns if c.startswith('time')]:
+        X1[f'{c1}_x_{c2}'] = X0[c1] * X0[c2]
+y = tips['tip']
+X0tr, X0te, ytr, yte = train_test_split(X0, y, test_size=0.3, random_state=0)
+X1tr, X1te, _, _    = train_test_split(X1, y, test_size=0.3, random_state=0)
+exp0 = float(LinearRegression().fit(X0tr, ytr).score(X0te, yte))
+exp1 = float(LinearRegression().fit(X1tr, ytr).score(X1te, yte))
+assert np.isclose(result[0], exp0, atol=1e-6), f"baseline R^2 should be {exp0:.4f}, got {result[0]:.4f}."
+assert np.isclose(result[1], exp1, atol=1e-6), f"interaction R^2 should be {exp1:.4f}, got {result[1]:.4f}."
+</script>
+<script type="text/x-solution">X0 = pd.get_dummies(tips[['day', 'time']], drop_first=True, dtype=float)
+X0['total_bill'] = tips['total_bill']; X0['size'] = tips['size']
+X1 = X0.copy()
+for c1 in [c for c in X0.columns if c.startswith('day')]:
+    for c2 in [c for c in X0.columns if c.startswith('time')]:
+        X1[f'{c1}_x_{c2}'] = X0[c1] * X0[c2]
+y = tips['tip']
+X0tr, X0te, ytr, yte = train_test_split(X0, y, test_size=0.3, random_state=0)
+X1tr, X1te, _, _    = train_test_split(X1, y, test_size=0.3, random_state=0)
+r0 = float(LinearRegression().fit(X0tr, ytr).score(X0te, yte))
+r1 = float(LinearRegression().fit(X1tr, ytr).score(X1te, yte))
+result = (r0, r1)
+print(f'baseline held-out R^2     = {r0:.4f}')
+print(f'+interactions held-out R^2 = {r1:.4f}')</script>
+<script type="text/x-explain">Training R&#xb2; always rises with more columns; held-out R&#xb2; tells you whether those columns actually generalize. On small data, interactions often look great in training and worse on a hold-out — that's the bias-variance tradeoff in action.</script>
   </section>
 
 </section>
@@ -164,6 +356,7 @@ PolynomialFeatures(degree=3).fit_transform(X)
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="../../../../shared/slides-template/interactive.js"></script>
 <script>
   Reveal.initialize({
     hash: true, slideNumber: 'c/t', transition: 'slide',
