@@ -94,6 +94,69 @@ print('after scaling mean/std:', Z.mean(axis=0).round(2), Z.std(axis=0).round(2)
     <pre class="ex-output"></pre>
   </section>
 
+  <section>
+    <h2>Scale matters — units disappear</h2>
+    <svg class="diagram" viewBox="0 0 540 280" width="600" height="300">
+      <!-- raw: two separate axes with very different ranges -->
+      <g transform="translate(20, 20)">
+        <text x="0" y="0" font-size="11" font-weight="600">raw units</text>
+        <!-- age axis -->
+        <line x1="0" y1="40" x2="220" y2="40" stroke="#0f172a" stroke-width="1.5"/>
+        <line x1="0" y1="36" x2="0" y2="44" stroke="#0f172a"/>
+        <line x1="220" y1="36" x2="220" y2="44" stroke="#0f172a"/>
+        <text x="-4" y="58" text-anchor="end" font-size="10" fill="#64748b">age</text>
+        <text x="0" y="58" text-anchor="middle" font-size="10" fill="#64748b">20</text>
+        <text x="220" y="58" text-anchor="middle" font-size="10" fill="#64748b">80</text>
+        <!-- dots on age axis -->
+        <circle cx="30" cy="40" r="3" fill="#2563eb"/><circle cx="80" cy="40" r="3" fill="#2563eb"/>
+        <circle cx="110" cy="40" r="3" fill="#2563eb"/><circle cx="160" cy="40" r="3" fill="#2563eb"/>
+        <circle cx="190" cy="40" r="3" fill="#2563eb"/>
+        <!-- income axis -->
+        <line x1="0" y1="100" x2="220" y2="100" stroke="#0f172a" stroke-width="1.5"/>
+        <line x1="0" y1="96" x2="0" y2="104" stroke="#0f172a"/>
+        <line x1="220" y1="96" x2="220" y2="104" stroke="#0f172a"/>
+        <text x="-4" y="118" text-anchor="end" font-size="10" fill="#64748b">income</text>
+        <text x="0" y="118" text-anchor="middle" font-size="10" fill="#64748b">10k</text>
+        <text x="220" y="118" text-anchor="middle" font-size="10" fill="#64748b">200k</text>
+        <circle cx="40" cy="100" r="3" fill="#b45309"/><circle cx="70" cy="100" r="3" fill="#b45309"/>
+        <circle cx="120" cy="100" r="3" fill="#b45309"/><circle cx="170" cy="100" r="3" fill="#b45309"/>
+        <circle cx="200" cy="100" r="3" fill="#b45309"/>
+      </g>
+      <!-- arrow down -->
+      <g transform="translate(280, 60)">
+        <text x="0" y="0" font-size="12" fill="#64748b">StandardScaler</text>
+        <line x1="40" y1="10" x2="40" y2="60" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr1)"/>
+      </g>
+      <defs>
+        <marker id="arr1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+        </marker>
+      </defs>
+      <!-- rescaled: both on z-score axis -->
+      <g transform="translate(20, 180)">
+        <text x="0" y="0" font-size="11" font-weight="600">z-scores (shared axis)</text>
+        <line x1="0" y1="40" x2="500" y2="40" stroke="#0f172a" stroke-width="1.5"/>
+        <line x1="0" y1="36" x2="0" y2="44" stroke="#0f172a"/>
+        <line x1="250" y1="36" x2="250" y2="44" stroke="#0f172a"/>
+        <line x1="500" y1="36" x2="500" y2="44" stroke="#0f172a"/>
+        <text x="0" y="58" text-anchor="middle" font-size="10" fill="#64748b">−3</text>
+        <text x="250" y="58" text-anchor="middle" font-size="10" fill="#64748b">0</text>
+        <text x="500" y="58" text-anchor="middle" font-size="10" fill="#64748b">+3</text>
+        <!-- age z (blue) -->
+        <circle cx="180" cy="34" r="3" fill="#2563eb"/><circle cx="220" cy="34" r="3" fill="#2563eb"/>
+        <circle cx="255" cy="34" r="3" fill="#2563eb"/><circle cx="295" cy="34" r="3" fill="#2563eb"/>
+        <circle cx="330" cy="34" r="3" fill="#2563eb"/>
+        <!-- income z (orange) -->
+        <circle cx="195" cy="46" r="3" fill="#b45309"/><circle cx="225" cy="46" r="3" fill="#b45309"/>
+        <circle cx="260" cy="46" r="3" fill="#b45309"/><circle cx="300" cy="46" r="3" fill="#b45309"/>
+        <circle cx="335" cy="46" r="3" fill="#b45309"/>
+        <text x="510" y="38" font-size="10" fill="#2563eb">age</text>
+        <text x="510" y="50" font-size="10" fill="#b45309">income</text>
+      </g>
+    </svg>
+    <p class="muted">After StandardScaler the units are gone.</p>
+  </section>
+
   <section class="example" data-packages="pandas,numpy,scikit-learn">
     <h2>Pipeline = scaler + estimator, one object</h2>
     <div class="ex-prompt">A <code>Pipeline</code> bundles preprocessing with the estimator so the scaler fits on training data only, surviving any future train/test split or cross-validation.</div>
@@ -120,6 +183,42 @@ print(f'R^2 = {pipe.score(X, y):.4f}')
       <span class="ex-status"></span>
     </div>
     <pre class="ex-output"></pre>
+  </section>
+
+  <section>
+    <h2>Pipeline — the conveyor belt</h2>
+    <svg class="diagram" viewBox="0 0 720 140" width="720" height="160">
+      <defs>
+        <marker id="arrpipe" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+        </marker>
+      </defs>
+      <!-- data -->
+      <rect x="10" y="40" width="100" height="60" rx="6" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5"/>
+      <text x="60" y="68" text-anchor="middle" font-size="12" font-weight="600">data</text>
+      <text x="60" y="86" text-anchor="middle" font-size="10" fill="#64748b">X, y</text>
+      <line x1="110" y1="70" x2="140" y2="70" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrpipe)"/>
+      <!-- Scaler -->
+      <rect x="140" y="40" width="110" height="60" rx="6" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="195" y="75" text-anchor="middle" font-size="12" font-weight="600">Scaler</text>
+      <line x1="250" y1="70" x2="280" y2="70" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrpipe)"/>
+      <!-- Poly -->
+      <rect x="280" y="40" width="140" height="60" rx="6" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="350" y="68" text-anchor="middle" font-size="12" font-weight="600">PolynomialFeatures</text>
+      <line x1="420" y1="70" x2="450" y2="70" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrpipe)"/>
+      <!-- Model -->
+      <rect x="450" y="40" width="110" height="60" rx="6" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="505" y="75" text-anchor="middle" font-size="12" font-weight="600">Model</text>
+      <line x1="560" y1="70" x2="590" y2="70" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrpipe)"/>
+      <!-- predictions -->
+      <rect x="590" y="40" width="110" height="60" rx="6" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5"/>
+      <text x="645" y="68" text-anchor="middle" font-size="12" font-weight="600">predictions</text>
+      <text x="645" y="86" text-anchor="middle" font-size="10" fill="#64748b">ŷ</text>
+      <!-- bracket: fit / predict use same transforms -->
+      <path d="M 140 115 L 140 125 L 560 125 L 560 115" fill="none" stroke="#10b981" stroke-width="1.5"/>
+      <text x="350" y="138" text-anchor="middle" font-size="10" fill="#10b981">fit on train · transform on predict — same parameters</text>
+    </svg>
+    <p class="muted">Same transforms at fit and predict — no leakage.</p>
   </section>
 
   <section class="example" data-packages="pandas,numpy,matplotlib">
@@ -163,6 +262,51 @@ print('log1p mean/std:', round(np.log1p(auto['horsepower']).mean(), 2), round(np
 PolynomialFeatures(degree=3).fit_transform(X)
 # [x] -&gt; [1, x, x^2, x^3]</code></pre><p class="muted">Linear in the parameters β, non-linear in x. Still linear regression!</p>
   </section>
+  <section>
+    <h2>Underfit / just-right / overfit</h2>
+    <svg class="diagram" viewBox="0 0 540 200" width="640" height="220">
+      <!-- shared scatter coordinates: a gentle quadratic-ish truth -->
+      <!-- Panel: d=1 underfit -->
+      <g transform="translate(10, 20)">
+        <text x="80" y="-4" text-anchor="middle" font-size="12" font-weight="600">d = 1 (underfit)</text>
+        <line x1="0" y1="140" x2="160" y2="140" stroke="#0f172a" stroke-width="1"/>
+        <line x1="0" y1="10" x2="0" y2="140" stroke="#0f172a" stroke-width="1"/>
+        <circle cx="10" cy="120" r="2.5" fill="#94a3b8"/><circle cx="25" cy="105" r="2.5" fill="#94a3b8"/>
+        <circle cx="40" cy="85" r="2.5" fill="#94a3b8"/><circle cx="55" cy="65" r="2.5" fill="#94a3b8"/>
+        <circle cx="70" cy="50" r="2.5" fill="#94a3b8"/><circle cx="85" cy="45" r="2.5" fill="#94a3b8"/>
+        <circle cx="100" cy="55" r="2.5" fill="#94a3b8"/><circle cx="115" cy="70" r="2.5" fill="#94a3b8"/>
+        <circle cx="130" cy="95" r="2.5" fill="#94a3b8"/><circle cx="148" cy="120" r="2.5" fill="#94a3b8"/>
+        <!-- straight line fit -->
+        <line x1="5" y1="95" x2="155" y2="85" stroke="#2563eb" stroke-width="2.5"/>
+      </g>
+      <!-- Panel: d=3 just right -->
+      <g transform="translate(190, 20)">
+        <text x="80" y="-4" text-anchor="middle" font-size="12" font-weight="600">d = 3 (just right)</text>
+        <line x1="0" y1="140" x2="160" y2="140" stroke="#0f172a" stroke-width="1"/>
+        <line x1="0" y1="10" x2="0" y2="140" stroke="#0f172a" stroke-width="1"/>
+        <circle cx="10" cy="120" r="2.5" fill="#94a3b8"/><circle cx="25" cy="105" r="2.5" fill="#94a3b8"/>
+        <circle cx="40" cy="85" r="2.5" fill="#94a3b8"/><circle cx="55" cy="65" r="2.5" fill="#94a3b8"/>
+        <circle cx="70" cy="50" r="2.5" fill="#94a3b8"/><circle cx="85" cy="45" r="2.5" fill="#94a3b8"/>
+        <circle cx="100" cy="55" r="2.5" fill="#94a3b8"/><circle cx="115" cy="70" r="2.5" fill="#94a3b8"/>
+        <circle cx="130" cy="95" r="2.5" fill="#94a3b8"/><circle cx="148" cy="120" r="2.5" fill="#94a3b8"/>
+        <path d="M 5 125 Q 80 30 155 125" fill="none" stroke="#10b981" stroke-width="2.5"/>
+      </g>
+      <!-- Panel: d=15 overfit -->
+      <g transform="translate(370, 20)">
+        <text x="80" y="-4" text-anchor="middle" font-size="12" font-weight="600">d = 15 (overfit)</text>
+        <line x1="0" y1="140" x2="160" y2="140" stroke="#0f172a" stroke-width="1"/>
+        <line x1="0" y1="10" x2="0" y2="140" stroke="#0f172a" stroke-width="1"/>
+        <circle cx="10" cy="120" r="2.5" fill="#94a3b8"/><circle cx="25" cy="105" r="2.5" fill="#94a3b8"/>
+        <circle cx="40" cy="85" r="2.5" fill="#94a3b8"/><circle cx="55" cy="65" r="2.5" fill="#94a3b8"/>
+        <circle cx="70" cy="50" r="2.5" fill="#94a3b8"/><circle cx="85" cy="45" r="2.5" fill="#94a3b8"/>
+        <circle cx="100" cy="55" r="2.5" fill="#94a3b8"/><circle cx="115" cy="70" r="2.5" fill="#94a3b8"/>
+        <circle cx="130" cy="95" r="2.5" fill="#94a3b8"/><circle cx="148" cy="120" r="2.5" fill="#94a3b8"/>
+        <!-- wiggly path through points -->
+        <path d="M 10 120 Q 17 90 25 105 Q 32 70 40 85 Q 47 50 55 65 Q 62 30 70 50 Q 77 25 85 45 Q 92 35 100 55 Q 107 50 115 70 Q 122 60 130 95 Q 139 80 148 120" fill="none" stroke="#ef4444" stroke-width="2"/>
+      </g>
+    </svg>
+    <p class="muted">Same data, three flexibilities. d=1 misses the curvature; d=15 chases the noise (ISLR Fig 2.10).</p>
+  </section>
 
   <section>
     <h2>The Wage data — age, year, education</h2>
@@ -184,6 +328,48 @@ PolynomialFeatures(degree=3).fit_transform(X)
     <p class="muted">Problem: jumps at the cut-points. Reality doesn't jump at age 35. Solution: piecewise polynomials that match at the knots — splines.</p>
   </section>
   <section>
+    <h2>Step functions — visual</h2>
+    <svg class="diagram" viewBox="0 0 480 220" width="560" height="240">
+      <g transform="translate(40, 20)">
+        <line x1="0" y1="160" x2="400" y2="160" stroke="#0f172a" stroke-width="1"/>
+        <line x1="0" y1="10" x2="0" y2="160" stroke="#0f172a" stroke-width="1"/>
+        <text x="200" y="190" text-anchor="middle" font-size="11" fill="#64748b">x</text>
+        <text x="-25" y="85" font-size="11" fill="#64748b">y</text>
+        <!-- bin boundaries -->
+        <line x1="100" y1="10" x2="100" y2="160" stroke="#64748b" stroke-width="1.2" stroke-dasharray="4,3"/>
+        <line x1="200" y1="10" x2="200" y2="160" stroke="#64748b" stroke-width="1.2" stroke-dasharray="4,3"/>
+        <line x1="300" y1="10" x2="300" y2="160" stroke="#64748b" stroke-width="1.2" stroke-dasharray="4,3"/>
+        <!-- scatter -->
+        <circle cx="15" cy="135" r="3" fill="#94a3b8"/>
+        <circle cx="35" cy="125" r="3" fill="#94a3b8"/>
+        <circle cx="55" cy="115" r="3" fill="#94a3b8"/>
+        <circle cx="75" cy="120" r="3" fill="#94a3b8"/>
+        <circle cx="90" cy="105" r="3" fill="#94a3b8"/>
+        <circle cx="110" cy="85" r="3" fill="#94a3b8"/>
+        <circle cx="135" cy="70" r="3" fill="#94a3b8"/>
+        <circle cx="160" cy="80" r="3" fill="#94a3b8"/>
+        <circle cx="185" cy="65" r="3" fill="#94a3b8"/>
+        <circle cx="215" cy="55" r="3" fill="#94a3b8"/>
+        <circle cx="240" cy="45" r="3" fill="#94a3b8"/>
+        <circle cx="265" cy="60" r="3" fill="#94a3b8"/>
+        <circle cx="290" cy="50" r="3" fill="#94a3b8"/>
+        <circle cx="315" cy="75" r="3" fill="#94a3b8"/>
+        <circle cx="345" cy="85" r="3" fill="#94a3b8"/>
+        <circle cx="375" cy="95" r="3" fill="#94a3b8"/>
+        <!-- piecewise constant means -->
+        <line x1="0" y1="115" x2="100" y2="115" stroke="#2563eb" stroke-width="2.5"/>
+        <line x1="100" y1="78" x2="200" y2="78" stroke="#2563eb" stroke-width="2.5"/>
+        <line x1="200" y1="52" x2="300" y2="52" stroke="#2563eb" stroke-width="2.5"/>
+        <line x1="300" y1="85" x2="400" y2="85" stroke="#2563eb" stroke-width="2.5"/>
+        <text x="50" y="172" text-anchor="middle" font-size="10" fill="#64748b">bin 1</text>
+        <text x="150" y="172" text-anchor="middle" font-size="10" fill="#64748b">bin 2</text>
+        <text x="250" y="172" text-anchor="middle" font-size="10" fill="#64748b">bin 3</text>
+        <text x="350" y="172" text-anchor="middle" font-size="10" fill="#64748b">bin 4</text>
+      </g>
+    </svg>
+    <p class="muted">One constant per bin — a staircase fit. Interpretable, but the jumps are real.</p>
+  </section>
+  <section>
     <h2>From piecewise polynomials to splines</h2>
     <ul>
       <li class="fragment fade-up"><strong>Piecewise polynomial</strong> — fit a cubic in each region, no continuity. Ugly jumps at knots.</li>
@@ -195,6 +381,106 @@ PolynomialFeatures(degree=3).fit_transform(X)
     <p class="muted">The famous ISLR comparison: a degree-14 polynomial vs a natural cubic spline with the same df behave dramatically differently at the edges. Splines win.</p>
   </section>
   <section>
+    <h2>Piecewise polynomial vs natural cubic spline</h2>
+    <svg class="diagram" viewBox="0 0 540 220" width="640" height="240">
+      <!-- Left: piecewise polynomial with jumps -->
+      <g transform="translate(20, 20)">
+        <text x="110" y="-4" text-anchor="middle" font-size="12" font-weight="600">piecewise polynomial</text>
+        <line x1="0" y1="160" x2="220" y2="160" stroke="#0f172a" stroke-width="1"/>
+        <line x1="0" y1="10" x2="0" y2="160" stroke="#0f172a" stroke-width="1"/>
+        <!-- knot ticks -->
+        <line x1="75" y1="158" x2="75" y2="166" stroke="#64748b" stroke-width="1.5"/>
+        <line x1="150" y1="158" x2="150" y2="166" stroke="#64748b" stroke-width="1.5"/>
+        <text x="75" y="178" text-anchor="middle" font-size="10" fill="#64748b">k₁</text>
+        <text x="150" y="178" text-anchor="middle" font-size="10" fill="#64748b">k₂</text>
+        <!-- three cubic pieces with visible jumps at knots -->
+        <path d="M 5 130 Q 40 60 75 80" fill="none" stroke="#2563eb" stroke-width="2"/>
+        <path d="M 75 40 Q 110 110 150 100" fill="none" stroke="#2563eb" stroke-width="2"/>
+        <path d="M 150 130 Q 185 60 215 90" fill="none" stroke="#2563eb" stroke-width="2"/>
+        <!-- mark jumps -->
+        <circle cx="75" cy="80" r="3" fill="#ef4444"/>
+        <circle cx="75" cy="40" r="3" fill="#ef4444"/>
+        <circle cx="150" cy="100" r="3" fill="#ef4444"/>
+        <circle cx="150" cy="130" r="3" fill="#ef4444"/>
+        <text x="160" y="55" font-size="10" fill="#ef4444">jumps</text>
+      </g>
+      <!-- Right: natural cubic spline (smooth) -->
+      <g transform="translate(300, 20)">
+        <text x="110" y="-4" text-anchor="middle" font-size="12" font-weight="600">natural cubic spline</text>
+        <line x1="0" y1="160" x2="220" y2="160" stroke="#0f172a" stroke-width="1"/>
+        <line x1="0" y1="10" x2="0" y2="160" stroke="#0f172a" stroke-width="1"/>
+        <line x1="75" y1="158" x2="75" y2="166" stroke="#64748b" stroke-width="1.5"/>
+        <line x1="150" y1="158" x2="150" y2="166" stroke="#64748b" stroke-width="1.5"/>
+        <text x="75" y="178" text-anchor="middle" font-size="10" fill="#64748b">k₁</text>
+        <text x="150" y="178" text-anchor="middle" font-size="10" fill="#64748b">k₂</text>
+        <path d="M 5 130 Q 40 60 75 70 Q 110 80 150 110 Q 185 130 215 100" fill="none" stroke="#10b981" stroke-width="2"/>
+        <circle cx="75" cy="70" r="3" fill="#10b981"/>
+        <circle cx="150" cy="110" r="3" fill="#10b981"/>
+        <text x="155" y="100" font-size="10" fill="#10b981">smooth</text>
+      </g>
+    </svg>
+    <p class="muted">Same knots, different rules. Splines enforce continuity of f, f′, f″ at every knot (ISLR Fig 7.3).</p>
+  </section>
+  <section>
+    <h2>Truncated power basis</h2>
+    <p class="muted" style="font-size:0.8em;">A cubic spline with knots k₁, k₂ is a linear combination of these basis functions.</p>
+    <svg class="diagram" viewBox="0 0 480 320" width="540" height="360">
+      <!-- 1 -->
+      <g transform="translate(20, 10)">
+        <text x="0" y="10" font-size="11" font-weight="600">β₀ · 1</text>
+        <line x1="0" y1="50" x2="180" y2="50" stroke="#0f172a" stroke-width="1"/>
+        <line x1="0" y1="20" x2="0" y2="50" stroke="#0f172a" stroke-width="1"/>
+        <line x1="0" y1="30" x2="180" y2="30" stroke="#2563eb" stroke-width="2"/>
+      </g>
+      <!-- x -->
+      <g transform="translate(20, 80)">
+        <text x="0" y="10" font-size="11" font-weight="600">β₁ · x</text>
+        <line x1="0" y1="50" x2="180" y2="50" stroke="#0f172a" stroke-width="1"/>
+        <line x1="0" y1="20" x2="0" y2="50" stroke="#0f172a" stroke-width="1"/>
+        <line x1="0" y1="50" x2="180" y2="20" stroke="#2563eb" stroke-width="2"/>
+      </g>
+      <!-- (x-k1)+ -->
+      <g transform="translate(20, 150)">
+        <text x="0" y="10" font-size="11" font-weight="600">β₂ · (x − k₁)₊</text>
+        <line x1="0" y1="50" x2="180" y2="50" stroke="#0f172a" stroke-width="1"/>
+        <line x1="0" y1="20" x2="0" y2="50" stroke="#0f172a" stroke-width="1"/>
+        <line x1="0" y1="50" x2="60" y2="50" stroke="#2563eb" stroke-width="2"/>
+        <line x1="60" y1="50" x2="180" y2="20" stroke="#2563eb" stroke-width="2"/>
+        <line x1="60" y1="48" x2="60" y2="54" stroke="#64748b" stroke-width="1.5"/>
+        <text x="60" y="65" text-anchor="middle" font-size="9" fill="#64748b">k₁</text>
+      </g>
+      <!-- (x-k2)+ -->
+      <g transform="translate(20, 220)">
+        <text x="0" y="10" font-size="11" font-weight="600">β₃ · (x − k₂)₊</text>
+        <line x1="0" y1="50" x2="180" y2="50" stroke="#0f172a" stroke-width="1"/>
+        <line x1="0" y1="20" x2="0" y2="50" stroke="#0f172a" stroke-width="1"/>
+        <line x1="0" y1="50" x2="120" y2="50" stroke="#2563eb" stroke-width="2"/>
+        <line x1="120" y1="50" x2="180" y2="25" stroke="#2563eb" stroke-width="2"/>
+        <line x1="120" y1="48" x2="120" y2="54" stroke="#64748b" stroke-width="1.5"/>
+        <text x="120" y="65" text-anchor="middle" font-size="9" fill="#64748b">k₂</text>
+      </g>
+      <!-- arrow down + summed fit -->
+      <g transform="translate(260, 100)">
+        <text x="100" y="0" text-anchor="middle" font-size="12" fill="#64748b">sum →</text>
+        <line x1="100" y1="10" x2="100" y2="40" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrowtp)"/>
+        <text x="100" y="60" text-anchor="middle" font-size="11" font-weight="600">fitted f(x)</text>
+        <line x1="0" y1="180" x2="200" y2="180" stroke="#0f172a" stroke-width="1"/>
+        <line x1="0" y1="80" x2="0" y2="180" stroke="#0f172a" stroke-width="1"/>
+        <path d="M 0 160 Q 40 130 70 135 Q 110 145 140 110 Q 170 85 200 95" fill="none" stroke="#10b981" stroke-width="2.5"/>
+        <line x1="70" y1="178" x2="70" y2="184" stroke="#64748b" stroke-width="1.5"/>
+        <line x1="140" y1="178" x2="140" y2="184" stroke="#64748b" stroke-width="1.5"/>
+        <text x="70" y="196" text-anchor="middle" font-size="9" fill="#64748b">k₁</text>
+        <text x="140" y="196" text-anchor="middle" font-size="9" fill="#64748b">k₂</text>
+      </g>
+      <defs>
+        <marker id="arrowtp" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+        </marker>
+      </defs>
+    </svg>
+    <p class="muted">Add one truncated power basis per knot. Linear combination = smooth spline.</p>
+  </section>
+  <section>
     <h2>GAMs — the generalization</h2>
     <p>A <strong>Generalized Additive Model</strong> writes:</p>
     <p style="text-align:center;font-size:1.15em;">y = β₀ + f₁(X₁) + f₂(X₂) + … + f_p(X_p) + ε</p>
@@ -202,6 +488,42 @@ PolynomialFeatures(degree=3).fit_transform(X)
     <p style="text-align:center;font-family:var(--bc-mono);font-size:0.9em;">wage = β₀ + f₁(year) + f₂(age) + f₃(education) + ε</p>
     <p>Each f_j is fit as a spline. You get the flexibility of non-linear modeling and the interpretability of "see one curve per feature."</p>
     <p class="muted">For classification: log-odds(wage &gt; 250K) = β₀ + f₁(year) + f₂(age) + f₃(education). Same idea, logistic link.</p>
+  </section>
+  <section>
+    <h2>GAM — additive structure</h2>
+    <p style="text-align:center;font-family:var(--bc-mono);font-size:1em;">ŷ = f₁(age) + f₂(year) + f₃(education)</p>
+    <svg class="diagram" viewBox="0 0 540 200" width="640" height="220">
+      <!-- f1(age): hump -->
+      <g transform="translate(20, 20)">
+        <text x="80" y="-4" text-anchor="middle" font-size="12" font-weight="600">f₁(age)</text>
+        <line x1="0" y1="140" x2="160" y2="140" stroke="#0f172a" stroke-width="1"/>
+        <line x1="0" y1="20" x2="0" y2="140" stroke="#0f172a" stroke-width="1"/>
+        <path d="M 0 120 Q 60 30 100 60 Q 140 90 160 130" fill="none" stroke="#2563eb" stroke-width="2"/>
+        <text x="80" y="158" text-anchor="middle" font-size="10" fill="#64748b">age</text>
+      </g>
+      <text x="200" y="100" font-size="20" fill="#64748b">+</text>
+      <!-- f2(year): rising -->
+      <g transform="translate(220, 20)">
+        <text x="80" y="-4" text-anchor="middle" font-size="12" font-weight="600">f₂(year)</text>
+        <line x1="0" y1="140" x2="160" y2="140" stroke="#0f172a" stroke-width="1"/>
+        <line x1="0" y1="20" x2="0" y2="140" stroke="#0f172a" stroke-width="1"/>
+        <path d="M 0 120 Q 80 100 160 50" fill="none" stroke="#2563eb" stroke-width="2"/>
+        <text x="80" y="158" text-anchor="middle" font-size="10" fill="#64748b">year</text>
+      </g>
+      <text x="400" y="100" font-size="20" fill="#64748b">+</text>
+      <!-- f3(education): step bars -->
+      <g transform="translate(420, 20)">
+        <text x="60" y="-4" text-anchor="middle" font-size="12" font-weight="600">f₃(edu)</text>
+        <line x1="0" y1="140" x2="120" y2="140" stroke="#0f172a" stroke-width="1"/>
+        <line x1="0" y1="20" x2="0" y2="140" stroke="#0f172a" stroke-width="1"/>
+        <rect x="10" y="110" width="20" height="30" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+        <rect x="35" y="85" width="20" height="55" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+        <rect x="60" y="60" width="20" height="80" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+        <rect x="85" y="40" width="20" height="100" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+        <text x="60" y="158" text-anchor="middle" font-size="10" fill="#64748b">education level</text>
+      </g>
+    </svg>
+    <p class="muted">One partial function per feature, added up. Flexible like splines, interpretable like LR (ISLR Fig 7.11).</p>
   </section>
   <section>
     <h2>Bias / variance, visualized</h2>
@@ -251,6 +573,43 @@ ax.set_title('Polynomial fits: d=1 underfit, d=15 overfit'); plt.show()
       <span class="ex-status"></span>
     </div>
     <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy,matplotlib,scikit-learn">
+    <h2>Triad on synthetic sin(x) — d = 1, 3, 15</h2>
+    <div class="ex-prompt">Fit polynomial regressions of degree 1, 3, and 15 to noisy sin(x) and overlay them. d=1 underfits, d=3 tracks the truth, d=15 wiggles through the noise.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
+
+rng = np.random.default_rng(0)
+x = np.sort(rng.uniform(0, 2 * np.pi, 40))
+y = np.sin(x) + rng.normal(0, 0.25, x.size)
+X = x.reshape(-1, 1)
+x_grid = np.linspace(x.min(), x.max(), 300).reshape(-1, 1)
+
+fig, ax = plt.subplots(figsize=(7, 4.5))
+ax.scatter(x, y, s=20, alpha=0.5, color='gray', label='data')
+ax.plot(x_grid, np.sin(x_grid), '--', color='#10b981', label='truth: sin(x)')
+for d, color in zip([1, 3, 15], ['#2563eb', '#10b981', '#ef4444']):
+    pipe = Pipeline([('p', PolynomialFeatures(degree=d, include_bias=False)),
+                     ('lr', LinearRegression())])
+    pipe.fit(X, y)
+    ax.plot(x_grid, pipe.predict(x_grid), color=color, label=f'd = {d}')
+ax.set_xlabel('x'); ax.set_ylabel('y'); ax.legend()
+ax.set_title('Underfit / just-right / overfit'); plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <p class="muted">See the triad on real data.</p>
   </section>
 
 </section>

@@ -55,8 +55,63 @@
   </section>
 
   <section>
+    <h2>Subset explosion — 2<sup>p</sup> grows fast</h2>
+    <svg class="diagram" viewBox="0 0 720 280" width="700" height="270">
+      <g transform="translate(80, 30)">
+        <line x1="0" y1="0" x2="0" y2="220" stroke="#64748b" stroke-width="1.5"/>
+        <line x1="0" y1="220" x2="560" y2="220" stroke="#64748b" stroke-width="1.5"/>
+        <text x="-10" y="35" text-anchor="end" font-size="13" fill="#0f172a">p = 5</text>
+        <text x="-10" y="85" text-anchor="end" font-size="13" fill="#0f172a">p = 10</text>
+        <text x="-10" y="135" text-anchor="end" font-size="13" fill="#0f172a">p = 20</text>
+        <text x="-10" y="185" text-anchor="end" font-size="13" fill="#0f172a">p = 30</text>
+        <rect x="0" y="20" width="50" height="24" fill="#2563eb" opacity="0.85"/>
+        <rect x="0" y="70" width="140" height="24" fill="#2563eb" opacity="0.85"/>
+        <rect x="0" y="120" width="320" height="24" fill="#b45309" opacity="0.85"/>
+        <rect x="0" y="170" width="540" height="24" fill="#b45309" opacity="0.85"/>
+        <text x="58" y="38" font-size="12" fill="#0f172a">32 subsets</text>
+        <text x="148" y="88" font-size="12" fill="#0f172a">1,024 subsets</text>
+        <text x="328" y="138" font-size="12" fill="#b45309" font-weight="600">≈ 1,000,000</text>
+        <text x="548" y="188" font-size="12" fill="#b45309" font-weight="600">≈ 1,000,000,000</text>
+        <text x="280" y="245" text-anchor="middle" font-size="12" fill="#64748b">number of candidate subsets (log-scaled bars)</text>
+      </g>
+    </svg>
+    <p class="muted" style="font-size:0.8em;">Best subset is intractable beyond ~15 predictors. Each extra feature doubles the work.</p>
+  </section>
+
+  <section>
     <h2>RSS always drops with more predictors</h2>
 <p>Adding a predictor can never <em>increase</em> training RSS. So we cannot pick model size by raw RSS.</p><p>We need a criterion that <em>penalizes</em> size: AIC, BIC, Cp, adjusted R², or — best — held-out CV error.</p>
+  </section>
+
+  <section>
+    <h2>Training RSS vs CV-MSE — the overfitting gap</h2>
+    <svg class="diagram" viewBox="0 0 640 320" width="620" height="310">
+      <g transform="translate(60, 30)">
+        <line x1="0" y1="0" x2="0" y2="240" stroke="#64748b" stroke-width="1.5"/>
+        <line x1="0" y1="240" x2="540" y2="240" stroke="#64748b" stroke-width="1.5"/>
+        <text x="-40" y="120" font-size="12" fill="#64748b" transform="rotate(-90, -40, 120)">error</text>
+        <text x="270" y="275" text-anchor="middle" font-size="12" fill="#64748b">subset size k</text>
+        <!-- shaded overfitting gap -->
+        <path d="M 60,200 L 120,165 L 180,138 L 240,115 L 300,98 L 360,86 L 420,78 L 480,72
+                 L 480,160 L 420,118 L 360,98 L 300,90 L 240,95 L 180,110 L 120,140 L 60,180 Z"
+              fill="#fde68a" opacity="0.45"/>
+        <!-- Training RSS curve (success, monotonically decreasing) -->
+        <polyline points="60,200 120,165 180,138 240,115 300,98 360,86 420,78 480,72"
+                  fill="none" stroke="#10b981" stroke-width="2.2"/>
+        <!-- CV-MSE curve (warn, U-shaped) -->
+        <polyline points="60,180 120,140 180,110 240,95 300,90 360,98 420,118 480,160"
+                  fill="none" stroke="#b45309" stroke-width="2.2"/>
+        <!-- markers -->
+        <g fill="#10b981"><circle cx="60" cy="200" r="3.5"/><circle cx="180" cy="138" r="3.5"/><circle cx="300" cy="98" r="3.5"/><circle cx="480" cy="72" r="3.5"/></g>
+        <g fill="#b45309"><circle cx="60" cy="180" r="3.5"/><circle cx="180" cy="110" r="3.5"/><circle cx="300" cy="90" r="3.5"/><circle cx="480" cy="160" r="3.5"/></g>
+        <!-- labels -->
+        <text x="495" y="68" font-size="12" fill="#10b981" font-weight="600">training RSS</text>
+        <text x="495" y="165" font-size="12" fill="#b45309" font-weight="600">CV-MSE</text>
+        <text x="380" y="135" font-size="11" fill="#92400e">overfitting gap</text>
+        <line x1="370" y1="130" x2="410" y2="110" stroke="#92400e" stroke-width="1"/>
+      </g>
+    </svg>
+    <p class="muted" style="font-size:0.8em;">Training error keeps falling; held-out error turns back up. The shaded region is the price of overfitting.</p>
   </section>
 
   <section class="example" data-packages="numpy,pandas,scikit-learn">
@@ -143,6 +198,46 @@ for k in range(1, len(small) + 1):
   <li>At each step, add the single predictor that most reduces CV error.</li>
   <li>Stop when CV error stops improving (or fit all p, then pick the best size).</li>
 </ul>
+  </section>
+
+  <section>
+    <h2>Forward stepwise trace — Credit data</h2>
+    <svg class="diagram" viewBox="0 0 680 320" width="660" height="310">
+      <g transform="translate(60, 30)">
+        <line x1="0" y1="0" x2="0" y2="240" stroke="#64748b" stroke-width="1.5"/>
+        <line x1="0" y1="240" x2="560" y2="240" stroke="#64748b" stroke-width="1.5"/>
+        <text x="280" y="278" text-anchor="middle" font-size="12" fill="#64748b">subset size k</text>
+        <text x="-40" y="120" font-size="12" fill="#64748b" transform="rotate(-90, -40, 120)">training MSE</text>
+        <!-- ticks -->
+        <g font-size="11" fill="#64748b" text-anchor="middle">
+          <text x="40" y="258">1</text><text x="120" y="258">2</text>
+          <text x="200" y="258">3</text><text x="280" y="258">4</text>
+          <text x="360" y="258">5</text><text x="440" y="258">6</text>
+          <text x="520" y="258">7</text>
+        </g>
+        <!-- curve (decreasing) -->
+        <polyline points="40,60 120,110 200,150 280,180 360,200 440,215 520,225"
+                  fill="none" stroke="#2563eb" stroke-width="2"/>
+        <!-- markers + new-variable labels -->
+        <g>
+          <circle cx="40"  cy="60"  r="4.5" fill="#2563eb"/>
+          <text x="40"  y="48"  text-anchor="middle" font-size="11" fill="#2563eb" font-weight="600">+rating</text>
+          <circle cx="120" cy="110" r="4.5" fill="#2563eb"/>
+          <text x="120" y="98"  text-anchor="middle" font-size="11" fill="#2563eb" font-weight="600">+income</text>
+          <circle cx="200" cy="150" r="4.5" fill="#2563eb"/>
+          <text x="200" y="138" text-anchor="middle" font-size="11" fill="#2563eb" font-weight="600">+student</text>
+          <circle cx="280" cy="180" r="4.5" fill="#2563eb"/>
+          <text x="280" y="168" text-anchor="middle" font-size="11" fill="#2563eb" font-weight="600">+limit</text>
+          <circle cx="360" cy="200" r="4.5" fill="#64748b"/>
+          <text x="360" y="188" text-anchor="middle" font-size="11" fill="#64748b">+cards</text>
+          <circle cx="440" cy="215" r="4.5" fill="#64748b"/>
+          <text x="440" y="203" text-anchor="middle" font-size="11" fill="#64748b">+age</text>
+          <circle cx="520" cy="225" r="4.5" fill="#64748b"/>
+          <text x="520" y="213" text-anchor="middle" font-size="11" fill="#64748b">+education</text>
+        </g>
+      </g>
+    </svg>
+    <p class="muted" style="font-size:0.8em;">Each marker shows the predictor added at that step (ISLR Fig 6.1). Big drops early, diminishing returns later.</p>
   </section>
 
   <section class="example" data-packages="numpy,pandas,scikit-learn">
@@ -341,6 +436,93 @@ print([round(m, 2) for m in mses])</script>
 <p style="font-family:monospace;font-size:0.95em;">AIC = n log(RSS/n) + 2p</p><p style="font-family:monospace;font-size:0.95em;">BIC = n log(RSS/n) + p log n</p><p style="font-family:monospace;font-size:0.95em;">Cp  = (RSS + 2 p σ²)/n</p><p style="font-family:monospace;font-size:0.95em;">adj-R² = 1 − (1−R²)(n−1)/(n−p−1)</p>
   </section>
 
+  <section>
+    <h2>Four criteria, four shapes</h2>
+    <svg class="diagram" viewBox="0 0 700 360" width="680" height="350">
+      <!-- Cp panel -->
+      <g transform="translate(30, 20)">
+        <text x="140" y="-2" text-anchor="middle" font-weight="600" font-size="13" fill="#0f172a">Cp</text>
+        <line x1="0" y1="0" x2="0" y2="130" stroke="#64748b"/>
+        <line x1="0" y1="130" x2="280" y2="130" stroke="#64748b"/>
+        <polyline points="20,30 60,55 100,80 140,95 180,90 220,100 260,115" fill="none" stroke="#2563eb" stroke-width="2"/>
+        <circle cx="180" cy="90" r="5" fill="#ef4444"/>
+        <line x1="180" y1="90" x2="180" y2="130" stroke="#ef4444" stroke-dasharray="3 3"/>
+        <text x="180" y="148" text-anchor="middle" font-size="11" fill="#ef4444">k=5</text>
+        <text x="140" y="165" text-anchor="middle" font-size="11" fill="#64748b">subset size</text>
+      </g>
+      <!-- AIC panel -->
+      <g transform="translate(370, 20)">
+        <text x="140" y="-2" text-anchor="middle" font-weight="600" font-size="13" fill="#0f172a">AIC</text>
+        <line x1="0" y1="0" x2="0" y2="130" stroke="#64748b"/>
+        <line x1="0" y1="130" x2="280" y2="130" stroke="#64748b"/>
+        <polyline points="20,30 60,55 100,78 140,92 180,88 220,100 260,118" fill="none" stroke="#2563eb" stroke-width="2"/>
+        <circle cx="180" cy="88" r="5" fill="#ef4444"/>
+        <line x1="180" y1="88" x2="180" y2="130" stroke="#ef4444" stroke-dasharray="3 3"/>
+        <text x="180" y="148" text-anchor="middle" font-size="11" fill="#ef4444">k=5</text>
+        <text x="140" y="165" text-anchor="middle" font-size="11" fill="#64748b">subset size</text>
+      </g>
+      <!-- BIC panel -->
+      <g transform="translate(30, 200)">
+        <text x="140" y="-2" text-anchor="middle" font-weight="600" font-size="13" fill="#0f172a">BIC</text>
+        <line x1="0" y1="0" x2="0" y2="130" stroke="#64748b"/>
+        <line x1="0" y1="130" x2="280" y2="130" stroke="#64748b"/>
+        <polyline points="20,40 60,60 100,75 140,82 180,92 220,108 260,122" fill="none" stroke="#b45309" stroke-width="2"/>
+        <circle cx="140" cy="82" r="5" fill="#ef4444"/>
+        <line x1="140" y1="82" x2="140" y2="130" stroke="#ef4444" stroke-dasharray="3 3"/>
+        <text x="140" y="148" text-anchor="middle" font-size="11" fill="#ef4444">k=4 (smaller!)</text>
+      </g>
+      <!-- adj R^2 panel -->
+      <g transform="translate(370, 200)">
+        <text x="140" y="-2" text-anchor="middle" font-weight="600" font-size="13" fill="#0f172a">adj-R²</text>
+        <line x1="0" y1="0" x2="0" y2="130" stroke="#64748b"/>
+        <line x1="0" y1="130" x2="280" y2="130" stroke="#64748b"/>
+        <polyline points="20,110 60,85 100,65 140,52 180,45 220,48 260,58" fill="none" stroke="#10b981" stroke-width="2"/>
+        <circle cx="180" cy="45" r="5" fill="#ef4444"/>
+        <line x1="180" y1="45" x2="180" y2="130" stroke="#ef4444" stroke-dasharray="3 3"/>
+        <text x="180" y="148" text-anchor="middle" font-size="11" fill="#ef4444">k=5 (maximize)</text>
+      </g>
+    </svg>
+    <p class="muted" style="font-size:0.8em;">ISLR Fig 6.2. BIC's heavier penalty pulls its optimum left; adj-R² is maximized, the others minimized.</p>
+  </section>
+
+  <section>
+    <h2>BIC vs AIC — same data, different winner</h2>
+    <svg class="diagram" viewBox="0 0 640 320" width="620" height="310">
+      <g transform="translate(60, 30)">
+        <line x1="0" y1="0" x2="0" y2="220" stroke="#64748b" stroke-width="1.5"/>
+        <line x1="0" y1="220" x2="540" y2="220" stroke="#64748b" stroke-width="1.5"/>
+        <text x="270" y="258" text-anchor="middle" font-size="12" fill="#64748b">subset size k</text>
+        <text x="-40" y="110" font-size="12" fill="#64748b" transform="rotate(-90, -40, 110)">criterion value</text>
+        <!-- AIC / Cp curve (accent) -->
+        <polyline points="40,50 110,90 180,120 250,140 320,135 390,148 460,170 520,200"
+                  fill="none" stroke="#2563eb" stroke-width="2.2"/>
+        <circle cx="320" cy="135" r="5" fill="#2563eb"/>
+        <line x1="320" y1="135" x2="320" y2="220" stroke="#2563eb" stroke-dasharray="3 3"/>
+        <text x="320" y="235" text-anchor="middle" font-size="11" fill="#2563eb" font-weight="600">AIC min · k=5</text>
+        <!-- BIC curve (warn) -->
+        <polyline points="40,55 110,80 180,100 250,108 320,125 390,150 460,185 520,215"
+                  fill="none" stroke="#b45309" stroke-width="2.2"/>
+        <circle cx="250" cy="108" r="5" fill="#b45309"/>
+        <line x1="250" y1="108" x2="250" y2="220" stroke="#b45309" stroke-dasharray="3 3"/>
+        <text x="250" y="98" text-anchor="middle" font-size="11" fill="#b45309" font-weight="600">BIC min · k=4</text>
+        <!-- Legend -->
+        <rect x="380" y="20" width="14" height="3" fill="#2563eb"/>
+        <text x="400" y="24" font-size="11" fill="#2563eb">Cp / AIC</text>
+        <rect x="380" y="38" width="14" height="3" fill="#b45309"/>
+        <text x="400" y="42" font-size="11" fill="#b45309">BIC</text>
+        <!-- Arrow -->
+        <defs>
+          <marker id="arrL" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#0f172a"/>
+          </marker>
+        </defs>
+        <line x1="320" y1="170" x2="260" y2="170" stroke="#0f172a" stroke-width="1.4" marker-end="url(#arrL)"/>
+        <text x="290" y="162" text-anchor="middle" font-size="11" fill="#0f172a">BIC prefers smaller models</text>
+      </g>
+    </svg>
+    <p class="muted" style="font-size:0.8em;">BIC's log(n)·p penalty is heavier than AIC's 2p once n &gt; 7, so its argmin slides left.</p>
+  </section>
+
   <section class="example" data-packages="numpy,pandas,scikit-learn">
     <h2>Compute AIC, BIC, Cp, adj-R² for each size</h2>
     <div class="ex-prompt">Walk down the forward-stepwise order and, at each prefix size, refit the model and compute all four criteria. Watch how each criterion bottoms out (or peaks) at a different size — they're literally measuring different tradeoffs.</div>
@@ -501,6 +683,61 @@ print({c: (ic_df[c].idxmin() if c != 'adj_r2' else ic_df[c].idxmax())
     </ol>
     <p class="muted">A larger model that is only marginally better is not actually better — its apparent edge is within the noise. Always prefer the simpler model when they tie.</p>
   </section>
+
+  <section>
+    <h2>One-SE rule — picture</h2>
+    <svg class="diagram" viewBox="0 0 680 320" width="660" height="310">
+      <g transform="translate(60, 30)">
+        <line x1="0" y1="0" x2="0" y2="230" stroke="#64748b" stroke-width="1.5"/>
+        <line x1="0" y1="230" x2="560" y2="230" stroke="#64748b" stroke-width="1.5"/>
+        <text x="280" y="265" text-anchor="middle" font-size="12" fill="#64748b">subset size k</text>
+        <text x="-40" y="115" font-size="12" fill="#64748b" transform="rotate(-90, -40, 115)">CV-MSE</text>
+        <!-- ticks -->
+        <g font-size="11" fill="#64748b" text-anchor="middle">
+          <text x="40" y="248">1</text><text x="120" y="248">2</text>
+          <text x="200" y="248">3</text><text x="280" y="248">4</text>
+          <text x="360" y="248">5</text><text x="440" y="248">6</text>
+          <text x="520" y="248">7</text>
+        </g>
+        <!-- min + 1SE line -->
+        <line x1="0" y1="110" x2="560" y2="110" stroke="#b45309" stroke-width="1.2" stroke-dasharray="5 4"/>
+        <text x="555" y="105" text-anchor="end" font-size="11" fill="#b45309">min + 1·SE threshold</text>
+        <!-- error bars then markers -->
+        <g stroke="#64748b" stroke-width="1.2">
+          <line x1="40"  y1="70"  x2="40"  y2="160"/>
+          <line x1="120" y1="55"  x2="120" y2="135"/>
+          <line x1="200" y1="68"  x2="200" y2="138"/>
+          <line x1="280" y1="80"  x2="280" y2="140"/>
+          <line x1="360" y1="90"  x2="360" y2="148"/>
+          <line x1="440" y1="105" x2="440" y2="165"/>
+          <line x1="520" y1="125" x2="520" y2="185"/>
+        </g>
+        <polyline points="40,115 120,95 200,103 280,110 360,119 440,135 520,155" fill="none" stroke="#2563eb" stroke-width="2"/>
+        <g fill="#2563eb">
+          <circle cx="40" cy="115" r="4"/>
+          <circle cx="200" cy="103" r="4"/>
+          <circle cx="280" cy="110" r="4"/>
+          <circle cx="360" cy="119" r="4"/>
+          <circle cx="440" cy="135" r="4"/>
+          <circle cx="520" cy="155" r="4"/>
+        </g>
+        <!-- abs min at k=2 -->
+        <circle cx="120" cy="95" r="6" fill="#ef4444"/>
+        <text x="120" y="78" text-anchor="middle" font-size="11" fill="#ef4444" font-weight="600">abs min · k=2</text>
+        <!-- one-SE pick at k=1 (simplest at or below threshold) -->
+        <circle cx="40" cy="115" r="7" fill="none" stroke="#10b981" stroke-width="2.5"/>
+        <text x="40" y="195" text-anchor="middle" font-size="11" fill="#10b981" font-weight="600">one-SE pick · k=1</text>
+        <!-- arrow from abs-min to one-SE -->
+        <defs>
+          <marker id="arrOSE" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#0f172a"/>
+          </marker>
+        </defs>
+        <line x1="115" y1="95" x2="48" y2="113" stroke="#0f172a" stroke-width="1.4" marker-end="url(#arrOSE)"/>
+      </g>
+    </svg>
+    <p class="muted" style="font-size:0.8em;">Anything under the dashed line is statistically tied with the minimum. Pick the simplest one.</p>
+  </section>
   <section>
     <h2>Which to trust?</h2>
 <ul>
@@ -647,6 +884,73 @@ print(f'CV picks size = {cv_best}, BIC picks size = {bic_best}')
 print('CV is the more honest test-error estimate;')
 print('BIC is faster but assumes the linear model is correctly specified.')</script>
 <script type="text/x-explain">CV directly estimates held-out prediction error, so it's the more honest test-error proxy. BIC is much cheaper (no refitting on folds) but relies on the assumption that the linear-Gaussian model is correctly specified — when it isn't, BIC's penalty can be miscalibrated. No auto-check on this one; the goal is to compare answers and reason about which to trust.</script>
+  </section>
+
+  <section class="example" data-packages="numpy,matplotlib,scikit-learn">
+    <h2>Cp / AIC / BIC on one plot</h2>
+    <div class="ex-prompt">Synthesize n=100, p=8 with only the first 3 features carrying signal. Run a manual forward-stepwise loop with <code>LinearRegression</code>, and at each subset size compute Cp/AIC/BIC from training RSS. Overlay all three curves — different criteria pick different winners.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+
+rng = np.random.default_rng(0)
+n, p = 100, 8
+X = rng.normal(0, 1, (n, p))
+# Only first 3 features carry signal
+beta = np.array([3.0, -2.0, 1.5, 0, 0, 0, 0, 0])
+y = X @ beta + rng.normal(0, 1.0, n)
+
+# Forward stepwise on training RSS
+remaining = list(range(p)); chosen = []
+while remaining:
+    best_col, best_rss = None, float('inf')
+    for c in remaining:
+        cols = chosen + [c]
+        m = LinearRegression().fit(X[:, cols], y)
+        rss = ((y - m.predict(X[:, cols]))**2).sum()
+        if rss < best_rss: best_rss, best_col = rss, c
+    chosen.append(best_col); remaining.remove(best_col)
+
+# sigma^2 estimate from the full model
+m_full = LinearRegression().fit(X, y)
+sigma2 = ((y - m_full.predict(X))**2).sum() / (n - p - 1)
+
+sizes, cps, aics, bics = [], [], [], []
+for k in range(1, p+1):
+    cols = chosen[:k]
+    m = LinearRegression().fit(X[:, cols], y)
+    rss = ((y - m.predict(X[:, cols]))**2).sum()
+    sizes.append(k)
+    cps.append((rss + 2*k*sigma2) / n)
+    aics.append(n*np.log(rss/n) + 2*k)
+    bics.append(n*np.log(rss/n) + k*np.log(n))
+
+# Normalize each curve to its own min=0 so they share an axis
+def norm(v):
+    v = np.array(v); return v - v.min()
+
+fig, ax = plt.subplots(figsize=(7, 4))
+ax.plot(sizes, norm(cps),  marker='o', color='#2563eb', label='Cp')
+ax.plot(sizes, norm(aics), marker='s', color='#10b981', label='AIC')
+ax.plot(sizes, norm(bics), marker='^', color='#b45309', label='BIC')
+for v, c, name in [(cps, '#2563eb', 'Cp'), (aics, '#10b981', 'AIC'), (bics, '#b45309', 'BIC')]:
+    k_star = sizes[int(np.argmin(v))]
+    ax.axvline(k_star, color=c, linestyle='--', alpha=0.4)
+ax.set_xlabel('subset size k'); ax.set_ylabel('criterion − min')
+ax.set_title('Cp / AIC / BIC vs subset size'); ax.legend()
+plt.tight_layout(); plt.show()
+print('Cp picks  k =', sizes[int(np.argmin(cps))])
+print('AIC picks k =', sizes[int(np.argmin(aics))])
+print('BIC picks k =', sizes[int(np.argmin(bics))])
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
 </section>

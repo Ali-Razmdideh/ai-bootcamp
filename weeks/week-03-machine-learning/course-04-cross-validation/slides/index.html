@@ -64,6 +64,25 @@
   <li class="fragment fade-up">That spread is <em>noise</em>, not signal.</li>
 </ul>
   </section>
+  <section>
+    <h2>The validation-set split</h2>
+    <svg class="diagram" viewBox="0 0 600 140" width="640" height="180">
+      <text x="60" y="30" font-size="12" fill="#2563eb">train (80%)</text>
+      <text x="470" y="30" font-size="12" fill="#b45309">validation (20%)</text>
+      <line x1="40" y1="40" x2="460" y2="40" stroke="#2563eb" stroke-width="1.5"/>
+      <line x1="40" y1="36" x2="40" y2="44" stroke="#2563eb" stroke-width="1.5"/>
+      <line x1="460" y1="36" x2="460" y2="44" stroke="#2563eb" stroke-width="1.5"/>
+      <line x1="460" y1="40" x2="560" y2="40" stroke="#b45309" stroke-width="1.5"/>
+      <line x1="560" y1="36" x2="560" y2="44" stroke="#b45309" stroke-width="1.5"/>
+      <rect x="40" y="55" width="420" height="38" fill="#2563eb" opacity="0.85"/>
+      <rect x="460" y="55" width="100" height="38" fill="#b45309" opacity="0.85"/>
+      <text x="250" y="80" text-anchor="middle" font-size="13" fill="#fff">fit the model here</text>
+      <text x="510" y="80" text-anchor="middle" font-size="12" fill="#fff">score</text>
+      <text x="40" y="115" font-size="11" fill="#64748b">sample 1</text>
+      <text x="560" y="115" font-size="11" fill="#64748b" text-anchor="end">sample N</text>
+    </svg>
+    <p class="muted">One slice held out, one number reported. Cheap — but the number wiggles a lot when you reshuffle.</p>
+  </section>
 
   <section class="example" data-packages="numpy,scikit-learn,matplotlib">
     <h2>Live demo</h2>
@@ -129,11 +148,81 @@ plt.show()
     <p class="muted">CV averages over many splits and gives a stable curve.</p>
   </section>
   <section>
+    <h2>Ten splits, ten answers</h2>
+    <svg class="diagram" viewBox="0 0 520 280" width="600" height="320">
+      <line x1="50" y1="240" x2="500" y2="240" stroke="#0f172a" stroke-width="1"/>
+      <line x1="50" y1="20" x2="50" y2="240" stroke="#0f172a" stroke-width="1"/>
+      <text x="275" y="265" text-anchor="middle" class="muted" font-size="12">model complexity →</text>
+      <text x="22" y="130" transform="rotate(-90 22 130)" text-anchor="middle" class="muted" font-size="12">test MSE</text>
+      <path d="M 60 90 Q 180 200 280 170 Q 380 140 490 60" fill="none" stroke="#2563eb" stroke-width="1.5" opacity="0.7"/>
+      <path d="M 60 110 Q 170 180 270 150 Q 370 170 490 80" fill="none" stroke="#b45309" stroke-width="1.5" opacity="0.7"/>
+      <path d="M 60 70 Q 200 210 290 180 Q 390 130 490 50" fill="none" stroke="#10b981" stroke-width="1.5" opacity="0.7"/>
+      <path d="M 60 120 Q 180 220 280 195 Q 360 150 490 100" fill="none" stroke="#ef4444" stroke-width="1.5" opacity="0.7"/>
+      <path d="M 60 100 Q 190 190 280 160 Q 370 145 490 70" fill="none" stroke="#7c3aed" stroke-width="1.5" opacity="0.7"/>
+      <path d="M 60 85 Q 170 175 270 155 Q 380 175 490 90" fill="none" stroke="#0891b2" stroke-width="1.5" opacity="0.7"/>
+      <path d="M 60 130 Q 200 205 290 180 Q 390 155 490 65" fill="none" stroke="#db2777" stroke-width="1.5" opacity="0.7"/>
+      <path d="M 60 95 Q 180 195 280 170 Q 370 130 490 55" fill="none" stroke="#a16207" stroke-width="1.5" opacity="0.7"/>
+      <path d="M 60 105 Q 190 215 290 185 Q 380 160 490 75" fill="none" stroke="#16a34a" stroke-width="1.5" opacity="0.7"/>
+      <path d="M 60 115 Q 170 185 270 165 Q 370 140 490 85" fill="none" stroke="#9333ea" stroke-width="1.5" opacity="0.7"/>
+    </svg>
+    <p class="muted">Ten 50/50 splits, ten wiggly U-curves. They roughly agree — but the exact minimum jumps from d=2 to d=7. Single split = noisy estimate.</p>
+  </section>
+  <section>
     <h2>K-fold cross-validation</h2>
 <p>Split into K folds. For k = 1…K, train on the other K−1 folds and score on fold k. Average the K scores.</p><ul>
   <li class="fragment fade-up">K = 5 or K = 10 is the standard. K = n is leave-one-out (LOOCV).</li>
   <li class="fragment fade-up"><code>cross_val_score(model, X, y, cv=KFold(10))</code> is one line.</li>
 </ul>
+  </section>
+  <section>
+    <h2>K-fold layout (K = 5)</h2>
+    <svg class="diagram" viewBox="0 0 560 260" width="620" height="300">
+      <text x="280" y="20" text-anchor="middle" font-size="13" class="muted">each row = one of the 5 folds; orange cell is the held-out test fold</text>
+      <g font-size="11" fill="#fff" text-anchor="middle">
+        <!-- Row 1: test at col 1-2 -->
+        <text x="20" y="60" fill="#0f172a" text-anchor="start">fold 1</text>
+        <rect x="80"  y="45" width="90" height="28" fill="#b45309"/>
+        <rect x="175" y="45" width="90" height="28" fill="#2563eb"/>
+        <rect x="270" y="45" width="90" height="28" fill="#2563eb"/>
+        <rect x="365" y="45" width="90" height="28" fill="#2563eb"/>
+        <rect x="460" y="45" width="90" height="28" fill="#2563eb"/>
+        <!-- Row 2 -->
+        <text x="20" y="100" fill="#0f172a" text-anchor="start">fold 2</text>
+        <rect x="80"  y="85" width="90" height="28" fill="#2563eb"/>
+        <rect x="175" y="85" width="90" height="28" fill="#b45309"/>
+        <rect x="270" y="85" width="90" height="28" fill="#2563eb"/>
+        <rect x="365" y="85" width="90" height="28" fill="#2563eb"/>
+        <rect x="460" y="85" width="90" height="28" fill="#2563eb"/>
+        <!-- Row 3 -->
+        <text x="20" y="140" fill="#0f172a" text-anchor="start">fold 3</text>
+        <rect x="80"  y="125" width="90" height="28" fill="#2563eb"/>
+        <rect x="175" y="125" width="90" height="28" fill="#2563eb"/>
+        <rect x="270" y="125" width="90" height="28" fill="#b45309"/>
+        <rect x="365" y="125" width="90" height="28" fill="#2563eb"/>
+        <rect x="460" y="125" width="90" height="28" fill="#2563eb"/>
+        <!-- Row 4 -->
+        <text x="20" y="180" fill="#0f172a" text-anchor="start">fold 4</text>
+        <rect x="80"  y="165" width="90" height="28" fill="#2563eb"/>
+        <rect x="175" y="165" width="90" height="28" fill="#2563eb"/>
+        <rect x="270" y="165" width="90" height="28" fill="#2563eb"/>
+        <rect x="365" y="165" width="90" height="28" fill="#b45309"/>
+        <rect x="460" y="165" width="90" height="28" fill="#2563eb"/>
+        <!-- Row 5 -->
+        <text x="20" y="220" fill="#0f172a" text-anchor="start">fold 5</text>
+        <rect x="80"  y="205" width="90" height="28" fill="#2563eb"/>
+        <rect x="175" y="205" width="90" height="28" fill="#2563eb"/>
+        <rect x="270" y="205" width="90" height="28" fill="#2563eb"/>
+        <rect x="365" y="205" width="90" height="28" fill="#2563eb"/>
+        <rect x="460" y="205" width="90" height="28" fill="#b45309"/>
+      </g>
+      <g font-size="11">
+        <rect x="80"  y="245" width="14" height="10" fill="#2563eb"/>
+        <text x="100" y="254" fill="#0f172a">train</text>
+        <rect x="160" y="245" width="14" height="10" fill="#b45309"/>
+        <text x="180" y="254" fill="#0f172a">test (held out)</text>
+      </g>
+    </svg>
+    <p class="muted">Five fits, five test scores, then average. ISLR Fig 5.5.</p>
   </section>
 
   <section class="exercise" data-packages="numpy,scikit-learn">
@@ -198,6 +287,102 @@ print(f'5-fold CV MSE = {result:.4f}')</script>
     <p>where h_i is the i-th diagonal of the hat matrix H = X(XᵀX)⁻¹Xᵀ. Fit the model <em>once</em>, divide each residual by (1 − h_i), square, average. Done.</p>
     <p class="muted">For arbitrary models (random forests, neural nets), there is no shortcut — LOOCV genuinely costs n fits, which is why we use 5- or 10-fold by default.</p>
   </section>
+  <section>
+    <h2>LOOCV — leave-one-out</h2>
+    <svg class="diagram" viewBox="0 0 560 340" width="600" height="360">
+      <g font-size="10">
+        <!-- 8 rows of 8 cells, diagonal warn -->
+        <!-- row generator inlined -->
+        <!-- row 1 -->
+        <text x="20" y="35" fill="#0f172a">fold 1</text>
+        <rect x="70"  y="20" width="55" height="26" fill="#b45309"/>
+        <rect x="128" y="20" width="55" height="26" fill="#2563eb"/>
+        <rect x="186" y="20" width="55" height="26" fill="#2563eb"/>
+        <rect x="244" y="20" width="55" height="26" fill="#2563eb"/>
+        <rect x="302" y="20" width="55" height="26" fill="#2563eb"/>
+        <rect x="360" y="20" width="55" height="26" fill="#2563eb"/>
+        <rect x="418" y="20" width="55" height="26" fill="#2563eb"/>
+        <rect x="476" y="20" width="55" height="26" fill="#2563eb"/>
+        <!-- row 2 -->
+        <text x="20" y="71" fill="#0f172a">fold 2</text>
+        <rect x="70"  y="56" width="55" height="26" fill="#2563eb"/>
+        <rect x="128" y="56" width="55" height="26" fill="#b45309"/>
+        <rect x="186" y="56" width="55" height="26" fill="#2563eb"/>
+        <rect x="244" y="56" width="55" height="26" fill="#2563eb"/>
+        <rect x="302" y="56" width="55" height="26" fill="#2563eb"/>
+        <rect x="360" y="56" width="55" height="26" fill="#2563eb"/>
+        <rect x="418" y="56" width="55" height="26" fill="#2563eb"/>
+        <rect x="476" y="56" width="55" height="26" fill="#2563eb"/>
+        <!-- row 3 -->
+        <text x="20" y="107" fill="#0f172a">fold 3</text>
+        <rect x="70"  y="92" width="55" height="26" fill="#2563eb"/>
+        <rect x="128" y="92" width="55" height="26" fill="#2563eb"/>
+        <rect x="186" y="92" width="55" height="26" fill="#b45309"/>
+        <rect x="244" y="92" width="55" height="26" fill="#2563eb"/>
+        <rect x="302" y="92" width="55" height="26" fill="#2563eb"/>
+        <rect x="360" y="92" width="55" height="26" fill="#2563eb"/>
+        <rect x="418" y="92" width="55" height="26" fill="#2563eb"/>
+        <rect x="476" y="92" width="55" height="26" fill="#2563eb"/>
+        <!-- row 4 -->
+        <text x="20" y="143" fill="#0f172a">fold 4</text>
+        <rect x="70"  y="128" width="55" height="26" fill="#2563eb"/>
+        <rect x="128" y="128" width="55" height="26" fill="#2563eb"/>
+        <rect x="186" y="128" width="55" height="26" fill="#2563eb"/>
+        <rect x="244" y="128" width="55" height="26" fill="#b45309"/>
+        <rect x="302" y="128" width="55" height="26" fill="#2563eb"/>
+        <rect x="360" y="128" width="55" height="26" fill="#2563eb"/>
+        <rect x="418" y="128" width="55" height="26" fill="#2563eb"/>
+        <rect x="476" y="128" width="55" height="26" fill="#2563eb"/>
+        <!-- row 5 -->
+        <text x="20" y="179" fill="#0f172a">fold 5</text>
+        <rect x="70"  y="164" width="55" height="26" fill="#2563eb"/>
+        <rect x="128" y="164" width="55" height="26" fill="#2563eb"/>
+        <rect x="186" y="164" width="55" height="26" fill="#2563eb"/>
+        <rect x="244" y="164" width="55" height="26" fill="#2563eb"/>
+        <rect x="302" y="164" width="55" height="26" fill="#b45309"/>
+        <rect x="360" y="164" width="55" height="26" fill="#2563eb"/>
+        <rect x="418" y="164" width="55" height="26" fill="#2563eb"/>
+        <rect x="476" y="164" width="55" height="26" fill="#2563eb"/>
+        <!-- row 6 -->
+        <text x="20" y="215" fill="#0f172a">fold 6</text>
+        <rect x="70"  y="200" width="55" height="26" fill="#2563eb"/>
+        <rect x="128" y="200" width="55" height="26" fill="#2563eb"/>
+        <rect x="186" y="200" width="55" height="26" fill="#2563eb"/>
+        <rect x="244" y="200" width="55" height="26" fill="#2563eb"/>
+        <rect x="302" y="200" width="55" height="26" fill="#2563eb"/>
+        <rect x="360" y="200" width="55" height="26" fill="#b45309"/>
+        <rect x="418" y="200" width="55" height="26" fill="#2563eb"/>
+        <rect x="476" y="200" width="55" height="26" fill="#2563eb"/>
+        <!-- row 7 -->
+        <text x="20" y="251" fill="#0f172a">fold 7</text>
+        <rect x="70"  y="236" width="55" height="26" fill="#2563eb"/>
+        <rect x="128" y="236" width="55" height="26" fill="#2563eb"/>
+        <rect x="186" y="236" width="55" height="26" fill="#2563eb"/>
+        <rect x="244" y="236" width="55" height="26" fill="#2563eb"/>
+        <rect x="302" y="236" width="55" height="26" fill="#2563eb"/>
+        <rect x="360" y="236" width="55" height="26" fill="#2563eb"/>
+        <rect x="418" y="236" width="55" height="26" fill="#b45309"/>
+        <rect x="476" y="236" width="55" height="26" fill="#2563eb"/>
+        <!-- row 8 -->
+        <text x="20" y="287" fill="#0f172a">fold 8</text>
+        <rect x="70"  y="272" width="55" height="26" fill="#2563eb"/>
+        <rect x="128" y="272" width="55" height="26" fill="#2563eb"/>
+        <rect x="186" y="272" width="55" height="26" fill="#2563eb"/>
+        <rect x="244" y="272" width="55" height="26" fill="#2563eb"/>
+        <rect x="302" y="272" width="55" height="26" fill="#2563eb"/>
+        <rect x="360" y="272" width="55" height="26" fill="#2563eb"/>
+        <rect x="418" y="272" width="55" height="26" fill="#2563eb"/>
+        <rect x="476" y="272" width="55" height="26" fill="#b45309"/>
+      </g>
+      <g font-size="11">
+        <rect x="70"  y="315" width="14" height="10" fill="#2563eb"/>
+        <text x="90" y="324" fill="#0f172a">train</text>
+        <rect x="150" y="315" width="14" height="10" fill="#b45309"/>
+        <text x="170" y="324" fill="#0f172a">test (one sample)</text>
+      </g>
+    </svg>
+    <p class="muted">N folds, one sample held out each time. Maximum training data per fold; n model fits unless a shortcut exists.</p>
+  </section>
   <section class="example" data-packages="numpy,scikit-learn">
     <h2>LOOCV — k equals n</h2>
     <div class="ex-prompt">LeaveOneOut is just K-fold with K = n. Cheap here because the model is a degree-2 polynomial linear regression. Reports the mean MSE across all n single-row holdouts.</div>
@@ -239,6 +424,43 @@ print(f'LOOCV MSE (d=2) = {-loo_scores.mean():.4f}')
     <h2>The CV curve</h2>
 <p>Plot CV error vs the hyperparameter (polynomial degree, α, λ, k, …). Pick the minimum.</p><p class="muted">For Auto mpg, the CV curve picks a stable d ≈ 2.</p>
     <aside class="notes">Reproduce ISLP Fig 5.4. Stable winner across folds = trustworthy choice.</aside>
+  </section>
+  <section>
+    <h2>The one-SE rule</h2>
+    <svg class="diagram" viewBox="0 0 540 280" width="600" height="320">
+      <line x1="60" y1="230" x2="510" y2="230" stroke="#0f172a" stroke-width="1"/>
+      <line x1="60" y1="20" x2="60" y2="230" stroke="#0f172a" stroke-width="1"/>
+      <text x="285" y="258" text-anchor="middle" class="muted" font-size="12">model complexity →</text>
+      <text x="22" y="125" transform="rotate(-90 22 125)" text-anchor="middle" class="muted" font-size="12">CV MSE</text>
+      <!-- curve points -->
+      <polyline points="100,80 150,110 200,140 250,160 300,150 350,135 400,115 450,95" fill="none" stroke="#2563eb" stroke-width="2"/>
+      <!-- error bars + dots -->
+      <g stroke="#2563eb" stroke-width="1.5">
+        <line x1="100" y1="65" x2="100" y2="95"/><line x1="95" y1="65" x2="105" y2="65"/><line x1="95" y1="95" x2="105" y2="95"/>
+        <line x1="150" y1="95" x2="150" y2="125"/><line x1="145" y1="95" x2="155" y2="95"/><line x1="145" y1="125" x2="155" y2="125"/>
+        <line x1="200" y1="125" x2="200" y2="155"/><line x1="195" y1="125" x2="205" y2="125"/><line x1="195" y1="155" x2="205" y2="155"/>
+        <line x1="250" y1="145" x2="250" y2="175"/><line x1="245" y1="145" x2="255" y2="145"/><line x1="245" y1="175" x2="255" y2="175"/>
+        <line x1="300" y1="135" x2="300" y2="165"/><line x1="295" y1="135" x2="305" y2="135"/><line x1="295" y1="165" x2="305" y2="165"/>
+        <line x1="350" y1="120" x2="350" y2="150"/><line x1="345" y1="120" x2="355" y2="120"/><line x1="345" y1="150" x2="355" y2="150"/>
+        <line x1="400" y1="100" x2="400" y2="130"/><line x1="395" y1="100" x2="405" y2="100"/><line x1="395" y1="130" x2="405" y2="130"/>
+        <line x1="450" y1="80" x2="450" y2="110"/><line x1="445" y1="80" x2="455" y2="80"/><line x1="445" y1="110" x2="455" y2="110"/>
+      </g>
+      <g fill="#2563eb">
+        <circle cx="100" cy="80" r="3"/><circle cx="150" cy="110" r="3"/><circle cx="200" cy="140" r="3"/>
+        <circle cx="250" cy="160" r="3"/><circle cx="300" cy="150" r="3"/><circle cx="350" cy="135" r="3"/>
+        <circle cx="400" cy="115" r="3"/><circle cx="450" cy="95" r="3"/>
+      </g>
+      <!-- absolute min marker at x=250 (y=160) -->
+      <circle cx="250" cy="160" r="6" fill="none" stroke="#ef4444" stroke-width="2"/>
+      <text x="258" y="180" font-size="11" fill="#ef4444">absolute min</text>
+      <!-- one-SE line at min + 1SE → 175 -->
+      <line x1="60" y1="175" x2="510" y2="175" stroke="#64748b" stroke-dasharray="4,4" stroke-width="1.5"/>
+      <text x="465" y="170" font-size="11" class="muted">min + 1·SE</text>
+      <!-- one-SE choice — simplest model under the line: x=200 (y=140) -->
+      <circle cx="200" cy="140" r="7" fill="none" stroke="#10b981" stroke-width="2.5"/>
+      <text x="120" y="125" font-size="11" fill="#10b981">one-SE choice</text>
+    </svg>
+    <p class="muted">Among all models whose CV error is within one SE of the minimum, pick the simplest. Favors generalization over chasing the dip.</p>
   </section>
   <section class="example" data-packages="numpy,scikit-learn,matplotlib">
     <h2>K-fold via <code>cross_val_score</code></h2>
@@ -294,6 +516,104 @@ ax.set_title('ISLP Fig 5.4 style: CV picks a stable winner'); plt.show()
     <p class="muted">resample with replacement</p>
   </section>
   <section>
+    <h2>Bootstrap resampling</h2>
+    <svg class="diagram" viewBox="0 0 720 340" width="720" height="360">
+      <!-- Original sample stack -->
+      <text x="50" y="20" font-size="12" fill="#0f172a">original (N)</text>
+      <g>
+        <rect x="40" y="30"  width="60" height="22" fill="#2563eb"/>
+        <rect x="40" y="54"  width="60" height="22" fill="#2563eb"/>
+        <rect x="40" y="78"  width="60" height="22" fill="#2563eb"/>
+        <rect x="40" y="102" width="60" height="22" fill="#2563eb"/>
+        <rect x="40" y="126" width="60" height="22" fill="#2563eb"/>
+        <rect x="40" y="150" width="60" height="22" fill="#2563eb"/>
+        <rect x="40" y="174" width="60" height="22" fill="#2563eb"/>
+        <rect x="40" y="198" width="60" height="22" fill="#2563eb"/>
+        <g font-size="11" fill="#fff" text-anchor="middle">
+          <text x="70" y="46">1</text><text x="70" y="70">2</text><text x="70" y="94">3</text><text x="70" y="118">4</text>
+          <text x="70" y="142">5</text><text x="70" y="166">6</text><text x="70" y="190">7</text><text x="70" y="214">8</text>
+        </g>
+      </g>
+      <!-- Arrows -->
+      <g stroke="#64748b" stroke-width="1.5" fill="none">
+        <path d="M 105 60  L 200 50"  marker-end="url(#arr)"/>
+        <path d="M 105 120 L 200 130" marker-end="url(#arr)"/>
+        <path d="M 105 180 L 200 210" marker-end="url(#arr)"/>
+      </g>
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+        </marker>
+      </defs>
+      <!-- Bootstrap sample 1: contains 1,1,3,4,4,6,7,8 (2 and 5 missing) -->
+      <text x="210" y="20" font-size="12" fill="#0f172a">bootstrap 1</text>
+      <g font-size="10" fill="#fff" text-anchor="middle">
+        <rect x="210" y="30"  width="50" height="22" fill="#b45309"/><text x="235" y="46">1</text>
+        <rect x="210" y="54"  width="50" height="22" fill="#b45309"/><text x="235" y="70">1</text>
+        <rect x="210" y="78"  width="50" height="22" fill="#2563eb"/><text x="235" y="94">3</text>
+        <rect x="210" y="102" width="50" height="22" fill="#b45309"/><text x="235" y="118">4</text>
+        <rect x="210" y="126" width="50" height="22" fill="#b45309"/><text x="235" y="142">4</text>
+        <rect x="210" y="150" width="50" height="22" fill="#2563eb"/><text x="235" y="166">6</text>
+        <rect x="210" y="174" width="50" height="22" fill="#2563eb"/><text x="235" y="190">7</text>
+        <rect x="210" y="198" width="50" height="22" fill="#2563eb"/><text x="235" y="214">8</text>
+      </g>
+      <!-- Bootstrap sample 2: 2,2,2,3,5,6,6,8 -->
+      <text x="290" y="20" font-size="12" fill="#0f172a">bootstrap 2</text>
+      <g font-size="10" fill="#fff" text-anchor="middle">
+        <rect x="290" y="30"  width="50" height="22" fill="#b45309"/><text x="315" y="46">2</text>
+        <rect x="290" y="54"  width="50" height="22" fill="#b45309"/><text x="315" y="70">2</text>
+        <rect x="290" y="78"  width="50" height="22" fill="#b45309"/><text x="315" y="94">2</text>
+        <rect x="290" y="102" width="50" height="22" fill="#2563eb"/><text x="315" y="118">3</text>
+        <rect x="290" y="126" width="50" height="22" fill="#2563eb"/><text x="315" y="142">5</text>
+        <rect x="290" y="150" width="50" height="22" fill="#b45309"/><text x="315" y="166">6</text>
+        <rect x="290" y="174" width="50" height="22" fill="#b45309"/><text x="315" y="190">6</text>
+        <rect x="290" y="198" width="50" height="22" fill="#2563eb"/><text x="315" y="214">8</text>
+      </g>
+      <!-- Bootstrap sample 3: 1,3,3,4,5,7,7,7 -->
+      <text x="370" y="20" font-size="12" fill="#0f172a">bootstrap 3</text>
+      <g font-size="10" fill="#fff" text-anchor="middle">
+        <rect x="370" y="30"  width="50" height="22" fill="#2563eb"/><text x="395" y="46">1</text>
+        <rect x="370" y="54"  width="50" height="22" fill="#b45309"/><text x="395" y="70">3</text>
+        <rect x="370" y="78"  width="50" height="22" fill="#b45309"/><text x="395" y="94">3</text>
+        <rect x="370" y="102" width="50" height="22" fill="#2563eb"/><text x="395" y="118">4</text>
+        <rect x="370" y="126" width="50" height="22" fill="#2563eb"/><text x="395" y="142">5</text>
+        <rect x="370" y="150" width="50" height="22" fill="#b45309"/><text x="395" y="166">7</text>
+        <rect x="370" y="174" width="50" height="22" fill="#b45309"/><text x="395" y="190">7</text>
+        <rect x="370" y="198" width="50" height="22" fill="#b45309"/><text x="395" y="214">7</text>
+      </g>
+      <text x="290" y="240" font-size="10" class="muted" text-anchor="middle">orange = duplicated draw</text>
+      <!-- Arrows to histogram -->
+      <g stroke="#64748b" stroke-width="1.5" fill="none">
+        <path d="M 425 80  L 510 110" marker-end="url(#arr)"/>
+        <path d="M 425 130 L 510 130" marker-end="url(#arr)"/>
+        <path d="M 425 180 L 510 150" marker-end="url(#arr)"/>
+      </g>
+      <!-- Histogram -->
+      <text x="600" y="20" font-size="12" fill="#0f172a" text-anchor="middle">θ̂* distribution</text>
+      <g>
+        <!-- 95% CI band -->
+        <rect x="540" y="40" width="120" height="180" fill="#2563eb" opacity="0.08"/>
+        <!-- bars -->
+        <rect x="525" y="190" width="14" height="30" fill="#64748b"/>
+        <rect x="541" y="160" width="14" height="60" fill="#2563eb"/>
+        <rect x="557" y="120" width="14" height="100" fill="#2563eb"/>
+        <rect x="573" y="90"  width="14" height="130" fill="#2563eb"/>
+        <rect x="589" y="80"  width="14" height="140" fill="#2563eb"/>
+        <rect x="605" y="100" width="14" height="120" fill="#2563eb"/>
+        <rect x="621" y="135" width="14" height="85" fill="#2563eb"/>
+        <rect x="637" y="170" width="14" height="50" fill="#2563eb"/>
+        <rect x="653" y="200" width="14" height="20" fill="#64748b"/>
+        <line x1="510" y1="220" x2="680" y2="220" stroke="#0f172a" stroke-width="1"/>
+        <line x1="540" y1="225" x2="540" y2="235" stroke="#0f172a"/>
+        <line x1="660" y1="225" x2="660" y2="235" stroke="#0f172a"/>
+        <text x="540" y="248" font-size="10" text-anchor="middle" fill="#0f172a">2.5%</text>
+        <text x="660" y="248" font-size="10" text-anchor="middle" fill="#0f172a">97.5%</text>
+        <text x="600" y="270" font-size="11" class="muted" text-anchor="middle">shaded = 95% CI</text>
+      </g>
+    </svg>
+    <p class="muted">Draw N samples with replacement, recompute the statistic, repeat B times. The spread is the SE; the 2.5/97.5 quantiles are the CI.</p>
+  </section>
+  <section>
     <h2>The right way vs the wrong way</h2>
     <p>Setup from ISLR §5.3: n = 50 samples, p = 5000 features, y is a coin flip, the predictors are pure noise. True test error = 50%.</p>
     <div class="two-col">
@@ -316,6 +636,71 @@ ax.set_title('ISLP Fig 5.4 style: CV picks a stable winner'); plt.show()
       </div>
     </div>
     <div class="mistake">Every preprocessing step that uses y — feature screening, target encoding, supervised PCA — must live <strong>inside</strong> the CV loop. Otherwise the held-out fold has already leaked.</div>
+  </section>
+  <section>
+    <h2>Nested cross-validation</h2>
+    <svg class="diagram" viewBox="0 0 660 320" width="680" height="340">
+      <text x="20" y="20" font-size="12" fill="#0f172a">outer loop (evaluate)</text>
+      <!-- 5 outer blocks across full width -->
+      <g>
+        <rect x="20"  y="35" width="120" height="50" fill="#2563eb" opacity="0.85"/>
+        <rect x="145" y="35" width="120" height="50" fill="#2563eb" opacity="0.85"/>
+        <rect x="270" y="35" width="120" height="50" fill="#b45309" opacity="0.85"/>
+        <rect x="395" y="35" width="120" height="50" fill="#2563eb" opacity="0.85"/>
+        <rect x="520" y="35" width="120" height="50" fill="#2563eb" opacity="0.85"/>
+        <g font-size="11" fill="#fff" text-anchor="middle">
+          <text x="80" y="65">outer 1 (train)</text>
+          <text x="205" y="65">outer 2 (train)</text>
+          <text x="330" y="65">outer 3 (test)</text>
+          <text x="455" y="65">outer 4 (train)</text>
+          <text x="580" y="65">outer 5 (train)</text>
+        </g>
+      </g>
+      <!-- Arrow from outer-1 (train) to inner detail -->
+      <path d="M 80 88 L 200 110" stroke="#64748b" stroke-width="1.5" fill="none" marker-end="url(#arr2)"/>
+      <defs>
+        <marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+        </marker>
+      </defs>
+      <text x="200" y="105" font-size="11" class="muted">zoom into one training outer fold:</text>
+      <text x="200" y="130" font-size="12" fill="#0f172a">inner loop (tune)</text>
+      <!-- Inner: 5 rows of 5 cells. Position cells: x base 220, y base 140 -->
+      <g font-size="10" fill="#fff" text-anchor="middle">
+        <!-- inner row 1: test col 1 -->
+        <rect x="220" y="140" width="70" height="22" fill="#b45309"/><text x="255" y="156">val</text>
+        <rect x="292" y="140" width="70" height="22" fill="#2563eb"/><text x="327" y="156">train</text>
+        <rect x="364" y="140" width="70" height="22" fill="#2563eb"/><text x="399" y="156">train</text>
+        <rect x="436" y="140" width="70" height="22" fill="#2563eb"/><text x="471" y="156">train</text>
+        <rect x="508" y="140" width="70" height="22" fill="#2563eb"/><text x="543" y="156">train</text>
+        <!-- row 2 -->
+        <rect x="220" y="166" width="70" height="22" fill="#2563eb"/><text x="255" y="182">train</text>
+        <rect x="292" y="166" width="70" height="22" fill="#b45309"/><text x="327" y="182">val</text>
+        <rect x="364" y="166" width="70" height="22" fill="#2563eb"/><text x="399" y="182">train</text>
+        <rect x="436" y="166" width="70" height="22" fill="#2563eb"/><text x="471" y="182">train</text>
+        <rect x="508" y="166" width="70" height="22" fill="#2563eb"/><text x="543" y="182">train</text>
+        <!-- row 3 -->
+        <rect x="220" y="192" width="70" height="22" fill="#2563eb"/><text x="255" y="208">train</text>
+        <rect x="292" y="192" width="70" height="22" fill="#2563eb"/><text x="327" y="208">train</text>
+        <rect x="364" y="192" width="70" height="22" fill="#b45309"/><text x="399" y="208">val</text>
+        <rect x="436" y="192" width="70" height="22" fill="#2563eb"/><text x="471" y="208">train</text>
+        <rect x="508" y="192" width="70" height="22" fill="#2563eb"/><text x="543" y="208">train</text>
+        <!-- row 4 -->
+        <rect x="220" y="218" width="70" height="22" fill="#2563eb"/><text x="255" y="234">train</text>
+        <rect x="292" y="218" width="70" height="22" fill="#2563eb"/><text x="327" y="234">train</text>
+        <rect x="364" y="218" width="70" height="22" fill="#2563eb"/><text x="399" y="234">train</text>
+        <rect x="436" y="218" width="70" height="22" fill="#b45309"/><text x="471" y="234">val</text>
+        <rect x="508" y="218" width="70" height="22" fill="#2563eb"/><text x="543" y="234">train</text>
+        <!-- row 5 -->
+        <rect x="220" y="244" width="70" height="22" fill="#2563eb"/><text x="255" y="260">train</text>
+        <rect x="292" y="244" width="70" height="22" fill="#2563eb"/><text x="327" y="260">train</text>
+        <rect x="364" y="244" width="70" height="22" fill="#2563eb"/><text x="399" y="260">train</text>
+        <rect x="436" y="244" width="70" height="22" fill="#2563eb"/><text x="471" y="260">train</text>
+        <rect x="508" y="244" width="70" height="22" fill="#b45309"/><text x="543" y="260">val</text>
+      </g>
+      <text x="400" y="290" font-size="11" class="muted" text-anchor="middle">inner CV picks the hyperparameter; outer fold scores the chosen model on never-seen data.</text>
+    </svg>
+    <p class="muted">Tune inside, evaluate outside — no leakage between hyperparameter selection and reported test error.</p>
   </section>
   <section class="exercise" data-packages="numpy,scikit-learn">
     <h2>Exercise — why training R² after CV is misleading</h2>
