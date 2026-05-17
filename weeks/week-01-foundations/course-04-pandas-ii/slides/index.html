@@ -285,6 +285,87 @@ tips = pd.DataFrame({
     <h1>Group, pivot, join</h1>
   </section>
 
+  <section>
+    <h2>Split → Apply → Combine</h2>
+    <svg class="diagram" viewBox="0 0 760 280" width="780" height="300">
+      <!-- SPLIT -->
+      <text x="120" y="22" text-anchor="middle" font-size="14" class="accent">Split</text>
+      <g font-size="12" text-anchor="middle">
+        <!-- original table -->
+        <rect x="30"  y="30" width="60" height="22" fill="#f1f5f9" stroke="#0f172a"/>
+        <rect x="90"  y="30" width="60" height="22" fill="#f1f5f9" stroke="#0f172a"/>
+        <text x="60" y="46">cat</text><text x="120" y="46">val</text>
+        <rect x="30"  y="52" width="60" height="22" fill="#dbeafe" stroke="#2563eb"/>
+        <rect x="90"  y="52" width="60" height="22" fill="#dbeafe" stroke="#2563eb"/>
+        <text x="60" y="68">A</text><text x="120" y="68">1</text>
+        <rect x="30"  y="74" width="60" height="22" fill="#fde68a" stroke="#b45309"/>
+        <rect x="90"  y="74" width="60" height="22" fill="#fde68a" stroke="#b45309"/>
+        <text x="60" y="90">B</text><text x="120" y="90">2</text>
+        <rect x="30"  y="96" width="60" height="22" fill="#dbeafe" stroke="#2563eb"/>
+        <rect x="90"  y="96" width="60" height="22" fill="#dbeafe" stroke="#2563eb"/>
+        <text x="60" y="112">A</text><text x="120" y="112">3</text>
+        <rect x="30"  y="118" width="60" height="22" fill="#bbf7d0" stroke="#10b981"/>
+        <rect x="90"  y="118" width="60" height="22" fill="#bbf7d0" stroke="#10b981"/>
+        <text x="60" y="134">C</text><text x="120" y="134">4</text>
+        <rect x="30"  y="140" width="60" height="22" fill="#fde68a" stroke="#b45309"/>
+        <rect x="90"  y="140" width="60" height="22" fill="#fde68a" stroke="#b45309"/>
+        <text x="60" y="156">B</text><text x="120" y="156">5</text>
+      </g>
+      <!-- arrow -->
+      <line x1="170" y1="90" x2="220" y2="90" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr6)"/>
+      <defs>
+        <marker id="arr6" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="#64748b"/>
+        </marker>
+      </defs>
+      <!-- three groups -->
+      <g font-size="12" text-anchor="middle">
+        <rect x="230" y="40" width="80" height="40" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+        <text x="270" y="58" fill="#2563eb">group A</text>
+        <text x="270" y="74">[1, 3]</text>
+        <rect x="230" y="90" width="80" height="40" fill="#fde68a" stroke="#b45309" stroke-width="1.5"/>
+        <text x="270" y="108" fill="#b45309">group B</text>
+        <text x="270" y="124">[2, 5]</text>
+        <rect x="230" y="140" width="80" height="40" fill="#bbf7d0" stroke="#10b981" stroke-width="1.5"/>
+        <text x="270" y="158" fill="#10b981">group C</text>
+        <text x="270" y="174">[4]</text>
+      </g>
+      <!-- APPLY -->
+      <text x="410" y="22" text-anchor="middle" font-size="14" class="accent">Apply</text>
+      <g font-size="13" text-anchor="middle">
+        <line x1="320" y1="60" x2="370" y2="60" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr6)"/>
+        <line x1="320" y1="110" x2="370" y2="110" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr6)"/>
+        <line x1="320" y1="160" x2="370" y2="160" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr6)"/>
+        <rect x="370" y="44" width="80" height="32" fill="#fff" stroke="#0f172a" stroke-width="1.5"/>
+        <text x="410" y="64" font-family="monospace">sum()</text>
+        <rect x="370" y="94" width="80" height="32" fill="#fff" stroke="#0f172a" stroke-width="1.5"/>
+        <text x="410" y="114" font-family="monospace">sum()</text>
+        <rect x="370" y="144" width="80" height="32" fill="#fff" stroke="#0f172a" stroke-width="1.5"/>
+        <text x="410" y="164" font-family="monospace">sum()</text>
+      </g>
+      <!-- COMBINE -->
+      <text x="630" y="22" text-anchor="middle" font-size="14" class="accent">Combine</text>
+      <g font-size="12" text-anchor="middle">
+        <line x1="460" y1="60" x2="540" y2="80" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr6)"/>
+        <line x1="460" y1="110" x2="540" y2="110" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr6)"/>
+        <line x1="460" y1="160" x2="540" y2="140" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr6)"/>
+        <rect x="560" y="50" width="70" height="22" fill="#f1f5f9" stroke="#0f172a"/>
+        <rect x="630" y="50" width="70" height="22" fill="#f1f5f9" stroke="#0f172a"/>
+        <text x="595" y="66">cat</text><text x="665" y="66">val</text>
+        <rect x="560" y="72" width="70" height="22" fill="#dbeafe" stroke="#2563eb"/>
+        <rect x="630" y="72" width="70" height="22" fill="#dbeafe" stroke="#2563eb"/>
+        <text x="595" y="88">A</text><text x="665" y="88">4</text>
+        <rect x="560" y="94" width="70" height="22" fill="#fde68a" stroke="#b45309"/>
+        <rect x="630" y="94" width="70" height="22" fill="#fde68a" stroke="#b45309"/>
+        <text x="595" y="110">B</text><text x="665" y="110">7</text>
+        <rect x="560" y="116" width="70" height="22" fill="#bbf7d0" stroke="#10b981"/>
+        <rect x="630" y="116" width="70" height="22" fill="#bbf7d0" stroke="#10b981"/>
+        <text x="595" y="132">C</text><text x="665" y="132">4</text>
+      </g>
+    </svg>
+    <p class="muted">Every <code>groupby</code> is these three steps. Pandas hides the loop; you just name the key and the aggregator.</p>
+  </section>
+
   <section class="example" data-packages="pandas,numpy">
     <h2>GroupBy — the workhorse</h2>
     <div class="ex-prompt">Split → apply → combine. One key or many; one aggregation or a list.</div>
@@ -302,6 +383,86 @@ tips = pd.DataFrame({
 print(tips.groupby('day', observed=False)['tip'].mean())
 print()
 print(tips.groupby(['day', 'sex'], observed=False)['tip'].agg(['mean', 'count']))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section>
+    <h2>GroupBy shrinks the row count</h2>
+    <svg class="diagram" viewBox="0 0 700 360" width="720" height="380">
+      <!-- left: 12 rows -->
+      <g font-size="12" text-anchor="middle">
+        <text x="100" y="18" class="muted">12 rows · cat + val</text>
+        <rect x="50"  y="24" width="50" height="22" fill="#f1f5f9" stroke="#0f172a"/>
+        <rect x="100" y="24" width="50" height="22" fill="#f1f5f9" stroke="#0f172a"/>
+        <text x="75" y="40">cat</text><text x="125" y="40">val</text>
+        <!-- 12 rows -->
+        <g>
+          <rect x="50"  y="46"  width="50" height="22" fill="#dbeafe" stroke="#2563eb"/><rect x="100" y="46"  width="50" height="22" fill="#dbeafe" stroke="#2563eb"/><text x="75" y="62">A</text><text x="125" y="62">3</text>
+          <rect x="50"  y="68"  width="50" height="22" fill="#fde68a" stroke="#b45309"/><rect x="100" y="68"  width="50" height="22" fill="#fde68a" stroke="#b45309"/><text x="75" y="84">B</text><text x="125" y="84">5</text>
+          <rect x="50"  y="90"  width="50" height="22" fill="#dbeafe" stroke="#2563eb"/><rect x="100" y="90"  width="50" height="22" fill="#dbeafe" stroke="#2563eb"/><text x="75" y="106">A</text><text x="125" y="106">1</text>
+          <rect x="50"  y="112" width="50" height="22" fill="#bbf7d0" stroke="#10b981"/><rect x="100" y="112" width="50" height="22" fill="#bbf7d0" stroke="#10b981"/><text x="75" y="128">C</text><text x="125" y="128">4</text>
+          <rect x="50"  y="134" width="50" height="22" fill="#fde68a" stroke="#b45309"/><rect x="100" y="134" width="50" height="22" fill="#fde68a" stroke="#b45309"/><text x="75" y="150">B</text><text x="125" y="150">2</text>
+          <rect x="50"  y="156" width="50" height="22" fill="#dbeafe" stroke="#2563eb"/><rect x="100" y="156" width="50" height="22" fill="#dbeafe" stroke="#2563eb"/><text x="75" y="172">A</text><text x="125" y="172">6</text>
+          <rect x="50"  y="178" width="50" height="22" fill="#bbf7d0" stroke="#10b981"/><rect x="100" y="178" width="50" height="22" fill="#bbf7d0" stroke="#10b981"/><text x="75" y="194">C</text><text x="125" y="194">2</text>
+          <rect x="50"  y="200" width="50" height="22" fill="#fde68a" stroke="#b45309"/><rect x="100" y="200" width="50" height="22" fill="#fde68a" stroke="#b45309"/><text x="75" y="216">B</text><text x="125" y="216">7</text>
+          <rect x="50"  y="222" width="50" height="22" fill="#dbeafe" stroke="#2563eb"/><rect x="100" y="222" width="50" height="22" fill="#dbeafe" stroke="#2563eb"/><text x="75" y="238">A</text><text x="125" y="238">2</text>
+          <rect x="50"  y="244" width="50" height="22" fill="#bbf7d0" stroke="#10b981"/><rect x="100" y="244" width="50" height="22" fill="#bbf7d0" stroke="#10b981"/><text x="75" y="260">C</text><text x="125" y="260">5</text>
+          <rect x="50"  y="266" width="50" height="22" fill="#fde68a" stroke="#b45309"/><rect x="100" y="266" width="50" height="22" fill="#fde68a" stroke="#b45309"/><text x="75" y="282">B</text><text x="125" y="282">1</text>
+          <rect x="50"  y="288" width="50" height="22" fill="#dbeafe" stroke="#2563eb"/><rect x="100" y="288" width="50" height="22" fill="#dbeafe" stroke="#2563eb"/><text x="75" y="304">A</text><text x="125" y="304">4</text>
+        </g>
+      </g>
+      <!-- arrow -->
+      <line x1="200" y1="170" x2="380" y2="170" stroke="#2563eb" stroke-width="1.8" marker-end="url(#arr7)"/>
+      <text x="290" y="160" text-anchor="middle" font-size="13" fill="#2563eb">.groupby('cat').sum()</text>
+      <defs>
+        <marker id="arr7" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/>
+        </marker>
+      </defs>
+      <!-- right: 3 rows -->
+      <g font-size="12" text-anchor="middle">
+        <text x="490" y="18" class="muted">3 rows · one per group</text>
+        <rect x="430" y="100" width="60" height="24" fill="#f1f5f9" stroke="#0f172a"/>
+        <rect x="490" y="100" width="60" height="24" fill="#f1f5f9" stroke="#0f172a"/>
+        <text x="460" y="117">cat</text><text x="520" y="117">val</text>
+        <rect x="430" y="124" width="60" height="28" fill="#dbeafe" stroke="#2563eb"/>
+        <rect x="490" y="124" width="60" height="28" fill="#dbeafe" stroke="#2563eb"/>
+        <text x="460" y="143">A</text><text x="520" y="143">16</text>
+        <rect x="430" y="152" width="60" height="28" fill="#fde68a" stroke="#b45309"/>
+        <rect x="490" y="152" width="60" height="28" fill="#fde68a" stroke="#b45309"/>
+        <text x="460" y="171">B</text><text x="520" y="171">15</text>
+        <rect x="430" y="180" width="60" height="28" fill="#bbf7d0" stroke="#10b981"/>
+        <rect x="490" y="180" width="60" height="28" fill="#bbf7d0" stroke="#10b981"/>
+        <text x="460" y="199">C</text><text x="520" y="199">11</text>
+      </g>
+    </svg>
+    <p class="muted">Result has one row per distinct group key. <code>cat</code> becomes the index; aggregated columns become the values.</p>
+  </section>
+
+  <section class="example" data-packages="pandas,numpy,matplotlib">
+    <h2>Aggregate then visualize — one fluent chain</h2>
+    <div class="ex-prompt">Aggregate then visualize in one fluent chain. Plot output renders inline below.</div>
+<textarea class="ex-code">import pandas as pd
+import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+
+df = pd.DataFrame({
+    'cat': ['A','B','A','C','B','A','C','B','A','C','B','A'],
+    'val': [3,   5,  1,  4,  2,  6,  2,  7,  2,  5,  1,  4],
+})
+
+ax = df.groupby('cat')['val'].sum().plot.bar(
+    title='Total val by category', color='#2563eb')
+ax.set_ylabel('sum(val)')
+plt.tight_layout()
+plt.show()
 </textarea>
     <div class="ex-controls">
       <button class="ex-run">Run</button>
@@ -392,6 +553,110 @@ print(g)</script>
 <script type="text/x-explain">`assign` returns a new frame with the added column — chainable and non-mutating. Grouping by two keys produces a Series with a MultiIndex; one aggregation per group cell.</script>
   </section>
 
+  <section>
+    <h2>Pivot ↔ Melt — long and wide are mirrors</h2>
+    <svg class="diagram" viewBox="0 0 680 360" width="720" height="380">
+      <!-- TOP: long -> pivot -> wide -->
+      <g font-size="12" text-anchor="middle">
+        <!-- long table -->
+        <text x="80" y="18" class="muted">long-format</text>
+        <rect x="20"  y="24" width="50" height="22" fill="#f1f5f9" stroke="#0f172a"/>
+        <rect x="70"  y="24" width="50" height="22" fill="#f1f5f9" stroke="#0f172a"/>
+        <rect x="120" y="24" width="50" height="22" fill="#f1f5f9" stroke="#0f172a"/>
+        <text x="45" y="40">id</text><text x="95" y="40">var</text><text x="145" y="40">value</text>
+        <rect x="20" y="46" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <rect x="70" y="46" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <rect x="120" y="46" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <text x="45" y="61">A</text><text x="95" y="61">x</text><text x="145" y="61">1</text>
+        <rect x="20" y="66" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <rect x="70" y="66" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <rect x="120" y="66" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <text x="45" y="81">A</text><text x="95" y="81">y</text><text x="145" y="81">2</text>
+        <rect x="20" y="86" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <rect x="70" y="86" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <rect x="120" y="86" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <text x="45" y="101">B</text><text x="95" y="101">x</text><text x="145" y="101">3</text>
+        <rect x="20" y="106" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <rect x="70" y="106" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <rect x="120" y="106" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <text x="45" y="121">B</text><text x="95" y="121">y</text><text x="145" y="121">4</text>
+      </g>
+      <!-- arrow right (pivot) -->
+      <line x1="200" y1="75" x2="340" y2="75" stroke="#2563eb" stroke-width="1.8" marker-end="url(#arr4)"/>
+      <text x="270" y="65" text-anchor="middle" font-size="13" fill="#2563eb">.pivot(index='id', columns='var')</text>
+      <defs>
+        <marker id="arr4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/>
+        </marker>
+      </defs>
+      <!-- wide table -->
+      <g font-size="12" text-anchor="middle">
+        <text x="430" y="18" class="muted">wide-format</text>
+        <rect x="360" y="24" width="50" height="22" fill="#f1f5f9" stroke="#0f172a"/>
+        <rect x="410" y="24" width="50" height="22" fill="#f1f5f9" stroke="#0f172a"/>
+        <rect x="460" y="24" width="50" height="22" fill="#f1f5f9" stroke="#0f172a"/>
+        <text x="385" y="40">id</text><text x="435" y="40">x</text><text x="485" y="40">y</text>
+        <rect x="360" y="46" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <rect x="410" y="46" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <rect x="460" y="46" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <text x="385" y="61">A</text><text x="435" y="61">1</text><text x="485" y="61">2</text>
+        <rect x="360" y="66" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <rect x="410" y="66" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <rect x="460" y="66" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <text x="385" y="81">B</text><text x="435" y="81">3</text><text x="485" y="81">4</text>
+      </g>
+      <!-- divider -->
+      <line x1="20" y1="180" x2="660" y2="180" stroke="#64748b" stroke-dasharray="3,3"/>
+      <!-- BOTTOM: wide -> melt -> long -->
+      <g font-size="12" text-anchor="middle">
+        <text x="80" y="206" class="muted">wide-format</text>
+        <rect x="20" y="212" width="50" height="22" fill="#f1f5f9" stroke="#0f172a"/>
+        <rect x="70" y="212" width="50" height="22" fill="#f1f5f9" stroke="#0f172a"/>
+        <rect x="120" y="212" width="50" height="22" fill="#f1f5f9" stroke="#0f172a"/>
+        <text x="45" y="228">id</text><text x="95" y="228">x</text><text x="145" y="228">y</text>
+        <rect x="20" y="234" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <rect x="70" y="234" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <rect x="120" y="234" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <text x="45" y="249">A</text><text x="95" y="249">1</text><text x="145" y="249">2</text>
+        <rect x="20" y="254" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <rect x="70" y="254" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <rect x="120" y="254" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <text x="45" y="269">B</text><text x="95" y="269">3</text><text x="145" y="269">4</text>
+      </g>
+      <line x1="200" y1="245" x2="340" y2="245" stroke="#b45309" stroke-width="1.8" marker-end="url(#arr5)"/>
+      <text x="270" y="235" text-anchor="middle" font-size="13" fill="#b45309">.melt(id_vars='id')</text>
+      <defs>
+        <marker id="arr5" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="#b45309"/>
+        </marker>
+      </defs>
+      <g font-size="12" text-anchor="middle">
+        <text x="420" y="206" class="muted">long-format</text>
+        <rect x="360" y="212" width="50" height="22" fill="#f1f5f9" stroke="#0f172a"/>
+        <rect x="410" y="212" width="50" height="22" fill="#f1f5f9" stroke="#0f172a"/>
+        <rect x="460" y="212" width="50" height="22" fill="#f1f5f9" stroke="#0f172a"/>
+        <text x="385" y="228">id</text><text x="435" y="228">var</text><text x="485" y="228">value</text>
+        <rect x="360" y="234" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <rect x="410" y="234" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <rect x="460" y="234" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <text x="385" y="249">A</text><text x="435" y="249">x</text><text x="485" y="249">1</text>
+        <rect x="360" y="254" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <rect x="410" y="254" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <rect x="460" y="254" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <text x="385" y="269">A</text><text x="435" y="269">y</text><text x="485" y="269">2</text>
+        <rect x="360" y="274" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <rect x="410" y="274" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <rect x="460" y="274" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <text x="385" y="289">B</text><text x="435" y="289">x</text><text x="485" y="289">3</text>
+        <rect x="360" y="294" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <rect x="410" y="294" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <rect x="460" y="294" width="50" height="20" fill="#fff" stroke="#0f172a"/>
+        <text x="385" y="309">B</text><text x="435" y="309">y</text><text x="485" y="309">4</text>
+      </g>
+    </svg>
+    <p class="muted">Pivot widens (one row per id, one column per var); melt narrows (one row per id-var pair). Mirror operations.</p>
+  </section>
+
   <section class="example" data-packages="pandas,numpy">
     <h2>Pivot — reshape from long to wide</h2>
     <div class="ex-prompt">Long-form data (one row per observation) becomes wide-form (a matrix) with one call. <code>margins=True</code> adds row/column totals — Geron's grade-book layout.</div>
@@ -413,6 +678,87 @@ print(pd.pivot_table(more, index='name', values='grade',
       <span class="ex-status"></span>
     </div>
     <pre class="ex-output"></pre>
+  </section>
+
+  <section>
+    <h2>MultiIndex — stack vs unstack</h2>
+    <svg class="diagram" viewBox="0 0 660 280" width="720" height="300">
+      <!-- left frame: MultiIndex (day, sex) -->
+      <g font-size="12">
+        <text x="100" y="20" text-anchor="middle" class="muted">day, sex → tip_pct</text>
+        <!-- header row -->
+        <rect x="20"  y="30" width="60" height="26" fill="#f1f5f9" stroke="#0f172a"/>
+        <rect x="80"  y="30" width="60" height="26" fill="#f1f5f9" stroke="#0f172a"/>
+        <rect x="140" y="30" width="60" height="26" fill="#f1f5f9" stroke="#0f172a"/>
+        <text x="50"  y="48" text-anchor="middle">day</text>
+        <text x="110" y="48" text-anchor="middle">sex</text>
+        <text x="170" y="48" text-anchor="middle">tip_pct</text>
+        <!-- rows -->
+        <rect x="20"  y="56" width="60" height="26" fill="#fff" stroke="#0f172a"/>
+        <rect x="80"  y="56" width="60" height="26" fill="#fff" stroke="#0f172a"/>
+        <rect x="140" y="56" width="60" height="26" fill="#fff" stroke="#0f172a"/>
+        <text x="50"  y="74" text-anchor="middle">Sat</text>
+        <text x="110" y="74" text-anchor="middle">F</text>
+        <text x="170" y="74" text-anchor="middle">0.17</text>
+        <rect x="20"  y="82" width="60" height="26" fill="#fff" stroke="#0f172a"/>
+        <rect x="80"  y="82" width="60" height="26" fill="#fff" stroke="#0f172a"/>
+        <rect x="140" y="82" width="60" height="26" fill="#fff" stroke="#0f172a"/>
+        <text x="50"  y="100" text-anchor="middle">Sat</text>
+        <text x="110" y="100" text-anchor="middle">M</text>
+        <text x="170" y="100" text-anchor="middle">0.14</text>
+        <rect x="20"  y="108" width="60" height="26" fill="#fff" stroke="#0f172a"/>
+        <rect x="80"  y="108" width="60" height="26" fill="#fff" stroke="#0f172a"/>
+        <rect x="140" y="108" width="60" height="26" fill="#fff" stroke="#0f172a"/>
+        <text x="50"  y="126" text-anchor="middle">Sun</text>
+        <text x="110" y="126" text-anchor="middle">F</text>
+        <text x="170" y="126" text-anchor="middle">0.18</text>
+        <rect x="20"  y="134" width="60" height="26" fill="#fff" stroke="#0f172a"/>
+        <rect x="80"  y="134" width="60" height="26" fill="#fff" stroke="#0f172a"/>
+        <rect x="140" y="134" width="60" height="26" fill="#fff" stroke="#0f172a"/>
+        <text x="50"  y="152" text-anchor="middle">Sun</text>
+        <text x="110" y="152" text-anchor="middle">M</text>
+        <text x="170" y="152" text-anchor="middle">0.15</text>
+      </g>
+      <!-- arrow -->
+      <g>
+        <line x1="240" y1="95" x2="350" y2="95" stroke="#2563eb" stroke-width="1.8" marker-end="url(#arr3)"/>
+        <text x="295" y="85" text-anchor="middle" font-size="13" fill="#2563eb">.unstack('sex')</text>
+        <line x1="350" y1="115" x2="240" y2="115" stroke="#b45309" stroke-width="1.8" marker-end="url(#arr3b)"/>
+        <text x="295" y="135" text-anchor="middle" font-size="13" fill="#b45309">.stack()</text>
+      </g>
+      <defs>
+        <marker id="arr3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/>
+        </marker>
+        <marker id="arr3b" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="#b45309"/>
+        </marker>
+      </defs>
+      <!-- right frame: wide -->
+      <g font-size="12">
+        <text x="490" y="20" text-anchor="middle" class="muted">sex moved to columns</text>
+        <rect x="380" y="30" width="80" height="26" fill="#f1f5f9" stroke="#0f172a"/>
+        <rect x="460" y="30" width="70" height="26" fill="#f1f5f9" stroke="#0f172a"/>
+        <rect x="530" y="30" width="70" height="26" fill="#f1f5f9" stroke="#0f172a"/>
+        <text x="420" y="48" text-anchor="middle">day</text>
+        <text x="495" y="48" text-anchor="middle">F</text>
+        <text x="565" y="48" text-anchor="middle">M</text>
+        <rect x="380" y="56" width="80" height="26" fill="#fff" stroke="#0f172a"/>
+        <rect x="460" y="56" width="70" height="26" fill="#fff" stroke="#0f172a"/>
+        <rect x="530" y="56" width="70" height="26" fill="#fff" stroke="#0f172a"/>
+        <text x="420" y="74" text-anchor="middle">Sat</text>
+        <text x="495" y="74" text-anchor="middle">0.17</text>
+        <text x="565" y="74" text-anchor="middle">0.14</text>
+        <rect x="380" y="82" width="80" height="26" fill="#fff" stroke="#0f172a"/>
+        <rect x="460" y="82" width="70" height="26" fill="#fff" stroke="#0f172a"/>
+        <rect x="530" y="82" width="70" height="26" fill="#fff" stroke="#0f172a"/>
+        <text x="420" y="100" text-anchor="middle">Sun</text>
+        <text x="495" y="100" text-anchor="middle">0.18</text>
+        <text x="565" y="100" text-anchor="middle">0.15</text>
+      </g>
+      <text x="330" y="220" text-anchor="middle" font-size="12" class="muted">unstack pivots an inner index level into columns; stack is the inverse.</text>
+    </svg>
+    <p class="muted">Same data, two layouts. Pick whichever is easier to read or plot.</p>
   </section>
 
   <section class="exercise" data-packages="numpy,pandas">
@@ -457,6 +803,44 @@ top = g.idxmax()
 print(pv)
 print(top)</script>
 <script type="text/x-explain">`unstack` moves one level of a MultiIndex into columns — long-to-wide in one call. `idxmax` returns the *index label* (a tuple for a MultiIndex) at the maximum, not the value.</script>
+  </section>
+
+  <section>
+    <h2>Merge — four join flavors</h2>
+    <svg class="diagram" viewBox="0 0 600 360" width="680" height="380">
+      <!-- inner: top-left -->
+      <g transform="translate(20,20)">
+        <circle cx="100" cy="70" r="50" fill="#fff" stroke="#0f172a" stroke-width="1.5"/>
+        <circle cx="160" cy="70" r="50" fill="#fff" stroke="#0f172a" stroke-width="1.5"/>
+        <path d="M 130,30 A 50,50 0 0,1 130,110 A 50,50 0 0,1 130,30 z" fill="#2563eb" fill-opacity="0.55"/>
+        <text x="130" y="145" text-anchor="middle" font-size="14" class="accent">inner</text>
+        <text x="130" y="162" text-anchor="middle" font-size="11" class="muted">keys in both</text>
+      </g>
+      <!-- left: top-right -->
+      <g transform="translate(320,20)">
+        <circle cx="100" cy="70" r="50" fill="#2563eb" fill-opacity="0.55" stroke="#0f172a" stroke-width="1.5"/>
+        <circle cx="160" cy="70" r="50" fill="#fff" stroke="#0f172a" stroke-width="1.5"/>
+        <path d="M 130,30 A 50,50 0 0,1 130,110 A 50,50 0 0,1 130,30 z" fill="#2563eb" fill-opacity="0.55"/>
+        <text x="130" y="145" text-anchor="middle" font-size="14" class="accent">left</text>
+        <text x="130" y="162" text-anchor="middle" font-size="11" class="muted">all of left + matches</text>
+      </g>
+      <!-- right: bottom-left -->
+      <g transform="translate(20,190)">
+        <circle cx="100" cy="70" r="50" fill="#fff" stroke="#0f172a" stroke-width="1.5"/>
+        <circle cx="160" cy="70" r="50" fill="#2563eb" fill-opacity="0.55" stroke="#0f172a" stroke-width="1.5"/>
+        <path d="M 130,30 A 50,50 0 0,1 130,110 A 50,50 0 0,1 130,30 z" fill="#2563eb" fill-opacity="0.55"/>
+        <text x="130" y="145" text-anchor="middle" font-size="14" class="accent">right</text>
+        <text x="130" y="162" text-anchor="middle" font-size="11" class="muted">all of right + matches</text>
+      </g>
+      <!-- outer: bottom-right -->
+      <g transform="translate(320,190)">
+        <circle cx="100" cy="70" r="50" fill="#2563eb" fill-opacity="0.55" stroke="#0f172a" stroke-width="1.5"/>
+        <circle cx="160" cy="70" r="50" fill="#2563eb" fill-opacity="0.55" stroke="#0f172a" stroke-width="1.5"/>
+        <text x="130" y="145" text-anchor="middle" font-size="14" class="accent">outer</text>
+        <text x="130" y="162" text-anchor="middle" font-size="11" class="muted">every key, NaN where missing</text>
+      </g>
+    </svg>
+    <p class="muted">Same vocabulary as SQL. <code>how=</code> picks which side's keys survive when a match is missing.</p>
   </section>
 
   <section class="example" data-packages="pandas,numpy">
@@ -547,6 +931,71 @@ ts.head()
     <pre class="ex-output"></pre>
   </section>
 
+  <section>
+    <h2>Resampling — bucket time, then aggregate</h2>
+    <svg class="diagram" viewBox="0 0 620 220" width="700" height="260">
+      <line x1="30" y1="70" x2="600" y2="70" stroke="#0f172a" stroke-width="1.5"/>
+      <!-- 30 daily ticks -->
+      <g stroke="#64748b" stroke-width="1">
+        <!-- month 1: 10 ticks -->
+        <line x1="40"  y1="62" x2="40"  y2="78"/>
+        <line x1="58"  y1="62" x2="58"  y2="78"/>
+        <line x1="76"  y1="62" x2="76"  y2="78"/>
+        <line x1="94"  y1="62" x2="94"  y2="78"/>
+        <line x1="112" y1="62" x2="112" y2="78"/>
+        <line x1="130" y1="62" x2="130" y2="78"/>
+        <line x1="148" y1="62" x2="148" y2="78"/>
+        <line x1="166" y1="62" x2="166" y2="78"/>
+        <line x1="184" y1="62" x2="184" y2="78"/>
+        <line x1="202" y1="62" x2="202" y2="78"/>
+        <!-- month 2: 10 ticks -->
+        <line x1="232" y1="62" x2="232" y2="78"/>
+        <line x1="250" y1="62" x2="250" y2="78"/>
+        <line x1="268" y1="62" x2="268" y2="78"/>
+        <line x1="286" y1="62" x2="286" y2="78"/>
+        <line x1="304" y1="62" x2="304" y2="78"/>
+        <line x1="322" y1="62" x2="322" y2="78"/>
+        <line x1="340" y1="62" x2="340" y2="78"/>
+        <line x1="358" y1="62" x2="358" y2="78"/>
+        <line x1="376" y1="62" x2="376" y2="78"/>
+        <line x1="394" y1="62" x2="394" y2="78"/>
+        <!-- month 3: 10 ticks -->
+        <line x1="424" y1="62" x2="424" y2="78"/>
+        <line x1="442" y1="62" x2="442" y2="78"/>
+        <line x1="460" y1="62" x2="460" y2="78"/>
+        <line x1="478" y1="62" x2="478" y2="78"/>
+        <line x1="496" y1="62" x2="496" y2="78"/>
+        <line x1="514" y1="62" x2="514" y2="78"/>
+        <line x1="532" y1="62" x2="532" y2="78"/>
+        <line x1="550" y1="62" x2="550" y2="78"/>
+        <line x1="568" y1="62" x2="568" y2="78"/>
+        <line x1="586" y1="62" x2="586" y2="78"/>
+      </g>
+      <!-- month boundary separators -->
+      <line x1="217" y1="40" x2="217" y2="100" stroke="#b45309" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <line x1="409" y1="40" x2="409" y2="100" stroke="#b45309" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <text x="120" y="35" text-anchor="middle" font-size="12" class="muted">Jan (daily)</text>
+      <text x="313" y="35" text-anchor="middle" font-size="12" class="muted">Feb (daily)</text>
+      <text x="505" y="35" text-anchor="middle" font-size="12" class="muted">Mar (daily)</text>
+      <!-- arrow -->
+      <text x="310" y="135" text-anchor="middle" font-size="13" fill="#2563eb">resample('M').mean()</text>
+      <line x1="310" y1="142" x2="310" y2="170" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arr1)"/>
+      <defs>
+        <marker id="arr1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/>
+        </marker>
+      </defs>
+      <!-- one dot per month -->
+      <circle cx="120" cy="190" r="6" fill="#2563eb"/>
+      <circle cx="313" cy="190" r="6" fill="#2563eb"/>
+      <circle cx="505" cy="190" r="6" fill="#2563eb"/>
+      <text x="120" y="212" text-anchor="middle" font-size="12">Jan mean</text>
+      <text x="313" y="212" text-anchor="middle" font-size="12">Feb mean</text>
+      <text x="505" y="212" text-anchor="middle" font-size="12">Mar mean</text>
+    </svg>
+    <p class="muted">Daily ticks above; month boundaries split them into buckets; one aggregated dot per bucket below. That is all <code>resample</code> does — a time-aware groupby.</p>
+  </section>
+
   <section class="example" data-packages="pandas,numpy">
     <h2>Resample — change the frequency</h2>
     <div class="ex-prompt">Downsampling aggregates (many rows → one); upsampling interpolates (one row → many). Same method, opposite directions.</div>
@@ -567,6 +1016,76 @@ print(ts.resample('15min').interpolate(method='cubic').head())
       <span class="ex-status"></span>
     </div>
     <pre class="ex-output"></pre>
+  </section>
+
+  <section>
+    <h2>Rolling window — slide-and-aggregate</h2>
+    <svg class="diagram" viewBox="0 0 620 240" width="700" height="280">
+      <!-- input series: 10 cells -->
+      <g font-size="13" text-anchor="middle">
+        <rect x="40"  y="30" width="50" height="40" fill="#fff" stroke="#0f172a" stroke-width="1.5"/>
+        <rect x="90"  y="30" width="50" height="40" fill="#fff" stroke="#0f172a" stroke-width="1.5"/>
+        <rect x="140" y="30" width="50" height="40" fill="#fff" stroke="#0f172a" stroke-width="1.5"/>
+        <rect x="190" y="30" width="50" height="40" fill="#fff" stroke="#0f172a" stroke-width="1.5"/>
+        <rect x="240" y="30" width="50" height="40" fill="#fff" stroke="#0f172a" stroke-width="1.5"/>
+        <rect x="290" y="30" width="50" height="40" fill="#fff" stroke="#0f172a" stroke-width="1.5"/>
+        <rect x="340" y="30" width="50" height="40" fill="#fff" stroke="#0f172a" stroke-width="1.5"/>
+        <rect x="390" y="30" width="50" height="40" fill="#fff" stroke="#0f172a" stroke-width="1.5"/>
+        <rect x="440" y="30" width="50" height="40" fill="#fff" stroke="#0f172a" stroke-width="1.5"/>
+        <rect x="490" y="30" width="50" height="40" fill="#fff" stroke="#0f172a" stroke-width="1.5"/>
+        <text x="65"  y="56">2</text>
+        <text x="115" y="56">4</text>
+        <text x="165" y="56">3</text>
+        <text x="215" y="56">5</text>
+        <text x="265" y="56">7</text>
+        <text x="315" y="56">6</text>
+        <text x="365" y="56">8</text>
+        <text x="415" y="56">9</text>
+        <text x="465" y="56">7</text>
+        <text x="515" y="56">10</text>
+      </g>
+      <!-- three sliding windows -->
+      <rect x="36"  y="22" width="158" height="56" fill="#2563eb" fill-opacity="0.12" stroke="#2563eb" stroke-width="1.5"/>
+      <rect x="186" y="14" width="158" height="64" fill="#b45309" fill-opacity="0.12" stroke="#b45309" stroke-width="1.5"/>
+      <rect x="386" y="22" width="158" height="56" fill="#10b981" fill-opacity="0.12" stroke="#10b981" stroke-width="1.5"/>
+      <text x="115" y="14" text-anchor="middle" font-size="11" fill="#2563eb">window 1</text>
+      <text x="265" y="92" text-anchor="middle" font-size="11" fill="#b45309">window 2 …</text>
+      <text x="465" y="14" text-anchor="middle" font-size="11" fill="#10b981">window k</text>
+      <!-- arrow down -->
+      <line x1="290" y1="115" x2="290" y2="150" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arr2)"/>
+      <defs>
+        <marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/>
+        </marker>
+      </defs>
+      <text x="320" y="135" font-size="13" fill="#2563eb">rolling(3).mean()</text>
+      <!-- output row -->
+      <g font-size="12" text-anchor="middle">
+        <rect x="40"  y="160" width="50" height="40" fill="#f1f5f9" stroke="#64748b" stroke-dasharray="3,3"/>
+        <rect x="90"  y="160" width="50" height="40" fill="#f1f5f9" stroke="#64748b" stroke-dasharray="3,3"/>
+        <rect x="140" y="160" width="50" height="40" fill="#fff" stroke="#0f172a" stroke-width="1.5"/>
+        <rect x="190" y="160" width="50" height="40" fill="#fff" stroke="#0f172a" stroke-width="1.5"/>
+        <rect x="240" y="160" width="50" height="40" fill="#fff" stroke="#0f172a" stroke-width="1.5"/>
+        <rect x="290" y="160" width="50" height="40" fill="#fff" stroke="#0f172a" stroke-width="1.5"/>
+        <rect x="340" y="160" width="50" height="40" fill="#fff" stroke="#0f172a" stroke-width="1.5"/>
+        <rect x="390" y="160" width="50" height="40" fill="#fff" stroke="#0f172a" stroke-width="1.5"/>
+        <rect x="440" y="160" width="50" height="40" fill="#fff" stroke="#0f172a" stroke-width="1.5"/>
+        <rect x="490" y="160" width="50" height="40" fill="#fff" stroke="#0f172a" stroke-width="1.5"/>
+        <text x="65"  y="185" class="muted">NaN</text>
+        <text x="115" y="185" class="muted">NaN</text>
+        <text x="165" y="185">3.0</text>
+        <text x="215" y="185">4.0</text>
+        <text x="265" y="185">5.0</text>
+        <text x="315" y="185">6.0</text>
+        <text x="365" y="185">7.0</text>
+        <text x="415" y="185">7.7</text>
+        <text x="465" y="185">8.0</text>
+        <text x="515" y="185">8.7</text>
+      </g>
+      <text x="20" y="55" font-size="12" class="muted" text-anchor="end">series</text>
+      <text x="20" y="185" font-size="12" class="muted" text-anchor="end">rolling</text>
+    </svg>
+    <p class="muted">A window slides one step at a time; each position emits one aggregated value. First <code>k-1</code> outputs are NaN until the window fills.</p>
   </section>
 
   <section class="example" data-packages="pandas,numpy">

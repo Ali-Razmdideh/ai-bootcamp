@@ -72,6 +72,65 @@ print(arr, type(arr).__name__, arr.dtype)
     <pre class="ex-output"></pre>
   </section>
 
+  <section>
+    <h2>Anatomy of an ndarray</h2>
+    <p>Every ndarray is a header (shape, dtype, strides) pointing at a flat, contiguous block of typed memory.</p>
+    <svg class="diagram" viewBox="0 0 520 260" width="640" height="320">
+      <rect x="20" y="20" width="180" height="110" fill="#f8fafc" stroke="#64748b" stroke-width="1.5" rx="4"/>
+      <text x="110" y="40" text-anchor="middle" font-size="13" fill="#0f172a" font-weight="bold">header</text>
+      <text x="35" y="65" font-size="12" fill="#0f172a">shape: <tspan fill="#2563eb">(3, 4)</tspan></text>
+      <text x="35" y="85" font-size="12" fill="#0f172a">dtype: <tspan fill="#2563eb">float64</tspan></text>
+      <text x="35" y="105" font-size="12" fill="#0f172a">strides: <tspan fill="#2563eb">(32, 8)</tspan></text>
+      <text x="35" y="125" font-size="12" fill="#64748b">ndim: 2, size: 12</text>
+      <path d="M 200 75 L 245 75" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrA)"/>
+      <defs>
+        <marker id="arrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="#64748b"/>
+        </marker>
+      </defs>
+      <text x="260" y="60" font-size="12" fill="#64748b">contiguous memory buffer (12 cells × 8 bytes)</text>
+      <g>
+        <rect x="250" y="70" width="22" height="28" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+        <rect x="272" y="70" width="22" height="28" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+        <rect x="294" y="70" width="22" height="28" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+        <rect x="316" y="70" width="22" height="28" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+        <rect x="338" y="70" width="22" height="28" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+        <rect x="360" y="70" width="22" height="28" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+        <rect x="382" y="70" width="22" height="28" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+        <rect x="404" y="70" width="22" height="28" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+        <rect x="426" y="70" width="22" height="28" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+        <rect x="448" y="70" width="22" height="28" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+        <rect x="470" y="70" width="22" height="28" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+        <rect x="492" y="70" width="22" height="28" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+      </g>
+      <text x="261" y="115" font-size="10" fill="#64748b">0</text>
+      <text x="283" y="115" font-size="10" fill="#64748b">1</text>
+      <text x="305" y="115" font-size="10" fill="#64748b">2</text>
+      <text x="327" y="115" font-size="10" fill="#64748b">3</text>
+      <text x="349" y="115" font-size="10" fill="#64748b">4</text>
+      <text x="371" y="115" font-size="10" fill="#64748b">5</text>
+      <text x="393" y="115" font-size="10" fill="#64748b">6</text>
+      <text x="415" y="115" font-size="10" fill="#64748b">7</text>
+      <text x="437" y="115" font-size="10" fill="#64748b">8</text>
+      <text x="459" y="115" font-size="10" fill="#64748b">9</text>
+      <text x="479" y="115" font-size="10" fill="#64748b">10</text>
+      <text x="501" y="115" font-size="10" fill="#64748b">11</text>
+      <line x1="250" y1="135" x2="338" y2="135" stroke="#b45309" stroke-width="2"/>
+      <text x="294" y="150" text-anchor="middle" font-size="11" fill="#b45309">row 0 (stride 32)</text>
+      <line x1="250" y1="170" x2="272" y2="170" stroke="#2563eb" stroke-width="2"/>
+      <text x="295" y="174" font-size="11" fill="#2563eb">one element (8 bytes)</text>
+      <text x="270" y="220" font-size="12" fill="#0f172a">Logical view (3, 4):</text>
+      <g transform="translate(270, 230)">
+        <rect x="0" y="0" width="30" height="22" fill="#eff6ff" stroke="#2563eb"/>
+        <rect x="30" y="0" width="30" height="22" fill="#eff6ff" stroke="#2563eb"/>
+        <rect x="60" y="0" width="30" height="22" fill="#eff6ff" stroke="#2563eb"/>
+        <rect x="90" y="0" width="30" height="22" fill="#eff6ff" stroke="#2563eb"/>
+      </g>
+      <text x="395" y="246" font-size="11" fill="#64748b">× 3 rows</text>
+    </svg>
+    <p class="muted">The header is tiny. The buffer is the data. Slicing & reshape mostly just rewrite the header.</p>
+  </section>
+
   <section class="example" data-packages="numpy">
     <h2>Six recipes for creating arrays</h2>
     <div class="ex-prompt">99% of "make an array" reduces to one of these constructors: <code>zeros</code>, <code>ones</code>, <code>full</code>, <code>arange</code>, <code>linspace</code>, <code>eye</code>.</div>
@@ -91,6 +150,62 @@ print(np.eye(3))
       <span class="ex-status"></span>
     </div>
     <pre class="ex-output"></pre>
+  </section>
+
+  <section>
+    <h2>1-D, 2-D, 3-D — same ndarray, more axes</h2>
+    <div class="three-col">
+      <div>
+        <svg class="diagram" viewBox="0 0 180 180" width="180" height="180">
+          <text x="90" y="20" text-anchor="middle" font-size="13" fill="#0f172a" font-weight="bold">1-D · shape (5,)</text>
+          <g transform="translate(20, 70)">
+            <rect x="0" y="0" width="28" height="28" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+            <rect x="28" y="0" width="28" height="28" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+            <rect x="56" y="0" width="28" height="28" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+            <rect x="84" y="0" width="28" height="28" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+            <rect x="112" y="0" width="28" height="28" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+          </g>
+          <line x1="20" y1="120" x2="160" y2="120" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr1)"/>
+          <defs><marker id="arr1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+          <text x="90" y="140" text-anchor="middle" font-size="12" fill="#64748b">axis 0</text>
+        </svg>
+      </div>
+      <div>
+        <svg class="diagram" viewBox="0 0 180 180" width="180" height="180">
+          <text x="90" y="20" text-anchor="middle" font-size="13" fill="#0f172a" font-weight="bold">2-D · shape (3, 4)</text>
+          <g transform="translate(40, 40)">
+            <rect x="0" y="0" width="25" height="25" fill="#eff6ff" stroke="#2563eb"/><rect x="25" y="0" width="25" height="25" fill="#eff6ff" stroke="#2563eb"/><rect x="50" y="0" width="25" height="25" fill="#eff6ff" stroke="#2563eb"/><rect x="75" y="0" width="25" height="25" fill="#eff6ff" stroke="#2563eb"/>
+            <rect x="0" y="25" width="25" height="25" fill="#eff6ff" stroke="#2563eb"/><rect x="25" y="25" width="25" height="25" fill="#eff6ff" stroke="#2563eb"/><rect x="50" y="25" width="25" height="25" fill="#eff6ff" stroke="#2563eb"/><rect x="75" y="25" width="25" height="25" fill="#eff6ff" stroke="#2563eb"/>
+            <rect x="0" y="50" width="25" height="25" fill="#eff6ff" stroke="#2563eb"/><rect x="25" y="50" width="25" height="25" fill="#eff6ff" stroke="#2563eb"/><rect x="50" y="50" width="25" height="25" fill="#eff6ff" stroke="#2563eb"/><rect x="75" y="50" width="25" height="25" fill="#eff6ff" stroke="#2563eb"/>
+          </g>
+          <line x1="25" y1="40" x2="25" y2="125" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr2)"/>
+          <line x1="40" y1="135" x2="140" y2="135" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr2)"/>
+          <defs><marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+          <text x="10" y="90" font-size="11" fill="#64748b">axis 0</text>
+          <text x="90" y="155" font-size="11" fill="#64748b">axis 1</text>
+        </svg>
+      </div>
+      <div>
+        <svg class="diagram" viewBox="0 0 180 180" width="180" height="180">
+          <text x="90" y="20" text-anchor="middle" font-size="13" fill="#0f172a" font-weight="bold">3-D · shape (2, 3, 4)</text>
+          <g transform="translate(30, 50)">
+            <g opacity="0.5"><rect x="20" y="0" width="80" height="60" fill="#eff6ff" stroke="#2563eb"/></g>
+            <g><rect x="0" y="20" width="80" height="60" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+              <line x1="0" y1="40" x2="80" y2="40" stroke="#2563eb"/>
+              <line x1="0" y1="60" x2="80" y2="60" stroke="#2563eb"/>
+              <line x1="20" y1="20" x2="20" y2="80" stroke="#2563eb"/>
+              <line x1="40" y1="20" x2="40" y2="80" stroke="#2563eb"/>
+              <line x1="60" y1="20" x2="60" y2="80" stroke="#2563eb"/>
+            </g>
+            <line x1="0" y1="20" x2="20" y2="0" stroke="#2563eb"/>
+            <line x1="80" y1="20" x2="100" y2="0" stroke="#2563eb"/>
+            <line x1="80" y1="80" x2="100" y2="60" stroke="#2563eb"/>
+          </g>
+          <text x="90" y="160" text-anchor="middle" font-size="11" fill="#64748b">axis 0 = depth</text>
+        </svg>
+      </div>
+    </div>
+    <p class="muted">A 1-D row, a 2-D table, a 3-D stack of tables. <code>ndim</code> just counts the axes.</p>
   </section>
 
   <section class="example" data-packages="numpy">
@@ -131,6 +246,36 @@ print(k3.dtype, k3)      # float64
     <pre class="ex-output"></pre>
   </section>
 
+  <section>
+    <h2>dtype memory footprint</h2>
+    <p>Per-element cost in bytes. Multiply by <code>size</code> to get <code>nbytes</code>.</p>
+    <svg class="diagram" viewBox="0 0 520 280" width="640" height="340">
+      <line x1="100" y1="20" x2="100" y2="260" stroke="#0f172a" stroke-width="1"/>
+      <g font-size="13" fill="#0f172a">
+        <text x="90" y="45" text-anchor="end">int8</text>
+        <text x="90" y="80" text-anchor="end">int16</text>
+        <text x="90" y="115" text-anchor="end">int32</text>
+        <text x="90" y="150" text-anchor="end">int64</text>
+        <text x="90" y="185" text-anchor="end">float32</text>
+        <text x="90" y="220" text-anchor="end">float64</text>
+      </g>
+      <rect x="100" y="32" width="40" height="20" fill="#2563eb"/>
+      <text x="148" y="47" font-size="12" fill="#0f172a">1 byte</text>
+      <rect x="100" y="67" width="80" height="20" fill="#2563eb"/>
+      <text x="188" y="82" font-size="12" fill="#0f172a">2 bytes</text>
+      <rect x="100" y="102" width="160" height="20" fill="#2563eb"/>
+      <text x="268" y="117" font-size="12" fill="#0f172a">4 bytes</text>
+      <rect x="100" y="137" width="320" height="20" fill="#2563eb"/>
+      <text x="428" y="152" font-size="12" fill="#0f172a">8 bytes</text>
+      <rect x="100" y="172" width="160" height="20" fill="#b45309"/>
+      <text x="268" y="187" font-size="12" fill="#0f172a">4 bytes</text>
+      <rect x="100" y="207" width="320" height="20" fill="#b45309"/>
+      <text x="428" y="222" font-size="12" fill="#0f172a">8 bytes</text>
+      <text x="260" y="255" text-anchor="middle" font-size="12" fill="#64748b">bytes per element</text>
+    </svg>
+    <p class="muted">A million-element <code>float64</code> array is 8 MB; the same data in <code>float32</code> halves that — at the cost of precision.</p>
+  </section>
+
   <section class="example" data-packages="numpy">
     <h2>astype — convert dtype, get a new array</h2>
     <div class="ex-prompt"><code>astype</code> returns a fresh array in the requested dtype. Going float→int truncates toward zero; no rounding.</div>
@@ -167,6 +312,36 @@ print('dtype   :', a.dtype)
     </div>
     <pre class="ex-output"></pre>
   </section>
+
+  <section class="example" data-packages="numpy,matplotlib">
+    <h2>See an array as a heatmap</h2>
+    <div class="ex-prompt">Visualize an array as a heatmap to inspect its structure.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+
+rng = np.random.default_rng(0)
+a = rng.integers(0, 100, size=(5, 5))
+
+fig, ax = plt.subplots(figsize=(5, 5))
+im = ax.imshow(a, cmap='Blues')
+for i in range(a.shape[0]):
+    for j in range(a.shape[1]):
+        ax.text(j, i, str(a[i, j]), ha='center', va='center',
+                color='black', fontsize=11)
+ax.set_xticks(range(5)); ax.set_yticks(range(5))
+ax.set_title('5x5 array — value per cell')
+fig.colorbar(im, ax=ax, shrink=0.8)
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
 </section>
 
 <section>
@@ -192,6 +367,64 @@ print(g2.flatten())          # always a copy
       <span class="ex-status"></span>
     </div>
     <pre class="ex-output"></pre>
+  </section>
+
+  <section>
+    <h2>Reshape — row-major fill order</h2>
+    <p>The buffer is unchanged; the header relabels how to walk it. NumPy fills the new shape row-by-row (C-order).</p>
+    <svg class="diagram" viewBox="0 0 520 280" width="640" height="340">
+      <text x="260" y="20" text-anchor="middle" font-size="13" fill="#0f172a" font-weight="bold">np.arange(12)  —  shape (12,)</text>
+      <g transform="translate(20, 35)">
+        <rect x="0" y="0" width="40" height="32" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+        <rect x="40" y="0" width="40" height="32" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+        <rect x="80" y="0" width="40" height="32" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+        <rect x="120" y="0" width="40" height="32" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+        <rect x="160" y="0" width="40" height="32" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+        <rect x="200" y="0" width="40" height="32" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+        <rect x="240" y="0" width="40" height="32" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+        <rect x="280" y="0" width="40" height="32" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+        <rect x="320" y="0" width="40" height="32" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+        <rect x="360" y="0" width="40" height="32" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+        <rect x="400" y="0" width="40" height="32" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+        <rect x="440" y="0" width="40" height="32" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+        <g font-size="13" fill="#0f172a">
+          <text x="20" y="21" text-anchor="middle">0</text>
+          <text x="60" y="21" text-anchor="middle">1</text>
+          <text x="100" y="21" text-anchor="middle">2</text>
+          <text x="140" y="21" text-anchor="middle">3</text>
+          <text x="180" y="21" text-anchor="middle">4</text>
+          <text x="220" y="21" text-anchor="middle">5</text>
+          <text x="260" y="21" text-anchor="middle">6</text>
+          <text x="300" y="21" text-anchor="middle">7</text>
+          <text x="340" y="21" text-anchor="middle">8</text>
+          <text x="380" y="21" text-anchor="middle">9</text>
+          <text x="420" y="21" text-anchor="middle">10</text>
+          <text x="460" y="21" text-anchor="middle">11</text>
+        </g>
+      </g>
+      <line x1="260" y1="90" x2="260" y2="140" stroke="#64748b" stroke-width="2" marker-end="url(#arrR)"/>
+      <defs><marker id="arrR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+      <text x="275" y="120" font-size="12" fill="#64748b">.reshape(3, 4)</text>
+      <text x="260" y="160" text-anchor="middle" font-size="13" fill="#0f172a" font-weight="bold">shape (3, 4)</text>
+      <g transform="translate(180, 175)">
+        <rect x="0" y="0" width="40" height="32" fill="#eff6ff" stroke="#2563eb"/><rect x="40" y="0" width="40" height="32" fill="#eff6ff" stroke="#2563eb"/><rect x="80" y="0" width="40" height="32" fill="#eff6ff" stroke="#2563eb"/><rect x="120" y="0" width="40" height="32" fill="#eff6ff" stroke="#2563eb"/>
+        <rect x="0" y="32" width="40" height="32" fill="#eff6ff" stroke="#2563eb"/><rect x="40" y="32" width="40" height="32" fill="#eff6ff" stroke="#2563eb"/><rect x="80" y="32" width="40" height="32" fill="#eff6ff" stroke="#2563eb"/><rect x="120" y="32" width="40" height="32" fill="#eff6ff" stroke="#2563eb"/>
+        <rect x="0" y="64" width="40" height="32" fill="#eff6ff" stroke="#2563eb"/><rect x="40" y="64" width="40" height="32" fill="#eff6ff" stroke="#2563eb"/><rect x="80" y="64" width="40" height="32" fill="#eff6ff" stroke="#2563eb"/><rect x="120" y="64" width="40" height="32" fill="#eff6ff" stroke="#2563eb"/>
+        <g font-size="13" fill="#0f172a">
+          <text x="20" y="21" text-anchor="middle">0</text><text x="60" y="21" text-anchor="middle">1</text><text x="100" y="21" text-anchor="middle">2</text><text x="140" y="21" text-anchor="middle">3</text>
+          <text x="20" y="53" text-anchor="middle">4</text><text x="60" y="53" text-anchor="middle">5</text><text x="100" y="53" text-anchor="middle">6</text><text x="140" y="53" text-anchor="middle">7</text>
+          <text x="20" y="85" text-anchor="middle">8</text><text x="60" y="85" text-anchor="middle">9</text><text x="100" y="85" text-anchor="middle">10</text><text x="140" y="85" text-anchor="middle">11</text>
+        </g>
+      </g>
+      <g stroke="#b45309" stroke-width="1.5" fill="none" marker-end="url(#arrFill)">
+        <line x1="190" y1="191" x2="320" y2="191"/>
+        <line x1="190" y1="223" x2="320" y2="223"/>
+        <line x1="190" y1="255" x2="320" y2="255"/>
+      </g>
+      <defs><marker id="arrFill" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#b45309"/></marker></defs>
+      <text x="350" y="227" font-size="13" fill="#b45309">row by row (C-order)</text>
+    </svg>
+    <p class="muted">Same 12 numbers, same buffer. Only the strides change.</p>
   </section>
 
   <section class="example" data-packages="numpy">
@@ -230,6 +463,32 @@ print(np.squeeze(np.array([[[1, 2, 3]]])).shape)
       <span class="ex-status"></span>
     </div>
     <pre class="ex-output"></pre>
+  </section>
+
+  <section>
+    <h2>Axis convention — what gets collapsed</h2>
+    <p>The <code>axis=</code> argument names the axis that <em>disappears</em> after the reduction.</p>
+    <svg class="diagram" viewBox="0 0 520 260" width="640" height="320">
+      <g transform="translate(120, 40)">
+        <rect x="0" y="0" width="50" height="40" fill="#eff6ff" stroke="#2563eb"/><rect x="50" y="0" width="50" height="40" fill="#eff6ff" stroke="#2563eb"/><rect x="100" y="0" width="50" height="40" fill="#eff6ff" stroke="#2563eb"/><rect x="150" y="0" width="50" height="40" fill="#eff6ff" stroke="#2563eb"/>
+        <rect x="0" y="40" width="50" height="40" fill="#eff6ff" stroke="#2563eb"/><rect x="50" y="40" width="50" height="40" fill="#eff6ff" stroke="#2563eb"/><rect x="100" y="40" width="50" height="40" fill="#eff6ff" stroke="#2563eb"/><rect x="150" y="40" width="50" height="40" fill="#eff6ff" stroke="#2563eb"/>
+        <rect x="0" y="80" width="50" height="40" fill="#eff6ff" stroke="#2563eb"/><rect x="50" y="80" width="50" height="40" fill="#eff6ff" stroke="#2563eb"/><rect x="100" y="80" width="50" height="40" fill="#eff6ff" stroke="#2563eb"/><rect x="150" y="80" width="50" height="40" fill="#eff6ff" stroke="#2563eb"/>
+      </g>
+      <defs>
+        <marker id="arrX0" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/></marker>
+        <marker id="arrX1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#b45309"/></marker>
+      </defs>
+      <line x1="108" y1="42" x2="108" y2="158" stroke="#2563eb" stroke-width="2" marker-end="url(#arrX0)"/>
+      <text x="100" y="180" text-anchor="end" font-size="12" fill="#2563eb">axis=0 ↓</text>
+      <text x="100" y="196" text-anchor="end" font-size="11" fill="#64748b">sum down each column</text>
+      <text x="100" y="212" text-anchor="end" font-size="11" fill="#64748b">→ shape (4,)</text>
+      <line x1="322" y1="80" x2="438" y2="80" stroke="#b45309" stroke-width="2" marker-end="url(#arrX1)"/>
+      <text x="332" y="100" font-size="12" fill="#b45309">axis=1 →</text>
+      <text x="332" y="116" font-size="11" fill="#64748b">sum across each row</text>
+      <text x="332" y="132" font-size="11" fill="#64748b">→ shape (3,)</text>
+      <text x="220" y="240" text-anchor="middle" font-size="12" fill="#64748b">a.sum(axis=0) drops axis 0  ·  a.sum(axis=1) drops axis 1</text>
+    </svg>
+    <p class="muted">Mnemonic: <em>axis=k removes the k-th entry of the shape tuple</em>.</p>
   </section>
 
   <section class="exercise" data-packages="numpy">
@@ -338,6 +597,50 @@ print('b[::-1]   =\n', b[::-1])
       <span class="ex-status"></span>
     </div>
     <pre class="ex-output"></pre>
+  </section>
+
+  <section>
+    <h2>Slicing visualized — <code>a[1:3, :2]</code></h2>
+    <p>Per-axis slicing carves a rectangular sub-grid out of the array.</p>
+    <svg class="diagram" viewBox="0 0 360 320" width="440" height="380">
+      <g transform="translate(40, 40)">
+        <g font-size="13" fill="#0f172a">
+          <text x="-15" y="25" text-anchor="middle" class="muted">0</text>
+          <text x="-15" y="65" text-anchor="middle" class="muted">1</text>
+          <text x="-15" y="105" text-anchor="middle" class="muted">2</text>
+          <text x="-15" y="145" text-anchor="middle" class="muted">3</text>
+          <text x="20" y="-8" text-anchor="middle" class="muted">0</text>
+          <text x="60" y="-8" text-anchor="middle" class="muted">1</text>
+          <text x="100" y="-8" text-anchor="middle" class="muted">2</text>
+          <text x="140" y="-8" text-anchor="middle" class="muted">3</text>
+        </g>
+        <g font-size="13" fill="#0f172a">
+          <rect x="0" y="0" width="40" height="40" fill="#f8fafc" stroke="#64748b"/><text x="20" y="25" text-anchor="middle">0</text>
+          <rect x="40" y="0" width="40" height="40" fill="#f8fafc" stroke="#64748b"/><text x="60" y="25" text-anchor="middle">1</text>
+          <rect x="80" y="0" width="40" height="40" fill="#f8fafc" stroke="#64748b"/><text x="100" y="25" text-anchor="middle">2</text>
+          <rect x="120" y="0" width="40" height="40" fill="#f8fafc" stroke="#64748b"/><text x="140" y="25" text-anchor="middle">3</text>
+
+          <rect x="0" y="40" width="40" height="40" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/><text x="20" y="65" text-anchor="middle">4</text>
+          <rect x="40" y="40" width="40" height="40" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/><text x="60" y="65" text-anchor="middle">5</text>
+          <rect x="80" y="40" width="40" height="40" fill="#f8fafc" stroke="#64748b"/><text x="100" y="65" text-anchor="middle">6</text>
+          <rect x="120" y="40" width="40" height="40" fill="#f8fafc" stroke="#64748b"/><text x="140" y="65" text-anchor="middle">7</text>
+
+          <rect x="0" y="80" width="40" height="40" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/><text x="20" y="105" text-anchor="middle">8</text>
+          <rect x="40" y="80" width="40" height="40" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/><text x="60" y="105" text-anchor="middle">9</text>
+          <rect x="80" y="80" width="40" height="40" fill="#f8fafc" stroke="#64748b"/><text x="100" y="105" text-anchor="middle">10</text>
+          <rect x="120" y="80" width="40" height="40" fill="#f8fafc" stroke="#64748b"/><text x="140" y="105" text-anchor="middle">11</text>
+
+          <rect x="0" y="120" width="40" height="40" fill="#f8fafc" stroke="#64748b"/><text x="20" y="145" text-anchor="middle">12</text>
+          <rect x="40" y="120" width="40" height="40" fill="#f8fafc" stroke="#64748b"/><text x="60" y="145" text-anchor="middle">13</text>
+          <rect x="80" y="120" width="40" height="40" fill="#f8fafc" stroke="#64748b"/><text x="100" y="145" text-anchor="middle">14</text>
+          <rect x="120" y="120" width="40" height="40" fill="#f8fafc" stroke="#64748b"/><text x="140" y="145" text-anchor="middle">15</text>
+        </g>
+        <rect x="-2" y="38" width="84" height="84" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-dasharray="4,3"/>
+      </g>
+      <text x="180" y="240" text-anchor="middle" font-size="13" fill="#2563eb">a[1:3, :2]  →  [[4, 5], [8, 9]]</text>
+      <text x="180" y="262" text-anchor="middle" font-size="11" fill="#64748b">rows 1–2 inclusive, columns 0–1 inclusive</text>
+      <text x="180" y="284" text-anchor="middle" font-size="11" fill="#b45309">stop is exclusive — 1:3 means 1 and 2</text>
+    </svg>
   </section>
 
   <section class="example" data-packages="numpy">
