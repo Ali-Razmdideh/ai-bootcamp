@@ -1047,16 +1047,26 @@ print(diag)</script>
 
   <section class="example" data-packages="numpy">
     <h2>Boolean masks — the most common filter</h2>
-    <div class="ex-prompt">Mask + reduction is how you compute "how many rows satisfy X" in one line. You will use this every day.</div>
+    <div class="ex-prompt">A <strong>mask</strong> is a boolean array of the same shape as the data. <code>arr[mask]</code> returns a 1-D array of the elements where the mask is <code>True</code> — always a <em>copy</em>, never a view.</div>
+    <ul class="muted" style="font-size: 0.82em; margin: 0 0 0.5em 0;">
+      <li><strong>Where do masks come from?</strong> Any comparison or logical op on an array: <code>arr &gt; 0</code>, <code>arr == 5</code>, <code>np.isnan(arr)</code>, <code>(arr &gt; 0) &amp; (arr &lt; 10)</code>. Use <code>&amp;</code> / <code>|</code> / <code>~</code> (bitwise) — <code>and</code>/<code>or</code> raise <code>ValueError</code> on arrays.</li>
+      <li><strong>Reading and writing.</strong> <code>arr[mask]</code> pulls matching values; <code>arr[mask] = 0</code> assigns to them in-place. Indexing on one axis filters rows: <code>df_arr[rows_on, :]</code>.</li>
+      <li><strong>Count and any / all.</strong> Because <code>True == 1</code>, <code>mask.sum()</code> counts hits, <code>mask.mean()</code> is the fraction, <code>mask.any()</code> / <code>mask.all()</code> short-circuit.</li>
+    </ul>
 <textarea class="ex-code">import numpy as np
 b = np.arange(48).reshape(4, 12)
 m = np.array([20, -5, 30, 40])
-print(m[m < 25])             # [20 -5]
+print(m[m < 25])                       # [20 -5]  — 1-D copy of matching values
 
 rows_on = np.array([True, False, True, False])
-print(b[rows_on, :])         # keep rows 0 and 2
+print(b[rows_on, :])                   # boolean axis index keeps rows 0 and 2
 
-print(b[b % 3 == 1])         # every elem where x % 3 == 1
+mask = b % 3 == 1                      # shape matches b → element-wise filter
+print('hits:', mask.sum(), 'fraction:', mask.mean())
+print(b[mask])                         # every elem where b % 3 == 1
+
+b[(b > 10) & (b < 20)] = -1            # assign through a mask, in place
+print('combined &amp; assigned:\n', b)
 </textarea>
     <div class="ex-controls">
       <button class="ex-run">Run</button>
@@ -1064,14 +1074,36 @@ print(b[b % 3 == 1])         # every elem where x % 3 == 1
       <span class="ex-status"></span>
     </div>
     <pre class="ex-output"></pre>
+<script type="text/x-explain">Mental model: a mask is a sieve — <code>True</code> lets the cell through, <code>False</code> drops it. Reading via a mask <em>flattens</em> the result (you lose the original shape); writing via a mask is shape-preserving and in-place, which is how you do "set NaNs to 0" or "clip outliers" in one line.</script>
   </section>
 
   <section class="example" data-packages="numpy">
-    <h2>np.where — pick from two arrays</h2>
-    <div class="ex-prompt">Vectorized if/else. The shape of all three arguments must broadcast together.</div>
+    <h2>np.where — vectorized if/else (and "where is the True?")</h2>
+    <div class="ex-prompt"><code>np.where</code> wears two hats — both replace a Python loop.</div>
+    <ul class="muted" style="font-size: 0.82em; margin: 0 0 0.5em 0;">
+      <li><strong>Three-arg form: <code>np.where(cond, a, b)</code>.</strong> Element-wise "<code>a if cond else b</code>", returning a new array of broadcast shape. Unlike a mask assignment, it produces a fresh array — handy in pipelines that should not mutate inputs.</li>
+      <li><strong>One-arg form: <code>np.where(cond)</code>.</strong> Returns a tuple of index arrays — one per axis — pointing at every <code>True</code> cell. Equivalent to <code>np.nonzero(cond)</code>. Use it when you need the <em>positions</em>, not the values.</li>
+      <li><strong>Broadcasting rules apply.</strong> The condition and the two replacement values must broadcast to a common shape — so you can mix scalars and arrays freely.</li>
+    </ul>
 <textarea class="ex-code">import numpy as np
 x = np.arange(10)
-print(np.where(x % 2 == 0, x, -1))   # keep evens, replace odds with -1
+
+# 1) Three-arg: keep evens, replace odds with -1
+print(np.where(x % 2 == 0, x, -1))
+
+# 2) Broadcasting two arrays as the choices
+y = np.array([10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
+print(np.where(x &lt; 5, x, y))            # take x for first 5, y after
+
+# 3) One-arg: get the positions of True
+M = np.array([[0, 3, 0, 5],
+              [7, 0, 0, 2]])
+rows, cols = np.where(M &gt; 0)
+print('rows:', rows, 'cols:', cols, '→ values:', M[rows, cols])
+
+# 4) Clamp-style: vectorized clip via where(where(...))
+arr = np.array([-3, 1, 7, 12, -8])
+print(np.where(arr &lt; 0, 0, np.where(arr &gt; 10, 10, arr)))   # clip to [0, 10]
 </textarea>
     <div class="ex-controls">
       <button class="ex-run">Run</button>
@@ -1079,6 +1111,7 @@ print(np.where(x % 2 == 0, x, -1))   # keep evens, replace odds with -1
       <span class="ex-status"></span>
     </div>
     <pre class="ex-output"></pre>
+<script type="text/x-explain">When you only need a boolean filter, the mask form (<code>arr[mask] = …</code>) is more direct. Reach for <code>np.where</code> when you need a <em>new</em> array (no mutation), when both branches are real values (not just "filter out"), or when you need the <em>indices</em> rather than the matching values.</script>
   </section>
 
   <section class="exercise" data-packages="numpy">
