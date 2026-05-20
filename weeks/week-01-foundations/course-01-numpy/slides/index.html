@@ -132,6 +132,71 @@ print(arr, type(arr).__name__, arr.dtype)
   </section>
 
   <section>
+    <h2>View vs copy — same buffer or new buffer?</h2>
+    <p>Because the buffer is separate from the header, NumPy has two ways to give you a "different array":</p>
+    <div class="three-col">
+      <div>
+        <h3 style="color:#2563eb; margin: 0 0 0.3em 0;">View</h3>
+        <p class="muted" style="margin: 0;">A new header pointing at the <em>same</em> buffer. Cheap (just metadata), and writes through to the original.</p>
+        <ul style="font-size: 0.85em;">
+          <li>basic slicing — <code>a[1:3]</code></li>
+          <li><code>reshape</code>, <code>ravel</code>, <code>transpose</code>, <code>.T</code></li>
+          <li><code>np.newaxis</code>, <code>expand_dims</code>, <code>squeeze</code></li>
+          <li>changing <code>dtype</code> with <code>.view()</code></li>
+        </ul>
+      </div>
+      <div>
+        <h3 style="color:#b45309; margin: 0 0 0.3em 0;">Copy</h3>
+        <p class="muted" style="margin: 0;">A brand-new buffer with its own bytes. Expensive (allocates + memcopies), independent of the original.</p>
+        <ul style="font-size: 0.85em;">
+          <li>fancy / boolean indexing — <code>a[[0,2]]</code>, <code>a[a&gt;0]</code></li>
+          <li>arithmetic — <code>a + 1</code>, <code>a * 2</code></li>
+          <li><code>astype</code>, <code>flatten</code>, <code>.copy()</code></li>
+          <li><code>np.concatenate</code>, <code>np.stack</code></li>
+        </ul>
+      </div>
+      <div>
+        <h3 style="color:#0f172a; margin: 0 0 0.3em 0;">How to check</h3>
+        <ul style="font-size: 0.85em;">
+          <li><code>b.base is a</code> — true if <code>b</code> is a view of <code>a</code>.</li>
+          <li><code>np.shares_memory(a, b)</code> — true if they overlap.</li>
+          <li><code>arr.flags.owndata</code> — false on a view.</li>
+        </ul>
+        <p class="callout" style="margin: 0.4em 0 0 0;">When in doubt, <code>.copy()</code> explicitly. Mutating a view you forgot was a view is the #1 NumPy bug.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="example" data-packages="numpy">
+    <h2>View vs copy — see the difference</h2>
+    <div class="ex-prompt">Same source array <code>a</code>. The slice shares memory and writes through; <code>.copy()</code> and fancy indexing produce independent buffers.</div>
+<textarea class="ex-code">import numpy as np
+a = np.arange(12).reshape(3, 4)
+
+v = a[:, 1:3]            # basic slice → VIEW
+v[0, 0] = -1
+print('a after writing to view:\n', a)
+print('v.base is a?       ', v.base is a)
+print('shares memory?     ', np.shares_memory(a, v))
+
+c = a[:, 1:3].copy()     # explicit COPY
+c[0, 0] = 999
+print('a unchanged by copy?\n', a)
+print('shares memory?     ', np.shares_memory(a, c))
+
+f = a[[0, 2], :]         # fancy indexing → COPY
+print('fancy shares memory?', np.shares_memory(a, f))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">Rule of thumb: <em>basic slicing returns a view; anything that picks elements by a list, a mask, or a condition returns a copy</em>. Arithmetic (<code>a + 1</code>) always allocates. Use <code>np.shares_memory</code> when you genuinely need to know.</script>
+  </section>
+
+  <section>
     <h2>How cells line up in RAM — C-order vs F-order</h2>
     <p>NumPy needs to flatten an n-dimensional logical shape into a 1-D buffer. Two conventions exist, named after the languages that popularised them:</p>
     <ul>
