@@ -1710,19 +1710,20 @@ print('sum (0, 2) :', c.sum(axis=(0, 2)).shape)
       <rect x="120" y="82" width="50" height="28" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/><text x="145" y="102" text-anchor="middle" font-size="13" fill="#b45309">4</text>
       <rect x="170" y="82" width="50" height="28" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/><text x="195" y="102" text-anchor="middle" font-size="13" fill="#b45309">1</text>
 
-      <!-- Step labels under each axis pair -->
-      <text x="195" y="135" text-anchor="middle" font-size="11" fill="#059669">step 1 · rightmost</text>
-      <text x="195" y="150" text-anchor="middle" font-size="11" fill="#059669">4 vs 1 → 1 stretches → 4 ✓</text>
+      <!-- highlight pointers under each axis column -->
+      <line x1="195" y1="115" x2="195" y2="125" stroke="#059669" stroke-width="1.5"/>
+      <text x="195" y="138" text-anchor="middle" font-size="11" fill="#059669">step 1 (rightmost)</text>
+      <line x1="145" y1="115" x2="145" y2="158" stroke="#059669" stroke-width="1.5" stroke-dasharray="3,3"/>
+      <text x="145" y="170" text-anchor="middle" font-size="11" fill="#059669">step 2 (next left)</text>
 
-      <text x="145" y="135" text-anchor="middle" font-size="11" fill="#059669">step 2 · next left</text>
-      <text x="145" y="150" text-anchor="middle" font-size="11" fill="#059669">1 vs 4 → 1 stretches → 4 ✓</text>
-
-      <text x="300" y="60" font-size="14">→</text>
-      <text x="320" y="64" font-size="13" fill="#0f172a">result</text>
-      <rect x="370" y="42" width="50" height="28" fill="#dcfce7" stroke="#059669" stroke-width="1.5"/><text x="395" y="62" text-anchor="middle" font-size="13" fill="#059669">4</text>
-      <rect x="420" y="42" width="50" height="28" fill="#dcfce7" stroke="#059669" stroke-width="1.5"/><text x="445" y="62" text-anchor="middle" font-size="13" fill="#059669">4</text>
-      <text x="500" y="80" font-size="11" fill="#64748b">both 1's stretched →</text>
-      <text x="500" y="94" font-size="11" fill="#64748b">(4, 4) output</text>
+      <!-- Result + caption (to the right) -->
+      <text x="320" y="48" font-size="14" fill="#64748b">→</text>
+      <text x="340" y="52" font-size="13" fill="#0f172a">result</text>
+      <rect x="395" y="34" width="50" height="28" fill="#dcfce7" stroke="#059669" stroke-width="1.5"/><text x="420" y="54" text-anchor="middle" font-size="13" fill="#059669">4</text>
+      <rect x="445" y="34" width="50" height="28" fill="#dcfce7" stroke="#059669" stroke-width="1.5"/><text x="470" y="54" text-anchor="middle" font-size="13" fill="#059669">4</text>
+      <text x="320" y="92"  font-size="12" fill="#0f172a"><tspan font-weight="bold" fill="#059669">step 1:</tspan> 4 vs 1 → 1 stretches → 4 ✓</text>
+      <text x="320" y="110" font-size="12" fill="#0f172a"><tspan font-weight="bold" fill="#059669">step 2:</tspan> 1 vs 4 → 1 stretches → 4 ✓</text>
+      <text x="320" y="132" font-size="12" fill="#64748b">⇒ both 1's stretched ⇒ output (4, 4)</text>
 
       <!-- Example B: (4, 4) and (4, 2) → ValueError -->
       <text x="180" y="190" text-anchor="middle" font-size="14" font-weight="bold" fill="#dc2626">Case B · (4, 4) and (4, 2)  →  ValueError</text>
