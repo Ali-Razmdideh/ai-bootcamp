@@ -24,7 +24,8 @@ weeks/
   week-01-foundations/         # NumPy, Pandas, Matplotlib/SciPy
     course-01-numpy/
     course-02-pandas/
-    course-03-viz-scipy/
+    course-03-matplotlib/
+    course-04-viz-capstone-scipy/
   week-03-machine-learning/    # Regression, CV, feature selection (ISLP Ch 3, 5, 6)
     course-01-linear-regression-i/
     course-02-linear-regression-ii/

@@ -1543,37 +1543,31 @@ def combine(lecture, *exercise_pairs):
 
 
 NOTEBOOKS = [
-    ("course-01-numpy-i/lecture.ipynb", lambda: combine(
-        course1_lecture(),
+    ("course-01-numpy/lecture.ipynb", lambda: combine(
+        course1_lecture() + course2_lecture(),
         (course1_ex1_starter(), course1_ex1_solution()),
         (course1_ex2_starter(), course1_ex2_solution()),
         (course1_ex3_starter(), course1_ex3_solution()),
-    )),
-    ("course-02-numpy-ii/lecture.ipynb", lambda: combine(
-        course2_lecture(),
         (course2_ex1_starter(), course2_ex1_solution()),
         (course2_ex2_starter(), course2_ex2_solution()),
         (course2_ex3_starter(), course2_ex3_solution()),
     )),
-    ("course-03-pandas-i/lecture.ipynb", lambda: combine(
-        course3_lecture(),
+    ("course-02-pandas/lecture.ipynb", lambda: combine(
+        course3_lecture() + course4_lecture(),
         (course3_ex1_starter(), course3_ex1_solution()),
         (course3_ex2_starter(), course3_ex2_solution()),
         (course3_ex3_starter(), course3_ex3_solution()),
-    )),
-    ("course-04-pandas-ii/lecture.ipynb", lambda: combine(
-        course4_lecture(),
         (course4_ex1_starter(), course4_ex1_solution()),
         (course4_ex2_starter(), course4_ex2_solution()),
         (course4_ex3_starter(), course4_ex3_solution()),
     )),
-    ("course-05-matplotlib/lecture.ipynb", lambda: combine(
+    ("course-03-matplotlib/lecture.ipynb", lambda: combine(
         course5_lecture(),
         (course5_ex1_starter(), course5_ex1_solution()),
         (course5_ex2_starter(), course5_ex2_solution()),
         (course5_ex3_starter(), course5_ex3_solution()),
     )),
-    ("course-06-viz-capstone-scipy/lecture.ipynb", lambda: combine(
+    ("course-04-viz-capstone-scipy/lecture.ipynb", lambda: combine(
         course6_lecture(),
         (course6_ex1_starter(), course6_ex1_solution()),
         (course6_ex2_starter(), course6_ex2_solution()),

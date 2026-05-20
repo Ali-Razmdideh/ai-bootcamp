@@ -1,6 +1,6 @@
 # Week 1 — Python & Math Foundations
 
-**Total time:** 9 hours · two days of three 1.5-hour sessions
+**Total time:** 12 hours · four 3-hour sessions (NumPy and Pandas now merged into single courses)
 
 Week 1 puts every student on the same numerical-Python footing before the
 bootcamp dives into classical ML and deep learning. Every concrete example is
@@ -13,17 +13,15 @@ changes across the week.
 
 | Course | Topic | Folder |
 |--------|-------|--------|
-| 1 | NumPy I — The ND-Array | [course-01-numpy-i/](course-01-numpy-i/) |
-| 2 | NumPy II — Vectorization & beyond | [course-02-numpy-ii/](course-02-numpy-ii/) |
-| 3 | Pandas I — Series, DataFrame, indexing | [course-03-pandas-i/](course-03-pandas-i/) |
+| 1 | NumPy — The ND-Array, vectorization & linear algebra | [course-01-numpy/](course-01-numpy/) |
+| 2 | Pandas — Series, DataFrames, GroupBy, joins, time | [course-02-pandas/](course-02-pandas/) |
 
-## Day 2 — Cleaning, plotting, and the math bridge
+## Day 2 — Plotting and the math bridge
 
 | Course | Topic | Folder |
 |--------|-------|--------|
-| 4 | Pandas II — Cleaning, groupby, joins, time | [course-04-pandas-ii/](course-04-pandas-ii/) |
-| 5 | Matplotlib essentials | [course-05-matplotlib/](course-05-matplotlib/) |
-| 6 | Viz Capstone + SciPy bridge | [course-06-viz-capstone-scipy/](course-06-viz-capstone-scipy/) |
+| 3 | Matplotlib essentials | [course-03-matplotlib/](course-03-matplotlib/) |
+| 4 | Viz Capstone + SciPy bridge | [course-04-viz-capstone-scipy/](course-04-viz-capstone-scipy/) |
 
 ## The arc
 
@@ -37,7 +35,7 @@ by three exercises with their solutions.
 
 ## Capstone — Grand Finale Lab
 
-The final exercise of Course 6 — the **Grand Finale Lab** — is a synthesis:
+The final exercise of Course 4 — the **Grand Finale Lab** — is a synthesis:
 load a messy stock-prices CSV, clean it with Pandas, compute a 7-day rolling
 mean with NumPy, plot the result with Matplotlib, then refactor the whole
 pipeline into a reusable function. If a student can finish it, they own the

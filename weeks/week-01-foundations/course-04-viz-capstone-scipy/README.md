@@ -41,5 +41,5 @@ student can write it, they own the Week 1 foundations.
 ## How to run
 
 ```bash
-uv run jupyter lab weeks/week-01-foundations/course-06-viz-capstone-scipy/
+uv run jupyter lab weeks/week-01-foundations/course-04-viz-capstone-scipy/
 ```

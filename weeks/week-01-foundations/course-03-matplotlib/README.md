@@ -34,5 +34,5 @@ By the end of the session a student can:
 ## How to run
 
 ```bash
-uv run jupyter lab weeks/week-01-foundations/course-05-matplotlib/
+uv run jupyter lab weeks/week-01-foundations/course-03-matplotlib/
 ```
