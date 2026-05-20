@@ -728,9 +728,9 @@ E = M[:, :, np.newaxis]</script>
   </section>
 
   <section>
-    <h2>C-order vs F-order — how the cells line up in RAM</h2>
-    <p>Same 2-D logical view, two possible <strong>linear orders</strong> in memory. The header's <code>strides</code> tell NumPy how many bytes to jump per axis — that's the only thing that actually changes.</p>
-    <svg class="diagram" viewBox="0 0 640 230" width="640" height="230">
+    <h2>C-order vs F-order — laying cells out in RAM</h2>
+    <p class="muted" style="margin: 0 0 0.4em 0;">Same logical matrix, two possible <strong>linear orders</strong>. <code>strides</code> = how many bytes to jump per axis.</p>
+    <svg class="diagram" viewBox="0 0 640 230" width="560" height="200">
       <!-- logical 2x3 matrix -->
       <text x="80" y="22" text-anchor="middle" font-size="13" font-weight="bold" fill="#0f172a">Logical view · shape (2, 3)</text>
       <g transform="translate(20, 35)">
@@ -764,10 +764,14 @@ E = M[:, :, np.newaxis]</script>
       </g>
       <text x="316" y="195" font-size="11" fill="#64748b">walk col 0, then col 1, then col 2 · strides = (itemsize, nrows·itemsize)</text>
     </svg>
-    <ul class="muted" style="font-size: 0.85em; margin: 0;">
-      <li><strong>Why it matters.</strong> CPUs love sequential reads. Iterating over rows of a C-order array (or columns of an F-order array) is cache-friendly — the opposite direction triggers cache misses and can run an order of magnitude slower.</li>
-      <li><strong>Transpose is free.</strong> <code>a.T</code> doesn't move any bytes — it just swaps the strides, so a C-contiguous array becomes F-contiguous through its transpose.</li>
-      <li><strong>When it bites.</strong> Some BLAS/LAPACK or SciPy routines silently <code>ascontiguousarray</code>-copy your data if the layout is wrong. <code>arr.flags</code> tells you which layout you actually have.</li>
+  </section>
+
+  <section>
+    <h2>C-order vs F-order — why you'd care</h2>
+    <ul>
+      <li><strong>Cache locality.</strong> CPUs love sequential reads. Walking rows of a C-order array (or columns of an F-order array) is cache-friendly — going the other way can be an order of magnitude slower.</li>
+      <li><strong>Transpose is free.</strong> <code>a.T</code> moves no bytes — it just swaps strides, so a C-contiguous array becomes F-contiguous through its transpose.</li>
+      <li><strong>When it bites.</strong> Some BLAS/LAPACK or SciPy routines silently copy your data if the layout is wrong. <code>arr.flags</code> shows which layout you actually have.</li>
     </ul>
   </section>
 
