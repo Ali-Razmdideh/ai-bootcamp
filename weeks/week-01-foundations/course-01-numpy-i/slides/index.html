@@ -131,6 +131,73 @@ print(arr, type(arr).__name__, arr.dtype)
     <p class="muted">The header is tiny. The buffer is the data. Slicing & reshape mostly just rewrite the header.</p>
   </section>
 
+  <section>
+    <h2>NDArray header → memory block</h2>
+    <p>A concrete <code>(3, 3) float32</code> array: 4-byte elements, row stride <code>12</code>, column stride <code>4</code>.</p>
+    <svg class="diagram" viewBox="0 0 720 360" width="760" height="380">
+      <defs>
+        <marker id="arrN" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker>
+        <marker id="arrP" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#7c3aed"/></marker>
+      </defs>
+      <text x="20" y="20" font-size="13" font-weight="bold" fill="#0f172a">NDArray header</text>
+      <g font-size="12" fill="#0f172a">
+        <rect x="20" y="30" width="120" height="26" fill="#f8fafc" stroke="#64748b"/><text x="30" y="48">dtype</text>
+        <rect x="140" y="30" width="40" height="26" fill="#f8fafc" stroke="#64748b"/><text x="155" y="48" text-anchor="middle">*</text>
+        <rect x="20" y="56" width="120" height="26" fill="#f8fafc" stroke="#64748b"/><text x="30" y="74">dim count</text>
+        <rect x="140" y="56" width="40" height="26" fill="#f8fafc" stroke="#64748b"/><text x="160" y="74" text-anchor="middle" fill="#2563eb">2</text>
+        <rect x="20" y="82" width="120" height="26" fill="#f8fafc" stroke="#64748b"/><text x="30" y="100">dimensions</text>
+        <rect x="140" y="82" width="20" height="26" fill="#f8fafc" stroke="#64748b"/><text x="150" y="100" text-anchor="middle" fill="#2563eb">3</text>
+        <rect x="160" y="82" width="20" height="26" fill="#f8fafc" stroke="#64748b"/><text x="170" y="100" text-anchor="middle" fill="#2563eb">3</text>
+        <rect x="20" y="108" width="120" height="26" fill="#f8fafc" stroke="#64748b"/><text x="30" y="126">strides</text>
+        <rect x="140" y="108" width="20" height="26" fill="#f8fafc" stroke="#64748b"/><text x="150" y="126" text-anchor="middle" fill="#b45309">12</text>
+        <rect x="160" y="108" width="20" height="26" fill="#f8fafc" stroke="#64748b"/><text x="170" y="126" text-anchor="middle" fill="#b45309">4</text>
+        <rect x="20" y="134" width="120" height="26" fill="#f8fafc" stroke="#64748b"/><text x="30" y="152">data</text>
+        <rect x="140" y="134" width="40" height="26" fill="#f8fafc" stroke="#64748b"/><text x="155" y="152" text-anchor="middle">*</text>
+      </g>
+      <path d="M 180 43 L 250 43" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrN)"/>
+      <rect x="250" y="28" width="80" height="30" fill="#eff6ff" stroke="#2563eb"/>
+      <text x="290" y="48" text-anchor="middle" font-size="13" fill="#2563eb" font-weight="bold">float32</text>
+      <text x="345" y="38" font-size="11" fill="#7c3aed">The float32 dtype describes</text>
+      <text x="345" y="52" font-size="11" fill="#7c3aed">the array data elements</text>
+
+      <path d="M 180 147 L 220 147 L 220 220 L 250 220" stroke="#64748b" stroke-width="1.5" fill="none" marker-end="url(#arrN)"/>
+      <text x="260" y="200" font-size="12" font-weight="bold" fill="#0f172a">Memory block</text>
+      <g>
+        <rect x="250" y="208" width="40" height="32" fill="#eff6ff" stroke="#2563eb"/><text x="270" y="229" text-anchor="middle" font-size="13">0</text>
+        <rect x="290" y="208" width="40" height="32" fill="#eff6ff" stroke="#2563eb"/><text x="310" y="229" text-anchor="middle" font-size="13">1</text>
+        <rect x="330" y="208" width="40" height="32" fill="#eff6ff" stroke="#2563eb"/><text x="350" y="229" text-anchor="middle" font-size="13">2</text>
+        <rect x="370" y="208" width="40" height="32" fill="#eff6ff" stroke="#2563eb"/><text x="390" y="229" text-anchor="middle" font-size="13">3</text>
+        <rect x="410" y="208" width="40" height="32" fill="#eff6ff" stroke="#2563eb"/><text x="430" y="229" text-anchor="middle" font-size="13">4</text>
+        <rect x="450" y="208" width="40" height="32" fill="#eff6ff" stroke="#2563eb"/><text x="470" y="229" text-anchor="middle" font-size="13">5</text>
+        <rect x="490" y="208" width="40" height="32" fill="#eff6ff" stroke="#2563eb"/><text x="510" y="229" text-anchor="middle" font-size="13">6</text>
+        <rect x="530" y="208" width="40" height="32" fill="#eff6ff" stroke="#2563eb"/><text x="550" y="229" text-anchor="middle" font-size="13">7</text>
+        <rect x="570" y="208" width="40" height="32" fill="#eff6ff" stroke="#2563eb"/><text x="590" y="229" text-anchor="middle" font-size="13">8</text>
+      </g>
+      <path d="M 250 200 L 370 200" stroke="#7c3aed" stroke-width="2"/>
+      <path d="M 250 200 L 250 208" stroke="#7c3aed" stroke-width="2"/>
+      <path d="M 370 200 L 370 208" stroke="#7c3aed" stroke-width="2"/>
+      <text x="280" y="194" font-size="11" fill="#7c3aed">12 bytes (stride 0)</text>
+      <path d="M 530 244 L 570 244" stroke="#b45309" stroke-width="2"/>
+      <path d="M 530 244 L 530 240" stroke="#b45309" stroke-width="2"/>
+      <path d="M 570 244 L 570 240" stroke="#b45309" stroke-width="2"/>
+      <text x="540" y="258" font-size="11" fill="#b45309">4 bytes (stride 1)</text>
+
+      <text x="20" y="290" font-size="13" font-weight="bold" fill="#0f172a">Python view:</text>
+      <g transform="translate(150, 270)" font-size="13" fill="#0f172a">
+        <rect x="0" y="0" width="32" height="26" fill="#eff6ff" stroke="#2563eb"/><text x="16" y="18" text-anchor="middle">0</text>
+        <rect x="32" y="0" width="32" height="26" fill="#eff6ff" stroke="#2563eb"/><text x="48" y="18" text-anchor="middle">1</text>
+        <rect x="64" y="0" width="32" height="26" fill="#eff6ff" stroke="#2563eb"/><text x="80" y="18" text-anchor="middle">2</text>
+        <rect x="0" y="26" width="32" height="26" fill="#eff6ff" stroke="#2563eb"/><text x="16" y="44" text-anchor="middle">3</text>
+        <rect x="32" y="26" width="32" height="26" fill="#eff6ff" stroke="#2563eb"/><text x="48" y="44" text-anchor="middle">4</text>
+        <rect x="64" y="26" width="32" height="26" fill="#eff6ff" stroke="#2563eb"/><text x="80" y="44" text-anchor="middle">5</text>
+        <rect x="0" y="52" width="32" height="26" fill="#eff6ff" stroke="#2563eb"/><text x="16" y="70" text-anchor="middle">6</text>
+        <rect x="32" y="52" width="32" height="26" fill="#eff6ff" stroke="#2563eb"/><text x="48" y="70" text-anchor="middle">7</text>
+        <rect x="64" y="52" width="32" height="26" fill="#eff6ff" stroke="#2563eb"/><text x="80" y="70" text-anchor="middle">8</text>
+      </g>
+    </svg>
+    <p class="muted">The header carries shape + strides; the buffer carries bytes. Moving down a row in <code>(3, 3) float32</code> = jump <code>12</code> bytes; moving across a column = jump <code>4</code> bytes.</p>
+  </section>
+
   <section class="example" data-packages="numpy">
     <h2>Six recipes for creating arrays</h2>
     <div class="ex-prompt">99% of "make an array" reduces to one of these constructors: <code>zeros</code>, <code>ones</code>, <code>full</code>, <code>arange</code>, <code>linspace</code>, <code>eye</code>.</div>
@@ -425,6 +492,63 @@ print(g2.flatten())          # always a copy
       <text x="350" y="227" font-size="13" fill="#b45309">row by row (C-order)</text>
     </svg>
     <p class="muted">Same 12 numbers, same buffer. Only the strides change.</p>
+  </section>
+
+  <section>
+    <h2>Strides — from <code>[i, j]</code> to a flat offset</h2>
+    <p>The 2-D index <code>[i, j]</code> maps to a byte offset in one contiguous block: <code>offset = i · strides[0] + j · strides[1]</code>.</p>
+    <svg class="diagram" viewBox="0 0 760 320" width="780" height="330">
+      <defs>
+        <marker id="arrAx" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#0f172a"/></marker>
+        <marker id="arrR2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker>
+        <marker id="arrG2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#65a30d"/></marker>
+      </defs>
+
+      <text x="160" y="22" text-anchor="middle" font-size="14" font-weight="bold" fill="#0f172a">Array representation</text>
+      <line x1="40" y1="40" x2="120" y2="40" stroke="#0f172a" stroke-width="1.5" marker-end="url(#arrAx)"/>
+      <text x="125" y="44" font-size="12" font-weight="bold">axis 1</text>
+      <line x1="40" y1="40" x2="40" y2="120" stroke="#0f172a" stroke-width="1.5" marker-end="url(#arrAx)"/>
+      <text x="10" y="100" font-size="12" font-weight="bold">axis 0</text>
+
+      <g transform="translate(60, 60)">
+        <rect x="0" y="0" width="60" height="60" fill="#bae6fd" stroke="#0f172a"/>
+        <rect x="60" y="0" width="60" height="60" fill="#bae6fd" stroke="#0f172a"/>
+        <rect x="120" y="0" width="60" height="60" fill="#bae6fd" stroke="#0f172a"/>
+        <rect x="0" y="60" width="60" height="60" fill="#e5e7eb" stroke="#0f172a"/>
+        <rect x="60" y="60" width="60" height="60" fill="#e5e7eb" stroke="#0f172a"/>
+        <rect x="120" y="60" width="60" height="60" fill="#e5e7eb" stroke="#0f172a"/>
+        <rect x="0" y="120" width="60" height="60" fill="#fde68a" stroke="#0f172a"/>
+        <rect x="60" y="120" width="60" height="60" fill="#fde68a" stroke="#0f172a"/>
+        <rect x="120" y="120" width="60" height="60" fill="#fde68a" stroke="#0f172a"/>
+        <text x="20" y="32" font-size="13" fill="#0f172a">[i, j]</text>
+      </g>
+      <path d="M 90 50 Q 130 30 165 55" stroke="#dc2626" stroke-width="2" fill="none" marker-end="url(#arrR2)"/>
+      <path d="M 80 90 Q 50 130 80 175" stroke="#65a30d" stroke-width="2" fill="none" marker-end="url(#arrG2)"/>
+
+      <path d="M 270 130 L 320 130" stroke="#0f172a" stroke-width="1.5" marker-end="url(#arrAx)"/>
+
+      <text x="560" y="22" text-anchor="middle" font-size="14" font-weight="bold" fill="#0f172a">Contiguous block of memory</text>
+      <g transform="translate(340, 110)">
+        <rect x="0" y="0" width="44" height="44" fill="#bae6fd" stroke="#0f172a"/>
+        <rect x="44" y="0" width="44" height="44" fill="#bae6fd" stroke="#0f172a"/>
+        <rect x="88" y="0" width="44" height="44" fill="#bae6fd" stroke="#0f172a"/>
+        <rect x="132" y="0" width="44" height="44" fill="#e5e7eb" stroke="#0f172a"/>
+        <rect x="176" y="0" width="44" height="44" fill="#e5e7eb" stroke="#0f172a"/>
+        <rect x="220" y="0" width="44" height="44" fill="#e5e7eb" stroke="#0f172a"/>
+        <rect x="264" y="0" width="44" height="44" fill="#fde68a" stroke="#0f172a"/>
+        <rect x="308" y="0" width="44" height="44" fill="#fde68a" stroke="#0f172a"/>
+        <rect x="352" y="0" width="44" height="44" fill="#fde68a" stroke="#0f172a"/>
+      </g>
+
+      <path d="M 362 100 Q 384 60 406 100" stroke="#dc2626" stroke-width="2" fill="none" marker-end="url(#arrR2)"/>
+      <text x="370" y="58" font-size="13" font-weight="bold" fill="#dc2626">strides[1]</text>
+
+      <path d="M 362 90 Q 470 30 538 100" stroke="#65a30d" stroke-width="2" fill="none" marker-end="url(#arrG2)"/>
+      <text x="440" y="40" font-size="13" font-weight="bold" fill="#65a30d">strides[0]</text>
+
+      <text x="540" y="220" text-anchor="middle" font-size="13" fill="#475569">offset: i · strides[0] + j · strides[1]</text>
+    </svg>
+    <p class="muted">Strides are the bytes to skip per axis step. That's why reshape and transpose are cheap — they rewrite strides, never the buffer.</p>
   </section>
 
   <section class="example" data-packages="numpy">
