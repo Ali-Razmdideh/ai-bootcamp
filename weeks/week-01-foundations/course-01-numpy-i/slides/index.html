@@ -253,22 +253,37 @@ print(np.eye(3))
         </svg>
       </div>
       <div>
-        <svg class="diagram" viewBox="0 0 180 180" width="180" height="180">
-          <text x="90" y="20" text-anchor="middle" font-size="13" fill="#0f172a" font-weight="bold">3-D · shape (2, 3, 4)</text>
-          <g transform="translate(30, 50)">
-            <g opacity="0.5"><rect x="20" y="0" width="80" height="60" fill="#eff6ff" stroke="#2563eb"/></g>
-            <g><rect x="0" y="20" width="80" height="60" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
-              <line x1="0" y1="40" x2="80" y2="40" stroke="#2563eb"/>
-              <line x1="0" y1="60" x2="80" y2="60" stroke="#2563eb"/>
-              <line x1="20" y1="20" x2="20" y2="80" stroke="#2563eb"/>
-              <line x1="40" y1="20" x2="40" y2="80" stroke="#2563eb"/>
-              <line x1="60" y1="20" x2="60" y2="80" stroke="#2563eb"/>
+        <svg class="diagram" viewBox="0 0 200 180" width="200" height="180">
+          <text x="100" y="18" text-anchor="middle" font-size="13" fill="#0f172a" font-weight="bold">3-D · shape (2, 3, 4)</text>
+          <defs><marker id="arr3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+          <g transform="translate(55, 40)">
+            <!-- back face (offset up-right for depth) -->
+            <g opacity="0.45">
+              <rect x="20" y="0" width="75" height="50" fill="#eff6ff" stroke="#2563eb"/>
+              <line x1="45" y1="0" x2="45" y2="50" stroke="#2563eb"/>
+              <line x1="70" y1="0" x2="70" y2="50" stroke="#2563eb"/>
+              <line x1="20" y1="25" x2="95" y2="25" stroke="#2563eb"/>
             </g>
+            <!-- depth-connecting edges -->
             <line x1="0" y1="20" x2="20" y2="0" stroke="#2563eb"/>
-            <line x1="80" y1="20" x2="100" y2="0" stroke="#2563eb"/>
-            <line x1="80" y1="80" x2="100" y2="60" stroke="#2563eb"/>
+            <line x1="75" y1="20" x2="95" y2="0" stroke="#2563eb"/>
+            <line x1="0" y1="70" x2="20" y2="50" stroke="#2563eb"/>
+            <line x1="75" y1="70" x2="95" y2="50" stroke="#2563eb"/>
+            <!-- front face: 2 rows × 3 cols -->
+            <rect x="0" y="20" width="75" height="50" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+            <line x1="25" y1="20" x2="25" y2="70" stroke="#2563eb"/>
+            <line x1="50" y1="20" x2="50" y2="70" stroke="#2563eb"/>
+            <line x1="0" y1="45" x2="75" y2="45" stroke="#2563eb"/>
           </g>
-          <text x="90" y="160" text-anchor="middle" font-size="11" fill="#64748b">axis 0 = depth</text>
+          <!-- axis 0: vertical, size 2 -->
+          <line x1="45" y1="40" x2="45" y2="115" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr3)"/>
+          <text x="30" y="80" font-size="11" fill="#64748b">axis 0</text>
+          <!-- axis 1: horizontal, size 3 -->
+          <line x1="55" y1="125" x2="130" y2="125" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr3)"/>
+          <text x="80" y="142" font-size="11" fill="#64748b">axis 1</text>
+          <!-- axis 2: diagonal depth, size 4 -->
+          <line x1="135" y1="115" x2="165" y2="85" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr3)"/>
+          <text x="150" y="115" font-size="11" fill="#64748b">axis 2 = depth</text>
         </svg>
       </div>
     </div>
