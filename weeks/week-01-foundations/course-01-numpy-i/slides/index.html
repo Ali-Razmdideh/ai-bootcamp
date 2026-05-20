@@ -293,6 +293,10 @@ print(np.eye(3))
   <section class="example" data-packages="numpy">
     <h2>Random — use the modern API</h2>
     <div class="ex-prompt"><code>np.random.seed</code> is legacy. <code>default_rng</code> gives you a deterministic generator object — seed it once and pass it around.</div>
+    <ul class="muted" style="margin: 0 0 0.6em 0; font-size: 0.85em;">
+      <li><strong>No global state.</strong> Unlike <code>np.random.rand()</code> / <code>np.random.seed()</code>, it doesn't pollute the global RNG — no unintended side effects when libraries reseed behind your back.</li>
+      <li><strong>Modern algorithm.</strong> Backed by <code>PCG64</code> by default — faster, smaller state, and statistically stronger than the old Mersenne Twister.</li>
+    </ul>
 <textarea class="ex-code">import numpy as np
 rng = np.random.default_rng(seed=42)
 print(rng.random((3, 4)))
