@@ -131,38 +131,38 @@ print(arr, type(arr).__name__, arr.dtype)
     <p class="muted">The header is tiny. The buffer is the data. Slicing &amp; reshape mostly just rewrite the header. By default NumPy fills that buffer <strong>row by row</strong> — the <em>C-order</em> layout (named after the C language).</p>
   </section>
 
-  <section>
-    <h2>View vs copy — same buffer or new buffer?</h2>
-    <p>Because the buffer is separate from the header, NumPy has two ways to give you a "different array":</p>
-    <div class="three-col">
+  <section style="font-size: 0.75em;">
+    <h2 style="margin-bottom: 0.2em;">View vs copy — same buffer or new buffer?</h2>
+    <p class="muted" style="margin: 0 0 0.4em 0;">Buffer and header are separate — that's why NumPy has two flavours of "different array".</p>
+    <div class="three-col" style="font-size: 0.92em;">
       <div>
-        <h3 style="color:#2563eb; margin: 0 0 0.3em 0;">View</h3>
-        <p class="muted" style="margin: 0;">A new header pointing at the <em>same</em> buffer. Cheap (just metadata), and writes through to the original.</p>
-        <ul style="font-size: 0.85em;">
+        <h3 style="color:#2563eb; margin: 0 0 0.2em 0; font-size: 1.15em;">View</h3>
+        <p style="margin: 0 0 0.2em 0;">New header, <em>same</em> buffer. Cheap. Writes through.</p>
+        <ul style="margin: 0; padding-left: 1.1em;">
           <li>basic slicing — <code>a[1:3]</code></li>
-          <li><code>reshape</code>, <code>ravel</code>, <code>transpose</code>, <code>.T</code></li>
-          <li><code>np.newaxis</code>, <code>expand_dims</code>, <code>squeeze</code></li>
-          <li>changing <code>dtype</code> with <code>.view()</code></li>
+          <li><code>reshape</code> / <code>ravel</code> / <code>.T</code></li>
+          <li><code>np.newaxis</code>, <code>squeeze</code></li>
+          <li><code>.view(dtype)</code></li>
         </ul>
       </div>
       <div>
-        <h3 style="color:#b45309; margin: 0 0 0.3em 0;">Copy</h3>
-        <p class="muted" style="margin: 0;">A brand-new buffer with its own bytes. Expensive (allocates + memcopies), independent of the original.</p>
-        <ul style="font-size: 0.85em;">
-          <li>fancy / boolean indexing — <code>a[[0,2]]</code>, <code>a[a&gt;0]</code></li>
+        <h3 style="color:#b45309; margin: 0 0 0.2em 0; font-size: 1.15em;">Copy</h3>
+        <p style="margin: 0 0 0.2em 0;">New buffer. Expensive. Independent.</p>
+        <ul style="margin: 0; padding-left: 1.1em;">
+          <li>fancy / boolean — <code>a[[0,2]]</code>, <code>a[a&gt;0]</code></li>
           <li>arithmetic — <code>a + 1</code>, <code>a * 2</code></li>
           <li><code>astype</code>, <code>flatten</code>, <code>.copy()</code></li>
           <li><code>np.concatenate</code>, <code>np.stack</code></li>
         </ul>
       </div>
       <div>
-        <h3 style="color:#0f172a; margin: 0 0 0.3em 0;">How to check</h3>
-        <ul style="font-size: 0.85em;">
-          <li><code>b.base is a</code> — true if <code>b</code> is a view of <code>a</code>.</li>
-          <li><code>np.shares_memory(a, b)</code> — true if they overlap.</li>
-          <li><code>arr.flags.owndata</code> — false on a view.</li>
+        <h3 style="margin: 0 0 0.2em 0; font-size: 1.15em;">How to check</h3>
+        <ul style="margin: 0; padding-left: 1.1em;">
+          <li><code>b.base is a</code></li>
+          <li><code>np.shares_memory(a, b)</code></li>
+          <li><code>arr.flags.owndata</code></li>
         </ul>
-        <p class="callout" style="margin: 0.4em 0 0 0;">When in doubt, <code>.copy()</code> explicitly. Mutating a view you forgot was a view is the #1 NumPy bug.</p>
+        <p class="callout" style="margin: 0.3em 0 0 0;">When in doubt, <code>.copy()</code> explicitly.</p>
       </div>
     </div>
   </section>
@@ -345,6 +345,129 @@ print('b same data as a?', np.shares_memory(a, b), '· strides:', b.strides)
     </svg>
     <p class="muted">The header carries shape + strides; the buffer carries bytes. Moving down a row in <code>(3, 3) float32</code> = jump <code>12</code> bytes; moving across a column = jump <code>4</code> bytes.</p>
   </section>
+  <section class="title-slide">
+    <span class="kicker">Big arrays</span>
+    <h2>When the array doesn't fit</h2>
+    <p class="callout">An ndarray needs <strong>one contiguous block of RAM</strong>. Asking for <code>np.zeros((50_000, 50_000))</code> in float64 wants 20&nbsp;GB <em>in one piece</em>. Even with free RAM, fragmentation can make that allocation fail with <code>MemoryError</code>.</p>
+  </section>
+
+  <section>
+    <h2>The size, in your head</h2>
+    <ul>
+      <li><strong>bytes = <code>prod(shape) × dtype.itemsize</code></strong>. Always do this math before allocating.</li>
+      <li>float64 = 8&nbsp;B/cell, float32 = 4&nbsp;B, int8/bool = 1&nbsp;B.</li>
+      <li>A (10_000, 10_000) float64 matrix is <strong>800&nbsp;MB</strong> — and you usually need a <em>copy</em> for the next step.</li>
+    </ul>
+    <p class="callout fragment fade-up">Four escape hatches: <strong>downcast dtype</strong>, <strong>views not copies</strong>, <strong>chunked generators</strong>, <strong>memory-mapped files</strong>.</p>
+  </section>
+
+  <section class="example" data-packages="numpy">
+    <h2>1) Downcast the dtype</h2>
+    <div class="ex-prompt">Same shape, a quarter of the bytes. Pick the smallest dtype the data actually needs.</div>
+<textarea class="ex-code">import numpy as np
+a64 = np.ones((1000, 1000), dtype=np.float64)
+a32 = a64.astype(np.float32)
+a8  = np.ones((1000, 1000), dtype=np.int8)
+for arr in (a64, a32, a8):
+    print(arr.dtype, "→", arr.nbytes / 1e6, "MB")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">float64 → float32 halves memory at the cost of ~7 decimal digits of precision (usually fine for ML features). Boolean masks and small-integer labels belong in int8/bool, not int64.</script>
+  </section>
+
+  <section class="example" data-packages="numpy">
+    <h2>2) Views, not copies</h2>
+    <div class="ex-prompt">Slicing and <code>reshape</code> share memory. <code>.copy()</code>, fancy indexing, and most arithmetic allocate. Know which is which.</div>
+<textarea class="ex-code">import numpy as np
+a = np.arange(1_000_000, dtype=np.float32)        # 4 MB
+view  = a.reshape(1000, 1000)                     # 0 extra bytes
+slc   = a[::2]                                    # view, 0 extra
+copy  = a * 2.0                                   # NEW 4 MB block
+print("a base:", a.base is None, "view base is a:", view.base is a)
+print("slc shares memory:", np.shares_memory(slc, a))
+print("copy shares memory:", np.shares_memory(copy, a))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">For sliding windows over big signals, use <code>np.lib.stride_tricks.sliding_window_view</code> — it builds a view, not a copy, so a (10M,) array with window=1024 costs zero extra bytes.</script>
+  </section>
+
+  <section class="example" data-packages="numpy">
+    <h2>3) Chunked generators — process, don't load</h2>
+    <div class="ex-prompt">When the full array won't fit, stream it. A generator yields one chunk at a time; only the chunk lives in RAM.</div>
+<textarea class="ex-code">import numpy as np
+
+def chunks(n_rows, n_cols, chunk=10_000, seed=0):
+    rng = np.random.default_rng(seed)
+    for start in range(0, n_rows, chunk):
+        size = min(chunk, n_rows - start)
+        yield rng.standard_normal((size, n_cols), dtype=np.float32)
+
+# Running mean over 1M rows × 50 cols WITHOUT ever holding all of it
+total = np.zeros(50, dtype=np.float64); n = 0
+for block in chunks(1_000_000, 50, chunk=50_000):
+    total += block.sum(axis=0); n += block.shape[0]
+print("mean[:5] =", (total / n)[:5])
+print("peak block bytes =", 50_000 * 50 * 4, "(≈ 10 MB, not 200 MB)")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">The pattern: keep <em>running statistics</em> (sum, sum-of-squares, count) in tiny accumulators, iterate blocks, derive mean/var/etc. at the end. Same trick works for fitting linear regression, computing histograms, and standardizing.</script>
+  </section>
+
+  <section class="example" data-packages="numpy">
+    <h2>4) <code>np.memmap</code> — array backed by a file</h2>
+    <div class="ex-prompt">A memmap behaves like an ndarray but lives on disk. The OS pages in only the slices you actually touch — you can index a 100&nbsp;GB array on a laptop.</div>
+<textarea class="ex-code">import numpy as np, os
+
+path = "/tmp/big.dat"
+shape, dtype = (10_000, 1_000), np.float32       # 40 MB on disk
+
+# Create + write (only the rows being assigned live in RAM)
+mm = np.memmap(path, dtype=dtype, mode="w+", shape=shape)
+for i in range(0, shape[0], 1000):
+    mm[i:i+1000] = np.random.default_rng(i).standard_normal((1000, shape[1]), dtype=dtype)
+mm.flush(); del mm
+
+# Reopen read-only, touch a slice — only that slice is paged in
+mm = np.memmap(path, dtype=dtype, mode="r", shape=shape)
+print("file size:", os.path.getsize(path) / 1e6, "MB")
+print("slice mean:", mm[500:600].mean())
+print("type:", type(mm).__name__, "— acts like an ndarray:", mm.shape, mm.dtype)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">Memmap is the gateway drug to out-of-core arrays. For richer features (compression, chunked I/O, parallel reads) the ecosystem moves to <strong>HDF5</strong> (h5py), <strong>Zarr</strong>, or <strong>Dask arrays</strong> — all of which present an ndarray-like API on top of disk or cluster storage.</script>
+  </section>
+
+  <section>
+    <h2>Choosing the right hatch</h2>
+    <ul>
+      <li><strong>Fits in RAM but barely?</strong> Downcast dtype, prefer views.</li>
+      <li><strong>One pass over many rows?</strong> Generator + running stats.</li>
+      <li><strong>Random access on a huge array?</strong> <code>np.memmap</code> (or HDF5/Zarr).</li>
+      <li><strong>Bigger than one machine?</strong> Dask, Ray, or a database — out of scope here.</li>
+    </ul>
+    <p class="callout fragment fade-up"><code>MemoryError</code> is rarely "you're out of RAM" — it's "you asked for one giant contiguous block." Reshape the problem first, buy more RAM last.</p>
+  </section>
+
 
   <section class="example" data-packages="numpy">
     <h2>Six recipes for creating arrays</h2>
@@ -1367,6 +1490,44 @@ print(np.clip(a, 0, 30))
   </section>
 
   <section class="example" data-packages="numpy">
+    <h2>In-place operations — skip the allocation</h2>
+    <div class="ex-prompt">By default every ufunc and arithmetic op allocates a <em>new</em> buffer. For large arrays that allocation is the slow part. NumPy lets you write the result back into an existing array — zero new bytes.</div>
+    <ul class="muted" style="font-size: 0.82em; margin: 0 0 0.5em 0;">
+      <li><strong>Augmented assignment.</strong> <code>a += 1</code>, <code>a *= 2</code>, <code>a **= 0.5</code> mutate <code>a</code>'s buffer. Plain <code>a = a + 1</code> allocates a new array and rebinds the name.</li>
+      <li><strong>Ufunc <code>out=</code> argument.</strong> Every ufunc (and <code>np.matmul</code>, <code>np.dot</code>) accepts <code>out=</code> — pass a pre-allocated array to write into. Pair with <code>where=</code> to update only selected cells.</li>
+      <li><strong>Watch for views.</strong> Mutating in place also writes through views and slices that share the buffer. That's the whole point — but it surprises people. Use <code>.copy()</code> first when you need independence.</li>
+    </ul>
+<textarea class="ex-code">import numpy as np
+a = np.arange(6, dtype=float)
+print('id before:', id(a))
+a += 10                       # in-place: same buffer
+print('id after :', id(a), 'a =', a)
+
+# np.add with out= — reuses the destination buffer
+out = np.empty_like(a)
+np.add(a, 100, out=out)
+print('out =', out)
+
+# square in place via **=
+b = np.arange(5, dtype=float)
+b **= 2
+print('b squared in place:', b)
+
+# Selective update with where=
+c = np.array([-3.0, 1.0, -7.0, 4.0])
+np.abs(c, out=c, where=c &lt; 0)  # flip only negatives, in place
+print('clipped:', c)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">Rule of thumb: hot inner loops and large arrays should use augmented assignment or <code>out=</code> to avoid the allocator. For a one-off line of code on small arrays, <code>a = a + 1</code> is fine — clarity wins.</script>
+  </section>
+
+  <section class="example" data-packages="numpy">
     <h2>Reductions — and the axis mnemonic</h2>
     <div class="ex-prompt">Mnemonic: <code>axis=k</code> means "the axis k disappears." <code>mean()</code> with no axis collapses everything to a scalar.</div>
 <textarea class="ex-code">import numpy as np
@@ -1529,6 +1690,157 @@ print('sum (0, 2) :', c.sum(axis=(0, 2)).shape)
       <text x="620" y="216" text-anchor="middle" font-size="11" class="muted">not broadcastable</text>
     </svg>
     <p class="muted">Equal, or one of them is 1, axis by axis — right-aligned. That single rule covers every legal broadcast.</p>
+  </section>
+
+  <section>
+    <h2>Walkthrough — compare axes right to left</h2>
+    <p class="muted" style="margin: 0 0 0.4em 0;">Stack the two shapes, right-aligned. Walk from the rightmost axis to the left. At each step the pair must be <strong>equal</strong> OR <strong>one of them is 1</strong> (which is then stretched). Missing axes count as 1.</p>
+    <svg class="diagram" viewBox="0 0 760 240" width="760" height="240">
+      <defs>
+        <marker id="bcArr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker>
+      </defs>
+
+      <!-- Example A: (1, 4) vs (4, 1) → broadcasts to (4, 4) -->
+      <text x="180" y="22" text-anchor="middle" font-size="14" font-weight="bold" fill="#059669">Case A · (1, 4) and (4, 1)  →  OK</text>
+      <text x="20" y="60" font-size="13" fill="#0f172a">array1.shape</text>
+      <rect x="120" y="42" width="50" height="28" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/><text x="145" y="62" text-anchor="middle" font-size="13" fill="#2563eb">1</text>
+      <rect x="170" y="42" width="50" height="28" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/><text x="195" y="62" text-anchor="middle" font-size="13" fill="#2563eb">4</text>
+
+      <text x="20" y="100" font-size="13" fill="#0f172a">array2.shape</text>
+      <rect x="120" y="82" width="50" height="28" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/><text x="145" y="102" text-anchor="middle" font-size="13" fill="#b45309">4</text>
+      <rect x="170" y="82" width="50" height="28" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/><text x="195" y="102" text-anchor="middle" font-size="13" fill="#b45309">1</text>
+
+      <!-- Step labels under each axis pair -->
+      <text x="195" y="135" text-anchor="middle" font-size="11" fill="#059669">step 1 · rightmost</text>
+      <text x="195" y="150" text-anchor="middle" font-size="11" fill="#059669">4 vs 1 → 1 stretches → 4 ✓</text>
+
+      <text x="145" y="135" text-anchor="middle" font-size="11" fill="#059669">step 2 · next left</text>
+      <text x="145" y="150" text-anchor="middle" font-size="11" fill="#059669">1 vs 4 → 1 stretches → 4 ✓</text>
+
+      <text x="300" y="60" font-size="14">→</text>
+      <text x="320" y="64" font-size="13" fill="#0f172a">result</text>
+      <rect x="370" y="42" width="50" height="28" fill="#dcfce7" stroke="#059669" stroke-width="1.5"/><text x="395" y="62" text-anchor="middle" font-size="13" fill="#059669">4</text>
+      <rect x="420" y="42" width="50" height="28" fill="#dcfce7" stroke="#059669" stroke-width="1.5"/><text x="445" y="62" text-anchor="middle" font-size="13" fill="#059669">4</text>
+      <text x="500" y="80" font-size="11" fill="#64748b">both 1's stretched →</text>
+      <text x="500" y="94" font-size="11" fill="#64748b">(4, 4) output</text>
+
+      <!-- Example B: (4, 4) and (4, 2) → ValueError -->
+      <text x="180" y="190" text-anchor="middle" font-size="14" font-weight="bold" fill="#dc2626">Case B · (4, 4) and (4, 2)  →  ValueError</text>
+      <rect x="120" y="200" width="50" height="28" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/><text x="145" y="220" text-anchor="middle" font-size="13" fill="#2563eb">4</text>
+      <rect x="170" y="200" width="50" height="28" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/><text x="195" y="220" text-anchor="middle" font-size="13" fill="#2563eb">4</text>
+      <rect x="240" y="200" width="50" height="28" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/><text x="265" y="220" text-anchor="middle" font-size="13" fill="#b45309">4</text>
+      <rect x="290" y="200" width="50" height="28" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/><text x="315" y="220" text-anchor="middle" font-size="13" fill="#b45309">2</text>
+      <text x="370" y="220" font-size="12" fill="#dc2626">rightmost: 4 vs 2 → ✗ (neither is 1)</text>
+      <text x="370" y="234" font-size="11" fill="#64748b">operands could not be broadcast together</text>
+    </svg>
+  </section>
+
+  <section>
+    <h2>How the stretch actually fills the result</h2>
+    <p class="muted" style="margin: 0 0 0.4em 0;"><code>a (4, 3)</code> + <code>b (1, 3)</code> — the length-1 row of <code>b</code> is replicated down 4 rows. No physical copy; NumPy iterates as if it had been duplicated.</p>
+    <svg class="diagram" viewBox="0 0 760 240" width="760" height="240">
+      <!-- a (4 x 3) on the left -->
+      <text x="80" y="22" text-anchor="middle" font-size="13" font-weight="bold" fill="#0f172a">a · (4, 3)</text>
+      <g font-family="ui-monospace, monospace" font-size="13" text-anchor="middle">
+        <rect x="20"  y="32" width="40" height="34" fill="#dbeafe" stroke="#2563eb"/><text x="40"  y="55">0</text>
+        <rect x="60"  y="32" width="40" height="34" fill="#dbeafe" stroke="#2563eb"/><text x="80"  y="55">0</text>
+        <rect x="100" y="32" width="40" height="34" fill="#dbeafe" stroke="#2563eb"/><text x="120" y="55">0</text>
+        <rect x="20"  y="66" width="40" height="34" fill="#dbeafe" stroke="#2563eb"/><text x="40"  y="89">10</text>
+        <rect x="60"  y="66" width="40" height="34" fill="#dbeafe" stroke="#2563eb"/><text x="80"  y="89">10</text>
+        <rect x="100" y="66" width="40" height="34" fill="#dbeafe" stroke="#2563eb"/><text x="120" y="89">10</text>
+        <rect x="20"  y="100" width="40" height="34" fill="#dbeafe" stroke="#2563eb"/><text x="40"  y="123">20</text>
+        <rect x="60"  y="100" width="40" height="34" fill="#dbeafe" stroke="#2563eb"/><text x="80"  y="123">20</text>
+        <rect x="100" y="100" width="40" height="34" fill="#dbeafe" stroke="#2563eb"/><text x="120" y="123">20</text>
+        <rect x="20"  y="134" width="40" height="34" fill="#dbeafe" stroke="#2563eb"/><text x="40"  y="157">30</text>
+        <rect x="60"  y="134" width="40" height="34" fill="#dbeafe" stroke="#2563eb"/><text x="80"  y="157">30</text>
+        <rect x="100" y="134" width="40" height="34" fill="#dbeafe" stroke="#2563eb"/><text x="120" y="157">30</text>
+      </g>
+
+      <text x="170" y="105" font-size="22">+</text>
+
+      <!-- b (1 x 3) — real row -->
+      <text x="260" y="22" text-anchor="middle" font-size="13" font-weight="bold" fill="#b45309">b · (1, 3)</text>
+      <g font-family="ui-monospace, monospace" font-size="13" text-anchor="middle">
+        <rect x="200" y="32" width="40" height="34" fill="#fef3c7" stroke="#b45309"/><text x="220" y="55">1</text>
+        <rect x="240" y="32" width="40" height="34" fill="#fef3c7" stroke="#b45309"/><text x="260" y="55">2</text>
+        <rect x="280" y="32" width="40" height="34" fill="#fef3c7" stroke="#b45309"/><text x="300" y="55">3</text>
+      </g>
+      <!-- "stretch" ghost copies below -->
+      <g font-family="ui-monospace, monospace" font-size="12" text-anchor="middle" opacity="0.45">
+        <rect x="200" y="66" width="40" height="34" fill="#fef3c7" stroke="#b45309" stroke-dasharray="4,3"/><text x="220" y="89">1</text>
+        <rect x="240" y="66" width="40" height="34" fill="#fef3c7" stroke="#b45309" stroke-dasharray="4,3"/><text x="260" y="89">2</text>
+        <rect x="280" y="66" width="40" height="34" fill="#fef3c7" stroke="#b45309" stroke-dasharray="4,3"/><text x="300" y="89">3</text>
+        <rect x="200" y="100" width="40" height="34" fill="#fef3c7" stroke="#b45309" stroke-dasharray="4,3"/><text x="220" y="123">1</text>
+        <rect x="240" y="100" width="40" height="34" fill="#fef3c7" stroke="#b45309" stroke-dasharray="4,3"/><text x="260" y="123">2</text>
+        <rect x="280" y="100" width="40" height="34" fill="#fef3c7" stroke="#b45309" stroke-dasharray="4,3"/><text x="300" y="123">3</text>
+        <rect x="200" y="134" width="40" height="34" fill="#fef3c7" stroke="#b45309" stroke-dasharray="4,3"/><text x="220" y="157">1</text>
+        <rect x="240" y="134" width="40" height="34" fill="#fef3c7" stroke="#b45309" stroke-dasharray="4,3"/><text x="260" y="157">2</text>
+        <rect x="280" y="134" width="40" height="34" fill="#fef3c7" stroke="#b45309" stroke-dasharray="4,3"/><text x="300" y="157">3</text>
+      </g>
+      <text x="340" y="200" font-size="11" fill="#b45309" font-style="italic">stretch (virtual)</text>
+
+      <text x="365" y="105" font-size="22">=</text>
+
+      <!-- result (4 x 3) -->
+      <text x="450" y="22" text-anchor="middle" font-size="13" font-weight="bold" fill="#059669">result · (4, 3)</text>
+      <g font-family="ui-monospace, monospace" font-size="13" text-anchor="middle">
+        <rect x="395" y="32" width="40" height="34" fill="#dcfce7" stroke="#059669"/><text x="415" y="55">1</text>
+        <rect x="435" y="32" width="40" height="34" fill="#dcfce7" stroke="#059669"/><text x="455" y="55">2</text>
+        <rect x="475" y="32" width="40" height="34" fill="#dcfce7" stroke="#059669"/><text x="495" y="55">3</text>
+        <rect x="395" y="66" width="40" height="34" fill="#dcfce7" stroke="#059669"/><text x="415" y="89">11</text>
+        <rect x="435" y="66" width="40" height="34" fill="#dcfce7" stroke="#059669"/><text x="455" y="89">12</text>
+        <rect x="475" y="66" width="40" height="34" fill="#dcfce7" stroke="#059669"/><text x="495" y="89">13</text>
+        <rect x="395" y="100" width="40" height="34" fill="#dcfce7" stroke="#059669"/><text x="415" y="123">21</text>
+        <rect x="435" y="100" width="40" height="34" fill="#dcfce7" stroke="#059669"/><text x="455" y="123">22</text>
+        <rect x="475" y="100" width="40" height="34" fill="#dcfce7" stroke="#059669"/><text x="495" y="123">23</text>
+        <rect x="395" y="134" width="40" height="34" fill="#dcfce7" stroke="#059669"/><text x="415" y="157">31</text>
+        <rect x="435" y="134" width="40" height="34" fill="#dcfce7" stroke="#059669"/><text x="455" y="157">32</text>
+        <rect x="475" y="134" width="40" height="34" fill="#dcfce7" stroke="#059669"/><text x="495" y="157">33</text>
+      </g>
+
+      <!-- right-hand caption -->
+      <text x="540" y="55" font-size="12" fill="#64748b">Rule check, right→left:</text>
+      <text x="540" y="74" font-size="12" fill="#0f172a">axis −1 :  3 vs 3  ✓</text>
+      <text x="540" y="92" font-size="12" fill="#0f172a">axis −2 :  4 vs 1  ✓ (stretch)</text>
+      <text x="540" y="118" font-size="12" fill="#059669">→ output shape (4, 3)</text>
+      <text x="540" y="150" font-size="11" fill="#64748b" font-style="italic">b is virtually replicated;</text>
+      <text x="540" y="164" font-size="11" fill="#64748b" font-style="italic">no extra memory allocated.</text>
+    </svg>
+  </section>
+
+  <section class="example" data-packages="numpy">
+    <h2>Match vs mismatch — same intuition in code</h2>
+    <div class="ex-prompt">Right-aligned shape comparison decides everything. <code>(4, 4) + (4, 1)</code> broadcasts; <code>(4, 4) * (4, 2)</code> errors out.</div>
+<textarea class="ex-code">import numpy as np
+
+array1 = np.array([[ 1,  2,  3,  4],
+                   [ 5,  6,  7,  8],
+                   [ 9, 10, 11, 12],
+                   [13, 14, 15, 16]])         # shape (4, 4)
+
+# ----- MATCH: (4, 4) * (4, 1) -----
+# right→left:  axis -1 → 4 vs 1 → 1 stretches → 4 ✓
+#              axis -2 → 4 vs 4 → equal ✓
+col = np.array([[1], [2], [3], [4]])           # shape (4, 1)
+print('col.shape   :', col.shape)
+print('array1*col =\n', array1 * col)
+
+# ----- MISMATCH: (4, 4) * (4, 2) -----
+# right→left:  axis -1 → 4 vs 2 → ✗ (neither is 1)
+bad = np.array([[1, 2], [2, 3], [3, 4], [4, 5]])   # shape (4, 2)
+print('bad.shape   :', bad.shape)
+try:
+    print(array1 * bad)
+except ValueError as e:
+    print('ValueError:', e)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">The single rule (<em>equal, or one of them is 1, axis by axis from the right</em>) decides match vs mismatch. <code>col</code> has shape <code>(4, 1)</code> so its trailing 1 stretches to 4 — clean broadcast. <code>bad</code> has shape <code>(4, 2)</code>; the trailing pair is 4 vs 2 and neither is 1 — NumPy raises <code>ValueError: operands could not be broadcast together</code>.</script>
   </section>
 
   <section class="example" data-packages="numpy">
@@ -1733,13 +2045,17 @@ print(Z.mean(axis=0).round(4), Z.std(axis=0).round(4))</script>
   </section>
 
   <section>
+    <h2>How a boolean mask works — three rules</h2>
+    <ul>
+      <li><strong>Mask construction.</strong> Any element-wise comparison or logical op produces a mask the <em>same shape</em> as the source: <code>a &gt; 4</code>, <code>a == 7</code>, <code>np.isnan(a)</code>, <code>(a &gt; 0) &amp; (a &lt; 10)</code>. Use <code>&amp;</code> / <code>|</code> / <code>~</code> (bitwise) — <code>and</code>/<code>or</code> raise on arrays.</li>
+      <li><strong>Reading flattens.</strong> <code>a[mask]</code> returns a 1-D <em>copy</em> of the matching values in row-major traversal — you trade shape for values. <code>mask.sum()</code> counts hits, <code>mask.mean()</code> is the fraction.</li>
+      <li><strong>Writing is in-place.</strong> <code>a[mask] = 0</code> assigns into the original buffer, shape preserved — that's how "clip outliers" or "set NaNs to 0" becomes one line.</li>
+    </ul>
+  </section>
+
+  <section>
     <h2>Boolean masking — select by condition</h2>
     <p>A boolean array of the same shape picks out the <span class="accent">True</span> cells.</p>
-    <ul class="muted" style="font-size: 0.82em; margin: 0 0 0.4em 0;">
-      <li><strong>Mask construction.</strong> Any element-wise comparison or logical op produces a mask the <em>same shape</em> as the source: <code>a &gt; 4</code>, <code>a == 7</code>, <code>np.isnan(a)</code>, <code>(a &gt; 0) &amp; (a &lt; 10)</code>. Combine with <code>&amp;</code> / <code>|</code> / <code>~</code> (bitwise) — <code>and</code>/<code>or</code> raise on arrays.</li>
-      <li><strong>Reading flattens.</strong> <code>a[mask]</code> always returns a 1-D copy in row-major (C-order) traversal — you trade shape for the matching values. Use <code>mask.sum()</code> to count hits, <code>mask.mean()</code> for the fraction.</li>
-      <li><strong>Writing is in-place.</strong> <code>a[mask] = 0</code> assigns to the original buffer, preserving shape — that's how "clip outliers" or "set NaNs to 0" becomes one line.</li>
-    </ul>
     <svg class="diagram" viewBox="0 0 520 220" width="620" height="260">
       <text x="80" y="20" text-anchor="middle" font-size="13" class="muted">data</text>
       <g font-size="13" text-anchor="middle">
@@ -1916,11 +2232,16 @@ print(Zr.mean(axis=1)[:5].round(4))</script>
 
   <section class="example" data-packages="numpy">
     <h2>Matrix multiplication — the <code>@</code> operator</h2>
-    <div class="ex-prompt"><code>@</code> calls <code>np.matmul</code> (equivalent to <code>.dot</code> for 2-D arrays). Never use <code>*</code> for matrix multiplication — that's element-wise.</div>
+    <div class="ex-prompt"><code>@</code> calls <code>np.matmul</code> (equivalent to <code>.dot</code> for 2-D arrays). Never use <code>*</code> for matrix multiplication — that's element-wise. For hot loops, <code>np.matmul</code> also accepts <code>out=</code> so the result writes into a pre-allocated buffer — no extra allocation.</div>
 <textarea class="ex-code">import numpy as np
 n1 = np.arange(10).reshape(2, 5)
 n2 = np.arange(15).reshape(5, 3)
 print(n1 @ n2)                # equivalent to n1.dot(n2)
+
+# In-place matmul into a pre-allocated buffer — zero new allocations
+C = np.empty((2, 3), dtype=n1.dtype)
+np.matmul(n1, n2, out=C)
+print('C =', C)
 </textarea>
     <div class="ex-controls">
       <button class="ex-run">Run</button>
@@ -1933,7 +2254,7 @@ print(n1 @ n2)                # equivalent to n1.dot(n2)
   <section class="example" data-packages="numpy">
     <h2>Solve a linear system — <code>Ax = b</code></h2>
     <div class="ex-prompt">Always prefer <code>np.linalg.solve</code> over <code>inv(A) @ b</code> — it uses LU factorization, so it's faster and numerically more stable.</div>
-    <svg class="diagram" viewBox="0 0 720 130" width="720" height="130" style="margin: 0 auto; display:block;">
+    <svg class="diagram" viewBox="0 0 720 160" width="720" height="160" style="margin: 0 auto; display:block;">
       <!-- Equations on the left -->
       <text x="20"  y="40" font-size="15" fill="#0f172a">System of equations</text>
       <text x="20"  y="65" font-family="ui-monospace, monospace" font-size="14" fill="#0f172a">2·x₁ + 6·x₂ =  6</text>
@@ -1962,10 +2283,12 @@ print(n1 @ n2)                # equivalent to n1.dot(n2)
       <text x="505" y="68" font-family="ui-monospace, monospace" font-size="13" fill="#7c3aed">&#160;6</text>
       <text x="505" y="90" font-family="ui-monospace, monospace" font-size="13" fill="#7c3aed">−9</text>
       <text x="525" y="73" font-size="22" fill="#0f172a">]</text>
-      <text x="395" y="115" text-anchor="middle" font-size="11" fill="#64748b">solution: x = [−3, 2]</text>
-      <!-- Tags -->
-      <text x="335" y="115" text-anchor="middle" font-size="11" fill="#2563eb">A (2×2)</text>
-      <text x="513" y="115" text-anchor="middle" font-size="11" fill="#7c3aed">b (2,)</text>
+      <!-- Tags under each matrix -->
+      <text x="335" y="118" text-anchor="middle" font-size="11" fill="#2563eb">A (2×2)</text>
+      <text x="420" y="118" text-anchor="middle" font-size="11" fill="#b45309">x (2,)</text>
+      <text x="513" y="118" text-anchor="middle" font-size="11" fill="#7c3aed">b (2,)</text>
+      <!-- Solution centred on its own line -->
+      <text x="420" y="148" text-anchor="middle" font-size="12" fill="#64748b">solution: x = [−3, 2]</text>
     </svg>
 <textarea class="ex-code">import numpy as np
 # 2·x1 + 6·x2 =  6
@@ -2139,131 +2462,6 @@ print(right)
       <span class="ex-status"></span>
     </div>
     <pre class="ex-output"></pre>
-  </section>
-</section>
-
-<section>
-  <section class="title-slide">
-    <span class="kicker">Big arrays</span>
-    <h2>When the array doesn't fit</h2>
-    <p class="callout">An ndarray needs <strong>one contiguous block of RAM</strong>. Asking for <code>np.zeros((50_000, 50_000))</code> in float64 wants 20&nbsp;GB <em>in one piece</em>. Even with free RAM, fragmentation can make that allocation fail with <code>MemoryError</code>.</p>
-  </section>
-
-  <section>
-    <h2>The size, in your head</h2>
-    <ul>
-      <li><strong>bytes = <code>prod(shape) × dtype.itemsize</code></strong>. Always do this math before allocating.</li>
-      <li>float64 = 8&nbsp;B/cell, float32 = 4&nbsp;B, int8/bool = 1&nbsp;B.</li>
-      <li>A (10_000, 10_000) float64 matrix is <strong>800&nbsp;MB</strong> — and you usually need a <em>copy</em> for the next step.</li>
-    </ul>
-    <p class="callout fragment fade-up">Four escape hatches: <strong>downcast dtype</strong>, <strong>views not copies</strong>, <strong>chunked generators</strong>, <strong>memory-mapped files</strong>.</p>
-  </section>
-
-  <section class="example" data-packages="numpy">
-    <h2>1) Downcast the dtype</h2>
-    <div class="ex-prompt">Same shape, a quarter of the bytes. Pick the smallest dtype the data actually needs.</div>
-<textarea class="ex-code">import numpy as np
-a64 = np.ones((1000, 1000), dtype=np.float64)
-a32 = a64.astype(np.float32)
-a8  = np.ones((1000, 1000), dtype=np.int8)
-for arr in (a64, a32, a8):
-    print(arr.dtype, "→", arr.nbytes / 1e6, "MB")
-</textarea>
-    <div class="ex-controls">
-      <button class="ex-run">Run</button>
-      <button class="ex-reset">Reset</button>
-      <span class="ex-status"></span>
-    </div>
-    <pre class="ex-output"></pre>
-<script type="text/x-explain">float64 → float32 halves memory at the cost of ~7 decimal digits of precision (usually fine for ML features). Boolean masks and small-integer labels belong in int8/bool, not int64.</script>
-  </section>
-
-  <section class="example" data-packages="numpy">
-    <h2>2) Views, not copies</h2>
-    <div class="ex-prompt">Slicing and <code>reshape</code> share memory. <code>.copy()</code>, fancy indexing, and most arithmetic allocate. Know which is which.</div>
-<textarea class="ex-code">import numpy as np
-a = np.arange(1_000_000, dtype=np.float32)        # 4 MB
-view  = a.reshape(1000, 1000)                     # 0 extra bytes
-slc   = a[::2]                                    # view, 0 extra
-copy  = a * 2.0                                   # NEW 4 MB block
-print("a base:", a.base is None, "view base is a:", view.base is a)
-print("slc shares memory:", np.shares_memory(slc, a))
-print("copy shares memory:", np.shares_memory(copy, a))
-</textarea>
-    <div class="ex-controls">
-      <button class="ex-run">Run</button>
-      <button class="ex-reset">Reset</button>
-      <span class="ex-status"></span>
-    </div>
-    <pre class="ex-output"></pre>
-<script type="text/x-explain">For sliding windows over big signals, use <code>np.lib.stride_tricks.sliding_window_view</code> — it builds a view, not a copy, so a (10M,) array with window=1024 costs zero extra bytes.</script>
-  </section>
-
-  <section class="example" data-packages="numpy">
-    <h2>3) Chunked generators — process, don't load</h2>
-    <div class="ex-prompt">When the full array won't fit, stream it. A generator yields one chunk at a time; only the chunk lives in RAM.</div>
-<textarea class="ex-code">import numpy as np
-
-def chunks(n_rows, n_cols, chunk=10_000, seed=0):
-    rng = np.random.default_rng(seed)
-    for start in range(0, n_rows, chunk):
-        size = min(chunk, n_rows - start)
-        yield rng.standard_normal((size, n_cols), dtype=np.float32)
-
-# Running mean over 1M rows × 50 cols WITHOUT ever holding all of it
-total = np.zeros(50, dtype=np.float64); n = 0
-for block in chunks(1_000_000, 50, chunk=50_000):
-    total += block.sum(axis=0); n += block.shape[0]
-print("mean[:5] =", (total / n)[:5])
-print("peak block bytes =", 50_000 * 50 * 4, "(≈ 10 MB, not 200 MB)")
-</textarea>
-    <div class="ex-controls">
-      <button class="ex-run">Run</button>
-      <button class="ex-reset">Reset</button>
-      <span class="ex-status"></span>
-    </div>
-    <pre class="ex-output"></pre>
-<script type="text/x-explain">The pattern: keep <em>running statistics</em> (sum, sum-of-squares, count) in tiny accumulators, iterate blocks, derive mean/var/etc. at the end. Same trick works for fitting linear regression, computing histograms, and standardizing.</script>
-  </section>
-
-  <section class="example" data-packages="numpy">
-    <h2>4) <code>np.memmap</code> — array backed by a file</h2>
-    <div class="ex-prompt">A memmap behaves like an ndarray but lives on disk. The OS pages in only the slices you actually touch — you can index a 100&nbsp;GB array on a laptop.</div>
-<textarea class="ex-code">import numpy as np, os
-
-path = "/tmp/big.dat"
-shape, dtype = (10_000, 1_000), np.float32       # 40 MB on disk
-
-# Create + write (only the rows being assigned live in RAM)
-mm = np.memmap(path, dtype=dtype, mode="w+", shape=shape)
-for i in range(0, shape[0], 1000):
-    mm[i:i+1000] = np.random.default_rng(i).standard_normal((1000, shape[1]), dtype=dtype)
-mm.flush(); del mm
-
-# Reopen read-only, touch a slice — only that slice is paged in
-mm = np.memmap(path, dtype=dtype, mode="r", shape=shape)
-print("file size:", os.path.getsize(path) / 1e6, "MB")
-print("slice mean:", mm[500:600].mean())
-print("type:", type(mm).__name__, "— acts like an ndarray:", mm.shape, mm.dtype)
-</textarea>
-    <div class="ex-controls">
-      <button class="ex-run">Run</button>
-      <button class="ex-reset">Reset</button>
-      <span class="ex-status"></span>
-    </div>
-    <pre class="ex-output"></pre>
-<script type="text/x-explain">Memmap is the gateway drug to out-of-core arrays. For richer features (compression, chunked I/O, parallel reads) the ecosystem moves to <strong>HDF5</strong> (h5py), <strong>Zarr</strong>, or <strong>Dask arrays</strong> — all of which present an ndarray-like API on top of disk or cluster storage.</script>
-  </section>
-
-  <section>
-    <h2>Choosing the right hatch</h2>
-    <ul>
-      <li><strong>Fits in RAM but barely?</strong> Downcast dtype, prefer views.</li>
-      <li><strong>One pass over many rows?</strong> Generator + running stats.</li>
-      <li><strong>Random access on a huge array?</strong> <code>np.memmap</code> (or HDF5/Zarr).</li>
-      <li><strong>Bigger than one machine?</strong> Dask, Ray, or a database — out of scope here.</li>
-    </ul>
-    <p class="callout fragment fade-up"><code>MemoryError</code> is rarely "you're out of RAM" — it's "you asked for one giant contiguous block." Reshape the problem first, buy more RAM last.</p>
   </section>
 </section>
 
