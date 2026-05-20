@@ -727,13 +727,66 @@ E = M[:, :, np.newaxis]</script>
 <script type="text/x-explain">`reshape` only succeeds if the new shape has the same total element count (8*4 == 4*8). `np.newaxis` (alias for `None`) inserts a length-1 axis — the buffer is unchanged, only the strides.</script>
   </section>
 
+  <section>
+    <h2>C-order vs F-order — how the cells line up in RAM</h2>
+    <p>Same 2-D logical view, two possible <strong>linear orders</strong> in memory. The header's <code>strides</code> tell NumPy how many bytes to jump per axis — that's the only thing that actually changes.</p>
+    <svg class="diagram" viewBox="0 0 640 230" width="640" height="230">
+      <!-- logical 2x3 matrix -->
+      <text x="80" y="22" text-anchor="middle" font-size="13" font-weight="bold" fill="#0f172a">Logical view · shape (2, 3)</text>
+      <g transform="translate(20, 35)">
+        <rect x="0"  y="0"  width="40" height="36" fill="#eff6ff" stroke="#2563eb"/><text x="20"  y="23" text-anchor="middle" font-size="13">0</text>
+        <rect x="40" y="0"  width="40" height="36" fill="#eff6ff" stroke="#2563eb"/><text x="60"  y="23" text-anchor="middle" font-size="13">1</text>
+        <rect x="80" y="0"  width="40" height="36" fill="#eff6ff" stroke="#2563eb"/><text x="100" y="23" text-anchor="middle" font-size="13">2</text>
+        <rect x="0"  y="36" width="40" height="36" fill="#eff6ff" stroke="#2563eb"/><text x="20"  y="59" text-anchor="middle" font-size="13">3</text>
+        <rect x="40" y="36" width="40" height="36" fill="#eff6ff" stroke="#2563eb"/><text x="60"  y="59" text-anchor="middle" font-size="13">4</text>
+        <rect x="80" y="36" width="40" height="36" fill="#eff6ff" stroke="#2563eb"/><text x="100" y="59" text-anchor="middle" font-size="13">5</text>
+      </g>
+      <!-- C-order buffer -->
+      <text x="380" y="22" text-anchor="middle" font-size="13" font-weight="bold" fill="#2563eb">C-order (row-major) — NumPy default</text>
+      <g transform="translate(220, 35)">
+        <rect x="0"   y="0" width="36" height="36" fill="#dbeafe" stroke="#2563eb"/><text x="18"  y="23" text-anchor="middle" font-size="13">0</text>
+        <rect x="36"  y="0" width="36" height="36" fill="#dbeafe" stroke="#2563eb"/><text x="54"  y="23" text-anchor="middle" font-size="13">1</text>
+        <rect x="72"  y="0" width="36" height="36" fill="#dbeafe" stroke="#2563eb"/><text x="90"  y="23" text-anchor="middle" font-size="13">2</text>
+        <rect x="108" y="0" width="36" height="36" fill="#dbeafe" stroke="#2563eb"/><text x="126" y="23" text-anchor="middle" font-size="13">3</text>
+        <rect x="144" y="0" width="36" height="36" fill="#dbeafe" stroke="#2563eb"/><text x="162" y="23" text-anchor="middle" font-size="13">4</text>
+        <rect x="180" y="0" width="36" height="36" fill="#dbeafe" stroke="#2563eb"/><text x="198" y="23" text-anchor="middle" font-size="13">5</text>
+      </g>
+      <text x="316" y="92" font-size="11" fill="#64748b">walk row 0, then row 1 · strides = (ncols·itemsize, itemsize)</text>
+      <!-- F-order buffer -->
+      <text x="380" y="125" text-anchor="middle" font-size="13" font-weight="bold" fill="#b45309">F-order (column-major) — Fortran / MATLAB / R</text>
+      <g transform="translate(220, 138)">
+        <rect x="0"   y="0" width="36" height="36" fill="#fef3c7" stroke="#b45309"/><text x="18"  y="23" text-anchor="middle" font-size="13">0</text>
+        <rect x="36"  y="0" width="36" height="36" fill="#fef3c7" stroke="#b45309"/><text x="54"  y="23" text-anchor="middle" font-size="13">3</text>
+        <rect x="72"  y="0" width="36" height="36" fill="#fef3c7" stroke="#b45309"/><text x="90"  y="23" text-anchor="middle" font-size="13">1</text>
+        <rect x="108" y="0" width="36" height="36" fill="#fef3c7" stroke="#b45309"/><text x="126" y="23" text-anchor="middle" font-size="13">4</text>
+        <rect x="144" y="0" width="36" height="36" fill="#fef3c7" stroke="#b45309"/><text x="162" y="23" text-anchor="middle" font-size="13">2</text>
+        <rect x="180" y="0" width="36" height="36" fill="#fef3c7" stroke="#b45309"/><text x="198" y="23" text-anchor="middle" font-size="13">5</text>
+      </g>
+      <text x="316" y="195" font-size="11" fill="#64748b">walk col 0, then col 1, then col 2 · strides = (itemsize, nrows·itemsize)</text>
+    </svg>
+    <ul class="muted" style="font-size: 0.85em; margin: 0;">
+      <li><strong>Why it matters.</strong> CPUs love sequential reads. Iterating over rows of a C-order array (or columns of an F-order array) is cache-friendly — the opposite direction triggers cache misses and can run an order of magnitude slower.</li>
+      <li><strong>Transpose is free.</strong> <code>a.T</code> doesn't move any bytes — it just swaps the strides, so a C-contiguous array becomes F-contiguous through its transpose.</li>
+      <li><strong>When it bites.</strong> Some BLAS/LAPACK or SciPy routines silently <code>ascontiguousarray</code>-copy your data if the layout is wrong. <code>arr.flags</code> tells you which layout you actually have.</li>
+    </ul>
+  </section>
+
   <section class="example" data-packages="numpy">
-    <h2>C-order vs F-order — a one-slide footnote</h2>
-    <div class="ex-prompt">NumPy stores arrays row-by-row by default (C-order). Transposing flips to F-order without copying. You rarely care, until you do.</div>
+    <h2>C-order vs F-order — see it</h2>
+    <div class="ex-prompt">Same logical array, different memory walks. <code>ravel()</code> flattens in whatever order you ask for — that's the cleanest way to see the underlying buffer order.</div>
 <textarea class="ex-code">import numpy as np
-a = np.arange(12).reshape(3, 4)            # default: C-order (row-major)
-print('C-contig?', a.flags['C_CONTIGUOUS'])
-print('F-contig?', a.T.flags['F_CONTIGUOUS'])
+a = np.arange(6).reshape(2, 3)             # default: C-order (row-major)
+print('a =\n', a)
+print('C-contig?', a.flags['C_CONTIGUOUS'], '· F-contig?', a.flags['F_CONTIGUOUS'])
+print('strides (bytes):', a.strides)       # (ncols*itemsize, itemsize) → (24, 8)
+print('ravel C:', a.ravel(order='C'))      # row by row: 0 1 2 3 4 5
+print('ravel F:', a.ravel(order='F'))      # col by col: 0 3 1 4 2 5
+
+aT = a.T                                   # transpose: zero-copy, strides swapped
+print('\na.T strides:', aT.strides, '· F-contig?', aT.flags['F_CONTIGUOUS'])
+
+b = np.asfortranarray(a)                   # force a real F-order copy
+print('b same data as a?', np.shares_memory(a, b), '· strides:', b.strides)
 </textarea>
     <div class="ex-controls">
       <button class="ex-run">Run</button>
@@ -741,6 +794,7 @@ print('F-contig?', a.T.flags['F_CONTIGUOUS'])
       <span class="ex-status"></span>
     </div>
     <pre class="ex-output"></pre>
+<script type="text/x-explain">Two takeaways: (1) transposing an array doesn't move bytes — it swaps strides, so the same buffer is reinterpreted as F-order; (2) when you really do need the other layout (for a library that demands it), use <code>np.ascontiguousarray</code> or <code>np.asfortranarray</code> to materialize a copy.</script>
   </section>
 </section>
 
