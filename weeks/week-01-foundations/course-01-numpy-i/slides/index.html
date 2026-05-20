@@ -592,6 +592,10 @@ print(t.transpose((1, 2, 0)).shape)   # (2, 3, 4)
   <section class="example" data-packages="numpy">
     <h2>Add and remove dimensions</h2>
     <div class="ex-prompt">You will use these constantly for broadcasting (next course) and for matching tensor shapes in deep learning. <code>np.newaxis</code> inserts a length-1 axis; <code>squeeze</code> drops them.</div>
+    <ul class="muted" style="margin: 0 0 0.6em 0; font-size: 0.85em;">
+      <li><strong><code>np.newaxis</code> vs <code>np.expand_dims</code> — same mechanic, different syntax.</strong> Both insert a length-1 axis and return a <em>view</em> (no copy — only the shape/strides metadata changes). <code>np.newaxis</code> is an alias for <code>None</code> used inside slicing brackets and reads like the target shape (<code>arr[:, np.newaxis]</code>); <code>np.expand_dims(arr, axis=k)</code> is the function form and is the one to reach for when the axis is a variable or you need to insert several at once (<code>axis=(0, 2)</code>).</li>
+      <li><strong><code>np.squeeze</code> is the inverse.</strong> It drops <em>every</em> length-1 axis (or just the ones you name with <code>axis=</code>) — also a view, no data moved. Use it to clean up stray singleton axes left over from reductions like <code>arr.sum(axis=1, keepdims=True)</code> or model outputs shaped <code>(N, 1)</code>.</li>
+    </ul>
 <textarea class="ex-code">import numpy as np
 v = np.array([1, 2, 3])
 print(v.shape)
