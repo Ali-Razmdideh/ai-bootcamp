@@ -927,6 +927,131 @@ print(right)
   </section>
 </section>
 
+<section>
+  <section class="title-slide">
+    <span class="kicker">Big arrays</span>
+    <h2>When the array doesn't fit</h2>
+    <p class="callout">An ndarray needs <strong>one contiguous block of RAM</strong>. Asking for <code>np.zeros((50_000, 50_000))</code> in float64 wants 20&nbsp;GB <em>in one piece</em>. Even with free RAM, fragmentation can make that allocation fail with <code>MemoryError</code>.</p>
+  </section>
+
+  <section>
+    <h2>The size, in your head</h2>
+    <ul>
+      <li><strong>bytes = <code>prod(shape) × dtype.itemsize</code></strong>. Always do this math before allocating.</li>
+      <li>float64 = 8&nbsp;B/cell, float32 = 4&nbsp;B, int8/bool = 1&nbsp;B.</li>
+      <li>A (10_000, 10_000) float64 matrix is <strong>800&nbsp;MB</strong> — and you usually need a <em>copy</em> for the next step.</li>
+    </ul>
+    <p class="callout fragment fade-up">Four escape hatches: <strong>downcast dtype</strong>, <strong>views not copies</strong>, <strong>chunked generators</strong>, <strong>memory-mapped files</strong>.</p>
+  </section>
+
+  <section class="example" data-packages="numpy">
+    <h2>1) Downcast the dtype</h2>
+    <div class="ex-prompt">Same shape, a quarter of the bytes. Pick the smallest dtype the data actually needs.</div>
+<textarea class="ex-code">import numpy as np
+a64 = np.ones((1000, 1000), dtype=np.float64)
+a32 = a64.astype(np.float32)
+a8  = np.ones((1000, 1000), dtype=np.int8)
+for arr in (a64, a32, a8):
+    print(arr.dtype, "→", arr.nbytes / 1e6, "MB")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">float64 → float32 halves memory at the cost of ~7 decimal digits of precision (usually fine for ML features). Boolean masks and small-integer labels belong in int8/bool, not int64.</script>
+  </section>
+
+  <section class="example" data-packages="numpy">
+    <h2>2) Views, not copies</h2>
+    <div class="ex-prompt">Slicing and <code>reshape</code> share memory. <code>.copy()</code>, fancy indexing, and most arithmetic allocate. Know which is which.</div>
+<textarea class="ex-code">import numpy as np
+a = np.arange(1_000_000, dtype=np.float32)        # 4 MB
+view  = a.reshape(1000, 1000)                     # 0 extra bytes
+slc   = a[::2]                                    # view, 0 extra
+copy  = a * 2.0                                   # NEW 4 MB block
+print("a base:", a.base is None, "view base is a:", view.base is a)
+print("slc shares memory:", np.shares_memory(slc, a))
+print("copy shares memory:", np.shares_memory(copy, a))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">For sliding windows over big signals, use <code>np.lib.stride_tricks.sliding_window_view</code> — it builds a view, not a copy, so a (10M,) array with window=1024 costs zero extra bytes.</script>
+  </section>
+
+  <section class="example" data-packages="numpy">
+    <h2>3) Chunked generators — process, don't load</h2>
+    <div class="ex-prompt">When the full array won't fit, stream it. A generator yields one chunk at a time; only the chunk lives in RAM.</div>
+<textarea class="ex-code">import numpy as np
+
+def chunks(n_rows, n_cols, chunk=10_000, seed=0):
+    rng = np.random.default_rng(seed)
+    for start in range(0, n_rows, chunk):
+        size = min(chunk, n_rows - start)
+        yield rng.standard_normal((size, n_cols), dtype=np.float32)
+
+# Running mean over 1M rows × 50 cols WITHOUT ever holding all of it
+total = np.zeros(50, dtype=np.float64); n = 0
+for block in chunks(1_000_000, 50, chunk=50_000):
+    total += block.sum(axis=0); n += block.shape[0]
+print("mean[:5] =", (total / n)[:5])
+print("peak block bytes =", 50_000 * 50 * 4, "(≈ 10 MB, not 200 MB)")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">The pattern: keep <em>running statistics</em> (sum, sum-of-squares, count) in tiny accumulators, iterate blocks, derive mean/var/etc. at the end. Same trick works for fitting linear regression, computing histograms, and standardizing.</script>
+  </section>
+
+  <section class="example" data-packages="numpy">
+    <h2>4) <code>np.memmap</code> — array backed by a file</h2>
+    <div class="ex-prompt">A memmap behaves like an ndarray but lives on disk. The OS pages in only the slices you actually touch — you can index a 100&nbsp;GB array on a laptop.</div>
+<textarea class="ex-code">import numpy as np, os
+
+path = "/tmp/big.dat"
+shape, dtype = (10_000, 1_000), np.float32       # 40 MB on disk
+
+# Create + write (only the rows being assigned live in RAM)
+mm = np.memmap(path, dtype=dtype, mode="w+", shape=shape)
+for i in range(0, shape[0], 1000):
+    mm[i:i+1000] = np.random.default_rng(i).standard_normal((1000, shape[1]), dtype=dtype)
+mm.flush(); del mm
+
+# Reopen read-only, touch a slice — only that slice is paged in
+mm = np.memmap(path, dtype=dtype, mode="r", shape=shape)
+print("file size:", os.path.getsize(path) / 1e6, "MB")
+print("slice mean:", mm[500:600].mean())
+print("type:", type(mm).__name__, "— acts like an ndarray:", mm.shape, mm.dtype)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">Memmap is the gateway drug to out-of-core arrays. For richer features (compression, chunked I/O, parallel reads) the ecosystem moves to <strong>HDF5</strong> (h5py), <strong>Zarr</strong>, or <strong>Dask arrays</strong> — all of which present an ndarray-like API on top of disk or cluster storage.</script>
+  </section>
+
+  <section>
+    <h2>Choosing the right hatch</h2>
+    <ul>
+      <li><strong>Fits in RAM but barely?</strong> Downcast dtype, prefer views.</li>
+      <li><strong>One pass over many rows?</strong> Generator + running stats.</li>
+      <li><strong>Random access on a huge array?</strong> <code>np.memmap</code> (or HDF5/Zarr).</li>
+      <li><strong>Bigger than one machine?</strong> Dask, Ray, or a database — out of scope here.</li>
+    </ul>
+    <p class="callout fragment fade-up"><code>MemoryError</code> is rarely "you're out of RAM" — it's "you asked for one giant contiguous block." Reshape the problem first, buy more RAM last.</p>
+  </section>
+</section>
+
 <section class="title-slide">
   <span class="kicker">Recap</span>
   <h2>Three things to leave with</h2>
