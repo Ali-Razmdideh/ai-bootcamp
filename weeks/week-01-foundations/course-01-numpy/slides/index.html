@@ -434,19 +434,24 @@ print("peak block bytes =", 50_000 * 50 * 4, "(≈ 10 MB, not 200 MB)")
 <textarea class="ex-code">import numpy as np, os
 
 path = "/tmp/big.dat"
-shape, dtype = (10_000, 1_000), np.float32       # 40 MB on disk
+shape, dtype = (2_000, 500), np.float32           # 4 MB on disk
 
-# Create + write (only the rows being assigned live in RAM)
-mm = np.memmap(path, dtype=dtype, mode="w+", shape=shape)
-for i in range(0, shape[0], 1000):
-    mm[i:i+1000] = np.random.default_rng(i).standard_normal((1000, shape[1]), dtype=dtype)
-mm.flush(); del mm
+# 1) Materialise the file with normal I/O (Pyodide's MEMFS is happier this way).
+rng = np.random.default_rng(0)
+data = rng.standard_normal(shape, dtype=dtype)
+data.tofile(path)
+del data                                          # release the in-memory copy
 
-# Reopen read-only, touch a slice — only that slice is paged in
+# 2) Open the file as a memmap — no full read, the OS pages slices on demand.
 mm = np.memmap(path, dtype=dtype, mode="r", shape=shape)
-print("file size:", os.path.getsize(path) / 1e6, "MB")
-print("slice mean:", mm[500:600].mean())
-print("type:", type(mm).__name__, "— acts like an ndarray:", mm.shape, mm.dtype)
+print("file size :", os.path.getsize(path) / 1e6, "MB")
+print("type      :", type(mm).__name__, "shape:", mm.shape, "dtype:", mm.dtype)
+print("slice mean (rows 500–600 only paged in):", mm[500:600].mean())
+
+# 3) Write through (mode='r+') — modify a few rows without loading the rest.
+mm2 = np.memmap(path, dtype=dtype, mode="r+", shape=shape)
+mm2[0] = 0.0
+print("row 0 now zeros?", np.allclose(mm2[0], 0.0))
 </textarea>
     <div class="ex-controls">
       <button class="ex-run">Run</button>
@@ -1198,6 +1203,75 @@ print('combined &amp; assigned:\n', b)
     </div>
     <pre class="ex-output"></pre>
 <script type="text/x-explain">Mental model: a mask is a sieve — <code>True</code> lets the cell through, <code>False</code> drops it. Reading via a mask <em>flattens</em> the result (you lose the original shape); writing via a mask is shape-preserving and in-place, which is how you do "set NaNs to 0" or "clip outliers" in one line.</script>
+  </section>
+
+  <section>
+    <h2>How a boolean mask works — three rules</h2>
+    <ul>
+      <li><strong>Mask construction.</strong> Any element-wise comparison or logical op produces a mask the <em>same shape</em> as the source: <code>a &gt; 4</code>, <code>a == 7</code>, <code>np.isnan(a)</code>, <code>(a &gt; 0) &amp; (a &lt; 10)</code>. Use <code>&amp;</code> / <code>|</code> / <code>~</code> (bitwise) — <code>and</code>/<code>or</code> raise on arrays.</li>
+      <li><strong>Reading flattens.</strong> <code>a[mask]</code> returns a 1-D <em>copy</em> of the matching values in row-major traversal — you trade shape for values. <code>mask.sum()</code> counts hits, <code>mask.mean()</code> is the fraction.</li>
+      <li><strong>Writing is in-place.</strong> <code>a[mask] = 0</code> assigns into the original buffer, shape preserved — that's how "clip outliers" or "set NaNs to 0" becomes one line.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Boolean masking — select by condition</h2>
+    <p>A boolean array of the same shape picks out the <span class="accent">True</span> cells.</p>
+    <svg class="diagram" viewBox="0 0 520 220" width="620" height="260">
+      <text x="80" y="20" text-anchor="middle" font-size="13" class="muted">data</text>
+      <g font-size="13" text-anchor="middle">
+        <rect x="20" y="30" width="40" height="40" fill="#f1f5f9" stroke="#0f172a" stroke-width="1.5"/><text x="40" y="55">3</text>
+        <rect x="60" y="30" width="40" height="40" fill="#2563eb" stroke="#0f172a" stroke-width="1.5"/><text x="80" y="55" fill="white">8</text>
+        <rect x="100" y="30" width="40" height="40" fill="#f1f5f9" stroke="#0f172a" stroke-width="1.5"/><text x="120" y="55">1</text>
+        <rect x="140" y="30" width="40" height="40" fill="#2563eb" stroke="#0f172a" stroke-width="1.5"/><text x="160" y="55" fill="white">9</text>
+
+        <rect x="20" y="70" width="40" height="40" fill="#2563eb" stroke="#0f172a" stroke-width="1.5"/><text x="40" y="95" fill="white">7</text>
+        <rect x="60" y="70" width="40" height="40" fill="#f1f5f9" stroke="#0f172a" stroke-width="1.5"/><text x="80" y="95">2</text>
+        <rect x="100" y="70" width="40" height="40" fill="#f1f5f9" stroke="#0f172a" stroke-width="1.5"/><text x="120" y="95">4</text>
+        <rect x="140" y="70" width="40" height="40" fill="#2563eb" stroke="#0f172a" stroke-width="1.5"/><text x="160" y="95" fill="white">6</text>
+
+        <rect x="20" y="110" width="40" height="40" fill="#f1f5f9" stroke="#0f172a" stroke-width="1.5"/><text x="40" y="135">0</text>
+        <rect x="60" y="110" width="40" height="40" fill="#2563eb" stroke="#0f172a" stroke-width="1.5"/><text x="80" y="135" fill="white">5</text>
+        <rect x="100" y="110" width="40" height="40" fill="#f1f5f9" stroke="#0f172a" stroke-width="1.5"/><text x="120" y="135">2</text>
+        <rect x="140" y="110" width="40" height="40" fill="#f1f5f9" stroke="#0f172a" stroke-width="1.5"/><text x="160" y="135">3</text>
+
+        <rect x="20" y="150" width="40" height="40" fill="#2563eb" stroke="#0f172a" stroke-width="1.5"/><text x="40" y="175" fill="white">9</text>
+        <rect x="60" y="150" width="40" height="40" fill="#f1f5f9" stroke="#0f172a" stroke-width="1.5"/><text x="80" y="175">1</text>
+        <rect x="100" y="150" width="40" height="40" fill="#2563eb" stroke="#0f172a" stroke-width="1.5"/><text x="120" y="175" fill="white">6</text>
+        <rect x="140" y="150" width="40" height="40" fill="#f1f5f9" stroke="#0f172a" stroke-width="1.5"/><text x="160" y="175">2</text>
+      </g>
+
+      <text x="220" y="115" font-size="20" text-anchor="middle">→</text>
+      <text x="220" y="135" font-size="11" text-anchor="middle" class="muted">a&gt;4</text>
+
+      <text x="330" y="20" text-anchor="middle" font-size="13" class="muted">mask</text>
+      <g font-size="11" text-anchor="middle">
+        <rect x="270" y="30" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="290" y="55" class="muted">F</text>
+        <rect x="310" y="30" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="330" y="55" class="accent">T</text>
+        <rect x="350" y="30" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="370" y="55" class="muted">F</text>
+        <rect x="390" y="30" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="410" y="55" class="accent">T</text>
+
+        <rect x="270" y="70" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="290" y="95" class="accent">T</text>
+        <rect x="310" y="70" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="330" y="95" class="muted">F</text>
+        <rect x="350" y="70" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="370" y="95" class="muted">F</text>
+        <rect x="390" y="70" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="410" y="95" class="accent">T</text>
+
+        <rect x="270" y="110" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="290" y="135" class="muted">F</text>
+        <rect x="310" y="110" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="330" y="135" class="accent">T</text>
+        <rect x="350" y="110" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="370" y="135" class="muted">F</text>
+        <rect x="390" y="110" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="410" y="135" class="muted">F</text>
+
+        <rect x="270" y="150" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="290" y="175" class="accent">T</text>
+        <rect x="310" y="150" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="330" y="175" class="muted">F</text>
+        <rect x="350" y="150" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="370" y="175" class="accent">T</text>
+        <rect x="390" y="150" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="410" y="175" class="muted">F</text>
+      </g>
+
+      <text x="465" y="115" font-size="20" text-anchor="middle">→</text>
+      <text x="500" y="115" font-size="13" text-anchor="middle" class="accent">a[mask]</text>
+      <text x="500" y="135" font-size="12" text-anchor="middle" class="muted">[8,9,7,6,5,9,6]</text>
+    </svg>
+    <p class="muted"><code>a[a &gt; 4]</code> returns a flat 1-D array of the selected cells — order is row-major.</p>
   </section>
 
   <section class="example" data-packages="numpy">
@@ -2045,74 +2119,6 @@ print(Z.mean(axis=0).round(4), Z.std(axis=0).round(4))</script>
     <p>When a broadcast surprises you, print the shapes. The bug is always in one of them.</p>
   </section>
 
-  <section>
-    <h2>How a boolean mask works — three rules</h2>
-    <ul>
-      <li><strong>Mask construction.</strong> Any element-wise comparison or logical op produces a mask the <em>same shape</em> as the source: <code>a &gt; 4</code>, <code>a == 7</code>, <code>np.isnan(a)</code>, <code>(a &gt; 0) &amp; (a &lt; 10)</code>. Use <code>&amp;</code> / <code>|</code> / <code>~</code> (bitwise) — <code>and</code>/<code>or</code> raise on arrays.</li>
-      <li><strong>Reading flattens.</strong> <code>a[mask]</code> returns a 1-D <em>copy</em> of the matching values in row-major traversal — you trade shape for values. <code>mask.sum()</code> counts hits, <code>mask.mean()</code> is the fraction.</li>
-      <li><strong>Writing is in-place.</strong> <code>a[mask] = 0</code> assigns into the original buffer, shape preserved — that's how "clip outliers" or "set NaNs to 0" becomes one line.</li>
-    </ul>
-  </section>
-
-  <section>
-    <h2>Boolean masking — select by condition</h2>
-    <p>A boolean array of the same shape picks out the <span class="accent">True</span> cells.</p>
-    <svg class="diagram" viewBox="0 0 520 220" width="620" height="260">
-      <text x="80" y="20" text-anchor="middle" font-size="13" class="muted">data</text>
-      <g font-size="13" text-anchor="middle">
-        <rect x="20" y="30" width="40" height="40" fill="#f1f5f9" stroke="#0f172a" stroke-width="1.5"/><text x="40" y="55">3</text>
-        <rect x="60" y="30" width="40" height="40" fill="#2563eb" stroke="#0f172a" stroke-width="1.5"/><text x="80" y="55" fill="white">8</text>
-        <rect x="100" y="30" width="40" height="40" fill="#f1f5f9" stroke="#0f172a" stroke-width="1.5"/><text x="120" y="55">1</text>
-        <rect x="140" y="30" width="40" height="40" fill="#2563eb" stroke="#0f172a" stroke-width="1.5"/><text x="160" y="55" fill="white">9</text>
-
-        <rect x="20" y="70" width="40" height="40" fill="#2563eb" stroke="#0f172a" stroke-width="1.5"/><text x="40" y="95" fill="white">7</text>
-        <rect x="60" y="70" width="40" height="40" fill="#f1f5f9" stroke="#0f172a" stroke-width="1.5"/><text x="80" y="95">2</text>
-        <rect x="100" y="70" width="40" height="40" fill="#f1f5f9" stroke="#0f172a" stroke-width="1.5"/><text x="120" y="95">4</text>
-        <rect x="140" y="70" width="40" height="40" fill="#2563eb" stroke="#0f172a" stroke-width="1.5"/><text x="160" y="95" fill="white">6</text>
-
-        <rect x="20" y="110" width="40" height="40" fill="#f1f5f9" stroke="#0f172a" stroke-width="1.5"/><text x="40" y="135">0</text>
-        <rect x="60" y="110" width="40" height="40" fill="#2563eb" stroke="#0f172a" stroke-width="1.5"/><text x="80" y="135" fill="white">5</text>
-        <rect x="100" y="110" width="40" height="40" fill="#f1f5f9" stroke="#0f172a" stroke-width="1.5"/><text x="120" y="135">2</text>
-        <rect x="140" y="110" width="40" height="40" fill="#f1f5f9" stroke="#0f172a" stroke-width="1.5"/><text x="160" y="135">3</text>
-
-        <rect x="20" y="150" width="40" height="40" fill="#2563eb" stroke="#0f172a" stroke-width="1.5"/><text x="40" y="175" fill="white">9</text>
-        <rect x="60" y="150" width="40" height="40" fill="#f1f5f9" stroke="#0f172a" stroke-width="1.5"/><text x="80" y="175">1</text>
-        <rect x="100" y="150" width="40" height="40" fill="#2563eb" stroke="#0f172a" stroke-width="1.5"/><text x="120" y="175" fill="white">6</text>
-        <rect x="140" y="150" width="40" height="40" fill="#f1f5f9" stroke="#0f172a" stroke-width="1.5"/><text x="160" y="175">2</text>
-      </g>
-
-      <text x="220" y="115" font-size="20" text-anchor="middle">→</text>
-      <text x="220" y="135" font-size="11" text-anchor="middle" class="muted">a&gt;4</text>
-
-      <text x="330" y="20" text-anchor="middle" font-size="13" class="muted">mask</text>
-      <g font-size="11" text-anchor="middle">
-        <rect x="270" y="30" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="290" y="55" class="muted">F</text>
-        <rect x="310" y="30" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="330" y="55" class="accent">T</text>
-        <rect x="350" y="30" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="370" y="55" class="muted">F</text>
-        <rect x="390" y="30" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="410" y="55" class="accent">T</text>
-
-        <rect x="270" y="70" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="290" y="95" class="accent">T</text>
-        <rect x="310" y="70" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="330" y="95" class="muted">F</text>
-        <rect x="350" y="70" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="370" y="95" class="muted">F</text>
-        <rect x="390" y="70" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="410" y="95" class="accent">T</text>
-
-        <rect x="270" y="110" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="290" y="135" class="muted">F</text>
-        <rect x="310" y="110" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="330" y="135" class="accent">T</text>
-        <rect x="350" y="110" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="370" y="135" class="muted">F</text>
-        <rect x="390" y="110" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="410" y="135" class="muted">F</text>
-
-        <rect x="270" y="150" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="290" y="175" class="accent">T</text>
-        <rect x="310" y="150" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="330" y="175" class="muted">F</text>
-        <rect x="350" y="150" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="370" y="175" class="accent">T</text>
-        <rect x="390" y="150" width="40" height="40" fill="white" stroke="#64748b" stroke-width="1.5"/><text x="410" y="175" class="muted">F</text>
-      </g>
-
-      <text x="465" y="115" font-size="20" text-anchor="middle">→</text>
-      <text x="500" y="115" font-size="13" text-anchor="middle" class="accent">a[mask]</text>
-      <text x="500" y="135" font-size="12" text-anchor="middle" class="muted">[8,9,7,6,5,9,6]</text>
-    </svg>
-    <p class="muted"><code>a[a &gt; 4]</code> returns a flat 1-D array of the selected cells — order is row-major.</p>
-  </section>
 
   <section>
     <h2>Fancy indexing — pick rows by index list</h2>
