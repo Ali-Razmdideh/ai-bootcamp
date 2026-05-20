@@ -34,28 +34,28 @@
   <p class="callout" style="margin-top:1.2em;">A DataFrame is a dict of aligned Series. A Series is a labeled NumPy array. Hold those two sentences and the rest of the API falls into place.</p>
 </section>
 
-<section>
+<section style="font-size: 0.78em;">
   <span class="kicker">Context</span>
-  <h2>Why pandas — and where Dask / Polars come in</h2>
-  <p>We teach pandas because it is the lingua franca of Python data work: every tutorial, Stack Overflow answer, and ML library expects a DataFrame. But it is not the only option — and once your data or latency budget grows, two siblings are worth knowing.</p>
-  <div class="three-col">
-    <div class="card">
-      <h4>pandas</h4>
-      <strong>Default for &lt; ~few GB, single machine</strong>
-      <p class="muted" style="margin:0.3em 0 0;">Richest API, biggest ecosystem (scikit-learn, statsmodels, plotting). In-memory, single-threaded. The right tool for EDA, notebooks, modeling features.</p>
+  <h2 style="margin-bottom: 0.2em;">Why pandas — and where Dask / Polars come in</h2>
+  <p class="muted" style="margin: 0 0 0.6em 0;">pandas is the lingua franca of Python data work — every tutorial, every Stack Overflow answer, every ML library expects a DataFrame. But it is not the only option: once data or latency budget grows, two siblings are worth knowing.</p>
+  <div class="three-col" style="font-size: 0.95em;">
+    <div class="card" style="padding: 0.6em 0.8em;">
+      <h4 style="margin: 0;">pandas</h4>
+      <strong>&lt; ~few GB · single machine</strong>
+      <p class="muted" style="margin:0.25em 0 0;">Richest API, biggest ecosystem (scikit-learn, statsmodels, plotting). In-memory, single-threaded. Right tool for EDA, notebooks, modeling features.</p>
     </div>
-    <div class="card">
-      <h4>Polars</h4>
-      <strong>When pandas is too slow or too big for RAM</strong>
-      <p class="muted" style="margin:0.3em 0 0;">Rust + Arrow, multi-threaded, lazy query optimizer, streaming for larger-than-RAM. Use for heavy ETL on a single beefy box, sub-second group-bys, log/event crunching.</p>
+    <div class="card" style="padding: 0.6em 0.8em;">
+      <h4 style="margin: 0;">Polars</h4>
+      <strong>pandas too slow / too big for RAM</strong>
+      <p class="muted" style="margin:0.25em 0 0;">Rust + Arrow, multi-threaded, lazy query optimizer, streaming. Heavy ETL on one beefy box, sub-second group-bys, log/event crunching.</p>
     </div>
-    <div class="card">
-      <h4>Dask</h4>
-      <strong>When the data won't fit on one machine</strong>
-      <p class="muted" style="margin:0.3em 0 0;">Partitioned, pandas-like API that scales to a cluster (or a laptop's disk). Use for TB-scale CSV/Parquet pipelines, parallel feature engineering, distributed ML preprocessing.</p>
+    <div class="card" style="padding: 0.6em 0.8em;">
+      <h4 style="margin: 0;">Dask</h4>
+      <strong>data won't fit on one machine</strong>
+      <p class="muted" style="margin:0.25em 0 0;">Partitioned, pandas-like API that scales to a cluster (or to disk). TB-scale CSV/Parquet pipelines, parallel feature engineering, distributed preprocessing.</p>
     </div>
   </div>
-  <p class="callout" style="margin-top:1.0em;">Rule of thumb: prototype in pandas → rewrite the hot path in Polars when one machine is enough → switch to Dask when it isn't. The DataFrame mental model we build here transfers to both.</p>
+  <p class="callout" style="margin: 0.7em 0 0 0;">Rule of thumb: prototype in pandas → rewrite the hot path in Polars when one machine is enough → switch to Dask when it isn't. The DataFrame mental model we build here transfers to both.</p>
 </section>
 
 <section>

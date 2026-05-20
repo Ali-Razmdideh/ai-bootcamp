@@ -1274,6 +1274,87 @@ print('combined &amp; assigned:\n', b)
     <p class="muted"><code>a[a &gt; 4]</code> returns a flat 1-D array of the selected cells — order is row-major.</p>
   </section>
 
+  <section>
+    <h2>Fancy indexing — pick rows by index list</h2>
+    <p>Indexing with an integer array picks those positions, in that order.</p>
+    <svg class="diagram" viewBox="0 0 560 220" width="640" height="260">
+      <text x="200" y="25" text-anchor="middle" font-size="13" class="muted">source: a[0..7]</text>
+      <g font-size="13" text-anchor="middle">
+        <rect x="30"  y="40" width="42" height="42" fill="#f1f5f9" stroke="#0f172a" stroke-width="1.5"/><text x="51" y="67">10</text>
+        <rect x="72"  y="40" width="42" height="42" fill="#2563eb" stroke="#0f172a" stroke-width="1.5"/><text x="93" y="67" fill="white">11</text>
+        <rect x="114" y="40" width="42" height="42" fill="#f1f5f9" stroke="#0f172a" stroke-width="1.5"/><text x="135" y="67">12</text>
+        <rect x="156" y="40" width="42" height="42" fill="#2563eb" stroke="#0f172a" stroke-width="1.5"/><text x="177" y="67" fill="white">13</text>
+        <rect x="198" y="40" width="42" height="42" fill="#f1f5f9" stroke="#0f172a" stroke-width="1.5"/><text x="219" y="67">14</text>
+        <rect x="240" y="40" width="42" height="42" fill="#f1f5f9" stroke="#0f172a" stroke-width="1.5"/><text x="261" y="67">15</text>
+        <rect x="282" y="40" width="42" height="42" fill="#2563eb" stroke="#0f172a" stroke-width="1.5"/><text x="303" y="67" fill="white">16</text>
+        <rect x="324" y="40" width="42" height="42" fill="#f1f5f9" stroke="#0f172a" stroke-width="1.5"/><text x="345" y="67">17</text>
+      </g>
+      <g font-size="11" text-anchor="middle" class="muted">
+        <text x="51" y="98">0</text><text x="93" y="98">1</text><text x="135" y="98">2</text>
+        <text x="177" y="98">3</text><text x="219" y="98">4</text><text x="261" y="98">5</text>
+        <text x="303" y="98">6</text><text x="345" y="98">7</text>
+      </g>
+
+      <text x="200" y="135" text-anchor="middle" font-size="13" class="accent">idx = [3, 1, 6]</text>
+
+      <line x1="177" y1="115" x2="100" y2="170" stroke="#2563eb" stroke-width="1.5" marker-end="url(#fa)"/>
+      <line x1="93"  y1="115" x2="180" y2="170" stroke="#2563eb" stroke-width="1.5" marker-end="url(#fa)"/>
+      <line x1="303" y1="115" x2="260" y2="170" stroke="#2563eb" stroke-width="1.5" marker-end="url(#fa)"/>
+      <defs>
+        <marker id="fa" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+          <path d="M0,0 L8,4 L0,8 z" fill="#2563eb"/>
+        </marker>
+      </defs>
+
+      <text x="180" y="195" text-anchor="middle" font-size="13" class="muted">a[idx]</text>
+      <g font-size="13" text-anchor="middle">
+        <rect x="80"  y="170" width="42" height="32" fill="#2563eb" stroke="#0f172a" stroke-width="1.5"/><text x="101" y="192" fill="white">13</text>
+        <rect x="160" y="170" width="42" height="32" fill="#2563eb" stroke="#0f172a" stroke-width="1.5"/><text x="181" y="192" fill="white">11</text>
+        <rect x="240" y="170" width="42" height="32" fill="#2563eb" stroke="#0f172a" stroke-width="1.5"/><text x="261" y="192" fill="white">16</text>
+      </g>
+    </svg>
+    <p class="muted">Output shape matches the index array — you can repeat or reorder positions freely.</p>
+  </section>
+
+  <section class="exercise" data-packages="numpy">
+    <h2>Exercise — Row-standardize</h2>
+    <div class="ex-prompt">Now standardize <em>rows</em> instead: each row of <code>Zr</code> should have mean 0 and std 1. The trick is keeping a trailing length-1 axis on the per-row statistics so broadcasting still works.</div>
+<textarea class="ex-code">import numpy as np
+rng = np.random.default_rng(0)
+X = rng.normal(loc=5, scale=2, size=(100, 3))
+
+mu_r = None   # per-row mean, shape (100, 1)
+sd_r = None   # per-row std,  shape (100, 1)
+Zr   = None   # row-standardized X, shape (100, 3)
+
+print(mu_r.shape if mu_r is not None else None,
+      sd_r.shape if sd_r is not None else None)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+<script type="text/x-check">
+import numpy as np
+assert mu_r is not None and sd_r is not None and Zr is not None, "Assign mu_r, sd_r, and Zr."
+assert np.asarray(mu_r).shape == (100, 1), f"mu_r should be (100, 1), got {np.asarray(mu_r).shape}."
+assert np.asarray(sd_r).shape == (100, 1), f"sd_r should be (100, 1), got {np.asarray(sd_r).shape}."
+Zr_arr = np.asarray(Zr)
+assert Zr_arr.shape == (100, 3), f"Zr should be (100, 3), got {Zr_arr.shape}."
+assert np.allclose(Zr_arr.mean(axis=1), 0, atol=1e-8), "Each row of Zr should have mean ~0."
+assert np.allclose(Zr_arr.std(axis=1), 1, atol=1e-8), "Each row of Zr should have std ~1."
+</script>
+<script type="text/x-solution">mu_r = X.mean(axis=1, keepdims=True)
+sd_r = X.std(axis=1, keepdims=True)
+Zr   = (X - mu_r) / sd_r
+print(Zr.mean(axis=1)[:5].round(4))</script>
+<script type="text/x-explain">Without <code>keepdims=True</code>, <code>X.mean(axis=1)</code> is shape <code>(100,)</code> — that broadcasts against <em>columns</em>, not rows. Keeping the reduced axis as length 1 (shape <code>(100, 1)</code>) makes it line up with <code>X</code>'s rows so subtraction works per-row.</script>
+  </section>
+
   <section class="example" data-packages="numpy">
     <h2>np.where — vectorized if/else (and "where is the True?")</h2>
     <div class="ex-prompt"><code>np.where</code> wears two hats — both replace a Python loop.</div>
@@ -2120,86 +2201,6 @@ print(Z.mean(axis=0).round(4), Z.std(axis=0).round(4))</script>
   </section>
 
 
-  <section>
-    <h2>Fancy indexing — pick rows by index list</h2>
-    <p>Indexing with an integer array picks those positions, in that order.</p>
-    <svg class="diagram" viewBox="0 0 560 220" width="640" height="260">
-      <text x="200" y="25" text-anchor="middle" font-size="13" class="muted">source: a[0..7]</text>
-      <g font-size="13" text-anchor="middle">
-        <rect x="30"  y="40" width="42" height="42" fill="#f1f5f9" stroke="#0f172a" stroke-width="1.5"/><text x="51" y="67">10</text>
-        <rect x="72"  y="40" width="42" height="42" fill="#2563eb" stroke="#0f172a" stroke-width="1.5"/><text x="93" y="67" fill="white">11</text>
-        <rect x="114" y="40" width="42" height="42" fill="#f1f5f9" stroke="#0f172a" stroke-width="1.5"/><text x="135" y="67">12</text>
-        <rect x="156" y="40" width="42" height="42" fill="#2563eb" stroke="#0f172a" stroke-width="1.5"/><text x="177" y="67" fill="white">13</text>
-        <rect x="198" y="40" width="42" height="42" fill="#f1f5f9" stroke="#0f172a" stroke-width="1.5"/><text x="219" y="67">14</text>
-        <rect x="240" y="40" width="42" height="42" fill="#f1f5f9" stroke="#0f172a" stroke-width="1.5"/><text x="261" y="67">15</text>
-        <rect x="282" y="40" width="42" height="42" fill="#2563eb" stroke="#0f172a" stroke-width="1.5"/><text x="303" y="67" fill="white">16</text>
-        <rect x="324" y="40" width="42" height="42" fill="#f1f5f9" stroke="#0f172a" stroke-width="1.5"/><text x="345" y="67">17</text>
-      </g>
-      <g font-size="11" text-anchor="middle" class="muted">
-        <text x="51" y="98">0</text><text x="93" y="98">1</text><text x="135" y="98">2</text>
-        <text x="177" y="98">3</text><text x="219" y="98">4</text><text x="261" y="98">5</text>
-        <text x="303" y="98">6</text><text x="345" y="98">7</text>
-      </g>
-
-      <text x="200" y="135" text-anchor="middle" font-size="13" class="accent">idx = [3, 1, 6]</text>
-
-      <line x1="177" y1="115" x2="100" y2="170" stroke="#2563eb" stroke-width="1.5" marker-end="url(#fa)"/>
-      <line x1="93"  y1="115" x2="180" y2="170" stroke="#2563eb" stroke-width="1.5" marker-end="url(#fa)"/>
-      <line x1="303" y1="115" x2="260" y2="170" stroke="#2563eb" stroke-width="1.5" marker-end="url(#fa)"/>
-      <defs>
-        <marker id="fa" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-          <path d="M0,0 L8,4 L0,8 z" fill="#2563eb"/>
-        </marker>
-      </defs>
-
-      <text x="180" y="195" text-anchor="middle" font-size="13" class="muted">a[idx]</text>
-      <g font-size="13" text-anchor="middle">
-        <rect x="80"  y="170" width="42" height="32" fill="#2563eb" stroke="#0f172a" stroke-width="1.5"/><text x="101" y="192" fill="white">13</text>
-        <rect x="160" y="170" width="42" height="32" fill="#2563eb" stroke="#0f172a" stroke-width="1.5"/><text x="181" y="192" fill="white">11</text>
-        <rect x="240" y="170" width="42" height="32" fill="#2563eb" stroke="#0f172a" stroke-width="1.5"/><text x="261" y="192" fill="white">16</text>
-      </g>
-    </svg>
-    <p class="muted">Output shape matches the index array — you can repeat or reorder positions freely.</p>
-  </section>
-
-  <section class="exercise" data-packages="numpy">
-    <h2>Exercise — Row-standardize</h2>
-    <div class="ex-prompt">Now standardize <em>rows</em> instead: each row of <code>Zr</code> should have mean 0 and std 1. The trick is keeping a trailing length-1 axis on the per-row statistics so broadcasting still works.</div>
-<textarea class="ex-code">import numpy as np
-rng = np.random.default_rng(0)
-X = rng.normal(loc=5, scale=2, size=(100, 3))
-
-mu_r = None   # per-row mean, shape (100, 1)
-sd_r = None   # per-row std,  shape (100, 1)
-Zr   = None   # row-standardized X, shape (100, 3)
-
-print(mu_r.shape if mu_r is not None else None,
-      sd_r.shape if sd_r is not None else None)
-</textarea>
-    <div class="ex-controls">
-      <button class="ex-run">Run &amp; Check</button>
-      <button class="ex-reset">Reset</button>
-      <button class="ex-show">Show solution</button>
-      <span class="ex-status"></span>
-    </div>
-    <pre class="ex-output"></pre>
-    <div class="ex-feedback"></div>
-<script type="text/x-check">
-import numpy as np
-assert mu_r is not None and sd_r is not None and Zr is not None, "Assign mu_r, sd_r, and Zr."
-assert np.asarray(mu_r).shape == (100, 1), f"mu_r should be (100, 1), got {np.asarray(mu_r).shape}."
-assert np.asarray(sd_r).shape == (100, 1), f"sd_r should be (100, 1), got {np.asarray(sd_r).shape}."
-Zr_arr = np.asarray(Zr)
-assert Zr_arr.shape == (100, 3), f"Zr should be (100, 3), got {Zr_arr.shape}."
-assert np.allclose(Zr_arr.mean(axis=1), 0, atol=1e-8), "Each row of Zr should have mean ~0."
-assert np.allclose(Zr_arr.std(axis=1), 1, atol=1e-8), "Each row of Zr should have std ~1."
-</script>
-<script type="text/x-solution">mu_r = X.mean(axis=1, keepdims=True)
-sd_r = X.std(axis=1, keepdims=True)
-Zr   = (X - mu_r) / sd_r
-print(Zr.mean(axis=1)[:5].round(4))</script>
-<script type="text/x-explain">Without <code>keepdims=True</code>, <code>X.mean(axis=1)</code> is shape <code>(100,)</code> — that broadcasts against <em>columns</em>, not rows. Keeping the reduced axis as length 1 (shape <code>(100, 1)</code>) makes it line up with <code>X</code>'s rows so subtraction works per-row.</script>
-  </section>
 </section>
 
 <section>
