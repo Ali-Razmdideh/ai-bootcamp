@@ -35,6 +35,30 @@
 </section>
 
 <section>
+  <span class="kicker">Context</span>
+  <h2>Why pandas — and where Dask / Polars come in</h2>
+  <p>We teach pandas because it is the lingua franca of Python data work: every tutorial, Stack Overflow answer, and ML library expects a DataFrame. But it is not the only option — and once your data or latency budget grows, two siblings are worth knowing.</p>
+  <div class="three-col">
+    <div class="card">
+      <h4>pandas</h4>
+      <strong>Default for &lt; ~few GB, single machine</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Richest API, biggest ecosystem (scikit-learn, statsmodels, plotting). In-memory, single-threaded. The right tool for EDA, notebooks, modeling features.</p>
+    </div>
+    <div class="card">
+      <h4>Polars</h4>
+      <strong>When pandas is too slow or too big for RAM</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Rust + Arrow, multi-threaded, lazy query optimizer, streaming for larger-than-RAM. Use for heavy ETL on a single beefy box, sub-second group-bys, log/event crunching.</p>
+    </div>
+    <div class="card">
+      <h4>Dask</h4>
+      <strong>When the data won't fit on one machine</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Partitioned, pandas-like API that scales to a cluster (or a laptop's disk). Use for TB-scale CSV/Parquet pipelines, parallel feature engineering, distributed ML preprocessing.</p>
+    </div>
+  </div>
+  <p class="callout" style="margin-top:1.0em;">Rule of thumb: prototype in pandas → rewrite the hot path in Polars when one machine is enough → switch to Dask when it isn't. The DataFrame mental model we build here transfers to both.</p>
+</section>
+
+<section>
   <section class="title-slide">
     <span class="kicker">Part 1 · 0:00 – 0:30</span>
     <h1>Series</h1>

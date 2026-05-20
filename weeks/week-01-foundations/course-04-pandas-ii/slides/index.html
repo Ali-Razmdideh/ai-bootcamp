@@ -1196,6 +1196,39 @@ print(weekly)</script>
   </section>
 </section>
 
+<section>
+  <span class="kicker">Beyond pandas</span>
+  <h2>When to reach for Dask or Polars</h2>
+  <p>Pandas is our default because it is the most widely used DataFrame library and integrates with the entire Python data stack. Once you hit its limits — RAM, single-thread speed, cluster scale — two alternatives use the same mental model.</p>
+  <table style="width:100%; border-collapse:collapse; margin-top:0.6em; font-size:0.85em;">
+    <thead>
+      <tr style="background:#f1f5f9;">
+        <th style="text-align:left; padding:0.4em 0.6em; border:1px solid #cbd5e1;">Tool</th>
+        <th style="text-align:left; padding:0.4em 0.6em; border:1px solid #cbd5e1;">Sweet spot</th>
+        <th style="text-align:left; padding:0.4em 0.6em; border:1px solid #cbd5e1;">Use case</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="padding:0.4em 0.6em; border:1px solid #cbd5e1;"><strong>pandas</strong></td>
+        <td style="padding:0.4em 0.6em; border:1px solid #cbd5e1;">&lt; ~few GB, single machine, in-memory</td>
+        <td style="padding:0.4em 0.6em; border:1px solid #cbd5e1;">EDA, notebooks, ML feature engineering, plotting; anywhere ecosystem matters more than raw speed.</td>
+      </tr>
+      <tr>
+        <td style="padding:0.4em 0.6em; border:1px solid #cbd5e1;"><strong>Polars</strong></td>
+        <td style="padding:0.4em 0.6em; border:1px solid #cbd5e1;">One big machine, multi-core, Arrow-native</td>
+        <td style="padding:0.4em 0.6em; border:1px solid #cbd5e1;">Fast ETL, sub-second group-bys on tens of GB, log/event analytics, lazy query optimization, larger-than-RAM streaming.</td>
+      </tr>
+      <tr>
+        <td style="padding:0.4em 0.6em; border:1px solid #cbd5e1;"><strong>Dask</strong></td>
+        <td style="padding:0.4em 0.6em; border:1px solid #cbd5e1;">Multi-machine cluster, or laptop with disk spill</td>
+        <td style="padding:0.4em 0.6em; border:1px solid #cbd5e1;">TB-scale Parquet/CSV pipelines, distributed feature engineering, parallel preprocessing for ML, scaling existing pandas code with minimal rewrite.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="callout" style="margin-top:0.8em;">The DataFrame model is the same. The skills you build in pandas transfer directly — only the execution engine changes.</p>
+</section>
+
 <section class="title-slide">
   <span class="kicker">Recap</span>
   <h2>Three things to leave with</h2>
