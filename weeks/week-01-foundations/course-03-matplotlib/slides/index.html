@@ -15,7 +15,7 @@
 <div class="reveal"><div class="slides">
 
 <section class="title-slide">
-  <span class="kicker">Week 1 · Course 5 · 1.5 hours</span>
+  <span class="kicker">Week 1 · Course 5 · ~2 hours</span>
   <h1>Matplotlib Essentials</h1>
   <p class="muted" style="font-size:1.1em;">Figure → Axes → Artists. One model to rule them all.</p>
 </section>
@@ -23,13 +23,15 @@
 <section>
   <span class="kicker">Roadmap</span>
   <h2>Where we are heading</h2>
-  <div class="three-col">
+  <div class="three-col" style="grid-template-columns:repeat(4, 1fr);">
     <div class="card"><h4>0:00 · 0:30</h4><strong>Figure & Axes</strong>
       <p class="muted" style="margin:0.3em 0 0;">The mental model.</p></div>
     <div class="card"><h4>0:30 · 1:00</h4><strong>The chart zoo</strong>
       <p class="muted" style="margin:0.3em 0 0;">scatter, bar, hist, box.</p></div>
     <div class="card"><h4>1:00 · 1:30</h4><strong>Subplots & saving</strong>
       <p class="muted" style="margin:0.3em 0 0;">grids, sharing, savefig.</p></div>
+    <div class="card"><h4>1:30 · 2:00</h4><strong>Beyond the basics</strong>
+      <p class="muted" style="margin:0.3em 0 0;">annotations, scales, images, layout.</p></div>
   </div>
   <p class="callout" style="margin-top:1.2em;">Every plot in this course uses the explicit API: <code>fig, ax = plt.subplots()</code>. Treat <code>plt.plot</code> as a beginner shortcut you graduate from today.</p>
 </section>
@@ -470,25 +472,25 @@ ax.grid(True); ax.legend()</script>
   <section>
     <h2>Plot-type chooser</h2>
     <p>One question, one branch, one chart.</p>
-    <svg class="diagram" viewBox="0 0 720 360" width="780" height="380">
+    <svg class="diagram" viewBox="0 0 760 280" width="780" height="320">
       <!-- root -->
-      <rect x="270" y="10" width="180" height="44" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
-      <text x="360" y="38" text-anchor="middle" font-size="13" fill="#0f172a">What relationship?</text>
+      <rect x="290" y="10" width="180" height="44" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+      <text x="380" y="38" text-anchor="middle" font-size="13" fill="#0f172a">What relationship?</text>
       <!-- branch lines -->
       <g stroke="#64748b" stroke-width="1.5" fill="none">
-        <path d="M 360 54 L 80  120"/>
-        <path d="M 360 54 L 230 120"/>
-        <path d="M 360 54 L 380 120"/>
-        <path d="M 360 54 L 530 120"/>
-        <path d="M 360 54 L 680 120"/>
+        <path d="M 380 54 L 80  120"/>
+        <path d="M 380 54 L 230 120"/>
+        <path d="M 380 54 L 380 120"/>
+        <path d="M 380 54 L 530 120"/>
+        <path d="M 380 54 L 680 120"/>
       </g>
-      <!-- branch labels -->
+      <!-- branch labels: each placed near the midpoint of its line, staggered to avoid overlap -->
       <g font-size="11" fill="#64748b" text-anchor="middle">
-        <text x="200" y="100">categories</text>
-        <text x="300" y="100">distribution</text>
-        <text x="445" y="100">2 numeric</text>
-        <text x="555" y="100">over time</text>
-        <text x="650" y="100">part-of-whole</text>
+        <text x="170" y="92">categories</text>
+        <text x="290" y="108">distribution</text>
+        <text x="395" y="92">2 numeric</text>
+        <text x="465" y="108">over time</text>
+        <text x="610" y="92">part-of-whole</text>
       </g>
       <!-- leaf nodes -->
       <g font-size="12" font-family="monospace">
@@ -517,7 +519,7 @@ ax.grid(True); ax.legend()</script>
         <text x="680" y="170" text-anchor="middle" fill="#0f172a">pie</text>
         <text x="680" y="190" text-anchor="middle" font-size="10" fill="#b45309">use sparingly</text>
       </g>
-      <text x="360" y="250" text-anchor="middle" font-size="12" fill="#64748b">Start with the question. The chart falls out.</text>
+      <text x="380" y="230" text-anchor="middle" font-size="12" fill="#64748b">Start with the question. The chart falls out.</text>
     </svg>
     <p class="muted">Pie is the only branch with a warning — humans read angles poorly. Reach for a bar chart first.</p>
   </section>
@@ -658,6 +660,56 @@ ax.set_ylabel('bill depth (mm)')</script>
     <p class="muted"><code>viridis</code> is perceptually uniform — equal data steps look like equal color steps. Use <code>coolwarm</code> for diverging data centered on zero.</p>
   </section>
 
+  <section>
+    <h2>What is a bin?</h2>
+    <p>A <strong>bin</strong> is a fixed-width interval on the x-axis. Each bar's height is the count of values that fell into that interval.</p>
+    <svg class="diagram" viewBox="0 0 720 280" width="780" height="300">
+      <!-- x-axis -->
+      <line x1="60" y1="220" x2="680" y2="220" stroke="#0f172a" stroke-width="1.5"/>
+      <!-- bin edges -->
+      <g stroke="#64748b" stroke-width="1" stroke-dasharray="3,3">
+        <line x1="120" y1="60"  x2="120" y2="220"/>
+        <line x1="220" y1="60"  x2="220" y2="220"/>
+        <line x1="320" y1="60"  x2="320" y2="220"/>
+        <line x1="420" y1="60"  x2="420" y2="220"/>
+        <line x1="520" y1="60"  x2="520" y2="220"/>
+        <line x1="620" y1="60"  x2="620" y2="220"/>
+      </g>
+      <!-- bars -->
+      <g fill="#93c5fd" stroke="#2563eb" stroke-width="1.5">
+        <rect x="122" y="180" width="96" height="40"/>
+        <rect x="222" y="120" width="96" height="100"/>
+        <rect x="322" y="80"  width="96" height="140"/>
+        <rect x="422" y="140" width="96" height="80"/>
+        <rect x="522" y="195" width="96" height="25"/>
+      </g>
+      <!-- bin width arrow -->
+      <g stroke="#b45309" stroke-width="1.5" fill="none">
+        <line x1="220" y1="245" x2="320" y2="245"/>
+        <line x1="220" y1="240" x2="220" y2="250"/>
+        <line x1="320" y1="240" x2="320" y2="250"/>
+      </g>
+      <text x="270" y="265" text-anchor="middle" font-size="12" fill="#b45309">bin width</text>
+      <!-- count arrow -->
+      <g stroke="#15803d" stroke-width="1.5" fill="none">
+        <line x1="370" y1="80"  x2="370" y2="220"/>
+        <line x1="365" y1="80"  x2="375" y2="80"/>
+        <line x1="365" y1="220" x2="375" y2="220"/>
+      </g>
+      <text x="385" y="155" font-size="12" fill="#15803d">count = bar height</text>
+      <!-- labels -->
+      <text x="120" y="238" text-anchor="middle" font-size="11" fill="#64748b">edge</text>
+      <text x="620" y="238" text-anchor="middle" font-size="11" fill="#64748b">edge</text>
+      <text x="370" y="50" text-anchor="middle" font-size="13" fill="#0f172a">5 equal-width bins covering the data range</text>
+    </svg>
+    <ul>
+      <li><code>bins=30</code> — number of equal-width bins (an int).</li>
+      <li><code>bins=[0, 1, 2, 5, 10]</code> — explicit edges (a sequence). Unequal widths are allowed.</li>
+      <li><code>bins='auto'</code> / <code>'sturges'</code> / <code>'fd'</code> — let numpy pick a rule.</li>
+    </ul>
+    <p class="callout">Too few bins hides the shape; too many turns it into noise. Try a few values before trusting what you see.</p>
+  </section>
+
   <section class="example" data-packages="numpy,pandas,matplotlib">
     <h2>Histogram — shape of one distribution</h2>
     <div class="ex-prompt">A histogram answers "where is the mass." Bin <code>body_mass_g</code> into 30 buckets.</div>
@@ -684,6 +736,64 @@ print('bars drawn:', len(ax.patches))
       <span class="ex-status"></span>
     </div>
     <pre class="ex-output"></pre>
+  </section>
+
+  <section>
+    <h2>Anatomy of a boxplot</h2>
+    <p>Every line and dot in a box has a name — and a statistical meaning.</p>
+    <svg class="diagram" viewBox="0 0 720 360" width="780" height="380">
+      <defs>
+        <marker id="boxArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+        </marker>
+      </defs>
+      <!-- y axis -->
+      <line x1="80" y1="20" x2="80" y2="340" stroke="#0f172a" stroke-width="1.5"/>
+      <!-- whisker caps + line -->
+      <g stroke="#0f172a" stroke-width="1.8" fill="none">
+        <line x1="300" y1="60"  x2="400" y2="60"/>  <!-- upper cap -->
+        <line x1="350" y1="60"  x2="350" y2="120"/> <!-- upper whisker -->
+        <line x1="350" y1="240" x2="350" y2="300"/> <!-- lower whisker -->
+        <line x1="300" y1="300" x2="400" y2="300"/> <!-- lower cap -->
+      </g>
+      <!-- box -->
+      <rect x="290" y="120" width="120" height="120" fill="#dbeafe" stroke="#1d4ed8" stroke-width="2"/>
+      <!-- median line -->
+      <line x1="290" y1="180" x2="410" y2="180" stroke="#b91c1c" stroke-width="3"/>
+      <!-- mean (optional) -->
+      <circle cx="350" cy="195" r="4" fill="#16a34a" stroke="#16a34a"/>
+      <!-- fliers -->
+      <circle cx="350" cy="35" r="3.5" fill="none" stroke="#0f172a" stroke-width="1.4"/>
+      <circle cx="350" cy="320" r="3.5" fill="none" stroke="#0f172a" stroke-width="1.4"/>
+      <!-- annotations -->
+      <g stroke="#475569" stroke-width="1.2" fill="none" marker-end="url(#boxArrow)">
+        <path d="M 540 35  L 360 35"/>
+        <path d="M 540 60  L 405 60"/>
+        <path d="M 540 120 L 415 120"/>
+        <path d="M 540 180 L 415 180"/>
+        <path d="M 540 195 L 358 195"/>
+        <path d="M 540 240 L 415 240"/>
+        <path d="M 540 300 L 405 300"/>
+      </g>
+      <g font-size="12" fill="#0f172a">
+        <text x="545" y="39">flier (outlier) — beyond whisker</text>
+        <text x="545" y="64">upper whisker cap — max within 1.5·IQR</text>
+        <text x="545" y="124">Q3 — 75th percentile</text>
+        <text x="545" y="184" fill="#b91c1c"><tspan font-weight="700">median (Q2)</tspan> — middle value</text>
+        <text x="545" y="199" fill="#16a34a">mean — optional, via showmeans=True</text>
+        <text x="545" y="244">Q1 — 25th percentile</text>
+        <text x="545" y="304">lower whisker cap — min within 1.5·IQR</text>
+      </g>
+      <!-- IQR bracket -->
+      <g stroke="#7c3aed" stroke-width="1.5" fill="none">
+        <line x1="265" y1="120" x2="265" y2="240"/>
+        <line x1="260" y1="120" x2="270" y2="120"/>
+        <line x1="260" y1="240" x2="270" y2="240"/>
+      </g>
+      <text x="255" y="184" text-anchor="end" font-size="12" font-weight="700" fill="#7c3aed">IQR</text>
+      <text x="255" y="200" text-anchor="end" font-size="11" fill="#7c3aed">Q3 − Q1</text>
+    </svg>
+    <p class="muted">Whiskers extend to the furthest point still within <strong>1.5 × IQR</strong> of the box. Anything past that is a <em>flier</em> drawn as an individual marker.</p>
   </section>
 
   <section class="example" data-packages="numpy,pandas,matplotlib">
@@ -965,6 +1075,155 @@ print('style applied inside the context manager')
       <span class="ex-status"></span>
     </div>
     <pre class="ex-output"></pre>
+  </section>
+</section>
+
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 4 · 1:30 – 2:00</span>
+    <h1>Beyond the basics</h1>
+    <p class="muted">Ten everyday tools the official guide hammers — and you will hit within a week of real work.</p>
+  </section>
+
+  <section>
+    <h2>Annotations &amp; text</h2>
+    <p><code>ax.text</code> drops a string at <code>(x, y)</code>. <code>ax.annotate</code> adds an arrow from text to a target point — perfect for calling out a peak, an outlier, or a regime change.</p>
+<pre><code class="language-python">fig, ax = plt.subplots()
+x = np.linspace(0, 4*np.pi, 200)
+ax.plot(x, np.sin(x))
+peak = (np.pi/2, 1.0)
+ax.annotate('first peak', xy=peak, xytext=(2.5, 1.3),
+            arrowprops=dict(arrowstyle='->', color='#b45309'))
+ax.text(4*np.pi - 0.5, -0.9, 'end of window', ha='right', color='#64748b')</code></pre>
+    <p class="muted"><code>xy</code> is the arrow tip; <code>xytext</code> is where the label sits.</p>
+  </section>
+
+  <section>
+    <h2>Axis scales — log, symlog, logit</h2>
+    <p>One call rescales an axis. Use <code>'log'</code> for orders-of-magnitude data (loss curves, populations), <code>'symlog'</code> when the data crosses zero, <code>'logit'</code> for probabilities near 0 or 1.</p>
+<pre><code class="language-python">epochs = np.arange(1, 101)
+loss = 1.0 / epochs + 0.01
+
+fig, ax = plt.subplots()
+ax.plot(epochs, loss)
+ax.set_yscale('log')          # linear in log-space
+ax.set_xlabel('epoch'); ax.set_ylabel('loss')</code></pre>
+    <p class="callout">A straight line on a log-y plot means exponential decay. Always check both scales before claiming "it plateaued."</p>
+  </section>
+
+  <section>
+    <h2>Date &amp; time ticks</h2>
+    <p>Matplotlib understands <code>datetime</code> and <code>numpy.datetime64</code> on either axis. <code>matplotlib.dates</code> gives you locators (where ticks go) and formatters (how they render).</p>
+<pre><code class="language-python">import matplotlib.dates as mdates
+dates = pd.date_range('2026-01-01', periods=120, freq='D')
+y = np.cumsum(np.random.default_rng(0).standard_normal(120))
+
+fig, ax = plt.subplots()
+ax.plot(dates, y)
+ax.xaxis.set_major_locator(mdates.MonthLocator())
+ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
+fig.autofmt_xdate()   # rotate labels so they fit</code></pre>
+  </section>
+
+  <section>
+    <h2>Colorbars</h2>
+    <p>A colorbar turns the colormap legend into something readable. The trick: <code>scatter</code>, <code>imshow</code>, and friends return a <em>mappable</em>; pass it to <code>fig.colorbar</code> together with the Axes it should attach to.</p>
+<pre><code class="language-python">rng = np.random.default_rng(0)
+x, y, z = rng.standard_normal((3, 300))
+
+fig, ax = plt.subplots()
+sc = ax.scatter(x, y, c=z, cmap='viridis', s=20)
+cbar = fig.colorbar(sc, ax=ax)
+cbar.set_label('z value')</code></pre>
+    <p class="muted">Without <code>ax=ax</code> the bar steals space from whatever Axes is current — surprising in subplot grids.</p>
+  </section>
+
+  <section>
+    <h2><code>imshow</code> — images &amp; heatmaps</h2>
+    <p>Any 2-D array becomes a heatmap. Confusion matrices, attention maps, raw pixels — same call.</p>
+<pre><code class="language-python">rng = np.random.default_rng(0)
+M = rng.random((8, 8))
+
+fig, ax = plt.subplots()
+im = ax.imshow(M, cmap='magma', origin='lower',
+               extent=[0, 8, 0, 8], aspect='equal')
+fig.colorbar(im, ax=ax)</code></pre>
+    <ul>
+      <li><code>origin='lower'</code> — put row 0 at the bottom (math convention). Default is top (image convention).</li>
+      <li><code>extent=[x0,x1,y0,y1]</code> — map array indices to data coordinates.</li>
+      <li><code>aspect='auto'</code> — let cells stretch to fill; <code>'equal'</code> keeps them square.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Constrained layout — the modern <code>tight_layout</code></h2>
+    <p><code>tight_layout()</code> runs <em>once</em> at call time and can leave you to tweak it again whenever you change a label. <code>layout='constrained'</code> runs every draw and adapts automatically — including for colorbars and suptitles.</p>
+<pre><code class="language-python">fig, axes = plt.subplots(2, 2, figsize=(8, 5),
+                         layout='constrained')
+for ax in axes.flat:
+    ax.plot([0, 1], [0, 1]); ax.set_title('a long title')
+fig.suptitle('layout="constrained" handles this automatically')</code></pre>
+    <p class="callout">Prefer <code>layout='constrained'</code> for any new plot with multiple subplots, colorbars, or a suptitle.</p>
+  </section>
+
+  <section>
+    <h2><code>subplot_mosaic</code> — layouts you can read</h2>
+    <p>Asymmetric layouts used to require <code>gridspec</code>. <code>subplot_mosaic</code> takes an ASCII map and gives you back a dict keyed by the labels you wrote.</p>
+<pre><code class="language-python">fig, axd = plt.subplot_mosaic(
+    '''
+    AAB
+    CCB
+    ''', figsize=(8, 4), layout='constrained')
+
+axd['A'].plot([0,1,2], [0,1,4]); axd['A'].set_title('A — wide top')
+axd['B'].hist(np.random.default_rng(0).standard_normal(200))
+axd['C'].plot([0,1,2], [2,1,0]); axd['C'].set_title('C — wide bottom')
+axd['B'].set_title('B — full-height right')</code></pre>
+  </section>
+
+  <section>
+    <h2>Twin axes — two y-scales, one chart</h2>
+    <p><code>ax.twinx()</code> returns a second Axes that shares the x-axis. Use it sparingly — readers can be misled by the independent y-scales — but it is the right call for comparing series in different units.</p>
+<pre><code class="language-python">x = np.linspace(0, 10, 200)
+fig, ax = plt.subplots()
+l1, = ax.plot(x, np.sin(x), color='#2563eb', label='signal')
+ax.set_ylabel('signal', color='#2563eb')
+
+ax2 = ax.twinx()
+l2, = ax2.plot(x, np.exp(x/5), color='#b45309', label='magnitude')
+ax2.set_ylabel('magnitude', color='#b45309')
+
+ax.legend(handles=[l1, l2], loc='upper left')</code></pre>
+  </section>
+
+  <section>
+    <h2><code>rcParams</code> — defaults you set once</h2>
+    <p>Every default — figure size, DPI, font, line width, grid — lives in <code>plt.rcParams</code>. Set it at the top of a notebook and the rest of the session inherits.</p>
+<pre><code class="language-python">import matplotlib as mpl
+mpl.rcParams['figure.dpi']    = 120
+mpl.rcParams['figure.figsize'] = (7, 4)
+mpl.rcParams['axes.grid']      = True
+mpl.rcParams['lines.linewidth'] = 1.8
+
+print(plt.style.available[:5])   # built-in style sheets
+# plt.style.use('seaborn-v0_8-whitegrid')   # apply one globally</code></pre>
+    <p class="muted">The same keys live in your <code>~/.matplotlibrc</code> file for persistent defaults across projects.</p>
+  </section>
+
+  <section>
+    <h2>Legend placement</h2>
+    <p><code>loc=</code> picks one of nine corners; <code>bbox_to_anchor</code> places the legend at an arbitrary figure coordinate. Need <em>two</em> legends on one Axes? Add the first manually as an artist, then call <code>ax.legend</code> again.</p>
+<pre><code class="language-python">fig, ax = plt.subplots(figsize=(7, 4), layout='constrained')
+l1, = ax.plot([0,1,2], [0,1,4], label='line A')
+l2, = ax.plot([0,1,2], [4,2,1], label='line B')
+l3, = ax.plot([0,1,2], [1,2,3], '--', label='reference')
+
+leg1 = ax.legend(handles=[l1, l2], loc='upper left',
+                 title='series')
+ax.add_artist(leg1)               # keep leg1 when we call legend again
+ax.legend(handles=[l3], loc='center left',
+          bbox_to_anchor=(1.02, 0.5), title='lines')</code></pre>
+    <p class="muted"><code>bbox_to_anchor=(1.02, 0.5)</code> = just outside the right edge, vertically centered. Pair with <code>layout='constrained'</code> so the figure expands to fit.</p>
   </section>
 </section>
 
