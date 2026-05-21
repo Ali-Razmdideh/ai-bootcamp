@@ -660,10 +660,10 @@ ax.set_ylabel('bill depth (mm)')</script>
     <p class="muted"><code>viridis</code> is perceptually uniform — equal data steps look like equal color steps. Use <code>coolwarm</code> for diverging data centered on zero.</p>
   </section>
 
-  <section>
-    <h2>What is a bin?</h2>
-    <p>A <strong>bin</strong> is a fixed-width interval on the x-axis. Each bar's height is the count of values that fell into that interval.</p>
-    <svg class="diagram" viewBox="0 0 720 280" width="780" height="300">
+  <section style="font-size: 0.78em;">
+    <h2 style="margin:0 0 0.3em 0;">What is a bin?</h2>
+    <p style="margin:0 0 0.4em 0;">A <strong>bin</strong> is a fixed-width interval on the x-axis. Each bar's height is the count of values that fell into that interval.</p>
+    <svg class="diagram" viewBox="0 0 720 280" width="560" height="220">
       <!-- x-axis -->
       <line x1="60" y1="220" x2="680" y2="220" stroke="#0f172a" stroke-width="1.5"/>
       <!-- bin edges -->
@@ -702,12 +702,12 @@ ax.set_ylabel('bill depth (mm)')</script>
       <text x="620" y="238" text-anchor="middle" font-size="11" fill="#64748b">edge</text>
       <text x="370" y="50" text-anchor="middle" font-size="13" fill="#0f172a">5 equal-width bins covering the data range</text>
     </svg>
-    <ul>
+    <ul style="margin:0.3em 0; line-height:1.35;">
       <li><code>bins=30</code> — number of equal-width bins (an int).</li>
       <li><code>bins=[0, 1, 2, 5, 10]</code> — explicit edges (a sequence). Unequal widths are allowed.</li>
       <li><code>bins='auto'</code> / <code>'sturges'</code> / <code>'fd'</code> — let numpy pick a rule.</li>
     </ul>
-    <p class="callout">Too few bins hides the shape; too many turns it into noise. Try a few values before trusting what you see.</p>
+    <p class="callout" style="margin-top:0.4em;">Too few bins hides the shape; too many turns it into noise. Try a few values before trusting what you see.</p>
   </section>
 
   <section class="example" data-packages="numpy,pandas,matplotlib">
