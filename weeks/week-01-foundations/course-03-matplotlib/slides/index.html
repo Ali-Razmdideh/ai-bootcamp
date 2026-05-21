@@ -54,6 +54,11 @@
     <h2>Anatomy of a figure</h2>
     <p>Every element on screen has a name — and a method on either <code>fig</code> or <code>ax</code>.</p>
     <svg class="diagram" viewBox="0 0 720 420" width="780" height="440">
+      <defs>
+        <marker id="anatArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+        </marker>
+      </defs>
       <!-- Figure outer -->
       <rect x="10" y="10" width="700" height="400" rx="8" fill="#fff" stroke="#0f172a" stroke-width="2"/>
       <!-- Axes inner (plot region) -->
@@ -100,26 +105,34 @@
       <text x="478" y="107" font-size="10" fill="#0f172a">series A</text>
       <line x1="452" y1="120" x2="472" y2="120" stroke="#b45309" stroke-width="2" stroke-dasharray="3,2"/>
       <text x="478" y="124" font-size="10" fill="#0f172a">series B</text>
-      <!-- Leader lines + labels -->
-      <g stroke="#64748b" stroke-width="1" fill="none">
-        <path d="M 30 30 L 90 30"/>
-        <path d="M 690 200 L 620 200"/>
-        <path d="M 30 200 L 130 200"/>
-        <path d="M 360 30 L 360 50"/>
-        <path d="M 540 95 L 600 60"/>
-        <path d="M 250 410 L 250 380"/>
-        <path d="M 80 380 L 165 320"/>
-        <path d="M 670 380 L 380 280"/>
+      <!-- Leader lines + labels (with arrowheads pointing at the target) -->
+      <g stroke="#475569" stroke-width="1.4" fill="none" marker-end="url(#anatArrow)">
+        <!-- Figure (page) → outer rect corner -->
+        <path d="M 95 32 L 35 18"/>
+        <!-- Axes (plot region) → into the blue plot rect -->
+        <path d="M 620 200 L 555 200"/>
+        <!-- spine → left edge of the axes rect -->
+        <path d="M 60 200 L 168 200"/>
+        <!-- title → above the title text -->
+        <path d="M 360 30 L 360 55"/>
+        <!-- legend → top-right of legend box -->
+        <path d="M 600 60 L 545 92"/>
+        <!-- x ticks & labels → the tick row at y=325 -->
+        <path d="M 250 395 L 250 343"/>
+        <!-- tick → one of the x-axis tick marks -->
+        <path d="M 100 385 L 263 326"/>
+        <!-- gridlines → onto a gridline inside the plot -->
+        <path d="M 600 385 L 460 245"/>
       </g>
-      <g font-size="11" fill="#64748b">
-        <text x="20" y="25">Figure (the page)</text>
-        <text x="625" y="195">Axes (plot region)</text>
-        <text x="20" y="195" text-anchor="start">spine</text>
+      <g font-size="12" font-weight="600" fill="#0f172a">
+        <text x="100" y="36">Figure (the page)</text>
+        <text x="625" y="205" text-anchor="start">Axes (plot region)</text>
+        <text x="20" y="205" text-anchor="start">spine</text>
         <text x="360" y="20" text-anchor="middle">title — ax.set_title</text>
         <text x="605" y="55" text-anchor="start">legend — ax.legend</text>
-        <text x="250" y="405" text-anchor="middle">x ticks &amp; labels</text>
-        <text x="80" y="395" text-anchor="middle">tick — ax.tick_params</text>
-        <text x="670" y="395" text-anchor="end">gridlines — ax.grid(True)</text>
+        <text x="250" y="408" text-anchor="middle">x ticks &amp; labels</text>
+        <text x="100" y="398" text-anchor="middle">tick — ax.tick_params</text>
+        <text x="670" y="398" text-anchor="end">gridlines — ax.grid(True)</text>
       </g>
     </svg>
     <p class="muted">Title, ticks, spines, gridlines, legend — each one is an <code>ax.set_*</code> or <code>ax.*</code> call.</p>
@@ -128,26 +141,66 @@
   <section>
     <h2>Figure vs Axes vs Axis</h2>
     <p>Three nested containers — and yes, "Axes" is not the plural of "Axis."</p>
-    <svg class="diagram" viewBox="0 0 600 320" width="700" height="360">
-      <!-- Figure outer -->
-      <rect x="10" y="10" width="580" height="300" rx="8" fill="#fff" stroke="#0f172a" stroke-width="2"/>
-      <text x="25" y="32" font-size="13" fill="#0f172a">Figure — the page (fig)</text>
-      <!-- Axes inner -->
-      <rect x="40" y="55" width="260" height="230" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
-      <text x="55" y="76" font-size="12" fill="#2563eb">Axes — one plot region (ax)</text>
-      <!-- Axis (x, y) innermost -->
-      <rect x="60" y="95" width="100" height="80" rx="4" fill="#fff" stroke="#b45309" stroke-width="1.5"/>
-      <text x="110" y="140" text-anchor="middle" font-size="12" fill="#b45309">Axis: x</text>
-      <rect x="180" y="95" width="100" height="80" rx="4" fill="#fff" stroke="#b45309" stroke-width="1.5"/>
-      <text x="230" y="140" text-anchor="middle" font-size="12" fill="#b45309">Axis: y</text>
-      <text x="170" y="210" text-anchor="middle" font-size="11" fill="#64748b">ax.xaxis · ax.yaxis</text>
-      <!-- second Axes -->
-      <rect x="320" y="55" width="250" height="105" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
-      <text x="335" y="76" font-size="12" fill="#2563eb">Axes (second subplot)</text>
-      <text x="445" y="115" text-anchor="middle" font-size="11" fill="#64748b">one Figure can hold many Axes</text>
-      <rect x="320" y="180" width="250" height="105" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
-      <text x="335" y="201" font-size="12" fill="#2563eb">Axes (third subplot)</text>
-      <text x="445" y="240" text-anchor="middle" font-size="11" fill="#64748b">each owns its own xaxis &amp; yaxis</text>
+    <svg class="diagram" viewBox="0 0 720 480" width="560" height="370">
+      <!-- Figure (dark red outer) -->
+      <rect x="20" y="30" width="680" height="430" fill="#fff" stroke="#7f1d1d" stroke-width="6"/>
+      <text x="360" y="22" text-anchor="middle" font-size="20" font-weight="700" fill="#7f1d1d">Figure</text>
+      <!-- Axes (blue inner) -->
+      <rect x="70" y="70" width="600" height="360" fill="#fff" stroke="#1d4ed8" stroke-width="5"/>
+      <text x="370" y="62" text-anchor="middle" font-size="18" font-weight="700" fill="#1d4ed8">Axes</text>
+      <!-- Plot area -->
+      <rect x="210" y="115" width="430" height="250" fill="#fff" stroke="#0f172a" stroke-width="1.5"/>
+      <text x="425" y="108" text-anchor="middle" font-size="14" fill="#0f172a">title</text>
+      <!-- A sine-like curve -->
+      <path d="M 210 240 Q 280 115 350 165 T 500 320 T 640 250" fill="none" stroke="#1d4ed8" stroke-width="1.6"/>
+      <!-- Y ticks + labels -->
+      <g font-size="11" fill="#0f172a" text-anchor="end">
+        <text x="205" y="140">1.0</text>
+        <text x="205" y="180">0.5</text>
+        <text x="205" y="240">0.0</text>
+        <text x="205" y="300">-0.5</text>
+        <text x="205" y="360">-1.0</text>
+      </g>
+      <g stroke="#0f172a" stroke-width="1">
+        <line x1="210" y1="140" x2="216" y2="140"/>
+        <line x1="210" y1="180" x2="216" y2="180"/>
+        <line x1="210" y1="240" x2="216" y2="240"/>
+        <line x1="210" y1="300" x2="216" y2="300"/>
+        <line x1="210" y1="360" x2="216" y2="360"/>
+      </g>
+      <!-- X ticks + labels -->
+      <g font-size="11" fill="#0f172a" text-anchor="middle">
+        <text x="280" y="383">1</text>
+        <text x="345" y="383">2</text>
+        <text x="410" y="383">3</text>
+        <text x="475" y="383">4</text>
+        <text x="540" y="383">5</text>
+        <text x="605" y="383">6</text>
+      </g>
+      <g stroke="#0f172a" stroke-width="1">
+        <line x1="280" y1="365" x2="280" y2="371"/>
+        <line x1="345" y1="365" x2="345" y2="371"/>
+        <line x1="410" y1="365" x2="410" y2="371"/>
+        <line x1="475" y1="365" x2="475" y2="371"/>
+        <line x1="540" y1="365" x2="540" y2="371"/>
+        <line x1="605" y1="365" x2="605" y2="371"/>
+      </g>
+      <!-- Axis labels -->
+      <text x="425" y="410" text-anchor="middle" font-size="13" fill="#0f172a">x label</text>
+      <text x="105" y="240" text-anchor="middle" font-size="13" fill="#0f172a" transform="rotate(-90 105 240)">y label</text>
+      <!-- Green ellipse around the Y Axis -->
+      <ellipse cx="200" cy="235" rx="26" ry="115" fill="none" stroke="#15803d" stroke-width="5"/>
+      <!-- Y "Axis" label: white pill above the ellipse, with a short connector -->
+      <line x1="200" y1="120" x2="200" y2="95" stroke="#15803d" stroke-width="2"/>
+      <rect x="170" y="72" width="60" height="26" rx="4" fill="#ffffff" stroke="#15803d" stroke-width="2"/>
+      <text x="200" y="91" text-anchor="middle" font-size="16" font-weight="700" fill="#15803d">Axis</text>
+      <!-- Green ellipse around the X Axis -->
+      <ellipse cx="470" cy="378" rx="200" ry="18" fill="none" stroke="#15803d" stroke-width="5"/>
+      <!-- X "Axis" label: white pill to the right of the ellipse, with a short connector -->
+      <line x1="670" y1="378" x2="688" y2="378" stroke="#15803d" stroke-width="2"/>
+      <rect x="615" y="425" width="60" height="26" rx="4" fill="#ffffff" stroke="#15803d" stroke-width="2"/>
+      <line x1="645" y1="396" x2="645" y2="425" stroke="#15803d" stroke-width="2"/>
+      <text x="645" y="444" text-anchor="middle" font-size="16" font-weight="700" fill="#15803d">Axis</text>
     </svg>
     <p class="muted">Figure ⊃ Axes ⊃ Axis. "Axes" means one plot region (it has both an x and y Axis); "Axis" means a single number line.</p>
   </section>
@@ -212,7 +265,7 @@ print('legend:', ax.get_legend() is not None)
 
   <section class="example" data-packages="numpy,matplotlib">
     <h2>A first Figure / Axes</h2>
-    <div class="ex-prompt">The smallest possible matplotlib program: ask for a Figure + Axes, then plot four points. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+    <div class="ex-prompt">The smallest possible matplotlib program: ask for a Figure + Axes, then plot four points.</div>
 <textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
 import matplotlib.pyplot as plt
 
@@ -233,7 +286,7 @@ print('Lines on the Axes:', len(ax.lines))
 
   <section class="example" data-packages="numpy,matplotlib">
     <h2>Your first plot, the right way</h2>
-    <div class="ex-prompt">Plot <code>y = x²</code> with labels, title, grid, and legend — everything goes through <code>ax</code>, not <code>plt</code>. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+    <div class="ex-prompt">Plot <code>y = x²</code> with labels, title, grid, and legend — everything goes through <code>ax</code>, not <code>plt</code>.</div>
 <textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
 import matplotlib.pyplot as plt
 import numpy as np
@@ -303,7 +356,7 @@ ax.plot(x, np.cos(x), label='cos')</script>
 
   <section class="example" data-packages="numpy,matplotlib">
     <h2>Lines: style, color, marker</h2>
-    <div class="ex-prompt">Three curves on one Axes, each with a different linestyle; the cubic also gets a marker every 20 points. Pass styling as keyword arguments. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+    <div class="ex-prompt">Three curves on one Axes, each with a different linestyle; the cubic also gets a marker every 20 points. Pass styling as keyword arguments.</div>
 <textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
 import matplotlib.pyplot as plt
 import numpy as np
@@ -328,7 +381,7 @@ print('linestyles:', [ln.get_linestyle() for ln in ax.lines])
 
   <section class="example" data-packages="numpy,matplotlib">
     <h2>Axis limits</h2>
-    <div class="ex-prompt">Use <code>ax.set_xlim</code> / <code>ax.set_ylim</code> to zoom into a region of the data without throwing away the underlying array. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+    <div class="ex-prompt">Use <code>ax.set_xlim</code> / <code>ax.set_ylim</code> to zoom into a region of the data without throwing away the underlying array.</div>
 <textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
 import matplotlib.pyplot as plt
 import numpy as np
@@ -470,7 +523,7 @@ ax.grid(True); ax.legend()</script>
 
   <section class="example" data-packages="numpy,pandas,matplotlib">
     <h2>Scatter — colored by a category</h2>
-    <div class="ex-prompt">Scatter <code>bill_length_mm</code> vs <code>bill_depth_mm</code>, coloring each point by the categorical <code>species</code> via <code>cat.codes</code>. A tiny synthetic penguins frame stands in for the real dataset. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+    <div class="ex-prompt">Scatter <code>bill_length_mm</code> vs <code>bill_depth_mm</code>, coloring each point by the categorical <code>species</code> via <code>cat.codes</code>. A tiny synthetic penguins frame stands in for the real dataset.</div>
 <textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
 import matplotlib.pyplot as plt
 import numpy as np
@@ -606,7 +659,7 @@ ax.set_ylabel('bill depth (mm)')</script>
 
   <section class="example" data-packages="numpy,pandas,matplotlib">
     <h2>Histogram — shape of one distribution</h2>
-    <div class="ex-prompt">A histogram answers "where is the mass." Bin <code>body_mass_g</code> into 30 buckets. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+    <div class="ex-prompt">A histogram answers "where is the mass." Bin <code>body_mass_g</code> into 30 buckets.</div>
 <textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
 import matplotlib.pyplot as plt
 import numpy as np
@@ -634,7 +687,7 @@ print('bars drawn:', len(ax.patches))
 
   <section class="example" data-packages="numpy,pandas,matplotlib">
     <h2>Boxplot — medians across groups</h2>
-    <div class="ex-prompt">A boxplot answers "where are the medians and outliers across groups." Group <code>body_mass_g</code> by species, pass one array per group to <code>ax.boxplot</code>. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+    <div class="ex-prompt">A boxplot answers "where are the medians and outliers across groups." Group <code>body_mass_g</code> by species, pass one array per group to <code>ax.boxplot</code>.</div>
 <textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
 import matplotlib.pyplot as plt
 import numpy as np
@@ -711,7 +764,7 @@ ax.legend()</script>
 
   <section class="example" data-packages="numpy,pandas,matplotlib">
     <h2>Bar — counts per category</h2>
-    <div class="ex-prompt"><code>value_counts</code> gives you category → count; feed its index and values straight into <code>ax.bar</code>. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+    <div class="ex-prompt"><code>value_counts</code> gives you category → count; feed its index and values straight into <code>ax.bar</code>.</div>
 <textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
 import matplotlib.pyplot as plt
 import numpy as np
@@ -772,7 +825,7 @@ print(counts)
 
   <section class="example" data-packages="numpy,matplotlib">
     <h2>A 2×2 grid in one call</h2>
-    <div class="ex-prompt"><code>plt.subplots(2, 2)</code> returns a Figure and a 2-D NumPy array of Axes. <code>sharex=True</code> aligns the x-axes; <code>fig.tight_layout()</code> stops titles from colliding. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+    <div class="ex-prompt"><code>plt.subplots(2, 2)</code> returns a Figure and a 2-D NumPy array of Axes. <code>sharex=True</code> aligns the x-axes; <code>fig.tight_layout()</code> stops titles from colliding.</div>
 <textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
 import matplotlib.pyplot as plt
 import numpy as np
@@ -870,7 +923,7 @@ fig.tight_layout()</script>
 
   <section class="example" data-packages="numpy,matplotlib">
     <h2>Saving to PNG</h2>
-    <div class="ex-prompt">Default DPI is too low for slides. Always pass <code>dpi=120</code> or higher and <code>bbox_inches='tight'</code> to trim whitespace. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+    <div class="ex-prompt">Default DPI is too low for slides. Always pass <code>dpi=120</code> or higher and <code>bbox_inches='tight'</code> to trim whitespace.</div>
 <textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
 import matplotlib.pyplot as plt
 import numpy as np
@@ -892,7 +945,7 @@ print('wrote /tmp/square.png')
 
   <section class="example" data-packages="numpy,matplotlib">
     <h2>Style sheets — change the look in one line</h2>
-    <div class="ex-prompt">Built-in styles like <code>ggplot</code>, <code>dark_background</code>, and the <code>seaborn-v0_8-*</code> family change the whole vibe of a plot. Use <code>plt.style.context</code> for a one-off, <code>plt.style.use</code> globally. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
+    <div class="ex-prompt">Built-in styles like <code>ggplot</code>, <code>dark_background</code>, and the <code>seaborn-v0_8-*</code> family change the whole vibe of a plot. Use <code>plt.style.context</code> for a one-off, <code>plt.style.use</code> globally.</div>
 <textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
 import matplotlib.pyplot as plt
 import numpy as np
