@@ -8,3 +8,4 @@ __pycache__/
 dist/
 build/
 uv.lock
+weeks/week-01-foundations/course-03-matplotlib/test.ipynb
