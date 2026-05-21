@@ -36,6 +36,30 @@
   <p class="callout" style="margin-top:1.2em;">Every plot in this course uses the explicit API: <code>fig, ax = plt.subplots()</code>. Treat <code>plt.plot</code> as a beginner shortcut you graduate from today.</p>
 </section>
 
+<section style="font-size: 0.78em;">
+  <h2>Why matplotlib — and the alternatives</h2>
+  <p class="muted" style="margin:0 0 0.6em 0;">Matplotlib is the foundational Python plotting library — almost every other library either wraps it or copies its API. Learn it first; reach for the others when you need their specific strengths.</p>
+  <table style="border-collapse:collapse; width:100%;">
+    <thead>
+      <tr style="background:#f1f5f9;">
+        <th style="text-align:left; padding:0.3em 0.5em; border:1px solid #cbd5e1;">Library</th>
+        <th style="text-align:left; padding:0.3em 0.5em; border:1px solid #cbd5e1;">Built on</th>
+        <th style="text-align:left; padding:0.3em 0.5em; border:1px solid #cbd5e1;">Sweet spot</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>matplotlib</strong></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">—</td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">Total control, publication-quality static figures, the lingua franca of scientific Python.</td></tr>
+      <tr><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>seaborn</strong></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">matplotlib</td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">Statistical plots in one line (<code>sns.boxplot</code>, <code>sns.pairplot</code>, <code>sns.heatmap</code>) — great defaults for EDA.</td></tr>
+      <tr><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>pandas <code>.plot</code></strong></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">matplotlib</td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><code>df.plot()</code> straight from a DataFrame — fastest path during analysis.</td></tr>
+      <tr><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>plotly</strong> / <strong>bokeh</strong></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">JS (WebGL/Canvas)</td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">Interactive web charts — zoom, hover, click. Plotly also powers Dash dashboards.</td></tr>
+      <tr><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>altair</strong></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">Vega-Lite</td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">Declarative grammar-of-graphics — great for layered, interactive statistical charts in notebooks.</td></tr>
+      <tr><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>plotnine</strong></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">matplotlib</td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">Python port of R's ggplot2 — for people coming from the tidyverse.</td></tr>
+      <tr><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>holoviews</strong> / <strong>hvplot</strong></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">bokeh / plotly / matplotlib</td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">High-level API that targets multiple backends — same code, interactive or static.</td></tr>
+    </tbody>
+  </table>
+  <p class="callout" style="margin-top:0.6em;">Matplotlib is the floor everything stands on. Once you can read an <code>ax</code> chain, you can debug seaborn, pandas, and plotnine output too.</p>
+</section>
+
 <section>
   <section class="title-slide">
     <span class="kicker">Part 1 · 0:00 – 0:30</span>
@@ -1085,36 +1109,63 @@ print('style applied inside the context manager')
     <p class="muted">Ten everyday tools the official guide hammers — and you will hit within a week of real work.</p>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,matplotlib">
     <h2>Annotations &amp; text</h2>
-    <p><code>ax.text</code> drops a string at <code>(x, y)</code>. <code>ax.annotate</code> adds an arrow from text to a target point — perfect for calling out a peak, an outlier, or a regime change.</p>
-<pre><code class="language-python">fig, ax = plt.subplots()
+    <div class="ex-prompt"><code>ax.text</code> drops a string at <code>(x, y)</code>; <code>ax.annotate</code> adds an arrow from text to a target. <code>xy</code> is the arrow tip; <code>xytext</code> is where the label sits.</div>
+<textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+
+fig, ax = plt.subplots()
 x = np.linspace(0, 4*np.pi, 200)
 ax.plot(x, np.sin(x))
 peak = (np.pi/2, 1.0)
 ax.annotate('first peak', xy=peak, xytext=(2.5, 1.3),
             arrowprops=dict(arrowstyle='->', color='#b45309'))
-ax.text(4*np.pi - 0.5, -0.9, 'end of window', ha='right', color='#64748b')</code></pre>
-    <p class="muted"><code>xy</code> is the arrow tip; <code>xytext</code> is where the label sits.</p>
+ax.text(4*np.pi - 0.5, -0.9, 'end of window', ha='right', color='#64748b')
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,matplotlib">
     <h2>Axis scales — log, symlog, logit</h2>
-    <p>One call rescales an axis. Use <code>'log'</code> for orders-of-magnitude data (loss curves, populations), <code>'symlog'</code> when the data crosses zero, <code>'logit'</code> for probabilities near 0 or 1.</p>
-<pre><code class="language-python">epochs = np.arange(1, 101)
+    <div class="ex-prompt">One call rescales an axis. Use <code>'log'</code> for orders-of-magnitude data (loss curves, populations), <code>'symlog'</code> when data crosses zero, <code>'logit'</code> for probabilities near 0 or 1.</div>
+<textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+
+epochs = np.arange(1, 101)
 loss = 1.0 / epochs + 0.01
 
 fig, ax = plt.subplots()
 ax.plot(epochs, loss)
-ax.set_yscale('log')          # linear in log-space
-ax.set_xlabel('epoch'); ax.set_ylabel('loss')</code></pre>
-    <p class="callout">A straight line on a log-y plot means exponential decay. Always check both scales before claiming "it plateaued."</p>
+ax.set_yscale('log')
+ax.set_xlabel('epoch'); ax.set_ylabel('loss')
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,pandas,matplotlib">
     <h2>Date &amp; time ticks</h2>
-    <p>Matplotlib understands <code>datetime</code> and <code>numpy.datetime64</code> on either axis. <code>matplotlib.dates</code> gives you locators (where ticks go) and formatters (how they render).</p>
-<pre><code class="language-python">import matplotlib.dates as mdates
+    <div class="ex-prompt">Matplotlib understands <code>datetime</code> and <code>numpy.datetime64</code> on either axis. <code>matplotlib.dates</code> gives you locators (where ticks go) and formatters (how they render).</div>
+<textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+import numpy as np
+import pandas as pd
+
 dates = pd.date_range('2026-01-01', periods=120, freq='D')
 y = np.cumsum(np.random.default_rng(0).standard_normal(120))
 
@@ -1122,54 +1173,95 @@ fig, ax = plt.subplots()
 ax.plot(dates, y)
 ax.xaxis.set_major_locator(mdates.MonthLocator())
 ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
-fig.autofmt_xdate()   # rotate labels so they fit</code></pre>
+fig.autofmt_xdate()
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,matplotlib">
     <h2>Colorbars</h2>
-    <p>A colorbar turns the colormap legend into something readable. The trick: <code>scatter</code>, <code>imshow</code>, and friends return a <em>mappable</em>; pass it to <code>fig.colorbar</code> together with the Axes it should attach to.</p>
-<pre><code class="language-python">rng = np.random.default_rng(0)
+    <div class="ex-prompt"><code>scatter</code>, <code>imshow</code>, and friends return a <em>mappable</em>; pass it to <code>fig.colorbar</code> with the Axes it should attach to. Without <code>ax=ax</code> the bar steals space from whichever Axes is current.</div>
+<textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+
+rng = np.random.default_rng(0)
 x, y, z = rng.standard_normal((3, 300))
 
 fig, ax = plt.subplots()
 sc = ax.scatter(x, y, c=z, cmap='viridis', s=20)
 cbar = fig.colorbar(sc, ax=ax)
-cbar.set_label('z value')</code></pre>
-    <p class="muted">Without <code>ax=ax</code> the bar steals space from whatever Axes is current — surprising in subplot grids.</p>
+cbar.set_label('z value')
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
-    <h2><code>imshow</code> — images &amp; heatmaps</h2>
-    <p>Any 2-D array becomes a heatmap. Confusion matrices, attention maps, raw pixels — same call.</p>
-<pre><code class="language-python">rng = np.random.default_rng(0)
+  <section class="example" data-packages="numpy,matplotlib" style="font-size: 0.6em;">
+    <h2 style="margin:0 0 0.2em 0;"><code>imshow</code> — images &amp; heatmaps</h2>
+    <div class="ex-prompt" style="margin:0.2em 0;">Any 2-D array becomes a heatmap. <code>origin='lower'</code> puts row 0 at the bottom (math convention); <code>extent</code> maps array indices to data coords; <code>aspect='equal'</code> keeps cells square.</div>
+<textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+
+rng = np.random.default_rng(0)
 M = rng.random((8, 8))
 
 fig, ax = plt.subplots()
 im = ax.imshow(M, cmap='magma', origin='lower',
                extent=[0, 8, 0, 8], aspect='equal')
-fig.colorbar(im, ax=ax)</code></pre>
-    <ul>
-      <li><code>origin='lower'</code> — put row 0 at the bottom (math convention). Default is top (image convention).</li>
-      <li><code>extent=[x0,x1,y0,y1]</code> — map array indices to data coordinates.</li>
-      <li><code>aspect='auto'</code> — let cells stretch to fill; <code>'equal'</code> keeps them square.</li>
-    </ul>
+fig.colorbar(im, ax=ax)
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,matplotlib">
     <h2>Constrained layout — the modern <code>tight_layout</code></h2>
-    <p><code>tight_layout()</code> runs <em>once</em> at call time and can leave you to tweak it again whenever you change a label. <code>layout='constrained'</code> runs every draw and adapts automatically — including for colorbars and suptitles.</p>
-<pre><code class="language-python">fig, axes = plt.subplots(2, 2, figsize=(8, 5),
-                         layout='constrained')
+    <div class="ex-prompt"><code>tight_layout()</code> runs once at call time. <code>layout='constrained'</code> runs every draw and adapts automatically — including for colorbars and suptitles. Prefer it for any new plot with multiple subplots.</div>
+<textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+
+fig, axes = plt.subplots(2, 2, figsize=(8, 5), layout='constrained')
 for ax in axes.flat:
-    ax.plot([0, 1], [0, 1]); ax.set_title('a long title')
-fig.suptitle('layout="constrained" handles this automatically')</code></pre>
-    <p class="callout">Prefer <code>layout='constrained'</code> for any new plot with multiple subplots, colorbars, or a suptitle.</p>
+    ax.plot([0, 1], [0, 1])
+    ax.set_title('a long title')
+fig.suptitle('layout="constrained" handles this automatically')
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,matplotlib">
     <h2><code>subplot_mosaic</code> — layouts you can read</h2>
-    <p>Asymmetric layouts used to require <code>gridspec</code>. <code>subplot_mosaic</code> takes an ASCII map and gives you back a dict keyed by the labels you wrote.</p>
-<pre><code class="language-python">fig, axd = plt.subplot_mosaic(
+    <div class="ex-prompt">Asymmetric layouts used to require <code>gridspec</code>. <code>subplot_mosaic</code> takes an ASCII map and gives you back a dict keyed by the labels you wrote.</div>
+<textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+
+fig, axd = plt.subplot_mosaic(
     '''
     AAB
     CCB
@@ -1177,14 +1269,26 @@ fig.suptitle('layout="constrained" handles this automatically')</code></pre>
 
 axd['A'].plot([0,1,2], [0,1,4]); axd['A'].set_title('A — wide top')
 axd['B'].hist(np.random.default_rng(0).standard_normal(200))
+axd['B'].set_title('B — full-height right')
 axd['C'].plot([0,1,2], [2,1,0]); axd['C'].set_title('C — wide bottom')
-axd['B'].set_title('B — full-height right')</code></pre>
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,matplotlib">
     <h2>Twin axes — two y-scales, one chart</h2>
-    <p><code>ax.twinx()</code> returns a second Axes that shares the x-axis. Use it sparingly — readers can be misled by the independent y-scales — but it is the right call for comparing series in different units.</p>
-<pre><code class="language-python">x = np.linspace(0, 10, 200)
+    <div class="ex-prompt"><code>ax.twinx()</code> returns a second Axes sharing the x-axis. Use sparingly — independent y-scales can mislead — but it is the right call for comparing series in different units.</div>
+<textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+
+x = np.linspace(0, 10, 200)
 fig, ax = plt.subplots()
 l1, = ax.plot(x, np.sin(x), color='#2563eb', label='signal')
 ax.set_ylabel('signal', color='#2563eb')
@@ -1193,37 +1297,258 @@ ax2 = ax.twinx()
 l2, = ax2.plot(x, np.exp(x/5), color='#b45309', label='magnitude')
 ax2.set_ylabel('magnitude', color='#b45309')
 
-ax.legend(handles=[l1, l2], loc='upper left')</code></pre>
+ax.legend(handles=[l1, l2], loc='upper left')
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
+  <section class="example" data-packages="numpy,matplotlib">
     <h2><code>rcParams</code> — defaults you set once</h2>
-    <p>Every default — figure size, DPI, font, line width, grid — lives in <code>plt.rcParams</code>. Set it at the top of a notebook and the rest of the session inherits.</p>
-<pre><code class="language-python">import matplotlib as mpl
-mpl.rcParams['figure.dpi']    = 120
-mpl.rcParams['figure.figsize'] = (7, 4)
-mpl.rcParams['axes.grid']      = True
+    <div class="ex-prompt">Every default — figure size, DPI, font, line width, grid — lives in <code>plt.rcParams</code>. Set it at the top of a notebook and the rest of the session inherits.</div>
+<textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
+
+mpl.rcParams['figure.dpi']      = 120
+mpl.rcParams['figure.figsize']  = (7, 4)
+mpl.rcParams['axes.grid']       = True
 mpl.rcParams['lines.linewidth'] = 1.8
 
-print(plt.style.available[:5])   # built-in style sheets
-# plt.style.use('seaborn-v0_8-whitegrid')   # apply one globally</code></pre>
-    <p class="muted">The same keys live in your <code>~/.matplotlibrc</code> file for persistent defaults across projects.</p>
+fig, ax = plt.subplots()
+ax.plot(np.linspace(0, 1, 50), np.linspace(0, 1, 50) ** 2)
+ax.set_title('rcParams applied')
+print('available styles (first 5):', plt.style.available[:5])
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
-    <h2>Legend placement</h2>
-    <p><code>loc=</code> picks one of nine corners; <code>bbox_to_anchor</code> places the legend at an arbitrary figure coordinate. Need <em>two</em> legends on one Axes? Add the first manually as an artist, then call <code>ax.legend</code> again.</p>
-<pre><code class="language-python">fig, ax = plt.subplots(figsize=(7, 4), layout='constrained')
+  <section class="example" data-packages="numpy,matplotlib" style="font-size: 0.6em;">
+    <h2 style="margin:0 0 0.2em 0;">Legend placement</h2>
+    <div class="ex-prompt" style="margin:0.2em 0;"><code>loc=</code> picks one of nine corners; <code>bbox_to_anchor</code> places the legend at an arbitrary coord. Two legends on one Axes: add the first manually, then call <code>ax.legend</code> again. <code>bbox_to_anchor=(1.02, 0.5)</code> = just outside the right edge.</div>
+<textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots(figsize=(7, 4), layout='constrained')
 l1, = ax.plot([0,1,2], [0,1,4], label='line A')
 l2, = ax.plot([0,1,2], [4,2,1], label='line B')
 l3, = ax.plot([0,1,2], [1,2,3], '--', label='reference')
 
-leg1 = ax.legend(handles=[l1, l2], loc='upper left',
-                 title='series')
-ax.add_artist(leg1)               # keep leg1 when we call legend again
+leg1 = ax.legend(handles=[l1, l2], loc='upper left', title='series')
+ax.add_artist(leg1)
 ax.legend(handles=[l3], loc='center left',
-          bbox_to_anchor=(1.02, 0.5), title='lines')</code></pre>
-    <p class="muted"><code>bbox_to_anchor=(1.02, 0.5)</code> = just outside the right edge, vertically centered. Pair with <code>layout='constrained'</code> so the figure expands to fit.</p>
+          bbox_to_anchor=(1.02, 0.5), title='lines')
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section style="font-size: 0.72em;">
+    <h2 style="margin:0 0 0.3em 0;">pandas <code>.plot</code> — when to use it</h2>
+    <p style="margin:0 0 0.4em 0;">Every <code>DataFrame</code> and <code>Series</code> has a <code>.plot</code> accessor that wraps matplotlib. During EDA it's the <em>fastest</em> path — one line per chart — because it pulls the index, column names, and dtypes straight from the frame.</p>
+    <ul style="margin:0.2em 0; line-height:1.35;">
+      <li><code>df.plot()</code> — line plot, one line per column, index on the x-axis.</li>
+      <li><code>df.plot(kind=...)</code> — <code>'bar'</code>, <code>'barh'</code>, <code>'hist'</code>, <code>'box'</code>, <code>'kde'</code>, <code>'area'</code>, <code>'scatter'</code>, <code>'pie'</code>, <code>'hexbin'</code>.</li>
+      <li>Shortcut form: <code>df.plot.bar()</code>, <code>df.plot.hist(bins=20)</code>, <code>df.plot.scatter(x='a', y='b')</code>.</li>
+      <li>Returns the underlying <code>Axes</code> — keep chaining matplotlib calls (<code>ax.set_ylabel</code>, <code>ax.grid</code>, …).</li>
+    </ul>
+    <p class="callout" style="margin-top:0.5em;">Rule of thumb: reach for <code>df.plot()</code> during exploration; drop to raw <code>ax.plot</code> once you need pixel-level control for a final figure.</p>
+  </section>
+
+  <section class="example" data-packages="numpy,pandas,matplotlib">
+    <h2>Line plot from a DataFrame</h2>
+    <div class="ex-prompt"><code>df.plot()</code> draws one line per column with the DataFrame's index on the x-axis — perfect for time series.</div>
+<textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+dates = pd.date_range('2026-01-01', periods=90, freq='D')
+df = pd.DataFrame({
+    'a': np.cumsum(np.random.default_rng(0).standard_normal(90)),
+    'b': np.cumsum(np.random.default_rng(1).standard_normal(90)),
+}, index=dates)
+
+ax = df.plot(title='df.plot() — line by default', figsize=(7, 4))
+ax.set_ylabel('value')
+ax.grid(True)
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy,pandas,matplotlib">
+    <h2>Bar &amp; grouped bar</h2>
+    <div class="ex-prompt">One row per group, one bar per column. Add <code>stacked=True</code> for cumulative; <code>kind='barh'</code> for horizontal bars (better for long category names).</div>
+<textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import pandas as pd
+
+sales = pd.DataFrame({
+    'q1': [120, 90, 60, 80],
+    'q2': [150, 110, 95, 70],
+    'q3': [170, 130, 120, 95],
+}, index=['North', 'South', 'East', 'West'])
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 4), layout='constrained')
+sales.plot(kind='bar',  ax=axes[0], title='grouped')
+sales.plot(kind='bar',  ax=axes[1], stacked=True, title='stacked')
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy">
+    <h2>Histogram &amp; KDE — distribution shape</h2>
+    <div class="ex-prompt"><code>.plot.hist</code> bins one or more columns; <code>.plot.kde</code> draws a smooth density estimate over the same data. Pass <code>alpha</code> to compare distributions on the same Axes.</div>
+<textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+rng = np.random.default_rng(0)
+df = pd.DataFrame({
+    'control':   rng.normal(0,   1,   1000),
+    'treatment': rng.normal(0.4, 1.1, 1000),
+})
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 4), layout='constrained')
+df.plot.hist(bins=30, alpha=0.55, ax=axes[0], title='histogram')
+df.plot.kde(ax=axes[1], title='kernel density')
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy,pandas,matplotlib">
+    <h2>Box &amp; area</h2>
+    <div class="ex-prompt"><code>.plot.box</code> summarizes a numeric column per category — pass a wide frame (one column per group). <code>.plot.area</code> stacks line series into filled bands.</div>
+<textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+rng = np.random.default_rng(0)
+box_df = pd.DataFrame({
+    'A': rng.normal(0,   1, 200),
+    'B': rng.normal(0.5, 1, 200),
+    'C': rng.normal(-0.3, 1.5, 200),
+})
+
+months = pd.date_range('2026-01-01', periods=12, freq='ME')
+area_df = pd.DataFrame({
+    'mobile':  rng.integers(20, 80,  12),
+    'desktop': rng.integers(30, 100, 12),
+    'tablet':  rng.integers(5,  25,  12),
+}, index=months)
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 4), layout='constrained')
+box_df.plot.box(ax=axes[0], title='box per column')
+area_df.plot.area(ax=axes[1], title='stacked area')
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy,pandas,matplotlib">
+    <h2>Scatter — color &amp; size by a column</h2>
+    <div class="ex-prompt"><code>.plot.scatter</code> takes <code>x</code> and <code>y</code> column names, plus optional <code>c</code> (color by a column) and <code>s</code> (size by a column or scalar). The colorbar comes for free.</div>
+<textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+rng = np.random.default_rng(0)
+df = pd.DataFrame({
+    'horsepower': rng.uniform(60, 250, 80),
+    'mpg':        rng.uniform(10, 45,  80),
+    'weight':     rng.uniform(1500, 4500, 80),
+})
+
+# Drop to ax.scatter — pandas .plot.scatter + cmap hits a pandas/matplotlib
+# version mismatch in Pyodide (ColormapRegistry.get_cmap was removed).
+fig, ax = plt.subplots(figsize=(7, 4))
+sc = ax.scatter(df['horsepower'], df['mpg'],
+                c=df['weight'], cmap='viridis',
+                s=40, alpha=0.8)
+ax.set_xlabel('horsepower'); ax.set_ylabel('mpg')
+ax.set_title('mpg vs horsepower (color = weight)')
+fig.colorbar(sc, ax=ax, label='weight')
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy,pandas,matplotlib">
+    <h2>Subplots from one DataFrame</h2>
+    <div class="ex-prompt"><code>subplots=True</code> gives each column its own Axes; <code>layout=(rows, cols)</code> shapes the grid. Quickest way to see every column at once during EDA.</div>
+<textarea class="ex-code">import matplotlib; matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+dates = pd.date_range('2026-01-01', periods=120, freq='D')
+rng = np.random.default_rng(0)
+df = pd.DataFrame({
+    'temperature':  20 + np.cumsum(rng.standard_normal(120)) * 0.3,
+    'humidity':     50 + np.cumsum(rng.standard_normal(120)) * 0.4,
+    'wind_speed':   10 + np.abs(np.cumsum(rng.standard_normal(120)) * 0.2),
+    'pressure':   1010 + np.cumsum(rng.standard_normal(120)) * 0.1,
+}, index=dates)
+
+axes = df.plot(subplots=True, layout=(2, 2),
+               figsize=(10, 5), sharex=True,
+               title='weather — all columns at once')
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 </section>
 
