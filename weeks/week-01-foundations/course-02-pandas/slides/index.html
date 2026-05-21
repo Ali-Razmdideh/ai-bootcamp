@@ -675,6 +675,82 @@ print(penguins.head())
     <p class="muted" style="text-align:center;">Same shape on the way in and on the way out — pick the format, the API name is predictable.</p>
   </section>
 
+  <section style="font-size: 0.72em;">
+    <h2>Supported formats — the full menu</h2>
+    <p class="muted" style="margin:0 0 0.5em 0;">Every reader is <code>pd.read_*</code>; every writer is <code>df.to_*</code>. Pick by what the data already lives in.</p>
+    <table style="border-collapse:collapse; width:100%;">
+      <thead>
+        <tr style="background:#f1f5f9;">
+          <th style="text-align:left; padding:0.3em 0.5em; border:1px solid #cbd5e1;">Format</th>
+          <th style="text-align:left; padding:0.3em 0.5em; border:1px solid #cbd5e1;">Reader / Writer</th>
+          <th style="text-align:left; padding:0.3em 0.5em; border:1px solid #cbd5e1;">When to use</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>CSV / TSV</strong></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><code>read_csv</code> / <code>to_csv</code></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">Universal interchange; slow, no types preserved.</td></tr>
+        <tr><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>Parquet</strong></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><code>read_parquet</code> / <code>to_parquet</code></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">Columnar, compressed, typed — default for ML/analytics on disk.</td></tr>
+        <tr><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>Feather / Arrow IPC</strong></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><code>read_feather</code> / <code>to_feather</code></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">Fast zero-copy interchange between pandas / Polars / R.</td></tr>
+        <tr><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>JSON / JSON Lines</strong></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><code>read_json</code> / <code>to_json</code></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">API payloads, log streams (<code>lines=True</code>).</td></tr>
+        <tr><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>Excel</strong></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><code>read_excel</code> / <code>to_excel</code></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">.xlsx / .xls from analysts; needs <code>openpyxl</code>.</td></tr>
+        <tr><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>SQL</strong></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><code>read_sql</code> / <code>to_sql</code></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">Postgres / MySQL / SQLite via SQLAlchemy.</td></tr>
+        <tr><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>HDF5</strong></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><code>read_hdf</code> / <code>to_hdf</code></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">Hierarchical scientific data, partial reads (PyTables).</td></tr>
+        <tr><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>ORC</strong></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><code>read_orc</code> / <code>to_orc</code></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">Hadoop/Hive columnar storage.</td></tr>
+        <tr><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>HTML</strong></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><code>read_html</code> / <code>to_html</code></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">Scrape <code>&lt;table&gt;</code> tags from web pages.</td></tr>
+        <tr><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>XML</strong></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><code>read_xml</code> / <code>to_xml</code></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">Legacy enterprise feeds, RSS, SOAP.</td></tr>
+        <tr><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>Stata / SAS / SPSS</strong></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><code>read_stata</code> / <code>read_sas</code> / <code>read_spss</code></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">Stats software interop (econ, social science, medical).</td></tr>
+        <tr><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>Clipboard</strong></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><code>read_clipboard</code> / <code>to_clipboard</code></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">Quick copy-paste from a spreadsheet during EDA.</td></tr>
+        <tr style="background:#fef2f2;"><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>Pickle</strong> ⚠️</td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><code>read_pickle</code> / <code>to_pickle</code></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">Round-trips any Python object — <em>never load untrusted files</em> (next slide).</td></tr>
+      </tbody>
+    </table>
+    <p class="callout" style="margin-top:0.6em;">Default to <strong>Parquet</strong> for storage, <strong>CSV</strong> for handoff, <strong>Feather/Arrow</strong> for cross-tool speed.</p>
+  </section>
+
+  <section style="font-size: 0.55em;">
+    <h2 style="margin:0 0 0.3em 0;">Framework-by-framework — who's safe, who isn't</h2>
+    <table style="border-collapse:collapse; width:100%;">
+      <thead>
+        <tr style="background:#f1f5f9;">
+          <th style="text-align:left; padding:0.3em 0.5em; border:1px solid #cbd5e1;">Library</th>
+          <th style="text-align:left; padding:0.3em 0.5em; border:1px solid #cbd5e1;">Pickle by default?</th>
+          <th style="text-align:left; padding:0.3em 0.5em; border:1px solid #cbd5e1;">Default format</th>
+          <th style="text-align:left; padding:0.3em 0.5em; border:1px solid #cbd5e1;">Secure alternative</th>
+          <th style="text-align:left; padding:0.3em 0.5em; border:1px solid #cbd5e1;">Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background:#ecfdf5;">
+          <td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>Hugging Face</strong></td>
+          <td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">No</td>
+          <td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>safetensors</strong></td>
+          <td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><em>already secure</em> (legacy <code>.bin</code> = pickle)</td>
+          <td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>Secure:</strong> safetensors across the ecosystem — no code paths in weight files.</td>
+        </tr>
+        <tr style="background:#ecfdf5;">
+          <td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>TensorFlow</strong></td>
+          <td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">No</td>
+          <td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><code>SavedModel</code> (protobuf) / <code>.keras</code> (zip/H5)</td>
+          <td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><em>already secure</em></td>
+          <td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>Secure:</strong> language-agnostic formats. Watch legacy <code>.h5</code> with custom Python Lambda layers.</td>
+        </tr>
+        <tr style="background:#fef2f2;">
+          <td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>PyTorch</strong></td>
+          <td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>Yes</strong></td>
+          <td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">Zip-archived pickle (<code>.pt</code>/<code>.pth</code>)</td>
+          <td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>safetensors</strong>, or <code>torch.load(..., weights_only=True)</code></td>
+          <td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>High risk:</strong> default save embeds the full class graph. <code>safetensors</code> stores raw tensors only.</td>
+        </tr>
+        <tr style="background:#fef2f2;">
+          <td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>scikit-learn</strong></td>
+          <td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>Yes</strong></td>
+          <td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><code>pickle</code> / <code>joblib</code> (wraps pickle)</td>
+          <td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>skops</strong>, ONNX, PMML</td>
+          <td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>High risk:</strong> vulnerable to arbitrary code execution. HF built <code>skops</code> as a non-pickle alternative for sklearn.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="callout" style="margin-top:0.6em;"><strong>Gold standard:</strong> <code>safetensors</code> is now the cross-framework default for weights — memory-mapped, fast, zero executable code.</p>
+  </section>
+
   <section class="example" data-packages="numpy,pandas">
     <h2>The first three things on any fresh dataset</h2>
     <div class="ex-prompt">Always inspect before you operate. <code>shape</code> tells you size, <code>dtypes</code> / <code>info</code> tell you column types and missingness, <code>describe</code> gives a quick summary — every single time.</div>
@@ -1331,6 +1407,63 @@ tips = pd.DataFrame({
       <span class="ex-status"></span>
     </div>
     <pre class="ex-output"></pre>
+  </section>
+
+  <section class="example" data-packages="numpy,pandas">
+    <h2><code>apply</code> — escape hatch for arbitrary functions</h2>
+    <div class="ex-prompt">Vectorized ops first (<code>+</code>, <code>*</code>, <code>.str</code>, <code>.dt</code>, <code>np.where</code>) — they're 10–100× faster. Reach for <code>apply</code> only when no vectorized form exists. On a Series, <code>apply</code> runs per element; on a DataFrame, <code>axis=0</code> runs per column (default), <code>axis=1</code> per row.</div>
+<textarea class="ex-code">import pandas as pd
+
+df = pd.DataFrame({
+    'name':  ['alice', 'bob', 'carol', 'dan'],
+    'score': [82, 75, 91, 68],
+    'bonus': [ 5,  3,  8,  2],
+})
+
+# 1) Series.apply — element-wise on one column
+df['name_title'] = df['name'].apply(str.title)
+
+# 2) DataFrame.apply axis=1 — row-wise (gets a Series per row)
+def grade(row):
+    total = row['score'] + row['bonus']
+    return 'A' if total >= 90 else 'B' if total >= 80 else 'C'
+
+df['grade'] = df.apply(grade, axis=1)
+
+# 3) DataFrame.apply axis=0 — column-wise aggregate
+print(df[['score', 'bonus']].apply(lambda col: col.max() - col.min()))
+print()
+print(df)
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <section style="font-size: 0.78em;">
+    <h2><code>apply</code> vs the alternatives</h2>
+    <table style="border-collapse:collapse; width:100%;">
+      <thead>
+        <tr style="background:#f1f5f9;">
+          <th style="text-align:left; padding:0.3em 0.5em; border:1px solid #cbd5e1;">Method</th>
+          <th style="text-align:left; padding:0.3em 0.5em; border:1px solid #cbd5e1;">Works on</th>
+          <th style="text-align:left; padding:0.3em 0.5em; border:1px solid #cbd5e1;">When to use</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>Vectorized op</strong> (<code>+</code>, <code>.str</code>, <code>.dt</code>, <code>np.where</code>)</td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">Series / DataFrame</td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><strong>Always try first</strong> — fastest, no Python loop.</td></tr>
+        <tr><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><code>Series.map</code></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">Series only</td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">Element-wise function or dict lookup (e.g. label encoding).</td></tr>
+        <tr><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><code>Series.apply</code></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">Series only</td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">Element-wise; can return a scalar or a Series (expands to a frame).</td></tr>
+        <tr><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><code>DataFrame.apply(..., axis=0)</code></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">DataFrame</td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">Run a function on each <em>column</em>; for column-level aggregates / reductions.</td></tr>
+        <tr><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><code>DataFrame.apply(..., axis=1)</code></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">DataFrame</td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">Run a function on each <em>row</em> — slowest; only when row logic needs multiple columns.</td></tr>
+        <tr><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><code>DataFrame.applymap</code> / <code>.map</code></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">DataFrame (every cell)</td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">Element-wise transform of every cell (formatting, type coercion).</td></tr>
+        <tr><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;"><code>GroupBy.apply</code></td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">Each group</td><td style="padding:0.3em 0.5em; border:1px solid #cbd5e1;">Custom per-group transforms that <code>.agg</code> / <code>.transform</code> can't express.</td></tr>
+      </tbody>
+    </table>
+    <p class="callout" style="margin-top:0.6em;"><code>apply</code> is a Python <code>for</code>-loop in disguise. Use it for clarity, not speed — and avoid <code>axis=1</code> on hot paths.</p>
   </section>
 </section>
 
