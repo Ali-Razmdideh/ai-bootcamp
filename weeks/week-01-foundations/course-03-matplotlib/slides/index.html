@@ -367,6 +367,7 @@ ax.plot(x, x,        label='x',     linestyle='-')
 ax.plot(x, x**2,     label='x^2',   linestyle='--')
 ax.plot(x, x**3,     label='x^3',   linestyle=':', marker='.', markevery=20)
 ax.set_title('Powers of x')
+ax.set_xticks(np.arange(-2, 3, 1))
 ax.legend()
 plt.show()
 print('linestyles:', [ln.get_linestyle() for ln in ax.lines])
@@ -701,7 +702,7 @@ penguins = pd.DataFrame({'species': species, 'body_mass_g': body_mass})
 groups = [penguins.loc[penguins['species'] == s, 'body_mass_g']
           for s in penguins['species'].unique()]
 fig, ax = plt.subplots()
-ax.boxplot(groups, tick_labels=list(penguins['species'].unique()))
+ax.boxplot(groups, labels=list(penguins['species'].unique()))
 ax.set_ylabel('body mass (g)')
 plt.show()
 print('groups:', list(penguins['species'].unique()))
@@ -951,10 +952,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 x = np.linspace(-1.4, 1.4, 30)
-with plt.style.context('seaborn-v0_8-whitegrid'):
+with plt.style.context('ggplot'):
     fig, ax = plt.subplots()
     ax.plot(x, np.sin(2 * np.pi * x))
-    ax.set_title('with seaborn-v0_8-whitegrid')
+    ax.set_title('with ggplot')
 plt.show()
 print('style applied inside the context manager')
 </textarea>
@@ -976,14 +977,6 @@ print('style applied inside the context manager')
     <li class="fragment fade-up"><strong>Subplots share axes; <code>tight_layout</code> fixes the crowding.</strong></li>
   </ol>
   <p class="callout fragment fade-up">Next course: Seaborn, SciPy, and the Grand Finale Lab.</p>
-</section>
-
-<section class="title-slide">
-  <span class="kicker">References</span>
-  <h2>Further reading</h2>
-  <ul>
-    <li><a href="https://web.mit.edu/dvp/Public/numpybook.pdf" target="_blank">Guide to NumPy</a> — Travis E. Oliphant (free PDF). Local copy: <code>assets/books/numpybook.pdf</code>.</li>
-  </ul>
 </section>
 
 </div></div>
