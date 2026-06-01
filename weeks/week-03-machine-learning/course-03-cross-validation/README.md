@@ -1,4 +1,4 @@
-# Course 4 — Cross-Validation
+# Course 3 — Cross-Validation
 
 **Duration:** 1.5 hours
 **Why this matters:** A single train/test split is noisy: it can pick the "best" polynomial degree differently every time you change the seed. Cross-validation is how you stop fooling yourself.
@@ -28,5 +28,5 @@ By the end of the session a student can:
 ## How to run
 
 ```bash
-uv run jupyter lab weeks/week-03-machine-learning/course-04-cross-validation/
+uv run jupyter lab weeks/week-03-machine-learning/course-03-cross-validation/
 ```

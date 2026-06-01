@@ -14,7 +14,7 @@
 <body>
 <div class="reveal"><div class="slides">
 <section class="title-slide">
-  <span class="kicker">Week 3 · Course 3 · 1.5 hours</span>
+  <span class="kicker">Week 3 · Course 2 · 1.5 hours</span>
   <h1>Feature Engineering</h1>
   <p class="muted" style="font-size:1.1em;">Scaling, polynomial features, encodings, pipelines</p>
 </section>
@@ -40,7 +40,7 @@
   <section>
     <h2>Why scale at all?</h2>
 <ul>
-  <li class="fragment fade-up">Plain LR doesn't care — but <em>regularized</em> LR does (Ridge/Lasso in Course 6).</li>
+  <li class="fragment fade-up">Plain LR doesn't care — but <em>regularized</em> LR does (Ridge/Lasso in Course 4).</li>
   <li class="fragment fade-up">Distance-based methods (KNN, SVM next week) crumble without scaling.</li>
   <li class="fragment fade-up">Neural nets converge faster on standardized inputs.</li>
 </ul>
@@ -774,7 +774,7 @@ print(f'R^2 = {result:.4f}')</script>
 
   <section class="example" data-packages="pandas,numpy,scikit-learn">
     <h2>Interactions in bulk</h2>
-    <div class="ex-prompt"><code>PolynomialFeatures(interaction_only=True)</code> adds every pairwise product <em>x<sub>i</sub> · x<sub>j</sub></em>. The column count explodes fast — combine with Lasso (Course 6) to keep only the useful ones.</div>
+    <div class="ex-prompt"><code>PolynomialFeatures(interaction_only=True)</code> adds every pairwise product <em>x<sub>i</sub> · x<sub>j</sub></em>. The column count explodes fast — combine with Lasso (Course 4) to keep only the useful ones.</div>
 <textarea class="ex-code">import pandas as pd
 from sklearn.preprocessing import PolynomialFeatures
 

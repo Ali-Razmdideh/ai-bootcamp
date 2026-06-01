@@ -1,7 +1,7 @@
 # Course 3 — Logistic Regression II — Multinomial & Regularized
 
 **Duration:** 1.5 hours
-**Why this matters:** Real problems have more than two classes and more predictors than observations. Course 3 generalizes binary LR to softmax and adds L1/L2 regularization — closing the loop with Week 3 Course 6.
+**Why this matters:** Real problems have more than two classes and more predictors than observations. Course 3 generalizes binary LR to softmax and adds L1/L2 regularization — closing the loop with Week 3 Course 4 (Ridge/Lasso).
 
 ## Schedule
 

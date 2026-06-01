@@ -9,6 +9,7 @@ Usage:
 from __future__ import annotations
 
 import html
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -132,13 +133,67 @@ def build_deck(spec: dict) -> str:
     return out
 
 
+def _add_minutes(time_str: str, offset_h: float) -> str:
+    h, m = (int(x) for x in time_str.split(":"))
+    total = h * 60 + m + int(offset_h * 60)
+    return f"{total // 60}:{total % 60:02d}"
+
+
+def _retime_summary_slot(slot: str, offset_h: float) -> str:
+    if " · " not in slot:
+        return slot
+    start, end = slot.split(" · ", 1)
+    return f"{_add_minutes(start.strip(), offset_h)} · {_add_minutes(end.strip(), offset_h)}"
+
+
+def _retime_part_kicker(kicker: str, part_num: int, offset_h: float) -> str:
+    m = re.search(r"(\d+:\d+)\s*[–-]\s*(\d+:\d+)", kicker)
+    if not m:
+        return kicker
+    start, end = m.group(1), m.group(2)
+    return f"Part {part_num} · {_add_minutes(start, offset_h)} – {_add_minutes(end, offset_h)}"
+
+
+def merge_deck_specs(
+    a: dict,
+    b: dict,
+    *,
+    title: str,
+    kicker: str,
+    subtitle: str,
+    callout: str,
+    recap_items: list[str],
+    recap_callout: str,
+    offset_h: float = 1.5,
+) -> dict:
+    n_parts_a = len(a["parts"])
+    parts_b = []
+    for i, p in enumerate(b["parts"], start=1):
+        p2 = dict(p)
+        p2["kicker"] = _retime_part_kicker(p["kicker"], n_parts_a + i, offset_h)
+        parts_b.append(p2)
+    summary_b = [
+        (_retime_summary_slot(s[0], offset_h), s[1], s[2]) for s in b["parts_summary"]
+    ]
+    return {
+        "title": title,
+        "kicker": kicker,
+        "subtitle": subtitle,
+        "parts_summary": a["parts_summary"] + summary_b,
+        "callout": callout,
+        "parts": a["parts"] + parts_b,
+        "recap_items": recap_items,
+        "recap_callout": recap_callout,
+    }
+
+
 # ============================================================================
 # WEEK 3
 # ============================================================================
 
 WEEK3 = ROOT / "weeks" / "week-03-machine-learning"
 
-W3C1 = {
+W3_LR1 = {
     "title": "Linear Regression I — Simple LR",
     "kicker": "Week 3 · Course 1 · 1.5 hours",
     "subtitle": "Fit a line, read the output, infer for β",
@@ -230,9 +285,9 @@ W3C1 = {
 }
 
 
-W3C2 = {
+W3_LR2 = {
     "title": "Linear Regression II — Multiple LR & Diagnostics",
-    "kicker": "Week 3 · Course 2 · 1.5 hours",
+    "kicker": "Week 3 · Part 2 · 1.5 hours",
     "subtitle": "Many predictors, collinearity, residual plots, and categorical encoding",
     "parts_summary": [
         ("0:00 · 0:30", "Multiple LR", "matrix form, collinearity, VIF."),
@@ -252,7 +307,7 @@ W3C2 = {
                 slide("Collinearity flips signs",
                       '<p>If predictor j is well predicted by the others, its coefficient becomes unstable.</p>'
                       '<p style="text-align:center;font-size:1.2em;">VIF<sub>j</sub> = 1 / (1 − R²<sub>j</sub>)</p>'
-                      '<p>VIF > 5–10 is a red flag. Drop one of the correlated pair, or use Ridge (Course 6) to stabilize.</p>',
+                      '<p>VIF > 5–10 is a red flag. Drop one of the correlated pair, or use Ridge (Course 4) to stabilize.</p>',
                       "Run VIF in the notebook on Boston; tax, rad, nox are biggest offenders."),
                 slide("Never read a coefficient in isolation",
                       bullets([
@@ -304,9 +359,9 @@ W3C2 = {
 }
 
 
-W3C3 = {
+W3C2 = {
     "title": "Feature Engineering",
-    "kicker": "Week 3 · Course 3 · 1.5 hours",
+    "kicker": "Week 3 · Course 2 · 1.5 hours",
     "subtitle": "Scaling, polynomial features, encodings, pipelines",
     "parts_summary": [
         ("0:00 · 0:30", "Scaling & pipelines", "StandardScaler, log1p, Pipeline."),
@@ -322,7 +377,7 @@ W3C3 = {
             "slides": [
                 slide("Why scale at all?",
                       bullets([
-                          "Plain LR doesn't care — but <em>regularized</em> LR does (Ridge/Lasso in Course 6).",
+                          "Plain LR doesn't care — but <em>regularized</em> LR does (Ridge/Lasso in Course 4).",
                           "Distance-based methods (KNN, SVM next week) crumble without scaling.",
                           "Neural nets converge faster on standardized inputs.",
                       ])),
@@ -375,7 +430,7 @@ W3C3 = {
                 slide("Interactions in bulk",
                       code_block("PolynomialFeatures(interaction_only=True, include_bias=False)\n"
                                  "# adds every x_i * x_j pair")
-                      + '<p class="muted">Combinatorial explosion ahead — combine with Lasso (Course 6) to keep only the useful interactions.</p>'),
+                      + '<p class="muted">Combinatorial explosion ahead — combine with Lasso (Course 4) to keep only the useful interactions.</p>'),
             ],
         },
     ],
@@ -388,9 +443,9 @@ W3C3 = {
 }
 
 
-W3C4 = {
+W3C3 = {
     "title": "Cross-Validation",
-    "kicker": "Week 3 · Course 4 · 1.5 hours",
+    "kicker": "Week 3 · Course 3 · 1.5 hours",
     "subtitle": "Stop fooling yourself about test error",
     "parts_summary": [
         ("0:00 · 0:30", "The trap", "one split → ten different best degrees."),
@@ -460,16 +515,16 @@ W3C4 = {
 }
 
 
-W3C5 = {
+W3_SEL1 = {
     "title": "Feature Selection I — Subset & Stepwise",
-    "kicker": "Week 3 · Course 5 · 1.5 hours",
+    "kicker": "Week 3 · Part 1 · 1.5 hours",
     "subtitle": "Pick the predictors that matter",
     "parts_summary": [
         ("0:00 · 0:30", "Best subset", "2^p subsets — combinatorial."),
         ("0:30 · 1:00", "Forward stepwise", "greedy and cheap."),
         ("1:00 · 1:30", "AIC / BIC / Cp / adj-R²", "model-size criteria."),
     ],
-    "callout": "Too many predictors hurt prediction. Subset selection is the classical answer; shrinkage (Course 6) is the modern one.",
+    "callout": "Too many predictors hurt prediction. Subset selection is the classical answer; shrinkage (Part 2) is the modern one.",
     "parts": [
         {
             "kicker": "Part 1 · 0:00 – 0:30",
@@ -539,9 +594,9 @@ W3C5 = {
 }
 
 
-W3C6 = {
+W3_SEL2 = {
     "title": "Feature Selection II — Ridge, Lasso, Elastic Net",
-    "kicker": "Week 3 · Course 6 · 1.5 hours",
+    "kicker": "Week 3 · Part 2 · 1.5 hours",
     "subtitle": "Shrink instead of select",
     "parts_summary": [
         ("0:00 · 0:30", "Ridge", "L2 penalty, smooth shrinkage."),
@@ -613,6 +668,28 @@ W3C6 = {
     ],
     "recap_callout": "End of Week 3. Next week: from regression to classification.",
 }
+
+W3C1 = merge_deck_specs(
+    W3_LR1,
+    W3_LR2,
+    title="Linear Regression",
+    kicker="Week 3 · Course 1 · 3 hours",
+    subtitle="Part 1: simple LR on Boston · Part 2: multiple LR, diagnostics, categoricals",
+    callout=W3_LR1["callout"],
+    recap_items=W3_LR1["recap_items"] + W3_LR2["recap_items"],
+    recap_callout="Next: feature engineering — scaling, polynomials, pipelines.",
+)
+
+W3C4 = merge_deck_specs(
+    W3_SEL1,
+    W3_SEL2,
+    title="Feature Selection",
+    kicker="Week 3 · Course 4 · 3 hours",
+    subtitle="Part 1: subset & stepwise · Part 2: Ridge, Lasso, Elastic Net",
+    callout=W3_SEL1["callout"],
+    recap_items=W3_SEL1["recap_items"] + W3_SEL2["recap_items"],
+    recap_callout=W3_SEL2["recap_callout"],
+)
 
 
 # ============================================================================
@@ -1103,12 +1180,7 @@ W4C6 = {
 # ============================================================================
 
 DECKS = [
-    (WEEK3 / "course-01-linear-regression-i" / "slides" / "index.html", W3C1),
-    (WEEK3 / "course-02-linear-regression-ii" / "slides" / "index.html", W3C2),
-    (WEEK3 / "course-03-feature-engineering" / "slides" / "index.html", W3C3),
-    (WEEK3 / "course-04-cross-validation" / "slides" / "index.html", W3C4),
-    (WEEK3 / "course-05-feature-selection-subset" / "slides" / "index.html", W3C5),
-    (WEEK3 / "course-06-feature-selection-shrinkage" / "slides" / "index.html", W3C6),
+    # Week 3 interactive decks: scripts/merge_week03_slides.py (from git + merge)
     (WEEK4 / "course-01-classification-knn" / "slides" / "index.html", W4C1),
     (WEEK4 / "course-02-logistic-regression-i" / "slides" / "index.html", W4C2),
     (WEEK4 / "course-03-logistic-regression-ii" / "slides" / "index.html", W4C3),

@@ -27,12 +27,10 @@ weeks/
     course-03-matplotlib/
     course-04-viz-capstone-scipy/
   week-03-machine-learning/    # Regression, CV, feature selection (ISLP Ch 3, 5, 6)
-    course-01-linear-regression-i/
-    course-02-linear-regression-ii/
-    course-03-feature-engineering/
-    course-04-cross-validation/
-    course-05-feature-selection-subset/
-    course-06-feature-selection-shrinkage/
+    course-01-linear-regression/
+    course-02-feature-engineering/
+    course-03-cross-validation/
+    course-04-feature-selection/
   week-04-classification/      # KNN, logistic, trees, ensembles, SVM (ISLP Ch 4, 8, 9)
     course-01-classification-knn/
     course-02-logistic-regression-i/

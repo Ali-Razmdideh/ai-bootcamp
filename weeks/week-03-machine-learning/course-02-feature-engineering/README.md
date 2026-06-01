@@ -1,4 +1,4 @@
-# Course 3 — Feature Engineering
+# Course 2 — Feature Engineering
 
 **Duration:** 1.5 hours
 **Why this matters:** Models do not learn from raw columns — they learn from the features you hand them. Scaling, polynomial expansion, one-hot encoding, and interaction terms are the four moves that turn a mediocre model into a competitive one.
@@ -28,5 +28,5 @@ By the end of the session a student can:
 ## How to run
 
 ```bash
-uv run jupyter lab weeks/week-03-machine-learning/course-03-feature-engineering/
+uv run jupyter lab weeks/week-03-machine-learning/course-02-feature-engineering/
 ```

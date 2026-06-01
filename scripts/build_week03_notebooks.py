@@ -61,13 +61,13 @@ def write_nb(path: Path, cells: list[dict]) -> None:
 
 def course1_lecture() -> list[dict]:
     return [
-        md("# Course 1 — Linear Regression I",
+        md("# Course 1 — Linear Regression",
            "",
-           "Live-coding notebook mirroring the slides. We use the ISLP `Boston`",
-           "dataset (506 census tracts) and regress median home value (`medv`)",
-           "on the lower-status percentage (`lstat`).",
+           "Live-coding notebook mirroring the slides.",
+           "Part 1: simple LR on the ISLP `Boston` dataset (`medv` ~ `lstat`).",
+           "Part 2: multiple LR, diagnostics, and categorical predictors.",
            "",
-           "**Sections**",
+           "**Part 1 sections**",
            "1. Fitting a line (0:00–0:30)",
            "2. Reading the output (0:30–1:00)",
            "3. Inference for β (1:00–1:30)"),
@@ -245,15 +245,17 @@ def course1_ex3_solution() -> list[dict]:
 
 def course2_lecture() -> list[dict]:
     return [
-        md("# Course 2 — Linear Regression II",
+        md("---",
+           "",
+           "# Part 2 — Multiple LR & diagnostics",
            "",
            "Multiple regression, diagnostics, qualitative predictors and",
            "interactions. We continue with `Boston` and bring in `Carseats`.",
            "",
-           "**Sections**",
-           "1. Multiple LR and collinearity (0:00–0:30)",
-           "2. Diagnostic plots and leverage (0:30–1:00)",
-           "3. Qualitative predictors and interactions (1:00–1:30)"),
+           "**Part 2 sections**",
+           "4. Multiple LR and collinearity (1:30–2:00)",
+           "5. Diagnostic plots and leverage (2:00–2:30)",
+           "6. Qualitative predictors and interactions (2:30–3:00)"),
         code(*REPO_ROOT_BOOTSTRAP,
              "from shared.data_utils import load_dataset",
              "import numpy as np",
@@ -412,7 +414,7 @@ def course2_ex3_solution() -> list[dict]:
 
 def course3_lecture() -> list[dict]:
     return [
-        md("# Course 3 — Feature Engineering",
+        md("# Course 2 — Feature Engineering",
            "",
            "Scaling, polynomial expansions, encoding, interactions, and the",
            "`Pipeline` pattern that holds it all together.",
@@ -440,7 +442,7 @@ def course3_lecture() -> list[dict]:
         code("print('weight: min={:.0f}  max={:.0f}'.format(auto['weight'].min(), auto['weight'].max()))",
              "print('accel : min={:.0f}  max={:.0f}'.format(auto['acceleration'].min(), auto['acceleration'].max()))"),
         md("Linear regression doesn't care, but the moment you add regularization",
-           "(Ridge, Lasso in Course 6) or anything distance-based (KNN, SVM next",
+           "(Ridge, Lasso in Course 4) or anything distance-based (KNN, SVM next",
            "week), the column with the bigger numbers eats the model. Standardize."),
         code("scaler = StandardScaler()",
              "Z = scaler.fit_transform(auto[['weight', 'acceleration']])",
@@ -473,7 +475,7 @@ def course3_lecture() -> list[dict]:
              "    ax.plot(x_grid, pipe.predict(x_grid), label=f'd = {d}', color=color)",
              "ax.set_xlabel('horsepower'); ax.set_ylabel('mpg'); ax.legend()",
              "ax.set_title('Polynomial fits: d=1 underfit, d=15 overfit'); plt.show()"),
-        md("d = 1 is too straight, d = 15 starts wagging at the edges. Course 4",
+        md("d = 1 is too straight, d = 15 starts wagging at the edges. Course 3",
            "will give us a principled way to pick d via cross-validation."),
         md("## 3. Categorical encoding and interactions"),
         md("### One-hot vs ordinal"),
@@ -603,7 +605,7 @@ def course3_ex3_solution() -> list[dict]:
 
 def course4_lecture() -> list[dict]:
     return [
-        md("# Course 4 — Cross-Validation",
+        md("# Course 3 — Cross-Validation",
            "",
            "One train/test split is noisy. K-fold cross-validation is how you",
            "stop fooling yourself when tuning a hyperparameter.",
@@ -784,12 +786,12 @@ def course4_ex3_solution() -> list[dict]:
 
 def course5_lecture() -> list[dict]:
     return [
-        md("# Course 5 — Feature Selection I",
+        md("# Course 4 — Feature Selection",
            "",
-           "Best-subset selection, forward/backward stepwise, and the four",
-           "model-size criteria: AIC, BIC, Mallow's Cp, adjusted R².",
+           "Part 1: best-subset selection, forward stepwise, and model-size criteria.",
+           "Part 2: Ridge, Lasso, and Elastic Net shrinkage.",
            "",
-           "**Sections**",
+           "**Part 1 sections**",
            "1. The combinatorial cost of best-subset (0:00–0:30)",
            "2. Forward stepwise from scratch (0:30–1:00)",
            "3. AIC, BIC, Cp, adjusted R² (1:00–1:30)"),
@@ -981,16 +983,18 @@ def course5_ex3_solution() -> list[dict]:
 
 def course6_lecture() -> list[dict]:
     return [
-        md("# Course 6 — Feature Selection II",
+        md("---",
+           "",
+           "# Part 2 — Ridge, Lasso, Elastic Net",
            "",
            "Shrinkage methods: Ridge, Lasso, Elastic Net. Instead of picking",
            "predictors in or out, every coefficient is pulled toward zero — softly",
            "for Ridge, sharply for Lasso.",
            "",
-           "**Sections**",
-           "1. Ridge regression (0:00–0:30)",
-           "2. Lasso and sparsity (0:30–1:00)",
-           "3. Elastic Net and the end-to-end pipeline (1:00–1:30)"),
+           "**Part 2 sections**",
+           "4. Ridge regression (1:30–2:00)",
+           "5. Lasso and sparsity (2:00–2:30)",
+           "6. Elastic Net and the end-to-end pipeline (2:30–3:00)"),
         code(*REPO_ROOT_BOOTSTRAP,
              "from shared.data_utils import load_dataset",
              "import numpy as np",
@@ -1152,7 +1156,7 @@ def course6_ex2_solution() -> list[dict]:
 def course6_ex3_starter() -> list[dict]:
     return [
         md("**Task 3.** Does Lasso pick the same features as forward stepwise from",
-           "Course 5? List both and report the overlap size."),
+           "Part 1? List both and report the overlap size."),
         code("# your code here"),
     ]
 
@@ -1197,38 +1201,32 @@ def combine(lecture, *exercise_pairs):
 
 
 NOTEBOOKS = [
-    ("course-01-linear-regression-i/lecture.ipynb", lambda: combine(
-        course1_lecture(),
+    ("course-01-linear-regression/lecture.ipynb", lambda: combine(
+        course1_lecture() + course2_lecture(),
         (course1_ex1_starter(), course1_ex1_solution()),
         (course1_ex2_starter(), course1_ex2_solution()),
         (course1_ex3_starter(), course1_ex3_solution()),
-    )),
-    ("course-02-linear-regression-ii/lecture.ipynb", lambda: combine(
-        course2_lecture(),
         (course2_ex1_starter(), course2_ex1_solution()),
         (course2_ex2_starter(), course2_ex2_solution()),
         (course2_ex3_starter(), course2_ex3_solution()),
     )),
-    ("course-03-feature-engineering/lecture.ipynb", lambda: combine(
+    ("course-02-feature-engineering/lecture.ipynb", lambda: combine(
         course3_lecture(),
         (course3_ex1_starter(), course3_ex1_solution()),
         (course3_ex2_starter(), course3_ex2_solution()),
         (course3_ex3_starter(), course3_ex3_solution()),
     )),
-    ("course-04-cross-validation/lecture.ipynb", lambda: combine(
+    ("course-03-cross-validation/lecture.ipynb", lambda: combine(
         course4_lecture(),
         (course4_ex1_starter(), course4_ex1_solution()),
         (course4_ex2_starter(), course4_ex2_solution()),
         (course4_ex3_starter(), course4_ex3_solution()),
     )),
-    ("course-05-feature-selection-subset/lecture.ipynb", lambda: combine(
-        course5_lecture(),
+    ("course-04-feature-selection/lecture.ipynb", lambda: combine(
+        course5_lecture() + course6_lecture(),
         (course5_ex1_starter(), course5_ex1_solution()),
         (course5_ex2_starter(), course5_ex2_solution()),
         (course5_ex3_starter(), course5_ex3_solution()),
-    )),
-    ("course-06-feature-selection-shrinkage/lecture.ipynb", lambda: combine(
-        course6_lecture(),
         (course6_ex1_starter(), course6_ex1_solution()),
         (course6_ex2_starter(), course6_ex2_solution()),
         (course6_ex3_starter(), course6_ex3_solution()),
