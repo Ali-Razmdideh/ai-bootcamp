@@ -2693,6 +2693,589 @@ The lasso performs <em>variable selection</em> — the kink at zero in |β| is w
 
 
 # ============================================================================
+# WEEK 3 · COURSE 5 — Moving Beyond Linearity
+# ============================================================================
+
+_CODE_POLYNOMIAL = """\
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+
+rng = np.random.default_rng(42)
+x = np.linspace(18, 80, 200)
+wage = 110 - 0.015*(x-49)**2 + 0.3*(x-49) + rng.normal(0, 20, 200)
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 4))
+x_rng = np.linspace(18, 80, 300).reshape(-1, 1)
+
+for deg, ax, color in zip([1, 4], axes, ['tab:blue', 'tab:orange']):
+    pipe = Pipeline([
+        ('poly', PolynomialFeatures(degree=deg, include_bias=False)),
+        ('lr', LinearRegression())
+    ])
+    pipe.fit(x.reshape(-1,1), wage)
+    ax.scatter(x, wage, alpha=0.4, s=20, color='steelblue')
+    ax.plot(x_rng, pipe.predict(x_rng), color=color, lw=2.5,
+            label=f'Degree {deg}')
+    ax.set_xlabel('Age'); ax.set_ylabel('Wage')
+    ax.set_title(f'Degree-{deg} Polynomial')
+    ax.legend()
+
+plt.tight_layout()
+plt.show()
+"""
+
+_CODE_STEP_SPLINE = """\
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+
+rng = np.random.default_rng(42)
+age = np.sort(rng.integers(18, 81, 300).astype(float))
+wage = 110 - 0.015*(age-49)**2 + 0.3*(age-49) + rng.normal(0, 20, 300)
+
+# Step function via pd.cut
+cuts = [18, 33.5, 49, 64.5, 80]
+labels = ['18-33', '33-49', '49-65', '65-80']
+cat = pd.cut(age, bins=cuts, labels=labels, include_lowest=True)
+D = pd.get_dummies(cat).values.astype(float)
+m = LinearRegression(fit_intercept=True).fit(D, wage)
+
+x_rng = np.linspace(18, 80, 400)
+cat_rng = pd.cut(x_rng, bins=cuts, labels=labels, include_lowest=True)
+D_rng = pd.get_dummies(cat_rng).values.astype(float)
+
+fig, ax = plt.subplots(figsize=(8, 4))
+ax.scatter(age, wage, alpha=0.35, s=20, color='steelblue')
+ax.step(x_rng, m.predict(D_rng), where='mid',
+        color='darkorange', lw=2.5, label='Step function')
+for c in cuts[1:-1]:
+    ax.axvline(c, color='grey', lw=0.8, linestyle='--', alpha=0.6)
+ax.set_xlabel('Age'); ax.set_ylabel('Wage')
+ax.set_title('Step Function (Piecewise Constant)')
+ax.legend(); plt.tight_layout(); plt.show()
+"""
+
+_CODE_CUBIC_SPLINE = """\
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from scipy.interpolate import UnivariateSpline
+
+rng = np.random.default_rng(42)
+age = np.sort(rng.integers(18, 81, 300).astype(float))
+wage = 110 - 0.015*(age-49)**2 + 0.3*(age-49) + rng.normal(0, 20, 300)
+x_rng = np.linspace(18, 80, 300)
+
+def trunc_power_basis(x, knots, d=3):
+    cols = [x**k for k in range(1, d+1)]
+    for kn in knots:
+        cols.append(np.maximum(x - kn, 0)**d)
+    return np.column_stack(cols)
+
+knots = np.quantile(age, [0.25, 0.5, 0.75])
+X = trunc_power_basis(age, knots)
+m = LinearRegression(fit_intercept=True).fit(X, wage)
+y_cubic = m.predict(trunc_power_basis(x_rng, knots))
+
+# Smoothing spline via scipy
+spl = UnivariateSpline(age, wage, k=3, s=len(age)*200)
+
+fig, axes = plt.subplots(1, 2, figsize=(11, 4))
+for ax, (y_hat, label, color) in zip(axes, [
+    (y_cubic, 'Cubic Spline (3 knots)', 'tab:orange'),
+    (spl(x_rng), 'Smoothing Spline', 'tab:red'),
+]):
+    ax.scatter(age, wage, alpha=0.3, s=20, color='steelblue')
+    ax.plot(x_rng, y_hat, color=color, lw=2.5, label=label)
+    ax.set_xlabel('Age'); ax.set_ylabel('Wage'); ax.legend()
+    ax.set_title(label)
+
+plt.tight_layout(); plt.show()
+"""
+
+_CODE_SMOOTHING_SPLINE = """\
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.interpolate import UnivariateSpline
+
+rng = np.random.default_rng(42)
+age = np.sort(rng.integers(18, 81, 300).astype(float))
+wage = 110 - 0.015*(age-49)**2 + 0.3*(age-49) + rng.normal(0, 20, 300)
+x_rng = np.linspace(18, 80, 300)
+
+smoothing_levels = [
+    (age.size * 20,   '16 df  (wiggly)',  'tab:red'),
+    (age.size * 200,  '6.8 df (LOOCV)',   'tab:blue'),
+    (age.size * 2000, '~2 df  (linear)',  'tab:green'),
+]
+
+fig, ax = plt.subplots(figsize=(8, 4.5))
+ax.scatter(age, wage, alpha=0.25, s=20, color='grey')
+for s, label, color in smoothing_levels:
+    spl = UnivariateSpline(age, wage, k=3, s=s)
+    ax.plot(x_rng, spl(x_rng), lw=2.5, color=color, label=label)
+
+ax.set_xlabel('Age'); ax.set_ylabel('Wage')
+ax.set_title('Smoothing Spline — Effect of lambda (s parameter)')
+ax.legend(); plt.tight_layout(); plt.show()
+"""
+
+_CODE_LOESS = """\
+import numpy as np
+import matplotlib.pyplot as plt
+from statsmodels.nonparametric.smoothers_lowess import lowess
+
+rng = np.random.default_rng(42)
+age = np.sort(rng.integers(18, 81, 300).astype(float))
+wage = 110 - 0.015*(age-49)**2 + 0.3*(age-49) + rng.normal(0, 20, 300)
+
+fig, ax = plt.subplots(figsize=(8, 4.5))
+ax.scatter(age, wage, alpha=0.3, s=20, color='steelblue', label='Data')
+
+for frac, color, label in [
+    (0.2, 'tab:orange', 'span = 0.2 (wiggly)'),
+    (0.5, 'tab:red',    'span = 0.5'),
+    (0.8, 'tab:green',  'span = 0.8 (smooth)'),
+]:
+    smooth = lowess(wage, age, frac=frac, return_sorted=True)
+    ax.plot(smooth[:, 0], smooth[:, 1], lw=2.5, color=color, label=label)
+
+ax.set_xlabel('Age'); ax.set_ylabel('Wage')
+ax.set_title('Local Regression (LOESS) — Different Span Values')
+ax.legend(); plt.tight_layout(); plt.show()
+"""
+
+_CODE_GAM = """\
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from scipy.interpolate import UnivariateSpline
+
+rng = np.random.default_rng(42)
+n = 500
+age  = rng.integers(18, 81, n).astype(float)
+year = rng.integers(2003, 2010, n).astype(float)
+edu  = rng.choice(['HS', 'College', 'Grad'], n, p=[0.4, 0.4, 0.2])
+wage = (110
+        - 0.015*(age-49)**2 + 0.3*(age-49)
+        + 1.5*(year-2006)
+        + np.where(edu=='HS', 0, np.where(edu=='College', 15, 30))
+        + rng.normal(0, 18, n))
+
+# Build feature matrix: spline on age + linear year + dummies for edu
+def spline_cols(x, knots, k=3):
+    cols = [x**d for d in range(1, k+1)]
+    for kn in knots: cols.append(np.maximum(x - kn, 0)**k)
+    return np.column_stack(cols)
+
+knots_age = np.quantile(age, [0.25, 0.5, 0.75])
+X_age  = spline_cols(age, knots_age)
+X_year = (year - year.mean()).reshape(-1, 1)
+X_edu  = pd.get_dummies(edu, drop_first=True).values.astype(float)
+X = np.column_stack([X_year, X_age, X_edu])
+m = LinearRegression(fit_intercept=True).fit(X, wage)
+
+print(f"GAM R² = {m.score(X, wage):.3f}")
+
+# Plot age component
+age_rng = np.linspace(age.min(), age.max(), 200)
+X_age_rng = spline_cols(age_rng, knots_age)
+n_age = X_age.shape[1]
+f_age = X_age_rng @ m.coef_[1:1+n_age]
+f_age -= f_age.mean()
+
+fig, ax = plt.subplots(figsize=(7, 4))
+ax.plot(age_rng, f_age, color='tab:red', lw=2.5)
+ax.axhline(0, color='grey', lw=0.7, linestyle='--')
+ax.set_xlabel('Age'); ax.set_ylabel('f(age)')
+ax.set_title('GAM: Partial Effect of Age')
+plt.tight_layout(); plt.show()
+"""
+
+W3_BL = {
+    "title": "Moving Beyond Linearity",
+    "kicker": "Week 3 · Course 5",
+    "subtitle": "Polynomials, splines, local regression, and generalized additive models",
+    "parts_summary": [
+        ("Part 1 · 0:00–0:20", "Polynomial Regression",
+         "Degree-d models, fitted curves, logistic extension, tail caveats."),
+        ("Part 2 · 0:20–0:35", "Step Functions & Piecewise Polynomials",
+         "Piecewise constant fits, dummy encoding, path from steps to splines."),
+        ("Part 3 · 0:35–1:00", "Splines",
+         "Linear, cubic, and natural cubic splines; knot placement, df trade-offs."),
+        ("Part 4 · 1:00–1:20", "Smoothing Splines",
+         "Roughness-penalised fit, effective df, LOOCV lambda selection."),
+        ("Part 5 · 1:20–1:40", "Local Regression",
+         "Sliding weighted window, span parameter, loess()."),
+        ("Part 6 · 1:40–2:00", "Generalized Additive Models",
+         "Additive structure, GAM components, GAM for classification."),
+    ],
+    "callout": (
+        "Linear models are a starting point, not the end. "
+        "These methods let you capture <em>any</em> smooth nonlinear relationship "
+        "while staying interpretable."
+    ),
+    "parts": [
+        # ------------------------------------------------------------------ #
+        # Part 1 — Polynomial Regression                                      #
+        # ------------------------------------------------------------------ #
+        {
+            "kicker": "Part 1 · 0:00 – 0:20",
+            "title": "Polynomial Regression",
+            "subtitle": "Extending the linear model with higher-degree terms",
+            "slides": [
+                slide(
+                    "Why go beyond linearity?",
+                    bullets([
+                        "Linear models are easy to fit and interpret — but the world is rarely linear.",
+                        "We want methods that are <em>flexible</em> yet still <em>interpretable</em>, unlike black-box models.",
+                        "Key insight: we can enrich the linear model by <strong>transforming the predictors</strong>, while keeping the same least-squares machinery.",
+                        "Five families: <strong>polynomials</strong>, step functions, splines, local regression, and GAMs — each a different way to bend the line.",
+                    ]),
+                    "The beauty of these methods: they all fit into the standard linear model framework — you create new input columns and run lm() or LinearRegression() as usual.",
+                ),
+                slide(
+                    "The Polynomial Model",
+                    two_col(
+                        bullets([
+                            "Replace the single linear predictor X with <strong>X, X², X³, …, Xᵈ</strong>.",
+                            "y<sub>i</sub> = β₀ + β₁x<sub>i</sub> + β₂x<sub>i</sub>² + β₃x<sub>i</sub>³ + … + βₐx<sub>i</sub>ᵈ + ε<sub>i</sub>",
+                            "Treat X<sub>k</sub> = x<sup>k</sup> as a new variable — then it's just <strong>multiple linear regression</strong>.",
+                            "Degree d is a hyperparameter: choose by CV or fix at a small value (d ≤ 5).",
+                            "<strong>Caveat:</strong> polynomials have notorious tail behaviour — they oscillate wildly outside the training range.",
+                        ], fragments=False),
+                        f'<img src="img/ch7_polynomial_fit.svg" style="width:100%;border-radius:8px;">',
+                    ),
+                    "The coefficients themselves are hard to interpret, but the fitted curve f̂(x) is the object of interest.",
+                ),
+                slide(
+                    "Fitted values and confidence bands",
+                    bullets([
+                        "We care about <strong>ŷ(x₀) = β̂₀ + β̂₁x₀ + β̂₂x₀² + β̂₃x₀³ + β̂₄x₀⁴</strong> at any test point x₀.",
+                        "Since ŷ(x₀) is a linear function of β̂, we get a simple expression for its variance — use OLS standard error formula.",
+                        "Plot ŷ(x₀) ± 2·se[ŷ(x₀)] as a <strong>pointwise confidence band</strong>.",
+                        "In Python: fit with <code>PolynomialFeatures + LinearRegression</code>, or <code>np.polyfit</code>; CIs via <code>statsmodels.OLS</code>.",
+                        "In R: <code>y ~ poly(x, degree=3)</code> — orthogonal polynomials are numerically more stable.",
+                    ]),
+                    "Pointwise CI != simultaneous CI — the band tells you the uncertainty at each individual x₀, not jointly across all x₀.",
+                ),
+                slide(
+                    "Logistic polynomial extension",
+                    two_col(
+                        bullets([
+                            "Polynomial features work seamlessly inside <strong>logistic regression</strong>.",
+                            "Example: Pr(wage > 250 | age) modelled as a logistic function of age<sup>1</sup>…age<sup>4</sup>.",
+                            "Compute CIs on the <em>logit scale</em>, then invert with σ(·) to get CI on the probability scale.",
+                            "The rug plot at the bottom shows the (rare) high-earner observations.",
+                        ], fragments=False),
+                        f'<img src="img/ch7_polynomial_logistic.svg" style="width:100%;border-radius:8px;">',
+                    ),
+                    "Computing CIs on logit scale and then transforming avoids probabilities outside [0,1].",
+                ),
+                example_slide(
+                    "Polynomial regression — live",
+                    "Fit degree-1 and degree-4 polynomials on simulated wage data. Plot both fits side by side.",
+                    _CODE_POLYNOMIAL,
+                    packages="numpy,matplotlib,sklearn",
+                ),
+            ],
+        },
+        # ------------------------------------------------------------------ #
+        # Part 2 — Step Functions & Piecewise Polynomials                     #
+        # ------------------------------------------------------------------ #
+        {
+            "kicker": "Part 2 · 0:20 – 0:35",
+            "title": "Step Functions & Piecewise Polynomials",
+            "subtitle": "Breaking the range into regions — constant or polynomial per region",
+            "slides": [
+                slide(
+                    "Step Functions",
+                    two_col(
+                        bullets([
+                            "Divide X into K+1 contiguous regions via <em>cut points</em> c₁ < c₂ < … < cₖ.",
+                            "Create indicator (dummy) variables: C₁(X)=I(X<c₁), C₂(X)=I(c₁≤X<c₂), …",
+                            "Fit a <strong>constant within each region</strong> — effectively a histogram regression.",
+                            "Easy to implement: <code>pd.cut()</code> → <code>get_dummies()</code> → <code>LinearRegression</code>.",
+                            "Useful for creating <strong>interpretable interactions</strong>, e.g. I(year<2005)·Age allows a different slope before/after 2005.",
+                        ], fragments=False),
+                        f'<img src="img/ch7_step_function.svg" style="width:100%;border-radius:8px;">',
+                    ),
+                    "Step functions are popular in biostatistics and economics where region-based effects are natural. They miss smooth trends within each region.",
+                ),
+                slide(
+                    "From steps to piecewise polynomials",
+                    bullets([
+                        "Instead of a constant in each region, fit a <strong>separate polynomial</strong>.",
+                        "A piecewise cubic with K knots fits a degree-3 polynomial in each of the K+1 intervals — that's 4(K+1) parameters.",
+                        "<strong>Problem:</strong> the polynomials need not join smoothly — there can be jumps and kinks at the knots.",
+                        "Adding <em>continuity constraints</em> reduces the parameter count but keeps the fit smooth.",
+                        "<em>Splines</em> have the <strong>maximum</strong> continuity: the function and its first d−1 derivatives are continuous at every knot.",
+                    ]),
+                    "4 panels: piecewise cubic → continuous → cubic spline → linear spline. Each step adds a smoothness constraint.",
+                ),
+                slide(
+                    "Four levels of smoothness",
+                    f'<img src="img/ch7_piecewise_comparison.svg" style="width:100%;border-radius:8px;">',
+                    "Top-left: piecewise cubic — jumps at the knot. Top-right: continuous but kink visible. Bottom-left: cubic spline — smooth. Bottom-right: linear spline — V-shape at knot.",
+                ),
+                example_slide(
+                    "Step function — live",
+                    "Fit a piecewise-constant step function on simulated wage~age data using pd.cut() and LinearRegression.",
+                    _CODE_STEP_SPLINE,
+                    packages="numpy,pandas,matplotlib,sklearn",
+                ),
+            ],
+        },
+        # ------------------------------------------------------------------ #
+        # Part 3 — Splines                                                    #
+        # ------------------------------------------------------------------ #
+        {
+            "kicker": "Part 3 · 0:35 – 1:00",
+            "title": "Splines",
+            "subtitle": "Linear, cubic, and natural cubic splines; basis functions and degrees of freedom",
+            "slides": [
+                slide(
+                    "Linear Splines — basis functions",
+                    two_col(
+                        bullets([
+                            "A <strong>linear spline</strong> with knots ξ₁,…,ξₖ is a piecewise linear function that is <em>continuous</em> at each knot.",
+                            "Represented as: y = β₀ + β₁x + β₂(x−ξ₁)₊ + … + βₖ₊₁(x−ξₖ)₊",
+                            "<strong>Truncated positive part</strong>: (x−ξ)₊ = max(x−ξ, 0)",
+                            "Each basis function is 0 to the left of its knot, then grows linearly — it 'turns on' at ξ.",
+                            "K knots → K+2 parameters (intercept + slope + K kink terms).",
+                        ], fragments=False),
+                        f'<img src="img/ch7_linear_spline_basis.svg" style="width:100%;border-radius:8px;">',
+                    ),
+                    "The truncated power basis is elegant: adding one term per knot is all it takes to create a new kink while keeping continuity.",
+                ),
+                slide(
+                    "Cubic Splines — the workhorse",
+                    two_col(
+                        bullets([
+                            "A <strong>cubic spline</strong> with K knots has continuous first and second derivatives at every knot — the curve looks <em>visually smooth</em>.",
+                            "Truncated cubic basis: b₁=x, b₂=x², b₃=x³, bₖ₊₃=(x−ξₖ)³₊",
+                            "K knots → <strong>K+4 parameters</strong> (3 polynomial terms + K truncated cubics + intercept).",
+                            "Fitted with ordinary least squares — no special algorithm needed.",
+                            "In R: <code>bs(x, knots=c(25,40,60))</code>; in Python: build the truncated basis manually or use <code>patsy.cr()</code>.",
+                        ], fragments=False),
+                        f'<img src="img/ch7_cubic_spline_basis.svg" style="width:100%;border-radius:8px;">',
+                    ),
+                    "Cubic splines are the sweet spot: smooth enough to look natural, yet not too wiggly. Higher degrees rarely help.",
+                ),
+                slide(
+                    "Natural Cubic Splines",
+                    two_col(
+                        bullets([
+                            "Cubic splines can behave badly in the <em>tails</em> (beyond the boundary knots) — high variance, wild extrapolation.",
+                            "A <strong>natural cubic spline</strong> adds the constraint that f(x) is <em>linear</em> beyond the boundary knots.",
+                            "This adds 4 constraints (2 per boundary) → reduces df by 4 vs a regular cubic spline.",
+                            "With the same df, we can place <strong>more internal knots</strong> → better fit in the interior.",
+                            "In Python: <code>scipy.interpolate.UnivariateSpline</code> with boundary conditions.",
+                        ], fragments=False),
+                        f'<img src="img/ch7_natural_spline_compare.svg" style="width:100%;border-radius:8px;">',
+                    ),
+                    "The natural spline (red) stays sensible near the boundaries. The cubic spline (blue) has wider CI bands at the edges.",
+                ),
+                slide(
+                    "Knot placement and degrees of freedom",
+                    two_col(
+                        bullets([
+                            "Strategy: pick K (number of knots), then place them at uniform <strong>quantiles</strong> of X — this puts more knots where the data is dense.",
+                            "Cubic spline: <strong>K+4 df</strong>; Natural spline: <strong>K df</strong>.",
+                            "More df = more flexibility = more variance. Choose K by cross-validation.",
+                            "At the same df, natural splines almost always beat polynomials in the tails.",
+                        ], fragments=False),
+                        f'<img src="img/ch7_knot_df_compare.svg" style="width:100%;border-radius:8px;">',
+                    ),
+                    "Degree-14 polynomial (15 df) goes haywire near the edges. Natural cubic spline (15 df) stays sensible throughout.",
+                ),
+                example_slide(
+                    "Cubic & smoothing splines — live",
+                    "Build a truncated power basis cubic spline and compare to scipy's UnivariateSpline on the same data.",
+                    _CODE_CUBIC_SPLINE,
+                    packages="numpy,matplotlib,sklearn,scipy",
+                ),
+            ],
+        },
+        # ------------------------------------------------------------------ #
+        # Part 4 — Smoothing Splines                                          #
+        # ------------------------------------------------------------------ #
+        {
+            "kicker": "Part 4 · 1:00 – 1:20",
+            "title": "Smoothing Splines",
+            "subtitle": "Roughness-penalised fitting — no knot placement needed",
+            "slides": [
+                slide(
+                    "The smoothing spline criterion",
+                    bullets([
+                        "Minimise over all smooth functions g: <strong>Σ(yᵢ − g(xᵢ))² + λ ∫ g″(t)² dt</strong>",
+                        "First term = RSS — fits the data.",
+                        "Second term = <em>roughness penalty</em> — penalises curvature (g″ large ≡ wiggly).",
+                        "λ ≥ 0 controls the trade-off: <strong>λ=0</strong> → interpolating spline (zero training RSS), <strong>λ→∞</strong> → linear fit.",
+                        "The solution is always a <em>natural cubic spline</em> with a knot at every unique xᵢ — but λ controls effective smoothness.",
+                    ]),
+                    "The roughness penalty λ∫g''² is the second derivative integrated over the whole domain — large g'' means rapid change in slope, i.e. wiggliness.",
+                ),
+                slide(
+                    "Effective degrees of freedom",
+                    two_col(
+                        bullets([
+                            "Fitted values: ĝ<sub>λ</sub> = <strong>S<sub>λ</sub> y</strong>, where S<sub>λ</sub> is an n×n smoother matrix.",
+                            "Effective df: df<sub>λ</sub> = Σᵢ {S<sub>λ</sub>}ᵢᵢ — the trace of the smoother matrix.",
+                            "Convenient to specify <strong>df instead of λ</strong> — the algorithm finds the λ that gives the target df.",
+                            "LOOCV: RSS<sub>CV</sub>(λ) = Σ [(yᵢ − ĝ<sub>λ</sub>(xᵢ)) / (1 − {S<sub>λ</sub>}ᵢᵢ)]² — computed from a single fit!",
+                        ], fragments=False),
+                        f'<img src="img/ch7_smoothing_spline.svg" style="width:100%;border-radius:8px;">',
+                    ),
+                    "The LOOCV formula for smoothing splines is free — unlike k-fold CV which requires k refits, LOOCV here is just a diagonal division.",
+                ),
+                slide(
+                    "Smoothing splines in Python",
+                    bullets([
+                        "<code>scipy.interpolate.UnivariateSpline(x, y, k=3, s=smoothing_factor)</code>",
+                        "The <code>s</code> parameter controls smoothing: s=0 → interpolating, s large → very smooth.",
+                        "Set s ≈ n × σ² as a rule of thumb; use CV to tune.",
+                        "<code>spl.get_residual()</code> returns RSS; effective df via <code>spl.get_knots()</code> count.",
+                        "No need to choose knot locations — the algorithm places them automatically at the data points.",
+                    ]),
+                    "In R: smooth.spline(x, y, df=10) specifies df directly; smooth.spline(x, y) uses LOOCV automatically.",
+                ),
+                example_slide(
+                    "Smoothing spline — live",
+                    "Fit smoothing splines with different s values (λ proxy). See how the smoothing parameter controls wiggliness.",
+                    _CODE_SMOOTHING_SPLINE,
+                    packages="numpy,matplotlib,scipy",
+                ),
+            ],
+        },
+        # ------------------------------------------------------------------ #
+        # Part 5 — Local Regression                                           #
+        # ------------------------------------------------------------------ #
+        {
+            "kicker": "Part 5 · 1:20 – 1:40",
+            "title": "Local Regression",
+            "subtitle": "Fit a local model at each query point using nearby observations",
+            "slides": [
+                slide(
+                    "The local regression idea",
+                    two_col(
+                        bullets([
+                            "At each query point x₀, fit a <strong>weighted linear regression</strong> using only nearby observations.",
+                            "<strong>Algorithm:</strong> (1) find s·n nearest neighbours of x₀; (2) assign weights Kλ(x₀, xᵢ) — highest at x₀, zero beyond the window; (3) fit weighted OLS; (4) use ŷ = β̂₀ + β̂₁x₀.",
+                            "The <strong>span s</strong> controls smoothness: small s → wiggly, large s → smooth (like a global fit).",
+                            "In Python: <code>statsmodels.nonparametric.smoothers_lowess.lowess(y, x, frac=0.5)</code>.",
+                            "In R: <code>loess(wage ~ age, span=0.5)</code>.",
+                        ], fragments=False),
+                        f'<img src="img/ch7_local_regression.svg" style="width:100%;border-radius:8px;">',
+                    ),
+                    "Local regression is sometimes called LOESS (locally estimated scatterplot smoothing) or LOWESS (locally weighted scatterplot smoothing).",
+                ),
+                slide(
+                    "Weight functions and span choice",
+                    bullets([
+                        "<strong>Epanechnikov kernel</strong>: K(u) = 0.75(1−u²) for |u|≤1 — optimal in MSE sense.",
+                        "<strong>Tricube kernel</strong>: w = (1 − |d/dₘₐₓ|³)³ — the most common default in loess.",
+                        "Can fit higher-degree local polynomials (not just linear) inside each window.",
+                        "Span = proportion of data used per fit: span 0.2 = 20% of points per window.",
+                        "Choose span by <strong>cross-validation</strong>; LOOCV is cheap for fixed span.",
+                        "<strong>Caveat:</strong> boundary effects — fewer points available at the edges of X.",
+                    ]),
+                    "Span is analogous to k in KNN regression: small span = high variance, large span = high bias.",
+                ),
+                example_slide(
+                    "LOESS — live",
+                    "Fit local regression with three different span values using statsmodels.lowess. Compare smoothness.",
+                    _CODE_LOESS,
+                    packages="numpy,matplotlib,statsmodels",
+                ),
+            ],
+        },
+        # ------------------------------------------------------------------ #
+        # Part 6 — Generalized Additive Models                               #
+        # ------------------------------------------------------------------ #
+        {
+            "kicker": "Part 6 · 1:40 – 2:00",
+            "title": "Generalized Additive Models",
+            "subtitle": "Flexible nonlinear models that stay interpretable — one component per predictor",
+            "slides": [
+                slide(
+                    "The GAM idea",
+                    bullets([
+                        "Replace each linear term β<sub>j</sub>x<sub>ij</sub> with a <em>smooth function</em> f<sub>j</sub>(x<sub>ij</sub>):",
+                        "y<sub>i</sub> = β₀ + f₁(x<sub>i1</sub>) + f₂(x<sub>i2</sub>) + … + f<sub>p</sub>(x<sub>ip</sub>) + ε<sub>i</sub>",
+                        "Each f<sub>j</sub> can be a <strong>spline, polynomial, step function, or LOESS fit</strong> — independently chosen.",
+                        "<strong>Additive structure</strong> is the key: effects are summed, so each component is interpretable in isolation.",
+                        "Fit by <em>backfitting</em>: iteratively update each f<sub>j</sub> while keeping the others fixed, until convergence.",
+                    ]),
+                    "GAMs are a sweet spot between linear models (interpretable, low variance) and fully nonparametric models (flexible, high variance).",
+                ),
+                slide(
+                    "GAM components — wage example",
+                    f'<img src="img/ch7_gam_components.svg" style="width:100%;border-radius:8px;">',
+                    "Three component plots: f1(year) is nearly linear (small effect). f2(age) is a smooth hump peaking around 45. f3(education) shows a strong positive step for advanced degrees.",
+                ),
+                slide(
+                    "GAMs for classification",
+                    two_col(
+                        bullets([
+                            "GAMs extend naturally to <strong>logistic regression</strong>:",
+                            "log[p(X) / (1−p(X))] = β₀ + f₁(X₁) + f₂(X₂) + … + f<sub>p</sub>(X<sub>p</sub>)",
+                            "Each component is now a contribution to the <em>log-odds</em>.",
+                            "In Python: build spline features, then pass to <code>LogisticRegression</code> — same trick as before.",
+                        ], fragments=False),
+                        f'<img src="img/ch7_gam_classification.svg" style="width:100%;border-radius:8px;">',
+                    ),
+                    "The GAM for classification shows that education has by far the strongest effect on being a high earner — much more than year or age.",
+                ),
+                slide(
+                    "Pros, cons, and extensions",
+                    two_col(
+                        f"""<strong style="color:var(--bc-success)">Advantages</strong>
+{bullets([
+    "Automatically models nonlinear effects — no manual feature engineering.",
+    "Each f<sub>j</sub> is interpretable via a component plot.",
+    "Can mix: some terms linear, some spline, some factor.",
+    "Use <code>anova()</code> to test linearity of each term.",
+], fragments=False)}""",
+                        f"""<strong style="color:var(--bc-danger)">Limitations</strong>
+{bullets([
+    "Additive assumption can miss <em>interaction effects</em>.",
+    "Can add low-order interactions: <code>ns(age,df=5):ns(year,df=5)</code>.",
+    "Backfitting may be slow for large n and many predictors.",
+    "In Python: <code>pygam</code> library provides a full GAM implementation with automatic smoothing.",
+], fragments=False)}""",
+                    ),
+                    "GAMs are popular in environmental science, health research, and economics where smooth nonlinear effects are expected.",
+                ),
+                example_slide(
+                    "GAM — live",
+                    "Build an additive model for wage using spline on age, linear year, and dummy education. Print R² and plot the age component.",
+                    _CODE_GAM,
+                    packages="numpy,pandas,matplotlib,sklearn,scipy",
+                ),
+            ],
+        },
+    ],
+    "recap_items": [
+        "<strong>Polynomial regression</strong>: replace X with X, X², …, Xᵈ — standard OLS, but watch the tails.",
+        "<strong>Step functions</strong>: cut X into regions, create dummies — piecewise constant, easy interaction terms.",
+        "<strong>Splines</strong>: piecewise polynomials with continuity constraints — cubic splines (K+4 df) are the workhorse; natural cubic splines add linear tails (K df).",
+        "<strong>Smoothing splines</strong>: penalise curvature with λ∫g″²; effective df replaces knot selection; LOOCV chooses λ for free.",
+        "<strong>Local regression</strong>: fit a weighted local polynomial at each query point — span controls bias-variance trade-off.",
+        "<strong>GAMs</strong>: y = β₀ + f₁(X₁) + … + fₚ(Xₚ); each component is interpretable; extends to logistic GAMs.",
+    ],
+    "recap_callout": (
+        "All six methods fit into the <strong>linear model framework</strong> — you transform the predictors, then run OLS or logistic regression as usual. "
+        "Splines and GAMs are the most used in practice: they balance flexibility, interpretability, and statistical efficiency."
+    ),
+}
+
+# ============================================================================
 # DRIVER
 # ============================================================================
 
@@ -2702,6 +3285,7 @@ DECKS = [
     (WEEK3 / "course-02-linear-regression" / "slides" / "index.html", W3_LR),
     (WEEK3 / "course-03-resampling-methods" / "slides" / "index.html", W3_CV),
     (WEEK3 / "course-04-model-selection-regularization" / "slides" / "index.html", W3_MS),
+    (WEEK3 / "course-05-moving-beyond-linearity" / "slides" / "index.html", W3_BL),
     # Week 4
     (WEEK4 / "course-01-classification-knn" / "slides" / "index.html", W4C1),
     (WEEK4 / "course-02-logistic-regression-i" / "slides" / "index.html", W4C2),
