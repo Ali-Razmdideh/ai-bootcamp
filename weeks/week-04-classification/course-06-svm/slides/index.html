@@ -9,980 +9,115 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
-  <link rel="stylesheet" href="../../../../shared/slides-template/interactive.css" />
 </head>
 <body>
 <div class="reveal"><div class="slides">
-
 <section class="title-slide">
   <span class="kicker">Week 4 · Course 6 · 1.5 hours</span>
   <h1>Support Vector Machines</h1>
   <p class="muted" style="font-size:1.1em;">Maximum margin, kernels, and p ≫ n</p>
 </section>
-
 <section>
   <span class="kicker">Roadmap</span>
   <h2>Where we are heading</h2>
   <div class="three-col">
     <div class="card"><h4>0:00 · 0:30</h4><strong>Maximum margin</strong>
-      <p class="muted" style="margin:0.3em 0 0;">hyperplanes, support vectors, the soft margin C.</p></div>
+      <p class="muted" style="margin:0.3em 0 0;">support vectors and geometry.</p></div>
     <div class="card"><h4>0:30 · 1:00</h4><strong>Kernels</strong>
-      <p class="muted" style="margin:0.3em 0 0;">non-linear boundaries without the features.</p></div>
-    <div class="card"><h4>1:00 · 1:30</h4><strong>p ≫ n &amp; SVM vs LR</strong>
+      <p class="muted" style="margin:0.3em 0 0;">linear, polynomial, RBF.</p></div>
+    <div class="card"><h4>1:00 · 1:30</h4><strong>p ≫ n</strong>
       <p class="muted" style="margin:0.3em 0 0;">the Khan gene-expression lab.</p></div>
   </div>
-  <p class="callout" style="margin-top:1.2em;">SVMs produce non-linear boundaries without ever computing the non-linear features. They dominate when p ≫ n — text and genomics.</p>
+  <p class="callout" style="margin-top:1.2em;">SVMs produce non-linear boundaries without ever computing the non-linear features. They also dominate when p ≫ n — text and genomics.</p>
 </section>
-
-<!-- ============================================================ PART 1 -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 1 · 0:00 – 0:30</span>
     <h1>Maximum margin</h1>
-    <p class="muted">geometry, support vectors, the soft margin</p>
+    <p class="muted">geometry and support vectors</p>
   </section>
-
   <section>
-    <h2>A hyperplane separates feature space</h2>
-    <div class="two-col">
-      <div>
-        <svg viewBox="0 0 240 200" style="width:100%;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
-          <line x1="20" y1="180" x2="220" y2="20" stroke="#2563eb" stroke-width="2.5"/>
-          <g fill="#2563eb" opacity="0.7">
-            <circle cx="40" cy="60"  r="3"/><circle cx="70"  cy="50"  r="3"/>
-            <circle cx="55" cy="100" r="3"/><circle cx="90"  cy="80"  r="3"/>
-            <circle cx="60" cy="130" r="3"/>
-          </g>
-          <g fill="#b91c1c" opacity="0.7">
-            <circle cx="170" cy="160" r="3"/><circle cx="200" cy="140" r="3"/>
-            <circle cx="190" cy="110" r="3"/><circle cx="150" cy="170" r="3"/>
-            <circle cx="170" cy="120" r="3"/>
-          </g>
-          <text x="120" y="195" font-size="10" text-anchor="middle">β₀ + β₁x₁ + β₂x₂ = 0</text>
-        </svg>
-      </div>
-      <div>
-        <p>In p dimensions a hyperplane is the (p−1)-dim flat surface</p>
-        <p style="text-align:center;font-size:1.05em;">β₀ + β₁x₁ + ⋯ + β<sub>p</sub>x<sub>p</sub> = 0</p>
-        <p>Code labels y ∈ {−1, +1}. If y<sub>i</sub>·(β₀ + β·x<sub>i</sub>) &gt; 0 for every i, that hyperplane <strong>separates</strong> the classes.</p>
-      </div>
-    </div>
-  </section>
-
-  <section>
-    <h2>Infinitely many lines separate — pick the best</h2>
-    <div class="two-col">
-      <div>
-        <svg viewBox="0 0 240 200" style="width:100%;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
-          <line x1="20" y1="180" x2="220" y2="20"  stroke="#cbd5e1" stroke-width="1"/>
-          <line x1="40" y1="180" x2="180" y2="20"  stroke="#cbd5e1" stroke-width="1"/>
-          <line x1="60" y1="180" x2="200" y2="20"  stroke="#cbd5e1" stroke-width="1"/>
-          <line x1="50" y1="180" x2="200" y2="30"  stroke="#0f172a" stroke-width="2.5"/>
-          <line x1="50" y1="180" x2="200" y2="30"  stroke="#0f172a" stroke-dasharray="4 3" opacity="0.4" transform="translate(-25,-25)"/>
-          <line x1="50" y1="180" x2="200" y2="30"  stroke="#0f172a" stroke-dasharray="4 3" opacity="0.4" transform="translate(25,25)"/>
-          <g fill="#2563eb" opacity="0.7">
-            <circle cx="40" cy="60"  r="3"/><circle cx="70"  cy="50"  r="3"/>
-            <circle cx="90" cy="80"  r="3"/>
-            <circle cx="55" cy="130" r="4" stroke="#0f172a" stroke-width="1.5"/>
-          </g>
-          <g fill="#b91c1c" opacity="0.7">
-            <circle cx="170" cy="160" r="3"/><circle cx="200" cy="140" r="3"/>
-            <circle cx="190" cy="110" r="4" stroke="#0f172a" stroke-width="1.5"/>
-          </g>
-        </svg>
-      </div>
-      <div>
-        <p>The <strong>maximum-margin</strong> hyperplane is the unique one <em>furthest</em> from both classes.</p>
-        <p>Points touching the margin are the <strong>support vectors</strong> (circled). Move any other point — the boundary doesn't budge.</p>
-        <p class="muted">Only support vectors define the model. That's the source of SVM's robustness <em>and</em> its name.</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="example" data-packages="numpy,scikit-learn,matplotlib">
-    <h2>Infinitely many lines separate — pick the best</h2>
-    <div class="ex-prompt">Fit a hard-margin linear SVM on two well-separated blobs and inspect the support vectors that define the boundary. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
-<textarea class="ex-code">import numpy as np
-import matplotlib
-matplotlib.use('AGG')
-import matplotlib.pyplot as plt
-from sklearn.svm import SVC
-from sklearn.datasets import make_blobs
-
-X, y = make_blobs(n_samples=80, centers=2, cluster_std=0.8, random_state=0)
-svc = SVC(kernel='linear', C=100).fit(X, y)
-
-# Plot data, boundary, margins, and support vectors
-xx = np.linspace(X[:,0].min()-1, X[:,0].max()+1, 200)
-w = svc.coef_[0]; b = svc.intercept_[0]
-yy = -(w[0] * xx + b) / w[1]
-margin = 1 / np.linalg.norm(w)
-yy_up = yy + margin * np.sqrt(1 + (w[0]/w[1])**2)
-yy_dn = yy - margin * np.sqrt(1 + (w[0]/w[1])**2)
-
-fig, ax = plt.subplots(figsize=(7, 5))
-ax.scatter(X[y==0,0], X[y==0,1], s=30, label='class 0')
-ax.scatter(X[y==1,0], X[y==1,1], s=30, color='C3', label='class 1')
-ax.plot(xx, yy, 'k-'); ax.plot(xx, yy_up, 'k--', alpha=0.5)
-ax.plot(xx, yy_dn, 'k--', alpha=0.5)
-ax.scatter(svc.support_vectors_[:,0], svc.support_vectors_[:,1],
-            s=120, facecolors='none', edgecolors='black', label='SV')
-ax.legend(); ax.set_title('Maximum-margin classifier'); plt.show()
-print(f'#support vectors: {svc.n_support_}  ->  total {len(svc.support_vectors_)}')
-</textarea>
-    <div class="ex-controls">
-      <button class="ex-run">Run</button>
-      <button class="ex-reset">Reset</button>
-      <span class="ex-status"></span>
-    </div>
-    <pre class="ex-output"></pre>
+    <h2>The unique optimum</h2>
+<p>Infinitely many lines separate two linearly separable clouds. The maximum-margin line is the <em>unique</em> one furthest from both classes.</p><p>The points exactly on the margin are the <strong>support vectors</strong>. Move any other point and the boundary does not change.</p>
   </section>
 
   <section>
     <h2>The optimization</h2>
-    <p style="text-align:center;font-size:1.05em;">maximize M s.t. y<sub>i</sub>(β₀ + β·x<sub>i</sub>) ≥ M, &nbsp;‖β‖ = 1</p>
-    <p>Convex quadratic program — one global optimum, solved in seconds for n in the thousands.</p>
-    <p class="muted">Equivalent dual form: minimize ½‖w‖² subject to y<sub>i</sub>(w·x<sub>i</sub> + b) ≥ 1.</p>
+<p style="text-align:center;font-size:1.2em;">minimize ½‖w‖² &nbsp; s.t. y<sub>i</sub>(w·x<sub>i</sub> + b) ≥ 1</p><p>Equivalent to maximizing 2 / ‖w‖, the margin width. Convex quadratic program — unique solution.</p>
   </section>
 
   <section>
-    <h2>Real data overlaps — soft margin</h2>
-    <p>Hard margin breaks the moment one stray red sneaks into the blue cloud. The <strong>support vector classifier</strong> allows slack — let some points violate the margin (or even cross it), pay a penalty.</p>
-    <p style="text-align:center;font-size:1.05em;">maximize M s.t. y<sub>i</sub>(β₀ + β·x<sub>i</sub>) ≥ M(1 − ε<sub>i</sub>), &nbsp; ε ≥ 0, &nbsp; Σ ε<sub>i</sub> ≤ C</p>
+    <h2>Soft margin — the C parameter</h2>
+<ul>
+  <li class="fragment fade-up">Real data overlaps. We allow some violations of the margin.</li>
+  <li class="fragment fade-up">Small C → wide margin, many support vectors, more bias.</li>
+  <li class="fragment fade-up">Large C → narrow margin, few support vectors, more variance.</li>
+  <li class="fragment fade-up">Tune C with CV.</li>
+</ul>
   </section>
 
-  <section>
-    <h2>The C parameter — tuning the slack</h2>
-    <div class="three-col">
-      <div class="card">
-        <h4>Small C</h4>
-        <p class="muted">Wide margin, many support vectors. Tolerates violations. High bias, low variance.</p>
-      </div>
-      <div class="card">
-        <h4>Large C</h4>
-        <p class="muted">Narrow margin, few support vectors. Punishes violations. Low bias, high variance — overfits.</p>
-      </div>
-      <div class="card">
-        <h4>Tune with CV</h4>
-        <p class="muted"><code>GridSearchCV(svc, {'C': np.logspace(-2, 3, 6)})</code></p>
-      </div>
-    </div>
-    <p class="callout"><strong>Heads up:</strong> sklearn's C is the same direction as the formula above — large C = strict. Opposite of LR's C.</p>
-  </section>
-
-  <section>
-    <h2>The maximum margin classifier</h2>
-    <svg class="diagram" viewBox="0 0 520 300" style="width:80%;display:block;margin:0 auto;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
-      <!-- margin band -->
-      <line x1="40" y1="270" x2="460" y2="40" stroke="#2563eb" stroke-width="2"/>
-      <line x1="40" y1="220" x2="460" y2="-10" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.7"/>
-      <line x1="40" y1="320" x2="460" y2="90" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.7"/>
-      <!-- class - (blue) above the line -->
-      <g fill="#2563eb" opacity="0.75">
-        <circle cx="80" cy="80" r="4"/><circle cx="130" cy="60" r="4"/>
-        <circle cx="180" cy="100" r="4"/><circle cx="100" cy="130" r="4"/>
-        <circle cx="220" cy="60" r="4"/>
-      </g>
-      <!-- class + (red) below the line -->
-      <g fill="#ef4444" opacity="0.8">
-        <circle cx="320" cy="240" r="4"/><circle cx="380" cy="220" r="4"/>
-        <circle cx="420" cy="260" r="4"/><circle cx="280" cy="270" r="4"/>
-        <circle cx="360" cy="280" r="4"/>
-      </g>
-      <!-- support vectors circled -->
-      <circle cx="170" cy="170" r="5" fill="#2563eb" stroke="#0f172a" stroke-width="2"/>
-      <circle cx="240" cy="148" r="5" fill="#2563eb" stroke="#0f172a" stroke-width="2"/>
-      <circle cx="300" cy="172" r="5" fill="#ef4444" stroke="#0f172a" stroke-width="2"/>
-      <!-- margin bracket -->
-      <line x1="260" y1="105" x2="260" y2="215" stroke="#b45309" stroke-width="1.5" marker-start="url(#a1)" marker-end="url(#a2)"/>
-      <defs>
-        <marker id="a1" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M8,0 L0,4 L8,8 z" fill="#b45309"/></marker>
-        <marker id="a2" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#b45309"/></marker>
-      </defs>
-      <text x="268" y="165" font-size="13" fill="#b45309">M = 2 / ‖β‖</text>
-      <text x="60" y="55" font-size="12" fill="#2563eb">class −</text>
-      <text x="400" y="285" font-size="12" fill="#ef4444">class +</text>
-      <text x="460" y="35" font-size="11" fill="#64748b">β·x + β₀ = 0</text>
-    </svg>
-    <p class="muted" style="text-align:center;">The hyperplane sits halfway between the classes; circled points on the dashed lines are the support vectors. (ISLR Fig 9.3)</p>
-  </section>
-
-  <section>
-    <h2>Why pick the widest margin</h2>
-    <svg class="diagram" viewBox="0 0 520 300" style="width:80%;display:block;margin:0 auto;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
-      <!-- candidate 1 (narrow, muted) -->
-      <line x1="60" y1="280" x2="440" y2="50" stroke="#64748b" stroke-width="1.5"/>
-      <line x1="60" y1="260" x2="440" y2="30" stroke="#64748b" stroke-width="1" stroke-dasharray="3 3" opacity="0.5"/>
-      <line x1="60" y1="300" x2="440" y2="70" stroke="#64748b" stroke-width="1" stroke-dasharray="3 3" opacity="0.5"/>
-      <text x="70" y="285" font-size="11" fill="#64748b">narrow</text>
-      <!-- candidate 2 (tilted, muted) -->
-      <line x1="120" y1="290" x2="460" y2="20" stroke="#64748b" stroke-width="1.5"/>
-      <text x="130" y="295" font-size="11" fill="#64748b">tilted</text>
-      <!-- candidate 3 (widest, accent) -->
-      <line x1="30" y1="250" x2="490" y2="80" stroke="#2563eb" stroke-width="2.2"/>
-      <line x1="30" y1="210" x2="490" y2="40" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.8"/>
-      <line x1="30" y1="290" x2="490" y2="120" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.8"/>
-      <text x="380" y="80" font-size="12" fill="#2563eb">widest ✓</text>
-      <!-- points -->
-      <g fill="#2563eb" opacity="0.8">
-        <circle cx="90" cy="100" r="4"/><circle cx="140" cy="80" r="4"/>
-        <circle cx="190" cy="120" r="4"/><circle cx="110" cy="150" r="4"/>
-      </g>
-      <g fill="#ef4444" opacity="0.85">
-        <circle cx="360" cy="240" r="4"/><circle cx="410" cy="220" r="4"/>
-        <circle cx="450" cy="250" r="4"/><circle cx="320" cy="260" r="4"/>
-      </g>
-    </svg>
-    <p class="muted" style="text-align:center;">Widest margin = best generalization: most room for unseen test points to fall on the correct side.</p>
-  </section>
-
-  <section>
-    <h2>Soft margin with slack ε</h2>
-    <svg class="diagram" viewBox="0 0 520 300" style="width:80%;display:block;margin:0 auto;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
-      <line x1="40" y1="260" x2="480" y2="60" stroke="#2563eb" stroke-width="2"/>
-      <line x1="40" y1="210" x2="480" y2="10" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.7"/>
-      <line x1="40" y1="310" x2="480" y2="110" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.7"/>
-      <!-- well-placed blues -->
-      <g fill="#2563eb" opacity="0.75">
-        <circle cx="80" cy="60" r="4"/><circle cx="140" cy="50" r="4"/>
-        <circle cx="200" cy="80" r="4"/><circle cx="100" cy="110" r="4"/>
-      </g>
-      <!-- well-placed reds -->
-      <g fill="#ef4444" opacity="0.85">
-        <circle cx="380" cy="230" r="4"/><circle cx="430" cy="220" r="4"/>
-        <circle cx="450" cy="250" r="4"/><circle cx="340" cy="260" r="4"/>
-      </g>
-      <!-- violating blue inside margin -->
-      <circle cx="260" cy="160" r="5" fill="#2563eb" stroke="#0f172a" stroke-width="1.5"/>
-      <line x1="260" y1="160" x2="225" y2="118" stroke="#b45309" stroke-width="1.5" marker-end="url(#sa)"/>
-      <text x="265" y="156" font-size="12" fill="#b45309">ε₁</text>
-      <!-- misclassified red on wrong side -->
-      <circle cx="220" cy="200" r="5" fill="#ef4444" stroke="#0f172a" stroke-width="1.5"/>
-      <line x1="220" y1="200" x2="270" y2="252" stroke="#b45309" stroke-width="1.5" marker-end="url(#sa)"/>
-      <text x="195" y="215" font-size="12" fill="#b45309">ε₂</text>
-      <defs>
-        <marker id="sa" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#b45309"/></marker>
-      </defs>
-    </svg>
-    <p class="muted" style="text-align:center;">Each violation pays slack εᵢ ≥ 0; C bounds the total slack Σεᵢ. (ISLR Fig 9.6)</p>
-  </section>
-
-  <section>
-    <h2>C trade-off — three regimes</h2>
-    <div class="three-col">
-      <div>
-        <svg class="diagram" viewBox="0 0 200 200" style="width:100%;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
-          <line x1="20" y1="170" x2="180" y2="40" stroke="#2563eb" stroke-width="2"/>
-          <line x1="20" y1="200" x2="180" y2="70" stroke="#2563eb" stroke-dasharray="4 3" stroke-width="1.2" opacity="0.7"/>
-          <line x1="20" y1="140" x2="180" y2="10" stroke="#2563eb" stroke-dasharray="4 3" stroke-width="1.2" opacity="0.7"/>
-          <g fill="#2563eb" opacity="0.75">
-            <circle cx="40" cy="50" r="3"/><circle cx="70" cy="70" r="3"/>
-            <circle cx="90" cy="90" r="3"/><circle cx="110" cy="110" r="3"/>
-          </g>
-          <g fill="#ef4444" opacity="0.85">
-            <circle cx="100" cy="60" r="3"/><circle cx="130" cy="150" r="3"/>
-            <circle cx="150" cy="130" r="3"/><circle cx="80" cy="160" r="3"/>
-          </g>
-          <text x="100" y="195" font-size="11" text-anchor="middle" fill="#64748b">C = 0.1 — wide</text>
-        </svg>
-      </div>
-      <div>
-        <svg class="diagram" viewBox="0 0 200 200" style="width:100%;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
-          <line x1="20" y1="170" x2="180" y2="40" stroke="#2563eb" stroke-width="2"/>
-          <line x1="20" y1="190" x2="180" y2="60" stroke="#2563eb" stroke-dasharray="4 3" stroke-width="1.2" opacity="0.7"/>
-          <line x1="20" y1="150" x2="180" y2="20" stroke="#2563eb" stroke-dasharray="4 3" stroke-width="1.2" opacity="0.7"/>
-          <g fill="#2563eb" opacity="0.75">
-            <circle cx="40" cy="50" r="3"/><circle cx="70" cy="70" r="3"/>
-            <circle cx="90" cy="90" r="3"/><circle cx="60" cy="110" r="3"/>
-          </g>
-          <g fill="#ef4444" opacity="0.85">
-            <circle cx="130" cy="150" r="3"/><circle cx="150" cy="130" r="3"/>
-            <circle cx="110" cy="170" r="3"/><circle cx="160" cy="100" r="3"/>
-          </g>
-          <text x="100" y="195" font-size="11" text-anchor="middle" fill="#64748b">C = 1 — balanced</text>
-        </svg>
-      </div>
-      <div>
-        <svg class="diagram" viewBox="0 0 200 200" style="width:100%;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
-          <line x1="20" y1="170" x2="180" y2="40" stroke="#2563eb" stroke-width="2"/>
-          <line x1="20" y1="178" x2="180" y2="48" stroke="#2563eb" stroke-dasharray="4 3" stroke-width="1.2" opacity="0.7"/>
-          <line x1="20" y1="162" x2="180" y2="32" stroke="#2563eb" stroke-dasharray="4 3" stroke-width="1.2" opacity="0.7"/>
-          <g fill="#2563eb" opacity="0.75">
-            <circle cx="40" cy="50" r="3"/><circle cx="70" cy="70" r="3"/>
-            <circle cx="90" cy="90" r="3"/><circle cx="60" cy="100" r="3"/>
-          </g>
-          <g fill="#ef4444" opacity="0.85">
-            <circle cx="130" cy="150" r="3"/><circle cx="150" cy="130" r="3"/>
-            <circle cx="110" cy="170" r="3"/><circle cx="160" cy="100" r="3"/>
-          </g>
-          <text x="100" y="195" font-size="11" text-anchor="middle" fill="#64748b">C = 100 — narrow</text>
-        </svg>
-      </div>
-    </div>
-    <p class="muted" style="text-align:center;">Small C tolerates many violations (wide margin, high bias); large C forbids them (narrow margin, high variance).</p>
-  </section>
 </section>
-
-<!-- ============================================================ PART 2 -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 2 · 0:30 – 1:00</span>
     <h1>Kernels</h1>
-    <p class="muted">non-linear boundaries, cheaply</p>
+    <p class="muted">non-linear, cheap</p>
+  </section>
+  <section>
+    <h2>The kernel trick</h2>
+<p>Map x → φ(x) into a higher-dimensional space where the classes become linearly separable. Compute only inner products φ(x<sub>i</sub>) · φ(x<sub>j</sub>) — never φ itself.</p><p>A <strong>kernel</strong> K(x, x') gives that inner product directly.</p>
   </section>
 
   <section>
-    <h2>Linear boundaries fail on curved truth</h2>
-    <div class="two-col">
-      <div>
-        <svg viewBox="0 0 200 200" style="width:100%;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
-          <g fill="#2563eb" opacity="0.6">
-            <circle cx="50"  cy="50"  r="3"/><circle cx="150" cy="50"  r="3"/>
-            <circle cx="50"  cy="150" r="3"/><circle cx="150" cy="150" r="3"/>
-          </g>
-          <g fill="#b91c1c" opacity="0.7">
-            <circle cx="80"  cy="100" r="3"/><circle cx="120" cy="100" r="3"/>
-            <circle cx="100" cy="80"  r="3"/><circle cx="100" cy="120" r="3"/>
-          </g>
-          <text x="100" y="195" font-size="10" text-anchor="middle">red surrounded — no line works</text>
-        </svg>
-      </div>
-      <div>
-        <p>The fix from Course 3 was to add features: x₁², x₂², x₁x₂, … Works, but the feature space blows up fast.</p>
-        <p class="callout">Kernels do this implicitly — non-linear boundary, original feature space, no explicit expansion.</p>
-      </div>
-    </div>
+    <h2>Three kernels</h2>
+<ul>
+  <li class="fragment fade-up"><strong>Linear</strong>: K(x, x') = x · x'. Same as logistic regression boundary-wise.</li>
+  <li class="fragment fade-up"><strong>Polynomial</strong>: K(x, x') = (1 + x · x')<sup>d</sup>. Bends, but rigidly.</li>
+  <li class="fragment fade-up"><strong>RBF</strong>: K(x, x') = exp(−γ ‖x − x'‖²). Local bumps, very flexible. The default.</li>
+</ul>
   </section>
 
   <section>
-    <h2>Inner products run the show</h2>
-    <p>The SVM solution can be written entirely in terms of inner products:</p>
-    <p style="text-align:center;font-size:1.1em;">f(x) = β₀ + Σ<sub>i∈𝒮</sub> α̂<sub>i</sub>·⟨x, x<sub>i</sub>⟩</p>
-    <ul>
-      <li class="fragment fade-up">𝒮 is the set of support vectors — usually a small subset.</li>
-      <li class="fragment fade-up">We never need x<sub>i</sub> on its own, only ⟨x, x<sub>i</sub>⟩.</li>
-      <li class="fragment fade-up">Replace ⟨·,·⟩ with a more powerful similarity → <em>kernel trick</em>.</li>
-    </ul>
+    <h2>γ in the RBF kernel</h2>
+<ul>
+  <li class="fragment fade-up">Small γ — kernel is wide. Smooth boundary, more bias.</li>
+  <li class="fragment fade-up">Large γ — kernel is narrow. Boundary curls around individual points, more variance.</li>
+  <li class="fragment fade-up">Grid-search (C, γ) with CV. <code>gamma='scale'</code> is the modern default starting point.</li>
+</ul>
   </section>
 
-  <section>
-    <h2>Three kernels in the wild</h2>
-    <div class="three-col">
-      <div class="card">
-        <h4>Linear</h4>
-        <p style="text-align:center;">K(x, x') = x · x'</p>
-        <p class="muted">Same boundary shape as logistic regression. Best when n &lt; p.</p>
-      </div>
-      <div class="card">
-        <h4>Polynomial (d)</h4>
-        <p style="text-align:center;">(1 + x · x')<sup>d</sup></p>
-        <p class="muted">Bends, but rigidly. Equivalent to fitting in a degree-d polynomial space without computing it.</p>
-      </div>
-      <div class="card">
-        <h4>RBF (γ)</h4>
-        <p style="text-align:center;">exp(−γ‖x − x'‖²)</p>
-        <p class="muted">Local bumps. Implicit feature space is infinite-dimensional. The default.</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="example" data-packages="numpy,scikit-learn,matplotlib">
-    <h2>Three kernels on the moons dataset</h2>
-    <div class="ex-prompt">Compare linear, polynomial, and RBF kernels on a curved (moons) boundary. Linear can't bend; polynomial bends rigidly; RBF curves to fit almost exactly. Plot output isn't rendered here — copy this into Jupyter to see the figure.</div>
-<textarea class="ex-code">import numpy as np
-import matplotlib
-matplotlib.use('AGG')
-import matplotlib.pyplot as plt
-from sklearn.svm import SVC
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
-from sklearn.datasets import make_moons
-
-Xm, ym = make_moons(n_samples=200, noise=0.3, random_state=0)
-fig, axes = plt.subplots(1, 3, figsize=(13, 4), sharey=True)
-for ax, kernel in zip(axes, ['linear', 'poly', 'rbf']):
-    svc = Pipeline([('s', StandardScaler()),
-                    ('svc', SVC(kernel=kernel, degree=3, C=1, gamma='scale'))]).fit(Xm, ym)
-    xx, yy = np.meshgrid(np.linspace(Xm[:,0].min()-0.3, Xm[:,0].max()+0.3, 200),
-                          np.linspace(Xm[:,1].min()-0.3, Xm[:,1].max()+0.3, 200))
-    Z = svc.predict(np.c_[xx.ravel(), yy.ravel()]).reshape(xx.shape)
-    ax.contourf(xx, yy, Z, alpha=0.25)
-    ax.scatter(Xm[ym==0,0], Xm[ym==0,1], s=12)
-    ax.scatter(Xm[ym==1,0], Xm[ym==1,1], s=12, color='C3')
-    ax.set_title(f'{kernel} kernel — acc={svc.score(Xm, ym):.3f}')
-plt.tight_layout(); plt.show()
-</textarea>
-    <div class="ex-controls">
-      <button class="ex-run">Run</button>
-      <button class="ex-reset">Reset</button>
-      <span class="ex-status"></span>
-    </div>
-    <pre class="ex-output"></pre>
-  </section>
-
-  <section>
-    <h2>The γ knob in the RBF kernel</h2>
-    <div class="two-col">
-      <div>
-        <svg viewBox="0 0 240 200" style="width:100%;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
-          <path d="M40,180 C90,30 150,30 200,180" stroke="#2563eb" stroke-width="2" fill="none"/>
-          <text x="40" y="50" font-size="9" fill="#2563eb">small γ — smooth</text>
-          <path d="M40,180 C60,80 80,30 100,180 C120,30 140,80 200,180" stroke="#b91c1c" stroke-width="2" fill="none"/>
-          <text x="120" y="50" font-size="9" fill="#b91c1c">large γ — wiggly</text>
-          <text x="120" y="195" font-size="10" text-anchor="middle">distance to support vector →</text>
-        </svg>
-      </div>
-      <div>
-        <ul>
-          <li>Small γ — wide kernel; smooth boundary; more bias.</li>
-          <li>Large γ — narrow kernel; boundary curls around individual points; more variance.</li>
-          <li>Grid-search (C, γ) with CV. <code>gamma='scale'</code> is a sensible default starting point.</li>
-        </ul>
-      </div>
-    </div>
-  </section>
-
-  <section>
-    <h2>SVM in sklearn</h2>
-    <pre><code class="language-python">from sklearn.svm import SVC
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import GridSearchCV
-
-pipe = Pipeline([('sc', StandardScaler()),
-                 ('svc', SVC(kernel='rbf'))])
-
-grid = GridSearchCV(pipe, {
-    'svc__C':     [0.1, 1, 10, 100],
-    'svc__gamma': [1e-3, 1e-2, 1e-1, 1],
-}, cv=5).fit(X_train, y_train)</code></pre>
-    <p class="tip"><strong>Always scale</strong> before an SVM — kernels are based on distances. Wrap in a Pipeline so scaling is fit on training folds only.</p>
-  </section>
-
-  <section class="exercise" data-packages="numpy,pandas,scikit-learn">
-    <h2>Exercise — Scaled RBF SVM with CV</h2>
-    <div class="ex-prompt">Build a <code>Pipeline(StandardScaler &rarr; SVC(kernel='rbf'))</code> on a small penguins-like dataset and report the mean 5-fold CV accuracy in <code>cv_acc</code>.</div>
-<textarea class="ex-code">import numpy as np
-import pandas as pd
-from sklearn.svm import SVC
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
-from sklearn.model_selection import cross_val_score
-
-# Penguins-like sample (bill_length, bill_depth, flipper_length, body_mass) -> species
-data = [
-    (39.1,18.7,181,3750,'Adelie'),(39.5,17.4,186,3800,'Adelie'),(40.3,18.0,195,3250,'Adelie'),
-    (36.7,19.3,193,3450,'Adelie'),(39.3,20.6,190,3650,'Adelie'),(38.9,17.8,181,3625,'Adelie'),
-    (39.2,19.6,195,4675,'Adelie'),(34.1,18.1,193,3475,'Adelie'),(42.0,20.2,190,4250,'Adelie'),
-    (37.8,17.1,186,3300,'Adelie'),(37.8,17.3,180,3700,'Adelie'),(41.1,17.6,182,3200,'Adelie'),
-    (46.5,17.9,192,3500,'Chinstrap'),(50.0,19.5,196,3900,'Chinstrap'),(51.3,19.2,193,3650,'Chinstrap'),
-    (45.4,18.7,188,3525,'Chinstrap'),(52.7,19.8,197,3725,'Chinstrap'),(45.2,17.8,198,3950,'Chinstrap'),
-    (46.1,18.2,178,3250,'Chinstrap'),(51.3,18.2,197,3750,'Chinstrap'),(46.0,18.9,195,4150,'Chinstrap'),
-    (51.3,19.9,198,3700,'Chinstrap'),(46.6,17.8,193,3800,'Chinstrap'),(51.7,20.3,194,3775,'Chinstrap'),
-    (46.1,13.2,211,4500,'Gentoo'),(50.0,16.3,230,5700,'Gentoo'),(48.7,14.1,210,4450,'Gentoo'),
-    (50.0,15.2,218,5700,'Gentoo'),(47.6,14.5,215,5400,'Gentoo'),(46.5,13.5,210,4550,'Gentoo'),
-    (45.4,14.6,211,4800,'Gentoo'),(46.7,15.3,219,5200,'Gentoo'),(43.3,13.4,209,4400,'Gentoo'),
-    (46.8,15.4,215,5150,'Gentoo'),(40.9,13.7,214,4650,'Gentoo'),(49.0,16.1,216,5550,'Gentoo'),
-]
-df = pd.DataFrame(data, columns=['bill_length_mm','bill_depth_mm','flipper_length_mm','body_mass_g','species'])
-X = df[['bill_length_mm','bill_depth_mm','flipper_length_mm','body_mass_g']]
-y = df['species']
-
-pipe = None       # build the pipeline
-cv_acc = None     # mean 5-fold CV accuracy
-</textarea>
-    <div class="ex-controls">
-      <button class="ex-run">Run &amp; Check</button>
-      <button class="ex-reset">Reset</button>
-      <button class="ex-show">Show solution</button>
-      <span class="ex-status"></span>
-    </div>
-    <pre class="ex-output"></pre>
-    <div class="ex-feedback"></div>
-<script type="text/x-check">
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.svm import SVC
-from sklearn.model_selection import cross_val_score
-import numpy as np
-assert pipe is not None, "Assign your Pipeline to `pipe`."
-assert isinstance(pipe, Pipeline), "`pipe` must be an sklearn Pipeline."
-names = [n for n, _ in pipe.steps]
-assert any(isinstance(s, StandardScaler) for _, s in pipe.steps), "Pipeline must include StandardScaler."
-last = pipe.steps[-1][1]
-assert isinstance(last, SVC) and last.kernel == 'rbf', "Final step must be SVC(kernel='rbf')."
-assert cv_acc is not None, "Assign the mean 5-fold CV accuracy to `cv_acc`."
-expected = cross_val_score(Pipeline([('s', StandardScaler()), ('svc', SVC(kernel='rbf'))]), X, y, cv=5).mean()
-assert np.isclose(cv_acc, expected, atol=1e-6), f"cv_acc={cv_acc:.4f} does not match expected {expected:.4f}."
-print(f"OK — cv_acc = {cv_acc:.4f}")
-</script>
-<script type="text/x-solution">pipe = Pipeline([('s', StandardScaler()), ('svc', SVC(kernel='rbf'))])
-cv_acc = cross_val_score(pipe, X, y, cv=5).mean()
-print(f"CV accuracy = {cv_acc:.4f}")</script>
-<script type="text/x-explain">RBF kernels measure similarity through Euclidean distance, so features on very different scales (here body_mass in grams vs bill_depth in mm) would dominate. Wrapping StandardScaler inside the Pipeline ensures the scaler is refit on each CV training fold — no leakage.</script>
-  </section>
-
-  <section class="exercise" data-packages="numpy,pandas,scikit-learn">
-    <h2>Exercise — Unscaled RBF SVM</h2>
-    <div class="ex-prompt">Fit an <em>unscaled</em> <code>SVC(kernel='rbf')</code> on the same data with 5-fold CV. Store the mean accuracy in <code>unscaled_acc</code> and compare to the scaled version.</div>
-<textarea class="ex-code">import numpy as np
-import pandas as pd
-from sklearn.svm import SVC
-from sklearn.model_selection import cross_val_score
-
-data = [
-    (39.1,18.7,181,3750,'Adelie'),(39.5,17.4,186,3800,'Adelie'),(40.3,18.0,195,3250,'Adelie'),
-    (36.7,19.3,193,3450,'Adelie'),(39.3,20.6,190,3650,'Adelie'),(38.9,17.8,181,3625,'Adelie'),
-    (39.2,19.6,195,4675,'Adelie'),(34.1,18.1,193,3475,'Adelie'),(42.0,20.2,190,4250,'Adelie'),
-    (37.8,17.1,186,3300,'Adelie'),(37.8,17.3,180,3700,'Adelie'),(41.1,17.6,182,3200,'Adelie'),
-    (46.5,17.9,192,3500,'Chinstrap'),(50.0,19.5,196,3900,'Chinstrap'),(51.3,19.2,193,3650,'Chinstrap'),
-    (45.4,18.7,188,3525,'Chinstrap'),(52.7,19.8,197,3725,'Chinstrap'),(45.2,17.8,198,3950,'Chinstrap'),
-    (46.1,18.2,178,3250,'Chinstrap'),(51.3,18.2,197,3750,'Chinstrap'),(46.0,18.9,195,4150,'Chinstrap'),
-    (51.3,19.9,198,3700,'Chinstrap'),(46.6,17.8,193,3800,'Chinstrap'),(51.7,20.3,194,3775,'Chinstrap'),
-    (46.1,13.2,211,4500,'Gentoo'),(50.0,16.3,230,5700,'Gentoo'),(48.7,14.1,210,4450,'Gentoo'),
-    (50.0,15.2,218,5700,'Gentoo'),(47.6,14.5,215,5400,'Gentoo'),(46.5,13.5,210,4550,'Gentoo'),
-    (45.4,14.6,211,4800,'Gentoo'),(46.7,15.3,219,5200,'Gentoo'),(43.3,13.4,209,4400,'Gentoo'),
-    (46.8,15.4,215,5150,'Gentoo'),(40.9,13.7,214,4650,'Gentoo'),(49.0,16.1,216,5550,'Gentoo'),
-]
-df = pd.DataFrame(data, columns=['bill_length_mm','bill_depth_mm','flipper_length_mm','body_mass_g','species'])
-X = df[['bill_length_mm','bill_depth_mm','flipper_length_mm','body_mass_g']]
-y = df['species']
-
-unscaled_acc = None
-</textarea>
-    <div class="ex-controls">
-      <button class="ex-run">Run &amp; Check</button>
-      <button class="ex-reset">Reset</button>
-      <button class="ex-show">Show solution</button>
-      <span class="ex-status"></span>
-    </div>
-    <pre class="ex-output"></pre>
-    <div class="ex-feedback"></div>
-<script type="text/x-check">
-from sklearn.svm import SVC
-from sklearn.model_selection import cross_val_score
-import numpy as np
-assert unscaled_acc is not None, "Assign the unscaled mean CV accuracy to `unscaled_acc`."
-expected = cross_val_score(SVC(kernel='rbf'), X, y, cv=5).mean()
-assert np.isclose(unscaled_acc, expected, atol=1e-6), f"unscaled_acc={unscaled_acc:.4f} does not match expected {expected:.4f}."
-print(f"OK — unscaled_acc = {unscaled_acc:.4f} (note how much lower than the scaled version!)")
-</script>
-<script type="text/x-solution">unscaled_acc = cross_val_score(SVC(kernel='rbf'), X, y, cv=5).mean()
-print(f"unscaled CV accuracy = {unscaled_acc:.4f}")</script>
-<script type="text/x-explain">Without scaling, body_mass_g (roughly 3000–6000) dwarfs the bill features (~15–50) in the RBF distance. The kernel effectively sees only one feature, and accuracy collapses. This is why scaling is the #1 SVM-bug fix.</script>
-  </section>
-
-  <section class="exercise" data-packages="numpy,pandas,scikit-learn">
-    <h2>Exercise — Grid-search C and gamma</h2>
-    <div class="ex-prompt">Tune <code>C &in; [0.1, 1, 10]</code> and <code>gamma &in; ['scale', 0.1, 1.0]</code> with 5-fold <code>GridSearchCV</code> on the scaled RBF pipeline. Store the result in <code>grid</code>.</div>
-<textarea class="ex-code">import numpy as np
-import pandas as pd
-from sklearn.svm import SVC
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
-from sklearn.model_selection import GridSearchCV
-
-data = [
-    (39.1,18.7,181,3750,'Adelie'),(39.5,17.4,186,3800,'Adelie'),(40.3,18.0,195,3250,'Adelie'),
-    (36.7,19.3,193,3450,'Adelie'),(39.3,20.6,190,3650,'Adelie'),(38.9,17.8,181,3625,'Adelie'),
-    (39.2,19.6,195,4675,'Adelie'),(34.1,18.1,193,3475,'Adelie'),(42.0,20.2,190,4250,'Adelie'),
-    (37.8,17.1,186,3300,'Adelie'),(37.8,17.3,180,3700,'Adelie'),(41.1,17.6,182,3200,'Adelie'),
-    (46.5,17.9,192,3500,'Chinstrap'),(50.0,19.5,196,3900,'Chinstrap'),(51.3,19.2,193,3650,'Chinstrap'),
-    (45.4,18.7,188,3525,'Chinstrap'),(52.7,19.8,197,3725,'Chinstrap'),(45.2,17.8,198,3950,'Chinstrap'),
-    (46.1,18.2,178,3250,'Chinstrap'),(51.3,18.2,197,3750,'Chinstrap'),(46.0,18.9,195,4150,'Chinstrap'),
-    (51.3,19.9,198,3700,'Chinstrap'),(46.6,17.8,193,3800,'Chinstrap'),(51.7,20.3,194,3775,'Chinstrap'),
-    (46.1,13.2,211,4500,'Gentoo'),(50.0,16.3,230,5700,'Gentoo'),(48.7,14.1,210,4450,'Gentoo'),
-    (50.0,15.2,218,5700,'Gentoo'),(47.6,14.5,215,5400,'Gentoo'),(46.5,13.5,210,4550,'Gentoo'),
-    (45.4,14.6,211,4800,'Gentoo'),(46.7,15.3,219,5200,'Gentoo'),(43.3,13.4,209,4400,'Gentoo'),
-    (46.8,15.4,215,5150,'Gentoo'),(40.9,13.7,214,4650,'Gentoo'),(49.0,16.1,216,5550,'Gentoo'),
-]
-df = pd.DataFrame(data, columns=['bill_length_mm','bill_depth_mm','flipper_length_mm','body_mass_g','species'])
-X = df[['bill_length_mm','bill_depth_mm','flipper_length_mm','body_mass_g']]
-y = df['species']
-
-grid = None
-</textarea>
-    <div class="ex-controls">
-      <button class="ex-run">Run &amp; Check</button>
-      <button class="ex-reset">Reset</button>
-      <button class="ex-show">Show solution</button>
-      <span class="ex-status"></span>
-    </div>
-    <pre class="ex-output"></pre>
-    <div class="ex-feedback"></div>
-<script type="text/x-check">
-from sklearn.model_selection import GridSearchCV
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.svm import SVC
-import numpy as np
-assert grid is not None, "Assign your fitted GridSearchCV to `grid`."
-assert isinstance(grid, GridSearchCV), "`grid` must be a GridSearchCV instance."
-assert hasattr(grid, 'best_params_'), "Did you call .fit() on the grid?"
-keys = set(grid.param_grid.keys())
-assert keys == {'svc__C', 'svc__gamma'}, f"Expected param_grid keys {{'svc__C', 'svc__gamma'}}, got {keys}."
-assert sorted(grid.param_grid['svc__C']) == [0.1, 1, 10]
-assert list(grid.param_grid['svc__gamma']) == ['scale', 0.1, 1.0] or set(grid.param_grid['svc__gamma']) == {'scale', 0.1, 1.0}
-ref = GridSearchCV(Pipeline([('s', StandardScaler()), ('svc', SVC(kernel='rbf'))]),
-                   {'svc__C': [0.1, 1, 10], 'svc__gamma': ['scale', 0.1, 1.0]}, cv=5).fit(X, y)
-assert np.isclose(grid.best_score_, ref.best_score_, atol=1e-6), f"best_score_ mismatch: {grid.best_score_} vs {ref.best_score_}"
-print(f"OK — best params = {grid.best_params_}, best CV acc = {grid.best_score_:.4f}")
-</script>
-<script type="text/x-solution">grid = GridSearchCV(
-    Pipeline([('s', StandardScaler()), ('svc', SVC(kernel='rbf'))]),
-    {'svc__C': [0.1, 1, 10], 'svc__gamma': ['scale', 0.1, 1.0]},
-    cv=5,
-).fit(X, y)
-print(f"best params = {grid.best_params_}")
-print(f"best CV acc = {grid.best_score_:.4f}")</script>
-<script type="text/x-explain">SVMs have two interacting knobs — C trades margin width for slack, gamma controls the RBF bandwidth. They must be tuned together: a small grid with cross-validation is the standard recipe. Use the <code>svc__</code> prefix to reach the SVC step through the Pipeline.</script>
-  </section>
-
-  <section>
-    <h2>SVM is hinge-loss + L2 regularization</h2>
-    <p style="text-align:center;font-size:1.05em;">min<sub>β</sub> &nbsp; Σ<sub>i</sub> max(0, 1 − y<sub>i</sub>·f(x<sub>i</sub>)) &nbsp; + &nbsp; λ‖β‖²</p>
-    <svg viewBox="0 0 320 180" style="width:55%;display:block;margin:0 auto;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
-      <line x1="30" y1="150" x2="300" y2="150" stroke="#0f172a"/>
-      <line x1="160" y1="150" x2="160" y2="20" stroke="#0f172a"/>
-      <path d="M30,30 L160,150 L300,150" stroke="#0f172a" stroke-width="2.5" fill="none"/>
-      <path d="M30,40 C90,80 160,135 300,148" stroke="#2563eb" stroke-width="2.2" fill="none"/>
-      <text x="40"  y="50"  font-size="10" fill="#0f172a">SVM (hinge)</text>
-      <text x="170" y="80"  font-size="10" fill="#2563eb">log loss (LR)</text>
-      <text x="165" y="170" font-size="9">y·f(x) →</text>
-    </svg>
-    <p class="muted" style="text-align:center;">Both are "loss + L2"; the loss differs. Hinge loss is zero past the margin — that's why only support vectors matter.</p>
-  </section>
-
-  <section>
-    <h2>The kernel trick — 1D becomes 2D</h2>
-    <svg class="diagram" viewBox="0 0 560 280" style="width:90%;display:block;margin:0 auto;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
-      <!-- left: 1D number line -->
-      <line x1="20" y1="140" x2="240" y2="140" stroke="#0f172a" stroke-width="1.5"/>
-      <g stroke="#0f172a" stroke-width="1">
-        <line x1="40" y1="135" x2="40" y2="145"/><line x1="80" y1="135" x2="80" y2="145"/>
-        <line x1="130" y1="135" x2="130" y2="145"/><line x1="180" y1="135" x2="180" y2="145"/>
-        <line x1="220" y1="135" x2="220" y2="145"/>
-      </g>
-      <g fill="#ef4444"><circle cx="40" cy="140" r="5"/><circle cx="80" cy="140" r="5"/><circle cx="220" cy="140" r="5"/></g>
-      <g fill="#2563eb"><circle cx="130" cy="140" r="5"/><circle cx="180" cy="140" r="5"/></g>
-      <text x="130" y="170" font-size="12" text-anchor="middle" fill="#64748b">x  (not linearly separable)</text>
-      <!-- arrow -->
-      <line x1="250" y1="140" x2="310" y2="140" stroke="#b45309" stroke-width="2" marker-end="url(#ka)"/>
-      <defs>
-        <marker id="ka" markerWidth="10" markerHeight="10" refX="6" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#b45309"/></marker>
-      </defs>
-      <text x="280" y="125" font-size="12" text-anchor="middle" fill="#b45309">φ: x → (x, x²)</text>
-      <!-- right: 2D parabola -->
-      <line x1="330" y1="240" x2="540" y2="240" stroke="#0f172a" stroke-width="1.2"/>
-      <line x1="340" y1="250" x2="340" y2="40" stroke="#0f172a" stroke-width="1.2"/>
-      <path d="M340,235 Q435,-40 535,235" stroke="#64748b" stroke-width="1" fill="none" stroke-dasharray="3 3"/>
-      <!-- separating horizontal line -->
-      <line x1="335" y1="130" x2="540" y2="130" stroke="#2563eb" stroke-width="2"/>
-      <!-- lifted points: x at 40 → (40, ~205); higher x² further up -->
-      <circle cx="360" cy="215" r="5" fill="#ef4444"/>
-      <circle cx="395" cy="180" r="5" fill="#ef4444"/>
-      <circle cx="525" cy="180" r="5" fill="#ef4444"/>
-      <circle cx="445" cy="95" r="5" fill="#2563eb"/>
-      <circle cx="485" cy="80" r="5" fill="#2563eb"/>
-      <text x="540" y="255" font-size="11" fill="#64748b">x</text>
-      <text x="348" y="50" font-size="11" fill="#64748b">x²</text>
-      <text x="540" y="125" font-size="11" fill="#2563eb">linear ✓</text>
-    </svg>
-    <p class="muted" style="text-align:center;">A nonlinear lift makes the classes linearly separable; the kernel computes ⟨φ(x), φ(x')⟩ without ever building φ. (ISLR Fig 9.9)</p>
-  </section>
-
-  <section>
-    <h2>RBF as a sum of bumps</h2>
-    <svg class="diagram" viewBox="0 0 520 260" style="width:80%;display:block;margin:0 auto;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
-      <line x1="30" y1="200" x2="500" y2="200" stroke="#0f172a" stroke-width="1.2"/>
-      <line x1="30" y1="200" x2="30" y2="30" stroke="#0f172a" stroke-width="1.2"/>
-      <!-- individual bumps centered on SVs -->
-      <path d="M30,200 Q120,80 210,200" stroke="#64748b" stroke-width="1" fill="none" stroke-dasharray="3 3"/>
-      <path d="M150,200 Q240,120 330,200" stroke="#64748b" stroke-width="1" fill="none" stroke-dasharray="3 3"/>
-      <path d="M300,200 Q380,60 460,200" stroke="#64748b" stroke-width="1" fill="none" stroke-dasharray="3 3"/>
-      <!-- summed classifier -->
-      <path d="M30,200 Q90,90 145,150 Q200,200 230,160 Q280,90 340,130 Q400,40 460,180 L500,200" stroke="#2563eb" stroke-width="2" fill="none"/>
-      <!-- support vectors on x-axis -->
-      <circle cx="120" cy="200" r="4" fill="#ef4444" stroke="#0f172a" stroke-width="1.2"/>
-      <circle cx="240" cy="200" r="4" fill="#ef4444" stroke="#0f172a" stroke-width="1.2"/>
-      <circle cx="380" cy="200" r="4" fill="#ef4444" stroke="#0f172a" stroke-width="1.2"/>
-      <text x="120" y="220" font-size="11" text-anchor="middle" fill="#64748b">sv₁</text>
-      <text x="240" y="220" font-size="11" text-anchor="middle" fill="#64748b">sv₂</text>
-      <text x="380" y="220" font-size="11" text-anchor="middle" fill="#64748b">sv₃</text>
-      <!-- gamma width arrow on first bump -->
-      <line x1="70" y1="170" x2="170" y2="170" stroke="#b45309" stroke-width="1.5" marker-start="url(#ga1)" marker-end="url(#ga2)"/>
-      <defs>
-        <marker id="ga1" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M8,0 L0,4 L8,8 z" fill="#b45309"/></marker>
-        <marker id="ga2" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#b45309"/></marker>
-      </defs>
-      <text x="120" y="162" font-size="12" text-anchor="middle" fill="#b45309">width ∝ 1/√γ</text>
-      <text x="40" y="45" font-size="11" fill="#2563eb">f(x) = Σ αᵢ K(x, svᵢ)</text>
-      <text x="500" y="215" font-size="11" fill="#64748b" text-anchor="end">x</text>
-    </svg>
-    <p class="muted" style="text-align:center;">The RBF classifier is a weighted sum of Gaussian bumps planted on each support vector; γ sets the bump width.</p>
-  </section>
-
-  <section>
-    <h2>Hinge vs log loss vs 0-1</h2>
-    <svg class="diagram" viewBox="0 0 520 280" style="width:75%;display:block;margin:0 auto;background:#fff;border:1px solid var(--bc-line);border-radius:8px;">
-      <!-- axes -->
-      <line x1="40" y1="240" x2="500" y2="240" stroke="#0f172a" stroke-width="1.2"/>
-      <line x1="40" y1="240" x2="40" y2="20" stroke="#0f172a" stroke-width="1.2"/>
-      <!-- x marks: margin=1 at x=340 -->
-      <line x1="340" y1="236" x2="340" y2="244" stroke="#0f172a"/>
-      <text x="340" y="258" font-size="11" text-anchor="middle" fill="#64748b">1</text>
-      <line x1="40" y1="236" x2="40" y2="244" stroke="#0f172a"/>
-      <text x="40" y="258" font-size="11" text-anchor="middle" fill="#64748b">−3</text>
-      <text x="500" y="258" font-size="11" text-anchor="end" fill="#64748b">yf(x)</text>
-      <text x="20" y="30" font-size="11" fill="#64748b">loss</text>
-      <!-- 0-1 loss: step at 0 (x=265) -->
-      <path d="M40,60 L265,60 L265,240 L500,240" stroke="#64748b" stroke-width="1.5" stroke-dasharray="5 4" fill="none"/>
-      <text x="80" y="55" font-size="12" fill="#64748b">0-1</text>
-      <!-- hinge: max(0, 1-yf), kink at yf=1 (x=340). slope so at yf=-3 (x=40), loss=4 → y=240-4*40=80 -->
-      <path d="M40,80 L340,240 L500,240" stroke="#2563eb" stroke-width="2.2" fill="none"/>
-      <text x="160" y="160" font-size="12" fill="#2563eb">hinge (SVM)</text>
-      <!-- logistic log(1+exp(-yf)), smooth -->
-      <path d="M40,90 C120,115 200,165 265,205 C320,225 400,238 500,240" stroke="#b45309" stroke-width="2" fill="none"/>
-      <text x="260" y="190" font-size="12" fill="#b45309">log loss (LR)</text>
-      <!-- legend -->
-      <g transform="translate(370,40)">
-        <line x1="0" y1="0" x2="20" y2="0" stroke="#2563eb" stroke-width="2.2"/>
-        <text x="25" y="4" font-size="11" fill="#2563eb">hinge</text>
-        <line x1="0" y1="16" x2="20" y2="16" stroke="#b45309" stroke-width="2"/>
-        <text x="25" y="20" font-size="11" fill="#b45309">logistic</text>
-        <line x1="0" y1="32" x2="20" y2="32" stroke="#64748b" stroke-width="1.5" stroke-dasharray="5 4"/>
-        <text x="25" y="36" font-size="11" fill="#64748b">0-1</text>
-      </g>
-    </svg>
-    <p class="muted" style="text-align:center;">Hinge is zero once margin ≥ 1 (kink at 1); logistic is smooth and never zero; 0-1 is what we'd really like to minimize. (ISLR Fig 9.12)</p>
-  </section>
-
-  <section class="example" data-packages="numpy,matplotlib,scikit-learn">
-    <h2>RBF SVM — sweeping C on make_moons</h2>
-    <div class="ex-prompt">Fit an RBF SVM at three C values on the moons dataset and compare decision boundaries. Support vectors are circled in black.</div>
-<textarea class="ex-code">import numpy as np
-import matplotlib
-matplotlib.use('AGG')
-import matplotlib.pyplot as plt
-from sklearn.svm import SVC
-from sklearn.datasets import make_moons
-
-X, y = make_moons(n_samples=200, noise=0.3, random_state=0)
-Cs = [0.1, 1, 100]
-
-xx, yy = np.meshgrid(
-    np.linspace(X[:,0].min()-0.4, X[:,0].max()+0.4, 250),
-    np.linspace(X[:,1].min()-0.4, X[:,1].max()+0.4, 250),
-)
-grid = np.c_[xx.ravel(), yy.ravel()]
-
-fig, axes = plt.subplots(1, 3, figsize=(13, 4.2), sharey=True)
-for ax, C in zip(axes, Cs):
-    svc = SVC(kernel='rbf', C=C, gamma='scale').fit(X, y)
-    Z = svc.decision_function(grid).reshape(xx.shape)
-    ax.contourf(xx, yy, Z, levels=[-1e9, 0, 1e9], alpha=0.2, colors=['#2563eb', '#ef4444'])
-    ax.contour(xx, yy, Z, levels=[-1, 0, 1], colors='k',
-               linestyles=['--', '-', '--'], linewidths=[1, 1.6, 1])
-    ax.scatter(X[y==0,0], X[y==0,1], s=18, color='#2563eb', label='class 0')
-    ax.scatter(X[y==1,0], X[y==1,1], s=18, color='#ef4444', label='class 1')
-    ax.scatter(svc.support_vectors_[:,0], svc.support_vectors_[:,1],
-               s=110, facecolors='none', edgecolors='black', linewidths=1.2, label='SV')
-    ax.set_title(f'C = {C}  (#SV = {len(svc.support_vectors_)})')
-axes[0].legend(loc='lower right', fontsize=8)
-plt.tight_layout(); plt.show()
-</textarea>
-    <div class="ex-controls">
-      <button class="ex-run">Run</button>
-      <button class="ex-reset">Reset</button>
-      <span class="ex-status"></span>
-    </div>
-    <pre class="ex-output"></pre>
-  </section>
 </section>
-
-<!-- ============================================================ PART 3 -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 3 · 1:00 – 1:30</span>
-    <h1>p ≫ n &amp; the comparison map</h1>
-    <p class="muted">the Khan gene-expression lab</p>
+    <h1>p ≫ n</h1>
+    <p class="muted">the Khan lab</p>
+  </section>
+  <section>
+    <h2>Khan — 63 cases, 2308 genes</h2>
+<ul>
+  <li class="fragment fade-up">Four cancer subtypes.</li>
+  <li class="fragment fade-up">Unregularized logistic regression diverges.</li>
+  <li class="fragment fade-up">Linear SVM thrives — the margin objective is itself a form of regularization.</li>
+</ul>
   </section>
 
   <section>
-    <h2>Khan — 63 patients, 2 308 genes, 4 cancer subtypes</h2>
-    <ul>
-      <li>p (genes) ≫ n (patients): the classic genomics setup.</li>
-      <li>Unregularized LR diverges — perfect separation in 2 308-D.</li>
-      <li>Linear SVM thrives — the margin objective is itself a form of regularization.</li>
-      <li>RBF is overkill here: 2 308 raw dimensions already give plenty of flexibility.</li>
-    </ul>
-    <p class="tip">Rule of thumb: <strong>p ≫ n → linear kernel.</strong> Switch to RBF only when n is large and features are dense.</p>
+    <h2>Use a linear kernel here</h2>
+<pre><code class="language-python">svc = SVC(kernel=&#x27;linear&#x27;, C=10).fit(xtr, ytr)
+GridSearchCV(svc, {&#x27;C&#x27;: [0.1, 1, 10, 100]}, cv=3)</code></pre><p class="muted">RBF is too slow at p = 2308 and not needed — the high dimension already gives enough flexibility.</p>
   </section>
 
-  <section class="example" data-packages="numpy">
-    <h2>Khan — load and inspect the gene-expression data</h2>
-    <div class="ex-prompt">In the lecture this is the real Khan dataset (63 train × 2308 genes, 4 cancer subtypes). Here we generate a seeded synthetic p ≫ n surrogate with the same shape so the rest of the workflow runs offline.</div>
-<textarea class="ex-code">import numpy as np
-
-# Synthetic Khan-shaped data: 63 train, 20 test, 2308 features, 4 classes.
-rng = np.random.default_rng(0)
-n_features = 2308
-classes = np.array([1, 2, 3, 4])
-centers = rng.normal(0, 0.6, size=(4, n_features))
-
-def sample(per_class):
-    Xs, ys = [], []
-    for k, n in enumerate(per_class):
-        Xs.append(centers[k] + rng.normal(0, 1.0, size=(n, n_features)))
-        ys.append(np.full(n, classes[k]))
-    return np.vstack(Xs), np.concatenate(ys)
-
-xtr, ytr = sample([8, 23, 12, 20])   # 63 total, mirrors Khan class sizes
-xte, yte = sample([3, 6, 6, 5])      # 20 test points
-
-print('train:', xtr.shape, '  test:', xte.shape)
-print('classes:', np.bincount(ytr)[1:])  # subtypes labelled 1..4
-</textarea>
-    <div class="ex-controls">
-      <button class="ex-run">Run</button>
-      <button class="ex-reset">Reset</button>
-      <span class="ex-status"></span>
-    </div>
-    <pre class="ex-output"></pre>
-  </section>
-
-  <section class="example" data-packages="numpy,scikit-learn">
-    <h2>Linear SVM on Khan (p ≫ n)</h2>
-    <div class="ex-prompt">Fit a linear-kernel SVM with C=10 on the p ≫ n data and check train/test accuracy plus the confusion matrix. Linear SVM is the right tool when features outnumber samples.</div>
-<textarea class="ex-code">import numpy as np
-from sklearn.svm import SVC
-from sklearn.metrics import confusion_matrix
-
-# Self-contained Khan-shaped synthetic data
-rng = np.random.default_rng(0)
-n_features = 2308
-classes = np.array([1, 2, 3, 4])
-centers = rng.normal(0, 0.6, size=(4, n_features))
-
-def sample(per_class):
-    Xs, ys = [], []
-    for k, n in enumerate(per_class):
-        Xs.append(centers[k] + rng.normal(0, 1.0, size=(n, n_features)))
-        ys.append(np.full(n, classes[k]))
-    return np.vstack(Xs), np.concatenate(ys)
-
-xtr, ytr = sample([8, 23, 12, 20])
-xte, yte = sample([3, 6, 6, 5])
-
-svc = SVC(kernel='linear', C=10).fit(xtr, ytr)
-print(f'train accuracy = {svc.score(xtr, ytr):.4f}')
-print(f'test accuracy  = {svc.score(xte, yte):.4f}')
-print('confusion matrix on test:')
-print(confusion_matrix(yte, svc.predict(xte)))
-</textarea>
-    <div class="ex-controls">
-      <button class="ex-run">Run</button>
-      <button class="ex-reset">Reset</button>
-      <span class="ex-status"></span>
-    </div>
-    <pre class="ex-output"></pre>
-  </section>
-
-  <section class="example" data-packages="numpy,scikit-learn">
-    <h2>Tune C with a small grid (cv=3 because n=63)</h2>
-    <div class="ex-prompt">With only 63 training cases, a 3-fold grid over C ∈ {0.1, 1, 10, 100} is the right amount of tuning — anything heavier overfits the CV estimate itself.</div>
-<textarea class="ex-code">import numpy as np
-from sklearn.svm import SVC
-from sklearn.model_selection import GridSearchCV
-
-rng = np.random.default_rng(0)
-n_features = 2308
-classes = np.array([1, 2, 3, 4])
-centers = rng.normal(0, 0.6, size=(4, n_features))
-
-def sample(per_class):
-    Xs, ys = [], []
-    for k, n in enumerate(per_class):
-        Xs.append(centers[k] + rng.normal(0, 1.0, size=(n, n_features)))
-        ys.append(np.full(n, classes[k]))
-    return np.vstack(Xs), np.concatenate(ys)
-
-xtr, ytr = sample([8, 23, 12, 20])
-xte, yte = sample([3, 6, 6, 5])
-
-grid = GridSearchCV(SVC(kernel='linear'), {'C': [0.1, 1, 10, 100]},
-                     cv=3, n_jobs=-1).fit(xtr, ytr)
-print(f'best C = {grid.best_params_["C"]}  CV acc = {grid.best_score_:.4f}')
-print(f'test acc with best C = {grid.best_estimator_.score(xte, yte):.4f}')
-</textarea>
-    <div class="ex-controls">
-      <button class="ex-run">Run</button>
-      <button class="ex-reset">Reset</button>
-      <span class="ex-status"></span>
-    </div>
-    <pre class="ex-output"></pre>
-  </section>
-
-  <section>
-    <h2>SVM vs the field — when to use what</h2>
-    <table style="margin:0 auto;border-collapse:collapse;font-size:0.85em;">
-      <tr style="background:var(--bc-panel);">
-        <th style="padding:0.4em 0.7em;">situation</th>
-        <th style="padding:0.4em 0.7em;">first model</th>
-      </tr>
-      <tr><td style="padding:0.4em 0.7em;">classes well-separated, n &lt; p</td><td>SVM (linear) or LDA</td></tr>
-      <tr><td style="padding:0.4em 0.7em;">need calibrated probabilities</td><td>Logistic regression</td></tr>
-      <tr><td style="padding:0.4em 0.7em;">curved boundary, n moderate</td><td>SVM (RBF) or gradient boosting</td></tr>
-      <tr><td style="padding:0.4em 0.7em;">tabular, mixed dtypes</td><td>Random forest / gradient boosting</td></tr>
-      <tr><td style="padding:0.4em 0.7em;">huge n (millions of rows)</td><td>Linear models / GBM — not RBF-SVM</td></tr>
-      <tr><td style="padding:0.4em 0.7em;">images, audio, text</td><td>Deep nets (next week onward)</td></tr>
-    </table>
-  </section>
-
-  <section>
-    <h2>More than two classes</h2>
-    <div class="two-col">
-      <div class="card">
-        <h4>One-vs-rest (OVR)</h4>
-        <p class="muted">Fit K binary SVMs (class k vs rest); predict the class with the highest score.</p>
-      </div>
-      <div class="card">
-        <h4>One-vs-one (OVO)</h4>
-        <p class="muted">Fit K(K−1)/2 pairwise SVMs; predict by majority vote among them.</p>
-      </div>
-    </div>
-    <p class="muted">sklearn defaults to OVO for kernel SVMs. For K not too large, OVO is usually preferred — each sub-problem is balanced.</p>
-  </section>
-
-  <section>
-    <h2>Caveats and gotchas</h2>
-    <ul>
-      <li class="fragment fade-up"><strong>No calibrated probabilities.</strong> <code>SVC(probability=True)</code> wraps Platt scaling — slow and approximate.</li>
-      <li class="fragment fade-up"><strong>Doesn't scale to n &gt; 10⁵ with RBF.</strong> Training is O(n²) – O(n³). Switch to linear SVM (<code>LinearSVC</code>) or GBM.</li>
-      <li class="fragment fade-up"><strong>Two hyperparameters to tune.</strong> Always do C × γ grid with CV.</li>
-      <li class="fragment fade-up"><strong>Scale your features.</strong> Repeating because forgetting is the #1 SVM bug.</li>
-    </ul>
-  </section>
 </section>
-
-<!-- ============================================================ RECAP -->
 <section class="title-slide">
   <span class="kicker">Recap</span>
   <h2>Three things to leave with</h2>
   <ol>
-    <li class="fragment fade-up"><strong>SVM finds the maximum-margin boundary.</strong> Only support vectors define it; soft margin C controls slack.</li>
-    <li class="fragment fade-up"><strong>The kernel trick gives non-linear boundaries cheaply.</strong> RBF is the default; tune C and γ.</li>
-    <li class="fragment fade-up"><strong>SVM is the tool for p ≫ n.</strong> Use a linear kernel, scale features, grid-search C.</li>
+<li class="fragment fade-up"><strong>SVM finds the maximum-margin boundary.</strong> Support vectors define it.</li>
+<li class="fragment fade-up"><strong>The kernel trick gives non-linear boundaries cheaply.</strong> RBF is the default.</li>
+<li class="fragment fade-up"><strong>SVM is the tool for p ≫ n.</strong> Use linear kernel and tune C.</li>
   </ol>
-  <p class="callout fragment fade-up">End of Week 4. From here: deep learning — where these classifiers become the final layer of much bigger models.</p>
-</section>
-
-<section class="title-slide">
-  <span class="kicker">References</span>
-  <h2>Further reading</h2>
-  <ul>
-    <li><a href="https://www.statlearning.com/" target="_blank">An Introduction to Statistical Learning (Python edition)</a> — James, Witten, Hastie, Tibshirani, Taylor (free PDF). Local copy: <code>assets/books/ISLP.pdf</code>.</li>
-  </ul>
+  <p class="callout fragment fade-up">End of Week 4. From here: deep learning and neural networks.</p>
 </section>
 
 </div></div>
@@ -990,7 +125,6 @@ print(f'test acc with best C = {grid.best_estimator_.score(xte, yte):.4f}')
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
-<script src="../../../../shared/slides-template/interactive.js"></script>
 <script>
   Reveal.initialize({
     hash: true, slideNumber: 'c/t', transition: 'slide',

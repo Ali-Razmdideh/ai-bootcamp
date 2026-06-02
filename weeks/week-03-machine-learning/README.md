@@ -1,66 +1,67 @@
-# Week 3 — Machine Learning: Regression, Validation, Selection
+# Week 3 — What is Statistical Learning?
 
-**Total time:** 9 hours · four sessions (two 3-hour + two 1.5-hour)
+**Total time:** 1 course · lecture slides
 
-Week 3 takes students from "I can manipulate data with NumPy and Pandas" to
-"I can fit, validate, and shrink a real regression model." Every canonical
-example is lifted from the ISLP textbook (James, Witten, Hastie, Tibshirani,
-Taylor — *An Introduction to Statistical Learning, Python edition*). The
-three student exercises per short course (six per merged course) stay on the
-seaborn datasets from Week 1 so the data-loading surface never changes.
+This week introduces the conceptual foundation of statistical learning, drawing
+directly from Hastie & Tibshirani's *Introduction to Statistical Learning*.
+It covers the full arc from motivation (why the field matters) to the formal
+framework (Y = f(X) + ε) and the core theoretical tools (bias-variance
+trade-off, classification).
 
-## Day 1 — Regression, and how to feed it
+## Course
 
-| Course | Topic | Folder |
-|--------|-------|--------|
-| 1 | Linear Regression — simple & multiple LR, diagnostics | [course-01-linear-regression/](course-01-linear-regression/) |
-| 2 | Feature Engineering | [course-02-feature-engineering/](course-02-feature-engineering/) |
+| # | Title | Folder |
+|---|-------|--------|
+| 1 | What is Statistical Learning? | [course-01-what-is-statistical-learning/](course-01-what-is-statistical-learning/) |
 
-## Day 2 — Validating and shrinking the model
+## What this course covers
 
-| Course | Topic | Folder |
-|--------|-------|--------|
-| 3 | Cross-Validation | [course-03-cross-validation/](course-03-cross-validation/) |
-| 4 | Feature Selection — subset/stepwise & Ridge/Lasso/Elastic Net | [course-04-feature-selection/](course-04-feature-selection/) |
+### Part 1 — Why Statistical Learning Matters
+IBM Watson, Hal Varian's "sexy job" quote, FiveThirtyEight. The eight canonical
+statistical learning problems: prostate cancer, phoneme classification, heart
+attack prediction, spam detection, handwritten digits, cancer gene expression,
+salary & demographics, LANDSAT image classification.
 
-## The arc
+### Part 2 — Eight Problems Up Close
+Deep dives into each of the eight problems: what the data looks like, what the
+scatter matrices reveal, and what modelling challenges arise.
 
-Day 1 builds the regression habit: fit, read coefficients, check residuals,
-add interactions, transform features. Day 2 answers the questions Day 1
-raises — "how do I know my polynomial degree isn't overfitting?" (CV) and
-"how do I pick predictors when I have too many?" (subset selection,
-Ridge/Lasso). The narrative flows: features → fit → validate → shrink.
+### Part 3 — Types of Learning
+The supervised learning problem (regression vs classification), objectives,
+philosophy. Unsupervised learning (clustering, PCA). Semi-supervised learning.
+Netflix Prize as a case study. Statistical learning vs machine learning.
 
-## Datasets
+### Part 4 — The Statistical Framework — Y = f(X) + ε
+The Advertising dataset. Notation. The regression function f(x) = E[Y|X=x]
+as the ideal predictor. Reducible vs irreducible error decomposition.
+Nearest-neighbor estimation of f.
 
-ISLP CSVs (`Auto`, `Boston`, `Hitters`) are fetched once and cached via
-`shared.data_utils.load_dataset(name)` — same pattern as Week 1.
+### Part 5 — Estimating f and Assessing Models
+Curse of dimensionality. Parametric models (linear, quadratic, splines).
+Overfitting. Flexibility vs interpretability trade-off. Training MSE vs test
+MSE. The U-shaped test MSE curve. Bias-variance decomposition.
 
-## Interactive slides
+### Part 6 — Classification
+The Bayes optimal classifier and conditional class probabilities. Bayes error
+rate. KNN for classification. Decision boundaries in 2D (K=1, 10, 100).
+Classification error rate.
 
-Every course's `slides/index.html` is a self-contained Reveal.js deck where
-each notebook code cell appears as a **runnable example** (prefilled answer
-+ description + *Run* button) and each notebook exercise appears as a
-**checked exercise** (starter code + *Run & Check* + reference solution on
-failure). Code runs in the browser via Pyodide, which lazy-loads
-scikit-learn / pandas / matplotlib on first use. ISLP datasets (Boston,
-Hitters, Auto, …) that the notebooks load via `shared.data_utils` are
-inlined as small seeded synthetic DataFrames in the slide examples so they
-work without filesystem access.
+## Source material
 
-## Running everything
+Slides built from:
+- Hastie & Tibshirani — *Ch1_Introduction.pdf* (29 slides)
+- Hastie & Tibshirani — *Ch2_Statistical_Learning.pdf* (37 slides)
+
+Reference text: *An Introduction to Statistical Learning* (ISLR/ISLP).
+
+## Regenerating slides
 
 ```bash
-uv sync
-uv run jupyter lab weeks/week-03-machine-learning/
+python3 scripts/build_slides.py
 ```
 
-To regenerate every notebook and slide deck from source:
+Opens in the browser:
 
 ```bash
-uv run python scripts/build_week03_notebooks.py
-uv run python scripts/merge_week03_slides.py
+open weeks/week-03-machine-learning/course-01-what-is-statistical-learning/slides/index.html
 ```
-
-(`build_slides.py` only covers Week 4+; Week 3 slide decks are merged/restored
-from the full interactive HTML via `merge_week03_slides.py`.)

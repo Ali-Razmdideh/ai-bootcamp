@@ -193,503 +193,446 @@ def merge_deck_specs(
 
 WEEK3 = ROOT / "weeks" / "week-03-machine-learning"
 
-W3_LR1 = {
-    "title": "Linear Regression I — Simple LR",
-    "kicker": "Week 3 · Course 1 · 1.5 hours",
-    "subtitle": "Fit a line, read the output, infer for β",
+W3_SL = {
+    "title": "What is Statistical Learning?",
+    "kicker": "Week 3 · Course 1",
+    "subtitle": "From real-world motivation to f(X)+ε, bias-variance trade-off, and classification",
     "parts_summary": [
-        ("0:00 · 0:30", "Fitting a line", "Least squares, by hand and via sklearn."),
-        ("0:30 · 1:00", "Reading the output", "coef, R², RMSE, residuals."),
-        ("1:00 · 1:30", "Inference for β", "t-stat, bootstrap CI, assumptions."),
+        ("Part 1", "Why it matters", "Watson, Varian, and 8 real problems."),
+        ("Part 2", "Types of learning", "Supervised, unsupervised, semi-supervised."),
+        ("Part 3", "Y = f(X) + ε", "Notation, regression function, estimation."),
+        ("Part 4", "Estimating f", "KNN, curse of dimensionality, parametric models."),
+        ("Part 5", "Model accuracy", "Train/test MSE and bias-variance trade-off."),
+        ("Part 6", "Classification", "Bayes classifier and KNN boundaries."),
     ],
-    "callout": "Every concept that appears later — loss, coefficients, R², residuals — shows up here in its cleanest form. Master simple LR and the rest of the course just adds knobs.",
+    "callout": "Statistical learning is the set of tools for estimating f — the function that maps inputs X to output Y. This course builds the full mental model: from Watson to the bias-variance decomposition.",
     "parts": [
+        # ── Part 1 ─────────────────────────────────────────────────────────────
         {
-            "kicker": "Part 1 · 0:00 – 0:30",
-            "title": "Fitting a line",
-            "subtitle": "least squares, by hand",
+            "kicker": "Part 1",
+            "title": "Why Statistical Learning Matters",
+            "subtitle": "from Watson to eight real problems",
             "slides": [
-                slide("The cost we are minimizing",
-                      '<p>Given <code>(x₁, y₁), …, (xₙ, yₙ)</code>, the line ŷ = β₀ + β₁ x that minimizes <strong>residual sum of squares</strong>:</p>'
-                      '<p style="text-align:center;font-size:1.4em;">RSS(β) = Σᵢ (yᵢ − β₀ − β₁ xᵢ)²</p>'
-                      '<p class="muted">Take the gradient, set to zero, two-line closed-form solution.</p>',
-                      "Loss + closed-form solution. The point: every later model just changes the loss or the model class."),
-                slide("Closed form — both coefficients",
-                      '<p style="text-align:center;font-size:1.25em;">β̂₁ = Σᵢ (xᵢ − x̄)(yᵢ − ȳ) / Σᵢ (xᵢ − x̄)²</p>'
-                      '<p style="text-align:center;font-size:1.25em;">β̂₀ = ȳ − β̂₁ x̄</p>'
-                      '<p class="muted" style="margin-top:1em;">Two summations, no iteration. Compare with the iterative optimizers next month for neural nets.</p>'),
-                slide("Sklearn in three lines",
-                      code_block("from sklearn.linear_model import LinearRegression\n"
-                                 "X = boston[['lstat']]\n"
-                                 "y = boston['medv']\n"
-                                 "model = LinearRegression().fit(X, y)\n"
-                                 "print(model.intercept_, model.coef_)"),
-                      "Live in notebook: derive by hand, then sklearn. Should match to 4 decimal places."),
+                slide("Statistics in the news — IBM Watson",
+                      '<blockquote style="font-style:italic;border-left:4px solid #c00;padding-left:1em;">'
+                      '"It\'s machine learning allows the computer to become smarter as it tries to answer questions — '
+                      'and to learn as it gets them right or wrong."'
+                      '</blockquote>'
+                      '<p class="muted" style="margin-top:0.8em;">— David Ferrucci (PI of IBM Watson DeepQA), on why Watson beat Ken Jennings at <em>Jeopardy!</em> — <em>DailyFinance</em>, February 8, 2011.</p>',
+                      "Watson's Jeopardy win was a landmark. It was not rule-based programming — it was machine learning: iterating on labelled question-answer pairs to build a system that improves with experience. The distinction matters: you couldn't write down rules for every possible Jeopardy clue."),
+                slide("Statistics in the news — Hal Varian",
+                      '<blockquote style="font-style:italic;border-left:4px solid #c00;padding-left:1em;">'
+                      '"I keep saying that the sexy job in the next 10 years will be statisticians. And I\'m not kidding."'
+                      '</blockquote>'
+                      '<p class="muted" style="margin-top:0.6em;">— Hal Varian, Chief Economist at Google — <em>New York Times</em>, August 5, 2009.</p>'
+                      '<p style="margin-top:0.8em;">Carrie Grimes (Harvard anthropology → Google): '
+                      '"People think of field archaeology as Indiana Jones, but much of what you really do is data analysis."</p>',
+                      "Varian's quote was prescient — by 2015 'data scientist' was everywhere. The underlying skill is the same: extract signal from noisy data. The NYT article is from 2009, before deep learning, before TensorFlow. The insight was that demand for quantitative reasoning skills would far outpace supply."),
+                slide("Statistics in the news — FiveThirtyEight",
+                      '<p>Nate Silver\'s <strong>FiveThirtyEight</strong> aggregated polls with a statistical model to predict state-level election results with remarkable accuracy.</p>'
+                      + two_col(
+                          '<p style="font-size:1.8em;margin:0;"><strong>90.9%</strong></p>'
+                          '<p class="muted" style="margin:0;">Chance of winning (+13.5 since Oct. 30)</p>'
+                          '<p style="margin-top:0.6em;">vs.</p>'
+                          '<p style="font-size:1.8em;margin:0;"><strong>9.1%</strong></p>'
+                          '<p class="muted" style="margin:0;">(−13.5 since Oct. 30)</p>',
+                          '<p>Silver\'s book <em>The Signal and the Noise</em> (2012) explains why most predictions fail: mistaking noise for signal.</p>'
+                          '<p>Key idea: combine many noisy polls via a statistical model to produce a more stable probability estimate.</p>'
+                      ),
+                      "FiveThirtyEight used weighted poll averages with adjustments for house effects, likely-voter screens, and economic fundamentals. Classic statistical learning applied to publicly available data — no proprietary information required."),
+                slide("Eight statistical learning problems",
+                      bullets([
+                          "Identify the <strong>risk factors for prostate cancer</strong>.",
+                          "Classify a recorded phoneme based on a <strong>log-periodogram</strong>.",
+                          "Predict whether someone will have a <strong>heart attack</strong> from demographic, diet and clinical measurements.",
+                          "Customize an <strong>email spam detection</strong> system.",
+                          "Identify the numbers in a <strong>handwritten zip code</strong>.",
+                          "Classify a tissue sample into one of several <strong>cancer classes</strong>, based on a gene expression profile.",
+                          "Establish the relationship between <strong>salary and demographic variables</strong> in population survey data.",
+                          "Classify the pixels in a <strong>LANDSAT image</strong>, by usage.",
+                      ], fragments=False),
+                      "All eight are real published datasets used in ISLR. Point out the variety: some have quantitative Y (salary, lpsa), some have categorical Y (cancer subtype, spam/ham). Some we want to understand (what drives PSA?), some we want to predict (is this email spam?). The same statistical machinery handles all of them."),
             ],
         },
+        # ── Part 2 ─────────────────────────────────────────────────────────────
         {
-            "kicker": "Part 2 · 0:30 – 1:00",
-            "title": "Reading the output",
-            "subtitle": "R², RMSE, residuals",
+            "kicker": "Part 2",
+            "title": "Eight Problems Up Close",
+            "subtitle": "what the data looks like",
             "slides": [
-                slide("Three numbers you always report",
-                      bullets([
-                          "<strong>R²</strong> — fraction of variance the model explains (0 = nothing, 1 = perfect).",
-                          "<strong>RMSE</strong> — root mean squared error, <em>in the units of y</em>.",
-                          "<strong>Residual plot</strong> — fitted vs (y − ŷ). Looks like noise? You are done. A pattern? The model is wrong somewhere.",
-                      ])),
-                slide("Residuals reveal everything",
-                      '<p>If residuals show a curve → the relationship is not linear.</p>'
-                      '<p>If residuals fan out → the variance is not constant (heteroscedasticity).</p>'
-                      '<p>If residuals cluster by some category → there is a missing predictor.</p>'
-                      '<p class="callout">A residual plot is the cheapest model-criticism tool you have. Run it every time.</p>'),
-                slide("R² is not the whole story",
-                      '<p class="muted">A model with R² = 0.95 can still be useless if:</p>'
+                slide("Prostate cancer — predict lpsa",
+                      '<img src="img/ch1_prostate_scatter.svg" style="width:55%;float:right;margin-left:1em;">'
+                      '<p><strong>Data:</strong> 97 men; 8 clinical predictors; outcome = <code>lpsa</code> (log PSA).</p>'
                       + bullets([
-                          "Its residuals show a clear U-shape (model misspecified).",
-                          "Its predictions extrapolate badly outside the training range.",
-                          "The signal is dominated by one feature with a known data leak.",
-                      ])),
+                          "<code>lcavol</code> (log cancer volume) has the strongest relationship with <code>lpsa</code>.",
+                          "<code>lcp</code> and <code>lcavol</code> are correlated — multicollinearity matters.",
+                          "<code>svi</code> (seminal vesicle invasion) is binary — visible as two-column strips.",
+                          "<code>gleason</code> is an ordered integer — only a few distinct values.",
+                      ], fragments=False),
+                      "Walk through the scatter matrix. The top row (lpsa vs everything) is what matters for prediction. Collinearity between predictors is why we need multiple regression, not separate simple regressions."),
+                slide("Phoneme classification — aa vs ao",
+                      '<img src="img/ch1_phoneme.svg" style="width:100%;max-height:52vh;object-fit:contain;">'
+                      '<p class="muted" style="font-size:0.8em;margin-top:0.3em;"><strong>Top:</strong> log-periodograms for "aa" (green) and "ao" (orange) overlap at high frequencies. <strong>Bottom:</strong> raw LR coefficients (grey bars, noisy) vs. smooth restricted fit (red curve) — regularisation is needed.</p>',
+                      "The bottom panel shows raw LR coefficients (grey bars — very noisy) vs. a restricted smooth fit (red curve). The smooth version is correct — it imposes that nearby frequencies should have similar coefficients. This motivates regularisation."),
+                slide("Heart attack prediction — South African data",
+                      '<img src="img/ch1_heartattack_scatter.svg" style="width:52%;float:right;margin-left:1em;">'
+                      '<p><strong>Data:</strong> 462 males; outcome: <strong>chd</strong> (coronary heart disease, binary). Predictors: sbp, tobacco, ldl, famhist, obesity, alcohol, age.</p>'
+                      '<p><span style="color:#c00;">■</span> chd=1 &nbsp; <span style="color:#0cc;">■</span> chd=0</p>'
+                      + bullets([
+                          "<strong>Age</strong> and <strong>ldl</strong>: clearest separation.",
+                          "<strong>Tobacco</strong>: heavily right-skewed.",
+                          "<strong>famhist</strong>: binary — two-column strips.",
+                          "No single predictor separates perfectly.",
+                      ], fragments=False),
+                      "Classification problem, binary outcome. No single predictor is sufficient — but together they carry substantial signal. South African Heart Disease dataset (Rousseauw et al., 1983)."),
+                slide("Spam detection — customised filters",
+                      '<img src="img/ch1_spam_table.svg" style="width:100%;max-height:60vh;object-fit:contain;">',
+                      "The word 'george' appears frequently in legitimate email (it's the recipient) but never in spam — a personalised signal. 'free', '!', and 'remove' are classic spam signals. The key word 'customised' in the problem statement: a generic spam filter trained on someone else's email would miss the 'hp' and 'george' signals."),
+                slide("Handwritten zip codes — digit recognition",
+                      '<img src="img/ch1_digits.svg" style="width:100%;max-height:55vh;object-fit:contain;">'
+                      '<p class="muted" style="font-size:0.8em;margin-top:0.3em;">p = 256 features (16×16 pixels) · K = 10 classes · N ≈ 9000 training images. The same digit looks dramatically different across writers.</p>',
+                      "Key teaching point: 256 inputs, 10 output classes, no natural ordering of classes. A 9 can look like a 4; an 8 can look like a 3. This dataset was a key early benchmark for neural networks (LeCun et al., 1989)."),
+                slide("Cancer gene expression — breast cancer subtypes",
+                      '<img src="img/ch1_cancer_heatmap.svg" style="width:60%;float:right;margin-left:1em;">'
+                      '<p><strong>Data:</strong> Gene expression from breast tumour biopsies. Thousands of genes; ~200 patient samples.</p>'
+                      '<p>Hierarchical clustering heatmap (green = below average, red = above average) reveals four subtypes — <em>without any pathologist labels</em>:</p>'
+                      + bullets([
+                          '<strong>Luminal A</strong> — most common, best prognosis.',
+                          '<strong>Luminal B</strong> — more aggressive.',
+                          '<strong>ERBB2+</strong> — HER2-positive.',
+                          '<strong>Basal</strong> — triple-negative, worst prognosis.',
+                      ], fragments=False),
+                      "Perou et al. (2000) transformed breast oncology with this analysis. The subtypes have different clinical outcomes and respond differently to treatment — validating the data-driven grouping."),
+                slide("Salary and demographics",
+                      '<img src="img/ch1_salary.svg" style="width:100%;max-height:57vh;object-fit:contain;">'
+                      '<p class="muted" style="font-size:0.8em;margin-top:0.2em;">Central Atlantic USA males, 2009 CPS. <strong>Age:</strong> non-linear (peaks ~40). <strong>Year:</strong> slight upward trend. <strong>Education:</strong> ordered categorical, clear step-up effect.</p>',
+                      "The three panels show three different types of predictor-response relationships: non-linear continuous (Age), linear continuous (Year), and ordered categorical (Education). A good model of Wage needs to handle all three."),
+                slide("LANDSAT image classification",
+                      '<img src="img/ch1_landsat.svg" style="width:100%;max-height:58vh;object-fit:contain;">'
+                      '<p class="muted" style="font-size:0.8em;margin-top:0.2em;">4 spectral bands per pixel → classify into: red soil, cotton crop, vegetation stubble, mixture, grey soil, damp grey soil. Predicted map (right) nearly matches the true map (middle).</p>',
+                      "Multi-class pixel-level classification. Only 4 features per pixel, but the classes are well-separated in spectral space — KNN and LDA work well here."),
             ],
         },
+        # ── Part 3 ─────────────────────────────────────────────────────────────
         {
-            "kicker": "Part 3 · 1:00 – 1:30",
-            "title": "Inference for β",
-            "subtitle": "is the slope real?",
+            "kicker": "Part 3",
+            "title": "Types of Learning",
+            "subtitle": "supervised, unsupervised, and semi-supervised",
             "slides": [
-                slide("Standard error and the t-statistic",
-                      '<p style="text-align:center;font-size:1.2em;">t = β̂₁ / SE(β̂₁)</p>'
-                      '<p>If |t| is big (typically > 2), the slope is significantly different from zero. Sklearn does not report this; statsmodels does — but in this course we prefer the bootstrap.</p>'),
-                slide("The bootstrap — a CI for anything",
-                      code_block("for k in range(2000):\n"
-                                 "    idx = rng.choice(n, n, replace=True)\n"
-                                 "    b1_boot[k] = slope(x[idx], y[idx])\n"
-                                 "lo, hi = np.quantile(b1_boot, [0.025, 0.975])"),
-                      "The bootstrap was Bradley Efron's gift to applied stats. No formulas, no distributional assumptions, just resample with replacement."),
-                slide("Four assumptions of linear regression",
+                slide("The supervised learning problem",
+                      two_col(
+                          '<h3>The components</h3>'
+                          + bullets([
+                              "<strong>Y</strong> — outcome (response, target, dependent variable).",
+                              "<strong>X = (X₁, …, Xₚ)</strong> — p predictors (features, inputs, covariates).",
+                              "<strong>Training data</strong> (x₁,y₁), …, (xN,yN) — N labelled observations.",
+                          ], fragments=False),
+                          '<h3>Two sub-types</h3>'
+                          + bullets([
+                              "<strong>Regression</strong>: Y is quantitative (wage, lpsa, sales).",
+                              "<strong>Classification</strong>: Y is categorical (spam/ham, digit 0–9, cancer subtype).",
+                          ], fragments=False)
+                          + '<p class="muted" style="margin-top:0.8em;">Both regression and classification use the same framework; only the type of Y and the loss function change.</p>'
+                      ),
+                      "The word 'supervised' comes from having labelled examples — a supervisor told us the correct answer for each training case. The goal is to generalise: given a new X not in training, predict Y correctly."),
+                slide("Objectives of supervised learning",
                       bullets([
-                          "<strong>Linearity</strong> — residual plot has no curve.",
-                          "<strong>Constant variance</strong> — no fan, no funnel.",
-                          "<strong>Independence</strong> — observations not autocorrelated.",
-                          "<strong>Normality of errors</strong> — Q-Q plot of residuals is straight.",
-                      ])),
+                          "<strong>Accurately predict</strong> unseen test cases.",
+                          "<strong>Understand</strong> which inputs affect the outcome and how.",
+                          "<strong>Assess</strong> the quality of our predictions and inferences.",
+                      ]),
+                      "These three objectives often conflict. Maximising prediction accuracy can require a black-box model (random forest, neural net) that sacrifices interpretability. Maximising interpretability (simple linear model) may sacrifice accuracy. The right balance depends on the application."),
+                slide("Unsupervised learning",
+                      two_col(
+                          '<h3>No outcome variable</h3>'
+                          '<p>Just predictors X measured on a set of samples. No Y to predict.</p>'
+                          '<h3>Objectives (fuzzier)</h3>'
+                          + bullets([
+                              "Find <strong>groups</strong> of similar samples (clustering).",
+                              "Find <strong>features</strong> that vary together.",
+                              "Find <strong>low-dimensional structure</strong> in high-d data (PCA).",
+                          ], fragments=False),
+                          '<h3>The challenge</h3>'
+                          '<p>No ground truth to evaluate against. Hard to know how well you are doing.</p>'
+                          '<h3>Still very useful</h3>'
+                          '<p>Often a pre-processing step for supervised learning — or the only option when labels are unavailable.</p>'
+                          '<p class="muted">Example: the cancer subtypes from Part 2 emerged from unsupervised clustering with no pathologist labels.</p>'
+                      ),
+                      "Unsupervised learning is harder because there is no right answer. K-means, hierarchical clustering, and PCA are the main tools. It is sometimes called 'learning without a teacher'."),
+                slide("Semi-supervised learning",
+                      two_col(
+                          '<h3>The setting</h3>'
+                          '<p>A small set of <strong>labelled</strong> examples and a much larger set of <strong>unlabelled</strong> examples.</p>'
+                          '<h3>Why it arises</h3>'
+                          + bullets([
+                              "Labels are expensive: pathologist time, human annotation, clinical trials.",
+                              "Raw data is cheap: images, text, genomic sequences.",
+                          ], fragments=False),
+                          '<h3>The idea</h3>'
+                          '<p>Use the unlabelled data to learn the <em>structure</em> of X (clusters, manifolds), then use the few labelled examples to attach Y to that structure.</p>'
+                          '<h3>Modern examples</h3>'
+                          + bullets([
+                              "Foundation models (GPT, BERT): pre-trained on vast unlabelled text, fine-tuned with small labelled sets.",
+                              "Medical imaging: one annotated scan per patient, thousands without labels.",
+                          ], fragments=False)
+                      ),
+                      "Semi-supervised learning sits between supervised and unsupervised. It is the dominant paradigm in modern deep learning: pre-training on unlabelled data (self-supervised learning) followed by supervised fine-tuning on a small labelled dataset."),
+                slide("The Netflix Prize — supervised or unsupervised?",
+                      '<p>October 2006: Netflix releases a matrix of ratings: <strong>18,000 movies</strong> × <strong>400,000 customers</strong>, each rating 1–5 stars. The matrix is <strong>98% missing</strong>.</p>'
+                      '<p>Goal: predict the rating for 1 million missing (customer, movie) pairs. Netflix\'s own algorithm achieved RMSE = 0.953. The prize: <strong>$1,000,000</strong> for the first team achieving 10% improvement.</p>'
+                      '<p class="callout">Looks unsupervised (no explicit Y column), but each known rating is a labelled observation. This is a supervised regression problem with a massive missing-data challenge.</p>',
+                      "The Netflix Prize was enormously influential. It introduced matrix factorisation to a wide audience, showed that ensemble methods (blending 100+ models) reliably beat any single model, and raised important questions about privacy (the de-anonymisation paper by Narayanan and Shmatikoff appeared shortly after)."),
+                slide("BellKor's Pragmatic Chaos wins",
+                      '<p>After nearly 3 years, two teams simultaneously achieved the 10% threshold. <strong>BellKor\'s Pragmatic Chaos</strong> won by 20 minutes — their submission was received first.</p>'
+                      '<table style="font-size:0.88em;margin:0.8em auto;border-collapse:collapse;">'
+                      '<tr style="border-bottom:2px solid #ccc;"><th>Rank</th><th>Team</th><th>RMSE</th><th>% Improvement</th></tr>'
+                      '<tr><td>1</td><td>BellKor\'s Pragmatic Chaos</td><td>0.8567</td><td>10.06</td></tr>'
+                      '<tr><td>2</td><td>The Ensemble</td><td>0.8567</td><td>10.06</td></tr>'
+                      '<tr><td>3</td><td>Grand Prize Team</td><td>0.8582</td><td>9.90</td></tr>'
+                      '<tr><td>4</td><td>Opera Solutions and Vandelay United</td><td>0.8588</td><td>9.84</td></tr>'
+                      '</table>'
+                      '<p class="muted" style="font-size:0.85em;">The winning solution blended over 100 different models. The best single method was matrix factorisation.</p>',
+                      "No single algorithm won the prize. Blending uncorrelated models always beats any individual model — this is the fundamental insight behind ensemble methods (which we cover in Week 4)."),
+                slide("Statistical Learning vs Machine Learning",
+                      two_col(
+                          '<h3>Different roots</h3>'
+                          + bullets([
+                              "<strong>Machine learning</strong> arose as a subfield of Artificial Intelligence.",
+                              "<strong>Statistical learning</strong> arose as a subfield of Statistics.",
+                              "<em>Both</em> focus on supervised and unsupervised problems using the same algorithms.",
+                          ], fragments=False),
+                          '<h3>Different emphases</h3>'
+                          + bullets([
+                              "<strong>ML</strong>: large-scale applications, prediction accuracy, computational efficiency.",
+                              "<strong>SL</strong>: models, interpretability, precision and uncertainty of estimates.",
+                              "The distinction has blurred enormously — there is massive cross-fertilisation.",
+                          ], fragments=False)
+                          + '<p class="callout" style="margin-top:0.6em;">"Machine learning has the upper hand in marketing." — Hastie &amp; Tibshirani</p>'
+                      ),
+                      "Practical takeaway: 'ML' and 'statistical learning' are solving the same problems. If you come from CS you say ML; if you come from statistics you say SL. This course uses the ISLR framework (statistical flavour) but all the code is scikit-learn (ML flavour)."),
             ],
         },
-    ],
-    "recap_items": [
-        "<strong>Least squares is two lines of arithmetic.</strong> The closed form, not gradient descent.",
-        "<strong>R² and RMSE summarize fit; residuals find what they miss.</strong> Always plot residuals.",
-        "<strong>A CI is what a coefficient is worth as a claim.</strong> Bootstrap one in three lines.",
-    ],
-    "recap_callout": "Next: multiple regression, collinearity, and the four diagnostic plots every modeler should read in five seconds.",
-}
-
-
-W3_LR2 = {
-    "title": "Linear Regression II — Multiple LR & Diagnostics",
-    "kicker": "Week 3 · Part 2 · 1.5 hours",
-    "subtitle": "Many predictors, collinearity, residual plots, and categorical encoding",
-    "parts_summary": [
-        ("0:00 · 0:30", "Multiple LR", "matrix form, collinearity, VIF."),
-        ("0:30 · 1:00", "Diagnostics", "residuals, leverage, Cook's distance."),
-        ("1:00 · 1:30", "Categoricals & interactions", "one-hot, Price × Urban."),
-    ],
-    "callout": "Real datasets are multi-predictor and full of traps. The four diagnostic plots are your first reflex when a model 'looks fine'.",
-    "parts": [
+        # ── Part 4 ─────────────────────────────────────────────────────────────
         {
-            "kicker": "Part 1 · 0:00 – 0:30",
-            "title": "Multiple regression",
-            "subtitle": "Y = Xβ + ε",
+            "kicker": "Part 4",
+            "title": "The Statistical Framework — Y = f(X) + ε",
+            "subtitle": "notation, the regression function, and how to estimate f",
             "slides": [
-                slide("The matrix form",
-                      '<p style="text-align:center;font-size:1.3em;">Y = Xβ + ε,  β̂ = (XᵀX)⁻¹ Xᵀ Y</p>'
-                      '<p class="muted">One predictor or one hundred — the formula is the same. The expensive bit is the matrix inverse, but n ≪ 10⁴ → microseconds.</p>'),
-                slide("Collinearity flips signs",
-                      '<p>If predictor j is well predicted by the others, its coefficient becomes unstable.</p>'
-                      '<p style="text-align:center;font-size:1.2em;">VIF<sub>j</sub> = 1 / (1 − R²<sub>j</sub>)</p>'
-                      '<p>VIF > 5–10 is a red flag. Drop one of the correlated pair, or use Ridge (Course 4) to stabilize.</p>',
-                      "Run VIF in the notebook on Boston; tax, rad, nox are biggest offenders."),
-                slide("Never read a coefficient in isolation",
+                slide("Running example: the Advertising data",
+                      '<img src="img/ch2_advertising.svg" style="width:100%;max-height:55vh;object-fit:contain;">'
+                      '<p class="muted" style="font-size:0.8em;margin-top:0.2em;">200 markets. <strong>TV</strong>: strong (but non-linear). <strong>Radio</strong>: moderate. <strong>Newspaper</strong>: weak. Goal: Sales ≈ f(TV, Radio, Newspaper).</p>',
+                      "The Advertising dataset is the canonical ISLR example. Three predictors, one outcome, 200 rows. The simplicity lets us focus on the methodology without fighting the data."),
+                slide("Notation: Y = f(X) + ε",
+                      '<p>We observe a response <strong>Y</strong> and p predictors <strong>X = (X₁, X₂, …, Xₚ)</strong>.</p>'
+                      '<p style="text-align:center;font-size:1.6em;margin:0.8em 0;">Y = f(X) + ε</p>'
+                      + bullets([
+                          "<strong>f</strong> — the systematic information X contains about Y. Fixed but unknown.",
+                          "<strong>ε</strong> — error term: measurement noise, unmeasured causes, randomness. Independent of X, mean zero.",
+                          "Statistical learning is the set of approaches for <strong>estimating f</strong>.",
+                      ], fragments=False),
+                      "Write this on the board. This single equation is the foundation of everything in the course. Every model we see — linear regression, decision trees, neural networks — is a different way of estimating f."),
+                slide("What is f(X) good for?",
+                      two_col(
+                          '<h3>Prediction</h3>'
+                          '<p>With a good f̂, predict Y at new X = x. The internal form of f̂ does not matter — a black box is fine if it predicts well.</p>'
+                          '<p><em>Example:</em> Credit card default. Predict P(default | X) to decide whether to approve a loan. The model can be complex — we only care about the final probability.</p>',
+                          '<h3>Inference</h3>'
+                          '<p>Understand which Xⱼ matter and how they affect Y.</p>'
+                          '<p><em>Example:</em> Income survey. Seniority and years of education have big impacts on Income; marital status typically does not. We need a simple, interpretable model to make such statements.</p>'
+                      ),
+                      "Prediction and inference pull in opposite directions. Prediction wants the most accurate f̂. Inference wants f̂ to be simple enough to explain. Depending on the complexity of f, we may be able to understand how each component Xⱼ affects Y."),
+                slide("Is there an ideal f(X)?",
+                      '<img src="img/ch2_regression_function.svg" style="width:55%;float:right;margin-left:1em;">'
+                      '<p>At X = x there are many possible Y values (due to ε). The best single prediction is:</p>'
+                      '<p style="text-align:center;font-size:1.4em;margin:0.8em 0;"><strong>f(x) = E[Y | X = x]</strong></p>'
+                      '<p>The <strong>regression function</strong> — the average Y at a given x. The red curve threads through the cloud; each grey point deviates by ε.</p>',
+                      "Draw on the board: a scatter plot of (x, y) pairs. The conditional mean curve threads through the middle. Each point deviates from the curve by ε. The curve is the signal; the deviations are the noise."),
+                slide("Reducible vs irreducible error",
+                      '<p>For any estimate f̂(x) of f(x):</p>'
+                      '<p style="text-align:center;font-size:1.1em;margin:0.8em 0;">'
+                      'E[(Y − f̂(X))²|X=x] = '
+                      '<span style="color:#c00;">[f(x) − f̂(x)]²</span>'
+                      ' + '
+                      '<span style="color:#0066cc;">Var(ε)</span>'
+                      '</p>'
+                      + two_col(
+                          '<p><span style="color:#c00;"><strong>Reducible error</strong></span></p>'
+                          '<p>The gap between our f̂ and the true f. Can be closed with more data, better features, or smarter models.</p>',
+                          '<p><span style="color:#0066cc;"><strong>Irreducible error</strong></span></p>'
+                          '<p>Var(ε). Even knowing f exactly, we still err on individual Y values because of noise.</p>'
+                      )
+                      + '<p class="callout" style="margin-top:0.8em;">The irreducible error sets a hard floor on test error. No model — however complex — can beat Var(ε).</p>',
+                      "This is one of the most important ideas in the course. When students ask 'why isn't the test error zero?', the answer is: irreducible error. The goal is to push test error as close to Var(ε) as possible by minimising [f − f̂]²."),
+            ],
+        },
+        # ── Part 5 ─────────────────────────────────────────────────────────────
+        {
+            "kicker": "Part 5",
+            "title": "Estimating f and Assessing Models",
+            "subtitle": "from nearest-neighbor to the bias-variance trade-off",
+            "slides": [
+                slide("How to estimate f — nearest-neighbor averaging",
+                      '<p>We want f̂(x) ≈ E[Y | X = x]. Problem: typically no training points have <em>exactly</em> X = x.</p>'
+                      '<p>Solution — relax to a <strong>neighbourhood</strong>:</p>'
+                      '<p style="text-align:center;font-size:1.3em;margin:0.8em 0;">f̂(x) = Ave(Y | X ∈ 𝒩(x))</p>'
+                      '<p>Average Y over the k nearest neighbours of x in the training data.</p>'
+                      + bullets([
+                          "Works well for small p (p ≤ 4) and large N.",
+                          "A sliding window on a 1D scatter traces out f(x) by averaging nearby Y values.",
+                      ], fragments=False),
+                      "Draw the sliding window. As the window moves right, the local average traces the conditional mean. The window width controls bias vs variance: wide window = more data averaged = lower variance but higher bias."),
+                slide("Curse of dimensionality",
+                      '<img src="img/ch2_curse_dim.svg" style="width:100%;max-height:52vh;object-fit:contain;">'
+                      '<p class="muted" style="font-size:0.8em;margin-top:0.2em;"><strong>Left:</strong> 10% neighbourhood in 2D stays local. <strong>Right:</strong> radius needed to capture 10% of volume grows rapidly — at p=10 it spans almost the entire space.</p>',
+                      "At p=10, capturing 10% of the data requires going out to radius 0.80 in a unit hypercube. The 'neighbourhood' is no longer local — you are averaging points that are nothing like x. This is why parametric models (that impose structure on f) become necessary as p grows."),
+                slide("Parametric models — the linear model",
+                      '<p>Instead of estimating f freely at every x, assume f has a specific form with few parameters:</p>'
+                      '<p style="text-align:center;font-size:1.3em;margin:0.8em 0;">f<sub>L</sub>(X) = β₀ + β₁X₁ + β₂X₂ + … + βₚXₚ</p>'
+                      + bullets([
+                          "A linear model is specified by <strong>p + 1 parameters</strong>: β₀, β₁, …, βₚ.",
+                          "Estimate the parameters by <strong>fitting to training data</strong> (e.g. least squares).",
+                          "Almost never exactly correct, but often a good <strong>interpretable approximation</strong> to the unknown true f.",
+                      ], fragments=False),
+                      "The key advantage over nearest-neighbor: the linear model makes a strong assumption about f's shape, which drastically reduces the amount of data needed to estimate it well. The price is bias if the true f is non-linear."),
+                slide("Linear vs quadratic fit",
+                      '<img src="img/ch2_linear_quad.svg" style="width:100%;max-height:57vh;object-fit:contain;">'
+                      '<p class="muted" style="font-size:0.8em;margin-top:0.2em;"><strong>Top:</strong> linear f̂<sub>L</sub>(x) = β̂₀ + β̂₁x — misses the curvature (high bias). <strong>Bottom:</strong> quadratic f̂<sub>Q</sub>(x) = β̂₀ + β̂₁x + β̂₂x² — fits much better.</p>',
+                      "The quadratic model is still parametric but more flexible than linear. Adding basis terms keeps increasing flexibility. The question is always: how flexible should f̂ be? Too rigid → underfit. Too flexible → overfit."),
+                slide("The income surface — three fits",
+                      two_col(
+                          '<img src="img/ch2_income_true.svg" style="width:100%;height:26vh;object-fit:contain;">'
+                          '<p class="muted" style="font-size:0.75em;text-align:center;margin:0;">True f — smooth curved surface</p>',
+                          '<img src="img/ch2_income_linear.svg" style="width:100%;height:26vh;object-fit:contain;">'
+                          '<p class="muted" style="font-size:0.75em;text-align:center;margin:0;">Linear f̂ — flat plane (underfit)</p>'
+                      )
+                      + '<img src="img/ch2_income_overfit.svg" style="width:50%;display:block;margin:0.4em auto 0;">'
+                      + '<p class="muted" style="font-size:0.75em;text-align:center;margin:0;"><strong>Overfit spline</strong> — zero training error, generalises poorly</p>'
+                      + '<p class="callout" style="margin-top:0.4em;"><strong>Overfitting</strong>: the model memorised training noise. Training error ≈ 0, test error is large.</p>',
+                      "The three surface plots from ISLR Figs 3.2–3.4. True f is non-linear; linear model misses curvature but is still useful; overfit spline has zero training error but learns the noise."),
+                slide("Trade-offs in choosing a model",
                       bullets([
-                          "Its sign depends on which other predictors are in the model.",
-                          "Its size depends on the scale of the predictor.",
-                          "Its significance depends on collinearity with the others.",
-                      ])),
-            ],
-        },
-        {
-            "kicker": "Part 2 · 0:30 – 1:00",
-            "title": "Diagnostic plots",
-            "subtitle": "the 2×2 panel",
-            "slides": [
-                slide("The four plots",
-                      bullets([
-                          "<strong>Residuals vs fitted</strong> — look for a curve (model misspecified).",
-                          "<strong>Q-Q plot</strong> — look for tails (heavy-tailed errors).",
-                          "<strong>Scale-location</strong> — look for a fan (heteroscedasticity).",
-                          "<strong>Residuals vs leverage</strong> — look for high-leverage outliers (Cook's distance).",
-                      ])),
-                slide("Leverage — the hat matrix",
-                      '<p style="text-align:center;font-size:1.2em;">H = X(XᵀX)⁻¹Xᵀ,  hᵢ = Hᵢᵢ</p>'
-                      '<p>A high <code>hᵢ</code> means observation i has unusual <em>predictor</em> values — it pulls the fit toward itself. Combined with a big residual = Cook\'s distance = trouble.</p>'),
-            ],
-        },
-        {
-            "kicker": "Part 3 · 1:00 – 1:30",
-            "title": "Categoricals & interactions",
-            "subtitle": "one-hot and products",
-            "slides": [
-                slide("One-hot encoding",
-                      code_block("df = pd.get_dummies(carseats,\n"
-                                 "    columns=['ShelveLoc','Urban','US'],\n"
-                                 "    drop_first=True, dtype=float)")
-                      + '<p class="muted">drop_first=True avoids the dummy-variable trap (perfect collinearity with the intercept).</p>'),
-                slide("Interactions are just products",
-                      code_block("df['Price_x_Urban'] = df['Price'] * df['Urban_Yes']")
-                      + '<p>The coefficient on the product term tells you how the effect of Price <em>changes</em> when Urban switches from No to Yes.</p>'),
-            ],
-        },
-    ],
-    "recap_items": [
-        "<strong>β̂ = (XᵀX)⁻¹Xᵀy</strong>, but always check VIF first.",
-        "<strong>The 2×2 diagnostic panel</strong> is the first reflex. Five seconds tell you a lot.",
-        "<strong>Categoricals one-hot, interactions multiply.</strong> Drop one dummy to avoid collinearity.",
-    ],
-    "recap_callout": "Next: feature engineering — scaling, polynomial expansion, pipelines.",
-}
-
-
-W3C2 = {
-    "title": "Feature Engineering",
-    "kicker": "Week 3 · Course 2 · 1.5 hours",
-    "subtitle": "Scaling, polynomial features, encodings, pipelines",
-    "parts_summary": [
-        ("0:00 · 0:30", "Scaling & pipelines", "StandardScaler, log1p, Pipeline."),
-        ("0:30 · 1:00", "Polynomial features", "underfit, fit, overfit."),
-        ("1:00 · 1:30", "Encoding & interactions", "OneHot, ColumnTransformer."),
-    ],
-    "callout": "Models do not learn from raw columns — they learn from the features you hand them. This is where applied ML lives.",
-    "parts": [
-        {
-            "kicker": "Part 1 · 0:00 – 0:30",
-            "title": "Scaling & pipelines",
-            "subtitle": "StandardScaler, log1p",
-            "slides": [
-                slide("Why scale at all?",
-                      bullets([
-                          "Plain LR doesn't care — but <em>regularized</em> LR does (Ridge/Lasso in Course 4).",
-                          "Distance-based methods (KNN, SVM next week) crumble without scaling.",
-                          "Neural nets converge faster on standardized inputs.",
-                      ])),
-                slide("Pipeline = scaler + estimator, one object",
-                      code_block("from sklearn.pipeline import Pipeline\n"
-                                 "from sklearn.preprocessing import StandardScaler\n"
-                                 "from sklearn.linear_model import LinearRegression\n\n"
-                                 "pipe = Pipeline([\n"
-                                 "    ('scale', StandardScaler()),\n"
-                                 "    ('lr', LinearRegression()),\n"
-                                 "])\n"
-                                 "pipe.fit(X_train, y_train)\n"
-                                 "pipe.score(X_test, y_test)")
-                      + '<p class="muted">Pipelines survive train/test splits — they fit the scaler on train only.</p>'),
-                slide("Skew? log1p it.",
-                      '<p>Many natural features (income, counts, prices) are right-skewed.</p>'
-                      '<p style="text-align:center;font-size:1.2em;">log1p(x) = log(1 + x)</p>'
-                      '<p class="muted">log1p handles zeros (unlike plain log). Always sanity-check with a histogram.</p>'),
-            ],
-        },
-        {
-            "kicker": "Part 2 · 0:30 – 1:00",
-            "title": "Polynomial features",
-            "subtitle": "underfit ↔ overfit",
-            "slides": [
-                slide("Polynomial features turn LR into a curve-fitter",
-                      code_block("from sklearn.preprocessing import PolynomialFeatures\n"
-                                 "PolynomialFeatures(degree=3).fit_transform(X)\n"
-                                 "# [x] -> [1, x, x^2, x^3]")
-                      + '<p class="muted">Linear in the parameters β, non-linear in x. Still linear regression!</p>'),
-                slide("Bias / variance, visualized",
-                      bullets([
-                          "<strong>d = 1</strong> — too straight (underfit, high bias).",
-                          "<strong>d = 2</strong> — captures the curve (just right).",
-                          "<strong>d = 15</strong> — wagging tails (overfit, high variance).",
+                          "<strong>Prediction accuracy vs interpretability</strong> — linear models are easy to explain; splines and neural nets are not.",
+                          "<strong>Good fit vs over-fit vs under-fit</strong> — how do we know when the fit is just right?",
+                          "<strong>Parsimony vs black-box</strong> — we often prefer fewer variables and a simpler story, even at a small cost in accuracy.",
                       ])
-                      + '<p class="callout">How do you pick d without eyeballing? Cross-validation, next course.</p>'),
+                      + '<table style="font-size:0.85em;margin:0.8em auto;border-collapse:collapse;width:85%;">'
+                      + '<tr style="border-bottom:2px solid #ccc;"><th>← More interpretable</th><th>More flexible →</th></tr>'
+                      + '<tr><td>Subset selection, Lasso</td><td>Bagging, Boosting</td></tr>'
+                      + '<tr><td>Least squares linear regression</td><td>Support Vector Machines</td></tr>'
+                      + '<tr><td>Generalised Additive Models, Trees</td><td>Deep neural networks</td></tr>'
+                      + '</table>',
+                      "The flexibility/interpretability trade-off chart from ISLR Fig 2.7. Always ask: 'Do I need to explain this model?' If yes, stay left on the spectrum. If pure prediction performance is all that matters, flexible models are often better."),
+                slide("Assessing model accuracy — train vs test MSE",
+                      '<p>Given training data Tr = {xᵢ, yᵢ}₁ᴺ and a fitted model f̂:</p>'
+                      + two_col(
+                          '<p><strong>Training MSE:</strong></p>'
+                          '<p style="font-size:1.15em;">MSE<sub>Tr</sub> = Ave<sub>i∈Tr</sub>[yᵢ − f̂(xᵢ)]²</p>'
+                          '<p class="muted">Always decreases as complexity increases. Biased toward overfit models. Not a reliable guide.</p>',
+                          '<p><strong>Test MSE (what actually matters):</strong></p>'
+                          '<p style="font-size:1.15em;">MSE<sub>Te</sub> = Ave<sub>i∈Te</sub>[yᵢ − f̂(xᵢ)]²</p>'
+                          '<p class="muted">Evaluated on fresh data not seen during fitting. The true measure of how well the model generalises.</p>'
+                      )
+                      + '<p class="callout" style="margin-top:0.8em;">Training MSE is not a reliable guide to test MSE. Always evaluate on held-out data.</p>',
+                      "This is the core evaluation principle. A model that memorises training data (k=1 KNN, a very deep tree, a degree-20 polynomial) will have near-zero training MSE but terrible test MSE. In practice we use cross-validation to estimate test MSE when we don't have a separate test set."),
+                slide("The U-shaped test MSE curve — three scenarios",
+                      '<div style="display:flex;gap:0.5em;justify-content:center;">'
+                      '<div style="flex:1;text-align:center;">'
+                      '<img src="img/ch2_mse_scenario1.svg" style="width:100%;height:28vh;object-fit:contain;">'
+                      '<p class="muted" style="font-size:0.72em;margin:0;">Curved truth: moderate flexibility optimal</p>'
+                      '</div>'
+                      '<div style="flex:1;text-align:center;">'
+                      '<img src="img/ch2_mse_scenario2.svg" style="width:100%;height:28vh;object-fit:contain;">'
+                      '<p class="muted" style="font-size:0.72em;margin:0;">Linear truth: linear model wins</p>'
+                      '</div>'
+                      '<div style="flex:1;text-align:center;">'
+                      '<img src="img/ch2_mse_scenario3.svg" style="width:100%;height:28vh;object-fit:contain;">'
+                      '<p class="muted" style="font-size:0.72em;margin:0;">Wiggly truth: high flexibility needed</p>'
+                      '</div>'
+                      '</div>'
+                      '<p class="muted" style="font-size:0.8em;margin-top:0.4em;">Each panel: grey = train MSE (decreases monotonically), red = test MSE (U-shape), dashed = irreducible Var(ε).</p>',
+                      "The U-shaped test MSE curve is one of the central images of the course. Students should be able to sketch it from memory: training MSE monotonically decreasing, test MSE U-shaped, minimum of the U is what we want."),
+                slide("Bias-Variance Trade-off",
+                      '<p style="text-align:center;font-size:1.05em;margin:0.4em 0;">'
+                      'E[(y₀ − f̂(x₀))²] = '
+                      '<span style="color:#e07000;">Var(f̂(x₀))</span>'
+                      ' + '
+                      '<span style="color:#0066cc;">[Bias(f̂(x₀))]²</span>'
+                      ' + '
+                      '<span style="color:#888;">Var(ε)</span>'
+                      '</p>'
+                      '<img src="img/ch2_bias_variance.svg" style="width:100%;max-height:50vh;object-fit:contain;">'
+                      '<p class="muted" style="font-size:0.78em;margin-top:0.2em;">Three scenarios: MSE (dark red), Bias² (cyan), Variance (orange), Var(ε) (dashed). As flexibility ↑: Bias² ↓, Variance ↑. The U-shape is their sum.</p>',
+                      "The bias-variance decomposition is the theoretical foundation for the U-shaped test MSE curve. The minimum of the U is where bias and variance balance. This formula explains why it exists."),
             ],
         },
+        # ── Part 6 ─────────────────────────────────────────────────────────────
         {
-            "kicker": "Part 3 · 1:00 – 1:30",
-            "title": "Encoding & interactions",
-            "subtitle": "ColumnTransformer is your friend",
+            "kicker": "Part 6",
+            "title": "Classification",
+            "subtitle": "qualitative Y, the Bayes classifier, and KNN boundaries",
             "slides": [
-                slide("Different transforms for different columns",
-                      code_block("ColumnTransformer([\n"
-                                 "    ('num', StandardScaler(), numeric_cols),\n"
-                                 "    ('cat', OneHotEncoder(drop='first'), categorical_cols),\n"
-                                 "])")),
-                slide("Interactions in bulk",
-                      code_block("PolynomialFeatures(interaction_only=True, include_bias=False)\n"
-                                 "# adds every x_i * x_j pair")
-                      + '<p class="muted">Combinatorial explosion ahead — combine with Lasso (Course 4) to keep only the useful interactions.</p>'),
-            ],
-        },
-    ],
-    "recap_items": [
-        "<strong>Scale numeric features</strong> before regularizing or measuring distances.",
-        "<strong>Polynomial features turn LR into a flexible curve fitter.</strong> Pick degree with care.",
-        "<strong>Pipelines + ColumnTransformer</strong> keep preprocessing honest under train/test splits.",
-    ],
-    "recap_callout": "Next: how do you pick the degree without fooling yourself? Cross-validation.",
-}
-
-
-W3C3 = {
-    "title": "Cross-Validation",
-    "kicker": "Week 3 · Course 3 · 1.5 hours",
-    "subtitle": "Stop fooling yourself about test error",
-    "parts_summary": [
-        ("0:00 · 0:30", "The trap", "one split → ten different best degrees."),
-        ("0:30 · 1:00", "K-fold & LOOCV", "the right tool for tuning."),
-        ("1:00 · 1:30", "The bootstrap", "CIs without distributional assumptions."),
-    ],
-    "callout": "A single train/test split is noisy. CV averages out the noise; the bootstrap gives a CI for anything.",
-    "parts": [
-        {
-            "kicker": "Part 1 · 0:00 – 0:30",
-            "title": "The validation-set trap",
-            "subtitle": "one split lies",
-            "slides": [
-                slide("Why one split is not enough",
-                      bullets([
-                          "Pick polynomial degree by held-out MSE → answer depends on the split.",
-                          "Ten random splits give ten different 'best' degrees.",
-                          "That spread is <em>noise</em>, not signal.",
-                      ])),
-                slide("Live demo",
-                      code_block("for seed in range(10):\n"
-                                 "    Xtr, Xte, ytr, yte = train_test_split(\n"
-                                 "        x, y, test_size=0.5, random_state=seed)\n"
-                                 "    # …pick best degree from this single split…")),
-            ],
-        },
-        {
-            "kicker": "Part 2 · 0:30 – 1:00",
-            "title": "K-fold and LOOCV",
-            "subtitle": "average over many splits",
-            "slides": [
-                slide("K-fold cross-validation",
-                      '<p>Split into K folds. For k = 1…K, train on the other K−1 folds and score on fold k. Average the K scores.</p>'
+                slide("Classification problems",
+                      '<p>When the response Y is <strong>qualitative</strong> (categorical), the problem is called classification.</p>'
                       + bullets([
-                          "K = 5 or K = 10 is the standard. K = n is leave-one-out (LOOCV).",
-                          "<code>cross_val_score(model, X, y, cv=KFold(10))</code> is one line.",
-                      ])),
-                slide("The CV curve",
-                      '<p>Plot CV error vs the hyperparameter (polynomial degree, α, λ, k, …). Pick the minimum.</p>'
-                      '<p class="muted">For Auto mpg, the CV curve picks a stable d ≈ 2.</p>',
-                      "Reproduce ISLP Fig 5.4. Stable winner across folds = trustworthy choice."),
-            ],
-        },
-        {
-            "kicker": "Part 3 · 1:00 – 1:30",
-            "title": "The bootstrap",
-            "subtitle": "resample with replacement",
-            "slides": [
-                slide("Bootstrap = sampling-distribution emulator",
-                      code_block("for k in range(B):\n"
-                                 "    idx = rng.choice(n, n, replace=True)\n"
-                                 "    theta_boot[k] = compute_statistic(data[idx])\n"
-                                 "se = theta_boot.std()\n"
-                                 "lo, hi = np.quantile(theta_boot, [0.025, 0.975])")
-                      + '<p class="muted">Works for any statistic — slope, median, ratio, correlation — without distributional assumptions.</p>'),
-                slide("Preview: stratification for classification",
-                      '<p>Next week <code>y</code> is a class label. <code>StratifiedKFold</code> keeps class proportions stable across folds.</p>'),
-            ],
-        },
-    ],
-    "recap_items": [
-        "<strong>One split is noise.</strong> Always use K-fold for hyperparameter tuning.",
-        "<strong>Plot the CV curve and pick the minimum.</strong> If it's flat, simpler wins.",
-        "<strong>The bootstrap gives a CI for anything.</strong> Two lines of Python.",
-    ],
-    "recap_callout": "Next: with CV in hand, we can pick features and shrinkage strength honestly.",
-}
-
-
-W3_SEL1 = {
-    "title": "Feature Selection I — Subset & Stepwise",
-    "kicker": "Week 3 · Part 1 · 1.5 hours",
-    "subtitle": "Pick the predictors that matter",
-    "parts_summary": [
-        ("0:00 · 0:30", "Best subset", "2^p subsets — combinatorial."),
-        ("0:30 · 1:00", "Forward stepwise", "greedy and cheap."),
-        ("1:00 · 1:30", "AIC / BIC / Cp / adj-R²", "model-size criteria."),
-    ],
-    "callout": "Too many predictors hurt prediction. Subset selection is the classical answer; shrinkage (Part 2) is the modern one.",
-    "parts": [
-        {
-            "kicker": "Part 1 · 0:00 – 0:30",
-            "title": "Best subset",
-            "subtitle": "the combinatorial cost",
-            "slides": [
-                slide("Why best-subset is intractable",
-                      bullets([
-                          "p = 10 → 1024 subsets. p = 20 → 1 million.",
-                          "Hitters has p = 19 → 524288 fits.",
-                          "Wonderful for laptops but exponential — useless past ~30 predictors.",
-                      ])),
-                slide("RSS always drops with more predictors",
-                      '<p>Adding a predictor can never <em>increase</em> training RSS. So we cannot pick model size by raw RSS.</p>'
-                      '<p>We need a criterion that <em>penalizes</em> size: AIC, BIC, Cp, adjusted R², or — best — held-out CV error.</p>'),
-            ],
-        },
-        {
-            "kicker": "Part 2 · 0:30 – 1:00",
-            "title": "Forward stepwise",
-            "subtitle": "greedy but cheap",
-            "slides": [
-                slide("Forward stepwise algorithm",
-                      bullets([
-                          "Start with the empty model.",
-                          "At each step, add the single predictor that most reduces CV error.",
-                          "Stop when CV error stops improving (or fit all p, then pick the best size).",
-                      ], fragments=False)),
-                slide("From scratch in 12 lines",
-                      code_block("while remaining:\n"
-                                 "    best_col, best_mse = None, inf\n"
-                                 "    for col in remaining:\n"
-                                 "        mse = -cross_val_score(LinearRegression(),\n"
-                                 "                  X[chosen+[col]], y,\n"
-                                 "                  cv=5, scoring='neg_mean_squared_error').mean()\n"
-                                 "        if mse < best_mse:\n"
-                                 "            best_col, best_mse = col, mse\n"
-                                 "    chosen.append(best_col); remaining.remove(best_col)")),
-            ],
-        },
-        {
-            "kicker": "Part 3 · 1:00 – 1:30",
-            "title": "Model-size criteria",
-            "subtitle": "AIC, BIC, Cp, adj-R²",
-            "slides": [
-                slide("Four formulas, four answers",
-                      '<p style="font-family:monospace;font-size:0.95em;">AIC = n log(RSS/n) + 2p</p>'
-                      '<p style="font-family:monospace;font-size:0.95em;">BIC = n log(RSS/n) + p log n</p>'
-                      '<p style="font-family:monospace;font-size:0.95em;">Cp  = (RSS + 2 p σ²)/n</p>'
-                      '<p style="font-family:monospace;font-size:0.95em;">adj-R² = 1 − (1−R²)(n−1)/(n−p−1)</p>'),
-                slide("Which to trust?",
-                      bullets([
-                          "<strong>BIC</strong> — most conservative; for large n it picks fewer predictors.",
-                          "<strong>AIC / Cp</strong> — pick slightly larger models, focused on prediction.",
-                          "<strong>adj-R²</strong> — loosest, easiest to fool with collinear predictors.",
-                          "Pick a criterion <em>before</em> you look at the answers, and consider CV the gold standard.",
-                      ])),
-            ],
-        },
-    ],
-    "recap_items": [
-        "<strong>Best-subset is exponential</strong> — useless past ~30 predictors.",
-        "<strong>Forward stepwise is greedy and almost always good enough.</strong>",
-        "<strong>BIC ≤ Cp ≈ AIC ≤ adj-R²</strong> in how many predictors they keep. Pick first, then look.",
-    ],
-    "recap_callout": "Next: instead of picking features in or out, shrink them softly with Ridge and Lasso.",
-}
-
-
-W3_SEL2 = {
-    "title": "Feature Selection II — Ridge, Lasso, Elastic Net",
-    "kicker": "Week 3 · Part 2 · 1.5 hours",
-    "subtitle": "Shrink instead of select",
-    "parts_summary": [
-        ("0:00 · 0:30", "Ridge", "L2 penalty, smooth shrinkage."),
-        ("0:30 · 1:00", "Lasso", "L1 penalty, exact zeros."),
-        ("1:00 · 1:30", "Elastic Net & pipelines", "the modern default."),
-    ],
-    "callout": "Subset selection is discrete (in or out). Shrinkage is continuous (pulled toward zero). For p > 20, shrinkage almost always wins.",
-    "parts": [
-        {
-            "kicker": "Part 1 · 0:00 – 0:30",
-            "title": "Ridge",
-            "subtitle": "L2 penalty",
-            "slides": [
-                slide("Ridge objective",
-                      '<p style="text-align:center;font-size:1.25em;">minimize Σᵢ (yᵢ − ŷᵢ)² + <span style="color:#c33;">α Σⱼ βⱼ²</span></p>'
+                          "Email is <strong>spam</strong> or <strong>ham</strong> — binary classification (K = 2).",
+                          "Digit is one of <strong>0, 1, …, 9</strong> — 10-class classification.",
+                          "Breast tumour subtype — 4-class classification.",
+                      ], fragments=False)
+                      + '<p style="margin-top:0.8em;">Goals: <strong>(1)</strong> build a classifier C(X) that assigns a class label to new X; <strong>(2)</strong> assess the uncertainty in each classification; <strong>(3)</strong> understand which predictors drive the classification.</p>',
+                      "Classification is one of the two main problem types (regression is the other). In both cases we have Y and X — only the type of Y changes. The same cross-validation, bias-variance, and model selection ideas apply to both."),
+                slide("The Bayes optimal classifier",
+                      '<p>Define the <strong>conditional class probabilities</strong>:</p>'
+                      '<p style="text-align:center;font-size:1.2em;margin:0.6em 0;">pₖ(x) = Pr(Y = k | X = x),  k = 1, 2, …, K</p>'
+                      '<p>The <strong>Bayes classifier</strong> assigns x to the class with the highest conditional probability:</p>'
+                      '<p style="text-align:center;font-size:1.2em;margin:0.6em 0;">C(x) = j &nbsp; if &nbsp; p<sub>j</sub>(x) = max{p₁(x), p₂(x), …, p<sub>K</sub>(x)}</p>'
+                      + two_col(
+                          '<p>In a 1D binary example: the black curve shows p₁(x) = Pr(Y=1|X=x). The <strong>Bayes boundary</strong> is where p₁(x) = 0.5.</p>',
+                          '<p class="callout">The Bayes classifier has the <em>smallest possible</em> error rate of any classifier in the population. It is the gold standard — but it requires knowing the true pₖ(x), which we never do in practice.</p>'
+                      ),
+                      "In the 1D example from ISLR Fig 2.13: the bar plot at x=5 shows the conditional class probabilities at that point — about 75% class 1, 25% class 0. The Bayes classifier would say 'class 1' at x=5."),
+                slide("Nearest-neighbor for classification",
+                      '<p>Estimate pₖ(x) by local averaging — just as in regression:</p>'
+                      '<p style="text-align:center;font-size:1.2em;margin:0.8em 0;">p̂ₖ(x) = fraction of the k nearest neighbors with class k</p>'
+                      '<p>Assign x to the most common class among its k nearest neighbours.</p>'
                       + bullets([
-                          "α → 0: same as OLS.",
-                          "α → ∞: every β shrinks to 0.",
-                          "Scale matters: <em>always</em> standardize before Ridge.",
-                      ])),
-                slide("Coefficient paths",
-                      '<p>Plot every β<sub>j</sub> versus α (log axis). All paths shrink toward zero, none reach exactly zero.</p>'
-                      '<p class="muted">Pick α with GridSearchCV over a log grid (e.g. np.logspace(-2, 4, 50)).</p>'),
-            ],
-        },
-        {
-            "kicker": "Part 2 · 0:30 – 1:00",
-            "title": "Lasso",
-            "subtitle": "L1 penalty, exact zeros",
-            "slides": [
-                slide("Lasso objective",
-                      '<p style="text-align:center;font-size:1.25em;">minimize Σᵢ (yᵢ − ŷᵢ)² + <span style="color:#c33;">α Σⱼ |βⱼ|</span></p>'
-                      + '<p>The L1 penalty creates a <em>corner</em> at zero — some coefficients land exactly there.</p>'),
-                slide("Lasso is a feature selector",
-                      bullets([
-                          "Survivor coefficients form an interpretable subset.",
-                          "Use when you suspect many irrelevant features.",
-                          "Use when you want a sparse model for production speed.",
-                      ])
-                      + '<p class="callout">Comparison with forward stepwise: usually similar features. Lasso is faster and one-shot.</p>'),
-            ],
-        },
-        {
-            "kicker": "Part 3 · 1:00 – 1:30",
-            "title": "Elastic Net & pipelines",
-            "subtitle": "the modern default",
-            "slides": [
-                slide("Elastic Net = α (l1_ratio · L1 + (1 − l1_ratio) · L2)",
-                      bullets([
-                          "Combines Lasso sparsity with Ridge stability.",
-                          "Helps when features are correlated in groups.",
-                          "l1_ratio = 1 → Lasso. l1_ratio = 0 → Ridge.",
-                      ])),
-                slide("End-to-end pipeline + CV",
-                      code_block("Pipeline([\n"
-                                 "    ('scale', StandardScaler()),\n"
-                                 "    ('poly', PolynomialFeatures(2, interaction_only=True)),\n"
-                                 "    ('lasso', Lasso(max_iter=20000)),\n"
-                                 "])\n"
-                                 "GridSearchCV(pipe, {'lasso__alpha': np.logspace(-1, 2, 12)},\n"
-                                 "             cv=5, scoring='neg_mean_squared_error')")),
+                          "The 1D classifier plot shows the estimated p̂₁(x) curve (green) tracking the true p₁(x) (black) reasonably well.",
+                          "Still breaks down as p grows — same curse of dimensionality.",
+                          "But the impact on the classifier Ĉ(x) is <em>less severe</em> than on the probabilities p̂ₖ(x) themselves.",
+                      ], fragments=False),
+                      "The 1D example from ISLR Fig 2.14: the green curve is the KNN estimate of p₁(x) with k=15. It tracks the true black curve well in regions with data, but the bar chart at x=5 shows the local estimate is slightly off (65% vs true 75%). The classifier (majority vote) is usually still correct even when the probability estimate is off."),
+                slide("KNN in two dimensions — the decision boundary",
+                      two_col(
+                          '<img src="img/ch2_knn_raw.svg" style="width:100%;height:38vh;object-fit:contain;">'
+                          '<p class="muted" style="font-size:0.75em;text-align:center;margin:0;">Raw data + Bayes boundary (dashed purple)</p>',
+                          '<img src="img/ch2_knn_k10.svg" style="width:100%;height:38vh;object-fit:contain;">'
+                          '<p class="muted" style="font-size:0.75em;text-align:center;margin:0;">KNN K=10 boundary (black) vs Bayes (dashed)</p>'
+                      )
+                      + '<p class="muted" style="font-size:0.8em;margin-top:0.4em;">KNN K=10 closely tracks the Bayes boundary without any parametric assumptions.</p>',
+                      "KNN with K=10 produces a non-linear decision boundary that closely approximates the Bayes boundary. The dashed purple curve is the Bayes (optimal) boundary."),
+                slide("K controls the bias-variance dial",
+                      '<img src="img/ch2_knn_k1_k100.svg" style="width:100%;max-height:48vh;object-fit:contain;">'
+                      + two_col(
+                          '<p><strong>K = 1</strong>: zero training error, extremely wiggly boundary — overfit.</p>'
+                          '<p><strong>K = 100</strong>: too smooth, misses non-linearities — underfit.</p>',
+                          '<p class="callout">K = 1 → max flexibility. K = N → predict majority class. Pick K by cross-validation.</p>'
+                      ),
+                      "The two-panel figure from ISLR Fig 2.16. K=1 is very jagged (overfits); K=100 is too smooth (underfits). The sweet spot was K=10 shown in the previous slide."),
+                slide("Classification error rate and the KNN U-shape",
+                      '<img src="img/ch2_knn_error.svg" style="width:100%;max-height:50vh;object-fit:contain;">'
+                      '<p class="muted" style="font-size:0.8em;margin-top:0.3em;"><strong>Blue (training):</strong> 0 at K=1, rises as K grows. <strong>Orange (test):</strong> U-shape, minimum at K≈10. <strong>Dashed:</strong> Bayes error — irreducible floor.</p>'
+                      '<p class="callout" style="margin-top:0.4em;">Same story as regression: training error decreases with flexibility, test error has a U-shape.</p>',
+                      "This plot from ISLR Fig 2.17 closes the circle. KNN already demonstrates all the core ideas: training vs test error, overfitting, underfitting, the U-shape, and the Bayes floor. Every more sophisticated model is a more elaborate version of the same story."),
             ],
         },
     ],
     "recap_items": [
-        "<strong>Ridge shrinks; Lasso shrinks and zeros.</strong> Always scale first.",
-        "<strong>Tune α with GridSearchCV over a log grid.</strong> Coefficient paths are diagnostic.",
-        "<strong>Pipeline + CV = honest selection.</strong> The whole loop in 5 lines of sklearn.",
+        "<strong>Y = f(X) + ε.</strong> Statistical learning estimates f. The reducible error [f − f̂]² can be minimised; the irreducible Var(ε) cannot.",
+        "<strong>Bias-variance trade-off:</strong> Test MSE = Bias² + Variance + Var(ε). As flexibility increases, bias falls and variance rises. The U-shaped test MSE curve is the result.",
+        "<strong>Supervised, unsupervised, and semi-supervised</strong> learning differ in whether labelled Y values are available. The same bias-variance logic applies to all three.",
     ],
-    "recap_callout": "End of Week 3. Next week: from regression to classification.",
+    "recap_callout": "Next: Linear Regression — the simplest f̂, and the workhorse that every later model generalises.",
 }
 
-W3C1 = merge_deck_specs(
-    W3_LR1,
-    W3_LR2,
-    title="Linear Regression",
-    kicker="Week 3 · Course 1 · 3 hours",
-    subtitle="Part 1: simple LR on Boston · Part 2: multiple LR, diagnostics, categoricals",
-    callout=W3_LR1["callout"],
-    recap_items=W3_LR1["recap_items"] + W3_LR2["recap_items"],
-    recap_callout="Next: feature engineering — scaling, polynomials, pipelines.",
-)
-
-W3C4 = merge_deck_specs(
-    W3_SEL1,
-    W3_SEL2,
-    title="Feature Selection",
-    kicker="Week 3 · Course 4 · 3 hours",
-    subtitle="Part 1: subset & stepwise · Part 2: Ridge, Lasso, Elastic Net",
-    callout=W3_SEL1["callout"],
-    recap_items=W3_SEL1["recap_items"] + W3_SEL2["recap_items"],
-    recap_callout=W3_SEL2["recap_callout"],
-)
 
 
 # ============================================================================
@@ -1180,7 +1123,9 @@ W4C6 = {
 # ============================================================================
 
 DECKS = [
-    # Week 3 interactive decks: scripts/merge_week03_slides.py (from git + merge)
+    # Week 3
+    (WEEK3 / "course-01-what-is-statistical-learning" / "slides" / "index.html", W3_SL),
+    # Week 4
     (WEEK4 / "course-01-classification-knn" / "slides" / "index.html", W4C1),
     (WEEK4 / "course-02-logistic-regression-i" / "slides" / "index.html", W4C2),
     (WEEK4 / "course-03-logistic-regression-ii" / "slides" / "index.html", W4C3),
