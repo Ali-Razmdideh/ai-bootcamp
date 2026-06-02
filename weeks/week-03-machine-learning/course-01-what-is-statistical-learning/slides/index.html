@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>What is Statistical Learning?</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+</head>
+<body>
+<div class="reveal"><div class="slides">
+<section class="title-slide">
+  <span class="kicker">Week 3 · Course 1</span>
+  <h1>What is Statistical Learning?</h1>
+  <p class="muted" style="font-size:1.1em;">From real-world motivation to f(X)+ε, bias-variance trade-off, and classification</p>
+</section>
+<section>
+  <span class="kicker">Roadmap</span>
+  <h2>Where we are heading</h2>
+  <div class="three-col">
+    <div class="card"><h4>Part 1</h4><strong>Why it matters</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Watson, Varian, and 8 real problems.</p></div>
+    <div class="card"><h4>Part 2</h4><strong>Types of learning</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Supervised, unsupervised, semi-supervised.</p></div>
+    <div class="card"><h4>Part 3</h4><strong>Y = f(X) + ε</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Notation, regression function, estimation.</p></div>
+    <div class="card"><h4>Part 4</h4><strong>Estimating f</strong>
+      <p class="muted" style="margin:0.3em 0 0;">KNN, curse of dimensionality, parametric models.</p></div>
+    <div class="card"><h4>Part 5</h4><strong>Model accuracy</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Train/test MSE and bias-variance trade-off.</p></div>
+    <div class="card"><h4>Part 6</h4><strong>Classification</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Bayes classifier and KNN boundaries.</p></div>
+  </div>
+  <p class="callout" style="margin-top:1.2em;">Statistical learning is the set of tools for estimating f — the function that maps inputs X to output Y. This course builds the full mental model: from Watson to the bias-variance decomposition.</p>
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 1</span>
+    <h1>Why Statistical Learning Matters</h1>
+    <p class="muted">from Watson to eight real problems</p>
+  </section>
+  <section>
+    <h2>Statistics in the news — IBM Watson</h2>
+<blockquote style="font-style:italic;border-left:4px solid #c00;padding-left:1em;">"It's machine learning allows the computer to become smarter as it tries to answer questions — and to learn as it gets them right or wrong."</blockquote><p class="muted" style="margin-top:0.8em;">— David Ferrucci (PI of IBM Watson DeepQA), on why Watson beat Ken Jennings at <em>Jeopardy!</em> — <em>DailyFinance</em>, February 8, 2011.</p>
+    <aside class="notes">Watson&#x27;s Jeopardy win was a landmark. It was not rule-based programming — it was machine learning: iterating on labelled question-answer pairs to build a system that improves with experience. The distinction matters: you couldn&#x27;t write down rules for every possible Jeopardy clue.</aside>
+  </section>
+
+  <section>
+    <h2>Statistics in the news — Hal Varian</h2>
+<blockquote style="font-style:italic;border-left:4px solid #c00;padding-left:1em;">"I keep saying that the sexy job in the next 10 years will be statisticians. And I'm not kidding."</blockquote><p class="muted" style="margin-top:0.6em;">— Hal Varian, Chief Economist at Google — <em>New York Times</em>, August 5, 2009.</p><p style="margin-top:0.8em;">Carrie Grimes (Harvard anthropology → Google): "People think of field archaeology as Indiana Jones, but much of what you really do is data analysis."</p>
+    <aside class="notes">Varian&#x27;s quote was prescient — by 2015 &#x27;data scientist&#x27; was everywhere. The underlying skill is the same: extract signal from noisy data. The NYT article is from 2009, before deep learning, before TensorFlow. The insight was that demand for quantitative reasoning skills would far outpace supply.</aside>
+  </section>
+
+  <section>
+    <h2>Statistics in the news — FiveThirtyEight</h2>
+<p>Nate Silver's <strong>FiveThirtyEight</strong> aggregated polls with a statistical model to predict state-level election results with remarkable accuracy.</p><div class="two-col"><div><p style="font-size:1.8em;margin:0;"><strong>90.9%</strong></p><p class="muted" style="margin:0;">Chance of winning (+13.5 since Oct. 30)</p><p style="margin-top:0.6em;">vs.</p><p style="font-size:1.8em;margin:0;"><strong>9.1%</strong></p><p class="muted" style="margin:0;">(−13.5 since Oct. 30)</p></div><div><p>Silver's book <em>The Signal and the Noise</em> (2012) explains why most predictions fail: mistaking noise for signal.</p><p>Key idea: combine many noisy polls via a statistical model to produce a more stable probability estimate.</p></div></div>
+    <aside class="notes">FiveThirtyEight used weighted poll averages with adjustments for house effects, likely-voter screens, and economic fundamentals. Classic statistical learning applied to publicly available data — no proprietary information required.</aside>
+  </section>
+
+  <section>
+    <h2>Eight statistical learning problems</h2>
+<ul>
+  <li>Identify the <strong>risk factors for prostate cancer</strong>.</li>
+  <li>Classify a recorded phoneme based on a <strong>log-periodogram</strong>.</li>
+  <li>Predict whether someone will have a <strong>heart attack</strong> from demographic, diet and clinical measurements.</li>
+  <li>Customize an <strong>email spam detection</strong> system.</li>
+  <li>Identify the numbers in a <strong>handwritten zip code</strong>.</li>
+  <li>Classify a tissue sample into one of several <strong>cancer classes</strong>, based on a gene expression profile.</li>
+  <li>Establish the relationship between <strong>salary and demographic variables</strong> in population survey data.</li>
+  <li>Classify the pixels in a <strong>LANDSAT image</strong>, by usage.</li>
+</ul>
+    <aside class="notes">All eight are real published datasets used in ISLR. Point out the variety: some have quantitative Y (salary, lpsa), some have categorical Y (cancer subtype, spam/ham). Some we want to understand (what drives PSA?), some we want to predict (is this email spam?). The same statistical machinery handles all of them.</aside>
+  </section>
+
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 2</span>
+    <h1>Eight Problems Up Close</h1>
+    <p class="muted">what the data looks like</p>
+  </section>
+  <section>
+    <h2>Prostate cancer — predict lpsa</h2>
+<img src="img/ch1_prostate_scatter.svg" style="width:55%;float:right;margin-left:1em;"><p><strong>Data:</strong> 97 men; 8 clinical predictors; outcome = <code>lpsa</code> (log PSA).</p><ul>
+  <li><code>lcavol</code> (log cancer volume) has the strongest relationship with <code>lpsa</code>.</li>
+  <li><code>lcp</code> and <code>lcavol</code> are correlated — multicollinearity matters.</li>
+  <li><code>svi</code> (seminal vesicle invasion) is binary — visible as two-column strips.</li>
+  <li><code>gleason</code> is an ordered integer — only a few distinct values.</li>
+</ul>
+    <aside class="notes">Walk through the scatter matrix. The top row (lpsa vs everything) is what matters for prediction. Collinearity between predictors is why we need multiple regression, not separate simple regressions.</aside>
+  </section>
+
+  <section>
+    <h2>Phoneme classification — aa vs ao</h2>
+<img src="img/ch1_phoneme.svg" style="width:100%;max-height:52vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;margin-top:0.3em;"><strong>Top:</strong> log-periodograms for "aa" (green) and "ao" (orange) overlap at high frequencies. <strong>Bottom:</strong> raw LR coefficients (grey bars, noisy) vs. smooth restricted fit (red curve) — regularisation is needed.</p>
+    <aside class="notes">The bottom panel shows raw LR coefficients (grey bars — very noisy) vs. a restricted smooth fit (red curve). The smooth version is correct — it imposes that nearby frequencies should have similar coefficients. This motivates regularisation.</aside>
+  </section>
+
+  <section>
+    <h2>Heart attack prediction — South African data</h2>
+<img src="img/ch1_heartattack_scatter.svg" style="width:52%;float:right;margin-left:1em;"><p><strong>Data:</strong> 462 males; outcome: <strong>chd</strong> (coronary heart disease, binary). Predictors: sbp, tobacco, ldl, famhist, obesity, alcohol, age.</p><p><span style="color:#c00;">■</span> chd=1 &nbsp; <span style="color:#0cc;">■</span> chd=0</p><ul>
+  <li><strong>Age</strong> and <strong>ldl</strong>: clearest separation.</li>
+  <li><strong>Tobacco</strong>: heavily right-skewed.</li>
+  <li><strong>famhist</strong>: binary — two-column strips.</li>
+  <li>No single predictor separates perfectly.</li>
+</ul>
+    <aside class="notes">Classification problem, binary outcome. No single predictor is sufficient — but together they carry substantial signal. South African Heart Disease dataset (Rousseauw et al., 1983).</aside>
+  </section>
+
+  <section>
+    <h2>Spam detection — customised filters</h2>
+<img src="img/ch1_spam_table.svg" style="width:100%;max-height:60vh;object-fit:contain;">
+    <aside class="notes">The word &#x27;george&#x27; appears frequently in legitimate email (it&#x27;s the recipient) but never in spam — a personalised signal. &#x27;free&#x27;, &#x27;!&#x27;, and &#x27;remove&#x27; are classic spam signals. The key word &#x27;customised&#x27; in the problem statement: a generic spam filter trained on someone else&#x27;s email would miss the &#x27;hp&#x27; and &#x27;george&#x27; signals.</aside>
+  </section>
+
+  <section>
+    <h2>Handwritten zip codes — digit recognition</h2>
+<img src="img/ch1_digits.svg" style="width:100%;max-height:55vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;margin-top:0.3em;">p = 256 features (16×16 pixels) · K = 10 classes · N ≈ 9000 training images. The same digit looks dramatically different across writers.</p>
+    <aside class="notes">Key teaching point: 256 inputs, 10 output classes, no natural ordering of classes. A 9 can look like a 4; an 8 can look like a 3. This dataset was a key early benchmark for neural networks (LeCun et al., 1989).</aside>
+  </section>
+
+  <section>
+    <h2>Cancer gene expression — breast cancer subtypes</h2>
+<img src="img/ch1_cancer_heatmap.svg" style="width:60%;float:right;margin-left:1em;"><p><strong>Data:</strong> Gene expression from breast tumour biopsies. Thousands of genes; ~200 patient samples.</p><p>Hierarchical clustering heatmap (green = below average, red = above average) reveals four subtypes — <em>without any pathologist labels</em>:</p><ul>
+  <li><strong>Luminal A</strong> — most common, best prognosis.</li>
+  <li><strong>Luminal B</strong> — more aggressive.</li>
+  <li><strong>ERBB2+</strong> — HER2-positive.</li>
+  <li><strong>Basal</strong> — triple-negative, worst prognosis.</li>
+</ul>
+    <aside class="notes">Perou et al. (2000) transformed breast oncology with this analysis. The subtypes have different clinical outcomes and respond differently to treatment — validating the data-driven grouping.</aside>
+  </section>
+
+  <section>
+    <h2>Salary and demographics</h2>
+<img src="img/ch1_salary.svg" style="width:100%;max-height:57vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;margin-top:0.2em;">Central Atlantic USA males, 2009 CPS. <strong>Age:</strong> non-linear (peaks ~40). <strong>Year:</strong> slight upward trend. <strong>Education:</strong> ordered categorical, clear step-up effect.</p>
+    <aside class="notes">The three panels show three different types of predictor-response relationships: non-linear continuous (Age), linear continuous (Year), and ordered categorical (Education). A good model of Wage needs to handle all three.</aside>
+  </section>
+
+  <section>
+    <h2>LANDSAT image classification</h2>
+<img src="img/ch1_landsat.svg" style="width:100%;max-height:58vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;margin-top:0.2em;">4 spectral bands per pixel → classify into: red soil, cotton crop, vegetation stubble, mixture, grey soil, damp grey soil. Predicted map (right) nearly matches the true map (middle).</p>
+    <aside class="notes">Multi-class pixel-level classification. Only 4 features per pixel, but the classes are well-separated in spectral space — KNN and LDA work well here.</aside>
+  </section>
+
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 3</span>
+    <h1>Types of Learning</h1>
+    <p class="muted">supervised, unsupervised, and semi-supervised</p>
+  </section>
+  <section>
+    <h2>The supervised learning problem</h2>
+<div class="two-col"><div><h3>The components</h3><ul>
+  <li><strong>Y</strong> — outcome (response, target, dependent variable).</li>
+  <li><strong>X = (X₁, …, Xₚ)</strong> — p predictors (features, inputs, covariates).</li>
+  <li><strong>Training data</strong> (x₁,y₁), …, (xN,yN) — N labelled observations.</li>
+</ul></div><div><h3>Two sub-types</h3><ul>
+  <li><strong>Regression</strong>: Y is quantitative (wage, lpsa, sales).</li>
+  <li><strong>Classification</strong>: Y is categorical (spam/ham, digit 0–9, cancer subtype).</li>
+</ul><p class="muted" style="margin-top:0.8em;">Both regression and classification use the same framework; only the type of Y and the loss function change.</p></div></div>
+    <aside class="notes">The word &#x27;supervised&#x27; comes from having labelled examples — a supervisor told us the correct answer for each training case. The goal is to generalise: given a new X not in training, predict Y correctly.</aside>
+  </section>
+
+  <section>
+    <h2>Objectives of supervised learning</h2>
+<ul>
+  <li class="fragment fade-up"><strong>Accurately predict</strong> unseen test cases.</li>
+  <li class="fragment fade-up"><strong>Understand</strong> which inputs affect the outcome and how.</li>
+  <li class="fragment fade-up"><strong>Assess</strong> the quality of our predictions and inferences.</li>
+</ul>
+    <aside class="notes">These three objectives often conflict. Maximising prediction accuracy can require a black-box model (random forest, neural net) that sacrifices interpretability. Maximising interpretability (simple linear model) may sacrifice accuracy. The right balance depends on the application.</aside>
+  </section>
+
+  <section>
+    <h2>Unsupervised learning</h2>
+<div class="two-col"><div><h3>No outcome variable</h3><p>Just predictors X measured on a set of samples. No Y to predict.</p><h3>Objectives (fuzzier)</h3><ul>
+  <li>Find <strong>groups</strong> of similar samples (clustering).</li>
+  <li>Find <strong>features</strong> that vary together.</li>
+  <li>Find <strong>low-dimensional structure</strong> in high-d data (PCA).</li>
+</ul></div><div><h3>The challenge</h3><p>No ground truth to evaluate against. Hard to know how well you are doing.</p><h3>Still very useful</h3><p>Often a pre-processing step for supervised learning — or the only option when labels are unavailable.</p><p class="muted">Example: the cancer subtypes from Part 2 emerged from unsupervised clustering with no pathologist labels.</p></div></div>
+    <aside class="notes">Unsupervised learning is harder because there is no right answer. K-means, hierarchical clustering, and PCA are the main tools. It is sometimes called &#x27;learning without a teacher&#x27;.</aside>
+  </section>
+
+  <section>
+    <h2>Semi-supervised learning</h2>
+<div class="two-col"><div><h3>The setting</h3><p>A small set of <strong>labelled</strong> examples and a much larger set of <strong>unlabelled</strong> examples.</p><h3>Why it arises</h3><ul>
+  <li>Labels are expensive: pathologist time, human annotation, clinical trials.</li>
+  <li>Raw data is cheap: images, text, genomic sequences.</li>
+</ul></div><div><h3>The idea</h3><p>Use the unlabelled data to learn the <em>structure</em> of X (clusters, manifolds), then use the few labelled examples to attach Y to that structure.</p><h3>Modern examples</h3><ul>
+  <li>Foundation models (GPT, BERT): pre-trained on vast unlabelled text, fine-tuned with small labelled sets.</li>
+  <li>Medical imaging: one annotated scan per patient, thousands without labels.</li>
+</ul></div></div>
+    <aside class="notes">Semi-supervised learning sits between supervised and unsupervised. It is the dominant paradigm in modern deep learning: pre-training on unlabelled data (self-supervised learning) followed by supervised fine-tuning on a small labelled dataset.</aside>
+  </section>
+
+  <section>
+    <h2>The Netflix Prize — supervised or unsupervised?</h2>
+<p>October 2006: Netflix releases a matrix of ratings: <strong>18,000 movies</strong> × <strong>400,000 customers</strong>, each rating 1–5 stars. The matrix is <strong>98% missing</strong>.</p><p>Goal: predict the rating for 1 million missing (customer, movie) pairs. Netflix's own algorithm achieved RMSE = 0.953. The prize: <strong>$1,000,000</strong> for the first team achieving 10% improvement.</p><p class="callout">Looks unsupervised (no explicit Y column), but each known rating is a labelled observation. This is a supervised regression problem with a massive missing-data challenge.</p>
+    <aside class="notes">The Netflix Prize was enormously influential. It introduced matrix factorisation to a wide audience, showed that ensemble methods (blending 100+ models) reliably beat any single model, and raised important questions about privacy (the de-anonymisation paper by Narayanan and Shmatikoff appeared shortly after).</aside>
+  </section>
+
+  <section>
+    <h2>BellKor's Pragmatic Chaos wins</h2>
+<p>After nearly 3 years, two teams simultaneously achieved the 10% threshold. <strong>BellKor's Pragmatic Chaos</strong> won by 20 minutes — their submission was received first.</p><table style="font-size:0.88em;margin:0.8em auto;border-collapse:collapse;"><tr style="border-bottom:2px solid #ccc;"><th>Rank</th><th>Team</th><th>RMSE</th><th>% Improvement</th></tr><tr><td>1</td><td>BellKor's Pragmatic Chaos</td><td>0.8567</td><td>10.06</td></tr><tr><td>2</td><td>The Ensemble</td><td>0.8567</td><td>10.06</td></tr><tr><td>3</td><td>Grand Prize Team</td><td>0.8582</td><td>9.90</td></tr><tr><td>4</td><td>Opera Solutions and Vandelay United</td><td>0.8588</td><td>9.84</td></tr></table><p class="muted" style="font-size:0.85em;">The winning solution blended over 100 different models. The best single method was matrix factorisation.</p>
+    <aside class="notes">No single algorithm won the prize. Blending uncorrelated models always beats any individual model — this is the fundamental insight behind ensemble methods (which we cover in Week 4).</aside>
+  </section>
+
+  <section>
+    <h2>Statistical Learning vs Machine Learning</h2>
+<div class="two-col"><div><h3>Different roots</h3><ul>
+  <li><strong>Machine learning</strong> arose as a subfield of Artificial Intelligence.</li>
+  <li><strong>Statistical learning</strong> arose as a subfield of Statistics.</li>
+  <li><em>Both</em> focus on supervised and unsupervised problems using the same algorithms.</li>
+</ul></div><div><h3>Different emphases</h3><ul>
+  <li><strong>ML</strong>: large-scale applications, prediction accuracy, computational efficiency.</li>
+  <li><strong>SL</strong>: models, interpretability, precision and uncertainty of estimates.</li>
+  <li>The distinction has blurred enormously — there is massive cross-fertilisation.</li>
+</ul><p class="callout" style="margin-top:0.6em;">"Machine learning has the upper hand in marketing." — Hastie &amp; Tibshirani</p></div></div>
+    <aside class="notes">Practical takeaway: &#x27;ML&#x27; and &#x27;statistical learning&#x27; are solving the same problems. If you come from CS you say ML; if you come from statistics you say SL. This course uses the ISLR framework (statistical flavour) but all the code is scikit-learn (ML flavour).</aside>
+  </section>
+
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 4</span>
+    <h1>The Statistical Framework — Y = f(X) + ε</h1>
+    <p class="muted">notation, the regression function, and how to estimate f</p>
+  </section>
+  <section>
+    <h2>Running example: the Advertising data</h2>
+<img src="img/ch2_advertising.svg" style="width:100%;max-height:55vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;margin-top:0.2em;">200 markets. <strong>TV</strong>: strong (but non-linear). <strong>Radio</strong>: moderate. <strong>Newspaper</strong>: weak. Goal: Sales ≈ f(TV, Radio, Newspaper).</p>
+    <aside class="notes">The Advertising dataset is the canonical ISLR example. Three predictors, one outcome, 200 rows. The simplicity lets us focus on the methodology without fighting the data.</aside>
+  </section>
+
+  <section>
+    <h2>Notation: Y = f(X) + ε</h2>
+<p>We observe a response <strong>Y</strong> and p predictors <strong>X = (X₁, X₂, …, Xₚ)</strong>.</p><p style="text-align:center;font-size:1.6em;margin:0.8em 0;">Y = f(X) + ε</p><ul>
+  <li><strong>f</strong> — the systematic information X contains about Y. Fixed but unknown.</li>
+  <li><strong>ε</strong> — error term: measurement noise, unmeasured causes, randomness. Independent of X, mean zero.</li>
+  <li>Statistical learning is the set of approaches for <strong>estimating f</strong>.</li>
+</ul>
+    <aside class="notes">Write this on the board. This single equation is the foundation of everything in the course. Every model we see — linear regression, decision trees, neural networks — is a different way of estimating f.</aside>
+  </section>
+
+  <section>
+    <h2>What is f(X) good for?</h2>
+<div class="two-col"><div><h3>Prediction</h3><p>With a good f̂, predict Y at new X = x. The internal form of f̂ does not matter — a black box is fine if it predicts well.</p><p><em>Example:</em> Credit card default. Predict P(default | X) to decide whether to approve a loan. The model can be complex — we only care about the final probability.</p></div><div><h3>Inference</h3><p>Understand which Xⱼ matter and how they affect Y.</p><p><em>Example:</em> Income survey. Seniority and years of education have big impacts on Income; marital status typically does not. We need a simple, interpretable model to make such statements.</p></div></div>
+    <aside class="notes">Prediction and inference pull in opposite directions. Prediction wants the most accurate f̂. Inference wants f̂ to be simple enough to explain. Depending on the complexity of f, we may be able to understand how each component Xⱼ affects Y.</aside>
+  </section>
+
+  <section>
+    <h2>Is there an ideal f(X)?</h2>
+<img src="img/ch2_regression_function.svg" style="width:55%;float:right;margin-left:1em;"><p>At X = x there are many possible Y values (due to ε). The best single prediction is:</p><p style="text-align:center;font-size:1.4em;margin:0.8em 0;"><strong>f(x) = E[Y | X = x]</strong></p><p>The <strong>regression function</strong> — the average Y at a given x. The red curve threads through the cloud; each grey point deviates by ε.</p>
+    <aside class="notes">Draw on the board: a scatter plot of (x, y) pairs. The conditional mean curve threads through the middle. Each point deviates from the curve by ε. The curve is the signal; the deviations are the noise.</aside>
+  </section>
+
+  <section>
+    <h2>Reducible vs irreducible error</h2>
+<p>For any estimate f̂(x) of f(x):</p><p style="text-align:center;font-size:1.1em;margin:0.8em 0;">E[(Y − f̂(X))²|X=x] = <span style="color:#c00;">[f(x) − f̂(x)]²</span> + <span style="color:#0066cc;">Var(ε)</span></p><div class="two-col"><div><p><span style="color:#c00;"><strong>Reducible error</strong></span></p><p>The gap between our f̂ and the true f. Can be closed with more data, better features, or smarter models.</p></div><div><p><span style="color:#0066cc;"><strong>Irreducible error</strong></span></p><p>Var(ε). Even knowing f exactly, we still err on individual Y values because of noise.</p></div></div><p class="callout" style="margin-top:0.8em;">The irreducible error sets a hard floor on test error. No model — however complex — can beat Var(ε).</p>
+    <aside class="notes">This is one of the most important ideas in the course. When students ask &#x27;why isn&#x27;t the test error zero?&#x27;, the answer is: irreducible error. The goal is to push test error as close to Var(ε) as possible by minimising [f − f̂]².</aside>
+  </section>
+
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 5</span>
+    <h1>Estimating f and Assessing Models</h1>
+    <p class="muted">from nearest-neighbor to the bias-variance trade-off</p>
+  </section>
+  <section>
+    <h2>How to estimate f — nearest-neighbor averaging</h2>
+<p>We want f̂(x) ≈ E[Y | X = x]. Problem: typically no training points have <em>exactly</em> X = x.</p><p>Solution — relax to a <strong>neighbourhood</strong>:</p><p style="text-align:center;font-size:1.3em;margin:0.8em 0;">f̂(x) = Ave(Y | X ∈ 𝒩(x))</p><p>Average Y over the k nearest neighbours of x in the training data.</p><ul>
+  <li>Works well for small p (p ≤ 4) and large N.</li>
+  <li>A sliding window on a 1D scatter traces out f(x) by averaging nearby Y values.</li>
+</ul>
+    <aside class="notes">Draw the sliding window. As the window moves right, the local average traces the conditional mean. The window width controls bias vs variance: wide window = more data averaged = lower variance but higher bias.</aside>
+  </section>
+
+  <section>
+    <h2>Curse of dimensionality</h2>
+<img src="img/ch2_curse_dim.svg" style="width:100%;max-height:52vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;margin-top:0.2em;"><strong>Left:</strong> 10% neighbourhood in 2D stays local. <strong>Right:</strong> radius needed to capture 10% of volume grows rapidly — at p=10 it spans almost the entire space.</p>
+    <aside class="notes">At p=10, capturing 10% of the data requires going out to radius 0.80 in a unit hypercube. The &#x27;neighbourhood&#x27; is no longer local — you are averaging points that are nothing like x. This is why parametric models (that impose structure on f) become necessary as p grows.</aside>
+  </section>
+
+  <section>
+    <h2>Parametric models — the linear model</h2>
+<p>Instead of estimating f freely at every x, assume f has a specific form with few parameters:</p><p style="text-align:center;font-size:1.3em;margin:0.8em 0;">f<sub>L</sub>(X) = β₀ + β₁X₁ + β₂X₂ + … + βₚXₚ</p><ul>
+  <li>A linear model is specified by <strong>p + 1 parameters</strong>: β₀, β₁, …, βₚ.</li>
+  <li>Estimate the parameters by <strong>fitting to training data</strong> (e.g. least squares).</li>
+  <li>Almost never exactly correct, but often a good <strong>interpretable approximation</strong> to the unknown true f.</li>
+</ul>
+    <aside class="notes">The key advantage over nearest-neighbor: the linear model makes a strong assumption about f&#x27;s shape, which drastically reduces the amount of data needed to estimate it well. The price is bias if the true f is non-linear.</aside>
+  </section>
+
+  <section>
+    <h2>Linear vs quadratic fit</h2>
+<img src="img/ch2_linear_quad.svg" style="width:100%;max-height:57vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;margin-top:0.2em;"><strong>Top:</strong> linear f̂<sub>L</sub>(x) = β̂₀ + β̂₁x — misses the curvature (high bias). <strong>Bottom:</strong> quadratic f̂<sub>Q</sub>(x) = β̂₀ + β̂₁x + β̂₂x² — fits much better.</p>
+    <aside class="notes">The quadratic model is still parametric but more flexible than linear. Adding basis terms keeps increasing flexibility. The question is always: how flexible should f̂ be? Too rigid → underfit. Too flexible → overfit.</aside>
+  </section>
+
+  <section>
+    <h2>The income surface — three fits</h2>
+<div class="two-col"><div><img src="img/ch2_income_true.svg" style="width:100%;height:26vh;object-fit:contain;"><p class="muted" style="font-size:0.75em;text-align:center;margin:0;">True f — smooth curved surface</p></div><div><img src="img/ch2_income_linear.svg" style="width:100%;height:26vh;object-fit:contain;"><p class="muted" style="font-size:0.75em;text-align:center;margin:0;">Linear f̂ — flat plane (underfit)</p></div></div><img src="img/ch2_income_overfit.svg" style="width:50%;display:block;margin:0.4em auto 0;"><p class="muted" style="font-size:0.75em;text-align:center;margin:0;"><strong>Overfit spline</strong> — zero training error, generalises poorly</p><p class="callout" style="margin-top:0.4em;"><strong>Overfitting</strong>: the model memorised training noise. Training error ≈ 0, test error is large.</p>
+    <aside class="notes">The three surface plots from ISLR Figs 3.2–3.4. True f is non-linear; linear model misses curvature but is still useful; overfit spline has zero training error but learns the noise.</aside>
+  </section>
+
+  <section>
+    <h2>Trade-offs in choosing a model</h2>
+<ul>
+  <li class="fragment fade-up"><strong>Prediction accuracy vs interpretability</strong> — linear models are easy to explain; splines and neural nets are not.</li>
+  <li class="fragment fade-up"><strong>Good fit vs over-fit vs under-fit</strong> — how do we know when the fit is just right?</li>
+  <li class="fragment fade-up"><strong>Parsimony vs black-box</strong> — we often prefer fewer variables and a simpler story, even at a small cost in accuracy.</li>
+</ul><table style="font-size:0.85em;margin:0.8em auto;border-collapse:collapse;width:85%;"><tr style="border-bottom:2px solid #ccc;"><th>← More interpretable</th><th>More flexible →</th></tr><tr><td>Subset selection, Lasso</td><td>Bagging, Boosting</td></tr><tr><td>Least squares linear regression</td><td>Support Vector Machines</td></tr><tr><td>Generalised Additive Models, Trees</td><td>Deep neural networks</td></tr></table>
+    <aside class="notes">The flexibility/interpretability trade-off chart from ISLR Fig 2.7. Always ask: &#x27;Do I need to explain this model?&#x27; If yes, stay left on the spectrum. If pure prediction performance is all that matters, flexible models are often better.</aside>
+  </section>
+
+  <section>
+    <h2>Assessing model accuracy — train vs test MSE</h2>
+<p>Given training data Tr = {xᵢ, yᵢ}₁ᴺ and a fitted model f̂:</p><div class="two-col"><div><p><strong>Training MSE:</strong></p><p style="font-size:1.15em;">MSE<sub>Tr</sub> = Ave<sub>i∈Tr</sub>[yᵢ − f̂(xᵢ)]²</p><p class="muted">Always decreases as complexity increases. Biased toward overfit models. Not a reliable guide.</p></div><div><p><strong>Test MSE (what actually matters):</strong></p><p style="font-size:1.15em;">MSE<sub>Te</sub> = Ave<sub>i∈Te</sub>[yᵢ − f̂(xᵢ)]²</p><p class="muted">Evaluated on fresh data not seen during fitting. The true measure of how well the model generalises.</p></div></div><p class="callout" style="margin-top:0.8em;">Training MSE is not a reliable guide to test MSE. Always evaluate on held-out data.</p>
+    <aside class="notes">This is the core evaluation principle. A model that memorises training data (k=1 KNN, a very deep tree, a degree-20 polynomial) will have near-zero training MSE but terrible test MSE. In practice we use cross-validation to estimate test MSE when we don&#x27;t have a separate test set.</aside>
+  </section>
+
+  <section>
+    <h2>The U-shaped test MSE curve — three scenarios</h2>
+<div style="display:flex;gap:0.5em;justify-content:center;"><div style="flex:1;text-align:center;"><img src="img/ch2_mse_scenario1.svg" style="width:100%;height:28vh;object-fit:contain;"><p class="muted" style="font-size:0.72em;margin:0;">Curved truth: moderate flexibility optimal</p></div><div style="flex:1;text-align:center;"><img src="img/ch2_mse_scenario2.svg" style="width:100%;height:28vh;object-fit:contain;"><p class="muted" style="font-size:0.72em;margin:0;">Linear truth: linear model wins</p></div><div style="flex:1;text-align:center;"><img src="img/ch2_mse_scenario3.svg" style="width:100%;height:28vh;object-fit:contain;"><p class="muted" style="font-size:0.72em;margin:0;">Wiggly truth: high flexibility needed</p></div></div><p class="muted" style="font-size:0.8em;margin-top:0.4em;">Each panel: grey = train MSE (decreases monotonically), red = test MSE (U-shape), dashed = irreducible Var(ε).</p>
+    <aside class="notes">The U-shaped test MSE curve is one of the central images of the course. Students should be able to sketch it from memory: training MSE monotonically decreasing, test MSE U-shaped, minimum of the U is what we want.</aside>
+  </section>
+
+  <section>
+    <h2>Bias-Variance Trade-off</h2>
+<p style="text-align:center;font-size:1.05em;margin:0.4em 0;">E[(y₀ − f̂(x₀))²] = <span style="color:#e07000;">Var(f̂(x₀))</span> + <span style="color:#0066cc;">[Bias(f̂(x₀))]²</span> + <span style="color:#888;">Var(ε)</span></p><img src="img/ch2_bias_variance.svg" style="width:100%;max-height:50vh;object-fit:contain;"><p class="muted" style="font-size:0.78em;margin-top:0.2em;">Three scenarios: MSE (dark red), Bias² (cyan), Variance (orange), Var(ε) (dashed). As flexibility ↑: Bias² ↓, Variance ↑. The U-shape is their sum.</p>
+    <aside class="notes">The bias-variance decomposition is the theoretical foundation for the U-shaped test MSE curve. The minimum of the U is where bias and variance balance. This formula explains why it exists.</aside>
+  </section>
+
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 6</span>
+    <h1>Classification</h1>
+    <p class="muted">qualitative Y, the Bayes classifier, and KNN boundaries</p>
+  </section>
+  <section>
+    <h2>Classification problems</h2>
+<p>When the response Y is <strong>qualitative</strong> (categorical), the problem is called classification.</p><ul>
+  <li>Email is <strong>spam</strong> or <strong>ham</strong> — binary classification (K = 2).</li>
+  <li>Digit is one of <strong>0, 1, …, 9</strong> — 10-class classification.</li>
+  <li>Breast tumour subtype — 4-class classification.</li>
+</ul><p style="margin-top:0.8em;">Goals: <strong>(1)</strong> build a classifier C(X) that assigns a class label to new X; <strong>(2)</strong> assess the uncertainty in each classification; <strong>(3)</strong> understand which predictors drive the classification.</p>
+    <aside class="notes">Classification is one of the two main problem types (regression is the other). In both cases we have Y and X — only the type of Y changes. The same cross-validation, bias-variance, and model selection ideas apply to both.</aside>
+  </section>
+
+  <section>
+    <h2>The Bayes optimal classifier</h2>
+<p>Define the <strong>conditional class probabilities</strong>:</p><p style="text-align:center;font-size:1.2em;margin:0.6em 0;">pₖ(x) = Pr(Y = k | X = x),  k = 1, 2, …, K</p><p>The <strong>Bayes classifier</strong> assigns x to the class with the highest conditional probability:</p><p style="text-align:center;font-size:1.2em;margin:0.6em 0;">C(x) = j &nbsp; if &nbsp; p<sub>j</sub>(x) = max{p₁(x), p₂(x), …, p<sub>K</sub>(x)}</p><div class="two-col"><div><p>In a 1D binary example: the black curve shows p₁(x) = Pr(Y=1|X=x). The <strong>Bayes boundary</strong> is where p₁(x) = 0.5.</p></div><div><p class="callout">The Bayes classifier has the <em>smallest possible</em> error rate of any classifier in the population. It is the gold standard — but it requires knowing the true pₖ(x), which we never do in practice.</p></div></div>
+    <aside class="notes">In the 1D example from ISLR Fig 2.13: the bar plot at x=5 shows the conditional class probabilities at that point — about 75% class 1, 25% class 0. The Bayes classifier would say &#x27;class 1&#x27; at x=5.</aside>
+  </section>
+
+  <section>
+    <h2>Nearest-neighbor for classification</h2>
+<p>Estimate pₖ(x) by local averaging — just as in regression:</p><p style="text-align:center;font-size:1.2em;margin:0.8em 0;">p̂ₖ(x) = fraction of the k nearest neighbors with class k</p><p>Assign x to the most common class among its k nearest neighbours.</p><ul>
+  <li>The 1D classifier plot shows the estimated p̂₁(x) curve (green) tracking the true p₁(x) (black) reasonably well.</li>
+  <li>Still breaks down as p grows — same curse of dimensionality.</li>
+  <li>But the impact on the classifier Ĉ(x) is <em>less severe</em> than on the probabilities p̂ₖ(x) themselves.</li>
+</ul>
+    <aside class="notes">The 1D example from ISLR Fig 2.14: the green curve is the KNN estimate of p₁(x) with k=15. It tracks the true black curve well in regions with data, but the bar chart at x=5 shows the local estimate is slightly off (65% vs true 75%). The classifier (majority vote) is usually still correct even when the probability estimate is off.</aside>
+  </section>
+
+  <section>
+    <h2>KNN in two dimensions — the decision boundary</h2>
+<div class="two-col"><div><img src="img/ch2_knn_raw.svg" style="width:100%;height:38vh;object-fit:contain;"><p class="muted" style="font-size:0.75em;text-align:center;margin:0;">Raw data + Bayes boundary (dashed purple)</p></div><div><img src="img/ch2_knn_k10.svg" style="width:100%;height:38vh;object-fit:contain;"><p class="muted" style="font-size:0.75em;text-align:center;margin:0;">KNN K=10 boundary (black) vs Bayes (dashed)</p></div></div><p class="muted" style="font-size:0.8em;margin-top:0.4em;">KNN K=10 closely tracks the Bayes boundary without any parametric assumptions.</p>
+    <aside class="notes">KNN with K=10 produces a non-linear decision boundary that closely approximates the Bayes boundary. The dashed purple curve is the Bayes (optimal) boundary.</aside>
+  </section>
+
+  <section>
+    <h2>K controls the bias-variance dial</h2>
+<img src="img/ch2_knn_k1_k100.svg" style="width:100%;max-height:48vh;object-fit:contain;"><div class="two-col"><div><p><strong>K = 1</strong>: zero training error, extremely wiggly boundary — overfit.</p><p><strong>K = 100</strong>: too smooth, misses non-linearities — underfit.</p></div><div><p class="callout">K = 1 → max flexibility. K = N → predict majority class. Pick K by cross-validation.</p></div></div>
+    <aside class="notes">The two-panel figure from ISLR Fig 2.16. K=1 is very jagged (overfits); K=100 is too smooth (underfits). The sweet spot was K=10 shown in the previous slide.</aside>
+  </section>
+
+  <section>
+    <h2>Classification error rate and the KNN U-shape</h2>
+<img src="img/ch2_knn_error.svg" style="width:100%;max-height:50vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;margin-top:0.3em;"><strong>Blue (training):</strong> 0 at K=1, rises as K grows. <strong>Orange (test):</strong> U-shape, minimum at K≈10. <strong>Dashed:</strong> Bayes error — irreducible floor.</p><p class="callout" style="margin-top:0.4em;">Same story as regression: training error decreases with flexibility, test error has a U-shape.</p>
+    <aside class="notes">This plot from ISLR Fig 2.17 closes the circle. KNN already demonstrates all the core ideas: training vs test error, overfitting, underfitting, the U-shape, and the Bayes floor. Every more sophisticated model is a more elaborate version of the same story.</aside>
+  </section>
+
+</section>
+<section class="title-slide">
+  <span class="kicker">Recap</span>
+  <h2>Three things to leave with</h2>
+  <ol>
+<li class="fragment fade-up"><strong>Y = f(X) + ε.</strong> Statistical learning estimates f. The reducible error [f − f̂]² can be minimised; the irreducible Var(ε) cannot.</li>
+<li class="fragment fade-up"><strong>Bias-variance trade-off:</strong> Test MSE = Bias² + Variance + Var(ε). As flexibility increases, bias falls and variance rises. The U-shaped test MSE curve is the result.</li>
+<li class="fragment fade-up"><strong>Supervised, unsupervised, and semi-supervised</strong> learning differ in whether labelled Y values are available. The same bias-variance logic applies to all three.</li>
+  </ol>
+  <p class="callout fragment fade-up">Next: Linear Regression — the simplest f̂, and the workhorse that every later model generalises.</p>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true, slideNumber: 'c/t', transition: 'slide',
+    transitionSpeed: 'fast', backgroundTransition: 'fade',
+    width: 1280, height: 760, margin: 0.06,
+    plugins: [ RevealNotes, RevealHighlight ],
+  });
+</script>
+</body>
+</html>
