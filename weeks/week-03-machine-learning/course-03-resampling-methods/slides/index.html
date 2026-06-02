@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cross-Validation and the Bootstrap</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+</head>
+<body>
+<div class="reveal"><div class="slides">
+<section class="title-slide">
+  <span class="kicker">Week 3 · Course 3</span>
+  <h1>Cross-Validation and the Bootstrap</h1>
+  <p class="muted" style="font-size:1.1em;">Estimating test error via hold-out sets, K-fold CV, LOOCV, and the bootstrap</p>
+</section>
+<section>
+  <span class="kicker">Roadmap</span>
+  <h2>Where we are heading</h2>
+  <div class="three-col">
+    <div class="card"><h4>Part 1 · 0:00–0:30</h4><strong>Why training error lies</strong>
+      <p class="muted" style="margin:0.3em 0 0;">The overfitting gap, validation sets, and their drawbacks.</p></div>
+    <div class="card"><h4>Part 2 · 0:30–1:15</h4><strong>Cross-validation</strong>
+      <p class="muted" style="margin:0.3em 0 0;">K-fold, LOOCV, the right vs wrong way.</p></div>
+    <div class="card"><h4>Part 3 · 1:15–1:45</h4><strong>The Bootstrap</strong>
+      <p class="muted" style="margin:0.3em 0 0;">SE estimation, confidence intervals, and limits.</p></div>
+  </div>
+  <p class="callout" style="margin-top:1.2em;">Cross-validation and the bootstrap are the two most important tools for assessing statistical learning methods. Everything downstream — model selection, hyperparameter tuning, uncertainty quantification — rests on these ideas.</p>
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 1 · 0:00 – 0:30</span>
+    <h1>Why Training Error Lies</h1>
+    <p class="muted">The gap between training and test performance</p>
+  </section>
+  <section>
+    <h2>Training error vs test error</h2>
+<div class="two-col"><div><ul>
+  <li><strong>Test error</strong>: average error on new observations not used to train the model.</li>
+  <li><strong>Training error</strong>: error on the observations the model was fitted on — easy to calculate.</li>
+  <li>Training error <em>dramatically underestimates</em> test error for flexible models.</li>
+  <li>More flexibility → training error always falls, but test error forms a U-shape.</li>
+</ul></div><div><img src="img/ch5_bias_variance_curve.svg" style="width:100%;max-height:52vh;object-fit:contain;"></div></div>
+    <aside class="notes">The core motivation for resampling: we care about how the model performs on fresh data, not on the same data it memorised.</aside>
+  </section>
+
+  <section>
+    <h2>The bias-variance trade-off curve</h2>
+<div class="two-col"><div><p>As model complexity increases:</p><ul>
+  <li>Training error decreases monotonically.</li>
+  <li>Test error decreases, then <em>rises</em> again.</li>
+  <li>Minimum of test error = sweet spot.</li>
+  <li>Left of minimum: high bias (underfitting).</li>
+  <li>Right of minimum: high variance (overfitting).</li>
+</ul></div><div><img src="img/ch5_bias_variance_curve.svg" style="width:100%;max-height:55vh;object-fit:contain;"></div></div>
+    <aside class="notes">The cyan training curve goes down forever. The red test curve turns back up. We want to find the minimum of the red curve without ever having the true test data.</aside>
+  </section>
+
+  <section>
+    <h2>How to estimate test error</h2>
+<ul>
+  <li class="fragment fade-up"><strong>Best solution:</strong> a large designated test set — often not available.</li>
+  <li class="fragment fade-up"><strong>Mathematical adjustment:</strong> C<sub>p</sub>, AIC, BIC — adjust training error upward by a penalty for model complexity.</li>
+  <li class="fragment fade-up"><strong>Resampling methods (our focus):</strong> hold out a subset of training data, fit on the rest, evaluate on the held-out portion.</li>
+  <li class="fragment fade-up">Resampling is model-agnostic — it works for any learning method, not just linear models.</li>
+</ul>
+  </section>
+
+  <section>
+    <h2>The validation-set approach</h2>
+<img src="img/ch5_validation_split.svg" style="width:100%;max-height:28vh;object-fit:contain;margin-bottom:0.5em;"><ul>
+  <li class="fragment fade-up">Randomly split n observations into a <strong>training set</strong> and a <strong>validation (hold-out) set</strong>.</li>
+  <li class="fragment fade-up">Fit the model on the training set only.</li>
+  <li class="fragment fade-up">Evaluate on the validation set: <strong>MSE</strong> for regression, <strong>misclassification rate</strong> for classification.</li>
+  <li class="fragment fade-up">The validation error estimates the test error.</li>
+</ul>
+    <aside class="notes">Blue cells = training set; orange cells = validation set. The split is random, which is both the approach&#x27;s strength (simple) and weakness (variable).</aside>
+  </section>
+
+  <section>
+    <h2>Drawbacks of validation set</h2>
+<div class="two-col"><div><ul>
+  <li><strong>High variance:</strong> the validation error depends heavily on <em>which</em> observations land in each half.</li>
+  <li>10 random splits of the same Auto data → 10 different MSE curves (see right).</li>
+  <li><strong>Overestimates test error:</strong> only half the data trains the model.</li>
+  <li>The model fit on n/2 has more bias than the model deployed on all n.</li>
+</ul></div><div><img src="img/ch5_auto_multi_split.svg" style="width:100%;max-height:55vh;object-fit:contain;"></div></div>
+    <aside class="notes">This motivates K-fold cross-validation: use the data more efficiently by rotating which portion is held out.</aside>
+  </section>
+
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 2 · 0:30 – 1:15</span>
+    <h1>Cross-Validation</h1>
+    <p class="muted">K-fold, LOOCV, the right and wrong way</p>
+  </section>
+  <section>
+    <h2>K-fold cross-validation</h2>
+<ul>
+  <li class="fragment fade-up">Randomly divide data into <strong>K equal-sized parts</strong> C<sub>1</sub>, C<sub>2</sub>, …, C<sub>K</sub>.</li>
+  <li class="fragment fade-up">Leave out part k. Fit on the other K−1 parts combined. Predict on part k. Compute MSE<sub>k</sub>.</li>
+  <li class="fragment fade-up">Repeat for each k = 1, 2, …, K. Combine the K estimates.</li>
+  <li class="fragment fade-up">CV<sub>(K)</sub> = Σ (n<sub>k</sub>/n) · MSE<sub>k</sub></li>
+  <li class="fragment fade-up">Estimates can also be used to <em>select</em> the best model (degree, hyperparameter, etc.).</li>
+</ul>
+  </section>
+
+  <section>
+    <h2>5-fold CV — the diagram</h2>
+<div class="two-col"><div><table style="font-size:0.75em;border-collapse:collapse;"><tr><th>Fold</th><th>Part 1</th><th>Part 2</th><th>Part 3</th><th>Part 4</th><th>Part 5</th></tr><tr><td>1</td><td style="background:#fdd;color:#900;">Valid.</td><td>Train</td><td>Train</td><td>Train</td><td>Train</td></tr><tr><td>2</td><td>Train</td><td style="background:#fdd;color:#900;">Valid.</td><td>Train</td><td>Train</td><td>Train</td></tr><tr><td>3</td><td>Train</td><td>Train</td><td style="background:#fdd;color:#900;">Valid.</td><td>Train</td><td>Train</td></tr><tr><td>4</td><td>Train</td><td>Train</td><td>Train</td><td style="background:#fdd;color:#900;">Valid.</td><td>Train</td></tr><tr><td>5</td><td>Train</td><td>Train</td><td>Train</td><td>Train</td><td style="background:#fdd;color:#900;">Valid.</td></tr></table></div><div><p class="muted" style="font-size:0.9em;">Each row is one fit. Each red cell contributes its MSE to CV<sub>(5)</sub>. Every observation is held out exactly once.</p></div></div>
+    <aside class="notes">The key advantage over a single validation set: every observation is used for both training and validation across the K fits.</aside>
+  </section>
+
+  <section>
+    <h2>The CV formula in detail</h2>
+<p style="text-align:center;font-size:1.15em;">CV<sub>(K)</sub> = &Sigma;<sub>k=1</sub><sup>K</sup> (n<sub>k</sub>/n) &middot; MSE<sub>k</sub></p><p style="text-align:center;font-size:1.15em;">MSE<sub>k</sub> = &Sigma;<sub>i &isin; C<sub>k</sub></sub> (y<sub>i</sub> &minus; ŷ<sub>i</sub>)<sup>2</sup> / n<sub>k</sub></p><ul>
+  <li>n<sub>k</sub> = n/K when n is a multiple of K.</li>
+  <li>ŷ<sub>i</sub> is the prediction for obs i from the model <em>trained without part k</em>.</li>
+  <li>Setting K = n gives <strong>Leave-One-Out CV (LOOCV)</strong>.</li>
+</ul>
+    <aside class="notes">The weight n_k/n is just 1/K when folds are equal-sized. For LOOCV each fold has one observation.</aside>
+  </section>
+
+  <section>
+    <h2>LOOCV — a nice shortcut</h2>
+<p>For <strong>least-squares linear or polynomial regression</strong>:</p><p style="text-align:center;font-size:1.1em;">CV<sub>(n)</sub> = (1/n) &Sigma;<sub>i=1</sub><sup>n</sup> [(y<sub>i</sub> &minus; ŷ<sub>i</sub>) / (1 &minus; h<sub>i</sub>)]<sup>2</sup></p><ul>
+  <li class="fragment fade-up">ŷ<sub>i</sub> = fitted value from a <em>single</em> full-data OLS fit.</li>
+  <li class="fragment fade-up">h<sub>i</sub> = leverage of observation i — diagonal of the hat matrix H = X(X<sup>T</sup>X)<sup>&minus;1</sup>X<sup>T</sup>.</li>
+  <li class="fragment fade-up">One model fit computes LOOCV for free. No K refits needed.</li>
+  <li class="fragment fade-up">Observations with high leverage h<sub>i</sub> get their residual inflated more.</li>
+</ul>
+    <aside class="notes">This formula is a classic result in linear algebra. It shows that LOOCV is implicitly a form of influence analysis — high-leverage points dominate.</aside>
+  </section>
+
+  <section>
+    <h2>LOOCV vs K = 5 or 10</h2>
+<div class="two-col"><div><ul>
+  <li>LOOCV is nearly <em>unbiased</em> — trains on n−1 observations.</li>
+  <li>But LOOCV has <strong>high variance</strong>: K=n estimates are highly correlated.</li>
+  <li>K = 5 or K = 10 provides a better <strong>bias-variance trade-off</strong>.</li>
+  <li>Each fold uses (K−1)/K of the data → some upward bias, controlled variance.</li>
+  <li><strong>Practical rule of thumb: use K = 10.</strong></li>
+</ul></div><div><img src="img/ch5_auto_loocv_vs_10fold.svg" style="width:100%;max-height:54vh;object-fit:contain;"></div></div>
+    <aside class="notes">The analogy is averaging correlated vs uncorrelated estimators. LOOCV averages n nearly identical estimates; 10-fold averages 10 more diverse ones.</aside>
+  </section>
+
+  <section>
+    <h2>Auto data: LOOCV vs 10-fold CV</h2>
+<img src="img/ch5_auto_loocv_vs_10fold.svg" style="width:100%;max-height:52vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;margin-top:0.4em;"><strong>Left:</strong> LOOCV — single smooth curve, no randomness, minimum at degree 2. <strong>Right:</strong> 10-fold CV (10 runs) — slight variation across seeds, but minimum is consistently at degree 2.</p>
+    <aside class="notes">Both methods correctly identify that quadratic (degree 2) is sufficient. LOOCV gives one answer; 10-fold is slightly noisy but gets the same answer.</aside>
+  </section>
+
+  <section>
+    <h2>True vs estimated test MSE</h2>
+<img src="img/ch5_true_vs_estimated_mse.svg" style="width:100%;max-height:50vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;margin-top:0.3em;">Grey = training MSE. <strong style="color:#4878d0;">Blue</strong> = true test MSE. <strong style="color:#ee854a;">Orange dashed</strong> = 10-fold CV estimate. CV reliably finds the same minimum as the true test curve even when the absolute values differ.</p>
+    <aside class="notes">The practical take: CV is reliable for model selection (finding the minimum) even if the absolute CV error is slightly off the true test error.</aside>
+  </section>
+
+  <section>
+    <h2>Bias in K-fold CV</h2>
+<ul>
+  <li class="fragment fade-up">Each fold trains on only (K−1)/K of the full data.</li>
+  <li class="fragment fade-up">Smaller training set → model is slightly worse → <strong>upward bias</strong> in error estimate.</li>
+  <li class="fragment fade-up">K = n (LOOCV) minimises this bias — trains on n−1 points, nearly the full dataset.</li>
+  <li class="fragment fade-up">But LOOCV has the highest variance (correlated fold estimates).</li>
+  <li class="fragment fade-up"><strong>K = 5 or 10 balances bias and variance.</strong> The standard choice.</li>
+</ul>
+    <aside class="notes">This is exactly the bias-variance trade-off appearing at the meta-level: bias vs variance of the CV estimator itself.</aside>
+  </section>
+
+  <section>
+    <h2>CV for classification</h2>
+<p>Replace MSE with misclassification rate:</p><p style="text-align:center;">CV<sub>K</sub> = &Sigma;<sub>k</sub> (n<sub>k</sub>/n) Err<sub>k</sub>, &nbsp;&nbsp; Err<sub>k</sub> = &Sigma;<sub>i &isin; C<sub>k</sub></sub> I(y<sub>i</sub> &ne; ŷ<sub>i</sub>) / n<sub>k</sub></p><p>Estimated SE of CV<sub>K</sub>:</p><p style="text-align:center;">SE&#772;(CV<sub>K</sub>) = &radic;[ (1/K) &Sigma;<sub>k</sub> (Err<sub>k</sub> &minus; Err&#772;<sub>k</sub>)<sup>2</sup> / (K&minus;1) ]</p><p class="muted" style="font-size:0.85em;">This SE estimate is useful but <em>not strictly valid</em> — the K fold errors are correlated (they share training data), violating the independence assumption of the SE formula.</p>
+    <aside class="notes">Despite the violation, the SE estimate gives a practical sense of uncertainty. In practice, running CV multiple times and averaging gives a better stability estimate.</aside>
+  </section>
+
+  <section>
+    <h2>CV: the right and the wrong way</h2>
+<div class="two-col"><div><p><strong>Wrong:</strong></p><ul>
+  <li>Step 1: find top-100 predictors by correlation with labels (using ALL data).</li>
+  <li>Step 2: apply CV to logistic regression on those 100 predictors.</li>
+  <li>→ CV error ≈ 0%, but true error = 50%.</li>
+</ul></div><div><p><strong>Right:</strong></p><ul>
+  <li>CV folds wrap ALL steps.</li>
+  <li>Inside each fold: select predictors from training fold only, then fit classifier.</li>
+  <li>→ CV error correctly reflects true performance.</li>
+</ul></div></div>
+    <aside class="notes">This mistake was made in many genomics papers (Ambroise &amp; McLachlan 2002). The 5000 predictors are noise; their correlations with labels are spurious but large enough to separate classes.</aside>
+  </section>
+
+  <section>
+    <h2>Why the wrong way is wrong</h2>
+<ul>
+  <li class="fragment fade-up">Step 1 (feature selection) <em>has already seen the labels</em>.</li>
+  <li class="fragment fade-up">The selected features are chosen to correlate with labels in this specific sample — noise that happens to look like signal.</li>
+  <li class="fragment fade-up">The classifier in step 2 is guaranteed to look good on these features even if they are purely random.</li>
+  <li class="fragment fade-up"><strong>The rule:</strong> everything that touches labels must be inside the CV loop.</li>
+  <li class="fragment fade-up">In scikit-learn: use <code>Pipeline</code> — it enforces this automatically.</li>
+</ul>
+  </section>
+
+  <section>
+    <h2>sklearn Pipeline enforces the right way</h2>
+<pre><code class="language-python">from sklearn.pipeline import Pipeline
+from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
+
+# RIGHT: selection is inside the pipeline, inside each fold
+pipe = Pipeline([
+    (&#x27;select&#x27;, SelectKBest(f_classif, k=100)),
+    (&#x27;clf&#x27;,    LogisticRegression()),
+])
+cv_error = 1 - cross_val_score(pipe, X, y, cv=5).mean()
+# cv_error ≈ 0.50 for random labels — honest</code></pre>
+    <aside class="notes">The Pipeline passes each fold&#x27;s training data through SelectKBest before fitting the classifier. The held-out fold is evaluated on features selected without it.</aside>
+  </section>
+
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 3 · 1:15 – 1:45</span>
+    <h1>The Bootstrap</h1>
+    <p class="muted">Quantifying uncertainty by resampling</p>
+  </section>
+  <section>
+    <h2>What is the bootstrap?</h2>
+<ul>
+  <li class="fragment fade-up">A flexible tool to quantify <strong>uncertainty</strong> of any estimator or statistical learning method.</li>
+  <li class="fragment fade-up">Provides estimates of <strong>standard error</strong> and <strong>confidence intervals</strong> without needing a new study.</li>
+  <li class="fragment fade-up">Name from Baron Munchausen: <em>"pulled himself up by his own bootstraps"</em>.</li>
+  <li class="fragment fade-up">Key idea: treat the observed sample as a stand-in for the population; repeatedly resample from it.</li>
+</ul>
+  </section>
+
+  <section>
+    <h2>The investment example</h2>
+<p>Invest a fraction α in asset X and 1−α in asset Y. Minimise Var(αX + (1−α)Y).</p><p style="text-align:center;font-size:1.1em;">&alpha;<sup>*</sup> = (&sigma;<sub>Y</sub><sup>2</sup> &minus; &sigma;<sub>XY</sub>) / (&sigma;<sub>X</sub><sup>2</sup> + &sigma;<sub>Y</sub><sup>2</sup> &minus; 2&sigma;<sub>XY</sub>)</p><ul>
+  <li>&sigma;<sub>X</sub><sup>2</sup> = Var(X), &sigma;<sub>Y</sub><sup>2</sup> = Var(Y), &sigma;<sub>XY</sub> = Cov(X,Y) are unknown.</li>
+  <li>Estimate them from a sample → get &alpha;&#770;.</li>
+  <li>Problem: how accurate is &alpha;&#770;? What is SE(&alpha;&#770;)?</li>
+</ul>
+    <aside class="notes">With known population parameters σ_X²=1, σ_Y²=1.25, σ_XY=0.5, the true α = 0.6.</aside>
+  </section>
+
+  <section>
+    <h2>Simulating from the true population</h2>
+<ul>
+  <li class="fragment fade-up">If we could repeatedly draw samples of n=100 from the true population, we could estimate SE(&alpha;&#770;) directly.</li>
+  <li class="fragment fade-up">Draw 1000 datasets → compute &alpha;&#770; for each → histogram of &alpha;&#770;<sub>1</sub>, …, &alpha;&#770;<sub>1000</sub>.</li>
+  <li class="fragment fade-up">Mean ≈ 0.5996 (very close to true α = 0.6).</li>
+  <li class="fragment fade-up">SD ≈ 0.083 → SE(&alpha;&#770;) ≈ 0.083.</li>
+  <li class="fragment fade-up">This is the <em>gold standard</em> — but requires knowing the population.</li>
+</ul>
+    <aside class="notes">In practice we have one sample, not 1000. The bootstrap mimics this process using only that one sample.</aside>
+  </section>
+
+  <section>
+    <h2>Bootstrap: resample from your one dataset</h2>
+<ul>
+  <li class="fragment fade-up">We cannot generate new data from the population.</li>
+  <li class="fragment fade-up">Instead: treat the observed sample Z = (z<sub>1</sub>,…,z<sub>n</sub>) as the estimated population P&#770;.</li>
+  <li class="fragment fade-up">Draw bootstrap datasets Z*<sup>1</sup>, Z*<sup>2</sup>, …, Z*<sup>B</sup> by sampling <strong>n observations with replacement</strong> from Z.</li>
+  <li class="fragment fade-up">Some observations appear multiple times; some not at all.</li>
+  <li class="fragment fade-up">Compute &alpha;&#770;*<sup>1</sup>, …, &alpha;&#770;*<sup>B</sup> on each bootstrap dataset.</li>
+</ul>
+  </section>
+
+  <section>
+    <h2>Bootstrap standard error</h2>
+<div class="two-col"><div><p>Estimate SE using the bootstrap estimates:</p><p style="text-align:center;font-size:1em;">SE<sub>B</sub>(&alpha;&#770;) = &radic;[ 1/(B&minus;1) &Sigma;<sub>r=1</sub><sup>B</sup> (&alpha;&#770;*<sup>r</sup> &minus; &#x101;*)<sup>2</sup> ]</p><ul>
+  <li>Investment example: SE<sub>B</sub>(&alpha;&#770;) ≈ 0.087, true SE = 0.083.</li>
+  <li>B = 1000 resamples is typically enough.</li>
+  <li>Works for <em>any</em> estimator — OLS, medians, ML models.</li>
+</ul></div><div><img src="img/ch5_bootstrap_alpha.svg" style="width:100%;max-height:55vh;object-fit:contain;"></div></div>
+    <aside class="notes">The bootstrap distribution of α̂* closely tracks the true distribution from 1000 simulated datasets. This is the remarkable fact that makes bootstrap work.</aside>
+  </section>
+
+  <section>
+    <h2>Bootstrap percentile confidence interval</h2>
+<ul>
+  <li class="fragment fade-up">Sort the B bootstrap estimates &alpha;&#770;*<sup>1</sup>, …, &alpha;&#770;*<sup>B</sup>.</li>
+  <li class="fragment fade-up">The 5th and 95th percentiles form an approximate <strong>90% CI</strong>.</li>
+  <li class="fragment fade-up">For the investment example: 90% CI ≈ (0.43, 0.72). True α = 0.6 is well inside.</li>
+  <li class="fragment fade-up">This is the <strong>Bootstrap Percentile interval</strong> — the simplest CI from the bootstrap.</li>
+  <li class="fragment fade-up">More sophisticated variants (BCa, studentised bootstrap) correct for skew and bias.</li>
+</ul>
+    <aside class="notes">Interpretation: 90% of the time, the interval we construct this way contains the true α. This is the standard frequentist CI interpretation.</aside>
+  </section>
+
+  <section>
+    <h2>Bootstrap is NOT suitable for prediction error</h2>
+<div class="two-col"><div><ul>
+  <li>Attempt: use Z*<sup>b</sup> as training set, original Z as validation.</li>
+  <li>Problem: ~2/3 of obs appear in each bootstrap sample.</li>
+  <li>Model has already 'seen' ~63% of the validation set.</li>
+  <li>Result: bootstrap <em>severely underestimates</em> test error.</li>
+  <li><strong>Use CV for prediction error. Use bootstrap for SE and CI.</strong></li>
+</ul></div><div><img src="img/ch5_bootstrap_overlap.svg" style="width:100%;max-height:55vh;object-fit:contain;"></div></div>
+    <aside class="notes">Fraction out-of-bag ≈ 1 − (1 − 1/n)^n → 1 − 1/e ≈ 36.8% as n→∞. The other 63.2% were seen during training.</aside>
+  </section>
+
+  <section>
+    <h2>Bootstrap for regression coefficients</h2>
+<pre><code class="language-python">import numpy as np
+rng = np.random.default_rng(0)
+
+# One bootstrap iteration
+n = len(y)
+idx = rng.choice(n, size=n, replace=True)
+X_boot, y_boot = X[idx], y[idx]
+coef_boot = np.linalg.lstsq(X_boot, y_boot, rcond=None)[0]
+
+# Repeat B times, collect SE
+coefs = [fit_once(rng) for _ in range(1000)]
+se_boot = np.std(coefs, axis=0)  # compare to statsmodels .bse</code></pre>
+    <aside class="notes">Bootstrap SE of OLS coefficients matches statsmodels .bse closely. But bootstrap works for any model, not just OLS.</aside>
+  </section>
+
+  <section>
+    <h2>scipy.stats.bootstrap — the modern API</h2>
+<pre><code class="language-python">from scipy.stats import bootstrap
+
+# Bootstrap CI for the median of a 1-D sample
+result = bootstrap(
+    (sample,),          # data as tuple of arrays
+    statistic=np.median,
+    n_resamples=1000,
+    confidence_level=0.95,
+    random_state=0,
+)
+print(result.confidence_interval)  # ConfidenceInterval(low=..., high=...)</code></pre>
+    <aside class="notes">scipy.stats.bootstrap was added in SciPy 1.7. It handles any statistic — just pass a function. Supports both percentile and BCa (bias-corrected accelerated) intervals.</aside>
+  </section>
+
+  <section>
+    <h2>Bootstrap vs permutation tests</h2>
+<div class="two-col"><div><p><strong>Bootstrap</strong></p><ul>
+  <li>Samples from the <em>estimated population</em> P&#770;.</li>
+  <li>Estimates SE and CI for any estimator.</li>
+  <li>Answers: how variable is my estimate?</li>
+</ul></div><div><p><strong>Permutation test</strong></p><ul>
+  <li>Samples from the <em>null distribution</em> (shuffle labels).</li>
+  <li>Estimates p-values and False Discovery Rates.</li>
+  <li>Answers: is there any effect at all?</li>
+</ul></div></div>
+    <aside class="notes">Bootstrap can test H₀: θ=0 by checking if the CI contains zero. But permutation tests are generally more powerful for hypothesis testing. Use each for what it&#x27;s designed for.</aside>
+  </section>
+
+</section>
+<section class="title-slide">
+  <span class="kicker">Recap</span>
+  <h2>Three things to leave with</h2>
+  <ol>
+<li class="fragment fade-up"><strong>Cross-validate everything — including preprocessing.</strong> Use sklearn's Pipeline so that feature selection and scaling happen inside each fold, not outside.</li>
+<li class="fragment fade-up"><strong>K = 5 or 10 is the practical default.</strong> LOOCV is nearly unbiased but has high variance; large K finds the right minimum with less computation.</li>
+<li class="fragment fade-up"><strong>Bootstrap gives SE and CI for any estimator.</strong> Use scipy.stats.bootstrap; avoid using bootstrap for prediction error — use CV instead.</li>
+  </ol>
+  <p class="callout fragment fade-up">Next: Classification — when Y is categorical. The same ideas of regularisation and model selection reappear, now with logistic loss.</p>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true, slideNumber: 'c/t', transition: 'slide',
+    transitionSpeed: 'fast', backgroundTransition: 'fade',
+    width: 1280, height: 760, margin: 0.06,
+    plugins: [ RevealNotes, RevealHighlight ],
+  });
+</script>
+</body>
+</html>
