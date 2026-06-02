@@ -9,14 +9,18 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/interactive.css" />
 </head>
 <body>
 <div class="reveal"><div class="slides">
+
+<!-- ══════════════════════════════════ TITLE ══════════════════════════════════ -->
 <section class="title-slide">
   <span class="kicker">Week 3 · Course 3</span>
   <h1>Cross-Validation and the Bootstrap</h1>
   <p class="muted" style="font-size:1.1em;">Estimating test error via hold-out sets, K-fold CV, LOOCV, and the bootstrap</p>
 </section>
+
 <section>
   <span class="kicker">Roadmap</span>
   <h2>Where we are heading</h2>
@@ -30,335 +34,1111 @@
   </div>
   <p class="callout" style="margin-top:1.2em;">Cross-validation and the bootstrap are the two most important tools for assessing statistical learning methods. Everything downstream — model selection, hyperparameter tuning, uncertainty quantification — rests on these ideas.</p>
 </section>
+
+<!-- ═══════════════════════════════════ PART 1 ════════════════════════════════ -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 1 · 0:00 – 0:30</span>
     <h1>Why Training Error Lies</h1>
     <p class="muted">The gap between training and test performance</p>
   </section>
+
   <section>
     <h2>Training error vs test error</h2>
-<div class="two-col"><div><ul>
-  <li><strong>Test error</strong>: average error on new observations not used to train the model.</li>
-  <li><strong>Training error</strong>: error on the observations the model was fitted on — easy to calculate.</li>
-  <li>Training error <em>dramatically underestimates</em> test error for flexible models.</li>
-  <li>More flexibility → training error always falls, but test error forms a U-shape.</li>
-</ul></div><div><img src="img/ch5_bias_variance_curve.svg" style="width:100%;max-height:52vh;object-fit:contain;"></div></div>
+    <div class="two-col"><div><ul>
+      <li><strong>Test error</strong>: average loss on new observations not used to train the model.</li>
+      <li><strong>Training error</strong>: loss on the data the model was fitted on — always optimistic.</li>
+      <li>More flexibility → training error always falls, test error forms a <strong>U-shape</strong>.</li>
+    </ul></div><div><img src="img/ch5_bias_variance_curve.svg" style="width:100%;max-height:52vh;object-fit:contain;"></div></div>
     <aside class="notes">The core motivation for resampling: we care about how the model performs on fresh data, not on the same data it memorised.</aside>
   </section>
 
   <section>
-    <h2>The bias-variance trade-off curve</h2>
-<div class="two-col"><div><p>As model complexity increases:</p><ul>
-  <li>Training error decreases monotonically.</li>
-  <li>Test error decreases, then <em>rises</em> again.</li>
-  <li>Minimum of test error = sweet spot.</li>
-  <li>Left of minimum: high bias (underfitting).</li>
-  <li>Right of minimum: high variance (overfitting).</li>
-</ul></div><div><img src="img/ch5_bias_variance_curve.svg" style="width:100%;max-height:55vh;object-fit:contain;"></div></div>
-    <aside class="notes">The cyan training curve goes down forever. The red test curve turns back up. We want to find the minimum of the red curve without ever having the true test data.</aside>
-  </section>
-
-  <section>
     <h2>How to estimate test error</h2>
-<ul>
-  <li class="fragment fade-up"><strong>Best solution:</strong> a large designated test set — often not available.</li>
-  <li class="fragment fade-up"><strong>Mathematical adjustment:</strong> C<sub>p</sub>, AIC, BIC — adjust training error upward by a penalty for model complexity.</li>
-  <li class="fragment fade-up"><strong>Resampling methods (our focus):</strong> hold out a subset of training data, fit on the rest, evaluate on the held-out portion.</li>
-  <li class="fragment fade-up">Resampling is model-agnostic — it works for any learning method, not just linear models.</li>
-</ul>
+    <ul>
+      <li class="fragment fade-up"><strong>Best:</strong> a large designated test set — often not available.</li>
+      <li class="fragment fade-up"><strong>Mathematical adjustment:</strong> C<sub>p</sub>, AIC, BIC — penalise training error for complexity.</li>
+      <li class="fragment fade-up"><strong>Resampling (our focus):</strong> hold out a subset, fit on the rest, evaluate on held-out. Model-agnostic.</li>
+    </ul>
   </section>
 
   <section>
     <h2>The validation-set approach</h2>
-<img src="img/ch5_validation_split.svg" style="width:100%;max-height:28vh;object-fit:contain;margin-bottom:0.5em;"><ul>
-  <li class="fragment fade-up">Randomly split n observations into a <strong>training set</strong> and a <strong>validation (hold-out) set</strong>.</li>
-  <li class="fragment fade-up">Fit the model on the training set only.</li>
-  <li class="fragment fade-up">Evaluate on the validation set: <strong>MSE</strong> for regression, <strong>misclassification rate</strong> for classification.</li>
-  <li class="fragment fade-up">The validation error estimates the test error.</li>
-</ul>
-    <aside class="notes">Blue cells = training set; orange cells = validation set. The split is random, which is both the approach&#x27;s strength (simple) and weakness (variable).</aside>
+    <img src="img/ch5_validation_split.svg" style="width:100%;max-height:28vh;object-fit:contain;margin-bottom:0.5em;">
+    <ul>
+      <li class="fragment fade-up">Randomly split into <strong>training set</strong> and <strong>validation (hold-out) set</strong>.</li>
+      <li class="fragment fade-up">Fit on training only. Evaluate on validation → estimates test error.</li>
+      <li class="fragment fade-up"><strong>Drawback 1:</strong> high variance — result depends on which observations fall in each half.</li>
+      <li class="fragment fade-up"><strong>Drawback 2:</strong> overestimates test error — only n/2 observations train the model.</li>
+    </ul>
   </section>
 
   <section>
-    <h2>Drawbacks of validation set</h2>
-<div class="two-col"><div><ul>
-  <li><strong>High variance:</strong> the validation error depends heavily on <em>which</em> observations land in each half.</li>
-  <li>10 random splits of the same Auto data → 10 different MSE curves (see right).</li>
-  <li><strong>Overestimates test error:</strong> only half the data trains the model.</li>
-  <li>The model fit on n/2 has more bias than the model deployed on all n.</li>
-</ul></div><div><img src="img/ch5_auto_multi_split.svg" style="width:100%;max-height:55vh;object-fit:contain;"></div></div>
-    <aside class="notes">This motivates K-fold cross-validation: use the data more efficiently by rotating which portion is held out.</aside>
+    <h2>Drawbacks of the validation set</h2>
+    <div class="two-col"><div><ul>
+      <li>10 different random splits → 10 different MSE curves (right).</li>
+      <li>Even the <em>best degree</em> changes across splits.</li>
+      <li>Neither the curve shape nor the minimum is reliable.</li>
+    </ul></div><div><img src="img/ch5_auto_multi_split.svg" style="width:100%;max-height:55vh;object-fit:contain;"></div></div>
+  </section>
+
+  <!-- EXAMPLE: training vs test error with polynomials -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Training error vs test error — see it</h2>
+    <div class="ex-prompt">True function: y = 1 + 2x − x² + noise. We fit polynomials of degree 1–12. Training MSE always falls; test MSE bottoms at degree 2 (the true degree) and rises again — the classic U-shape.</div>
+<textarea class="ex-code">import numpy as np, matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
+from sklearn.metrics import mean_squared_error
+
+rng = np.random.default_rng(42)
+n_train, n_test = 80, 500
+x_train = rng.uniform(-3, 3, n_train)
+x_test  = rng.uniform(-3, 3, n_test)
+noise_sd = 2.0
+f_true   = lambda x: 1 + 2*x - x**2
+
+y_train = f_true(x_train) + rng.normal(0, noise_sd, n_train)
+y_test  = f_true(x_test)  + rng.normal(0, noise_sd, n_test)
+
+degrees = [1, 2, 3, 5, 9, 12]
+mse_train, mse_test = [], []
+for d in degrees:
+    pipe = Pipeline([('poly', PolynomialFeatures(d, include_bias=False)),
+                     ('lr',   LinearRegression())])
+    pipe.fit(x_train.reshape(-1,1), y_train)
+    mse_train.append(mean_squared_error(y_train, pipe.predict(x_train.reshape(-1,1))))
+    mse_test.append( mean_squared_error(y_test,  pipe.predict(x_test.reshape(-1,1))))
+
+fig, ax = plt.subplots(figsize=(7, 4))
+ax.plot(degrees, mse_train, 'o-', color='steelblue', label='Training MSE')
+ax.plot(degrees, mse_test,  'o-', color='tomato',    label='Test MSE')
+ax.axhline(noise_sd**2, color='grey', ls='--', label=f'Irreducible error (σ²={noise_sd**2})')
+ax.set_xlabel('Polynomial degree'); ax.set_ylabel('MSE')
+ax.set_title('Training error deceives — test error is U-shaped')
+ax.legend(); plt.tight_layout(); plt.show()
+
+print('Degree | Train MSE | Test MSE')
+for d, tr, te in zip(degrees, mse_train, mse_test):
+    print(f'  {d:2d}   |  {tr:7.3f}  | {te:7.3f}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">Training MSE collapses to near-zero at degree 12 — the model memorises noise. Test MSE is lowest at degree 2 (matching the true polynomial). The irreducible error floor (σ² = 4) is the minimum possible test MSE — no model can beat it.</script>
+  </section>
+
+  <!-- EXAMPLE: validation set on Auto data -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Validation-set approach — single split vs. multiple splits</h2>
+    <div class="ex-prompt">Auto dataset: predict mpg from horsepower using polynomial regression. Left: one 50/50 split looks clean. Right: 10 different splits give wildly different curves — the high variance problem.</div>
+<textarea class="ex-code">import numpy as np, matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+
+# Load Auto (mpg) dataset
+try:
+    import pandas as pd
+    auto = pd.read_csv("https://raw.githubusercontent.com/selva86/datasets/master/Auto.csv")
+    auto = auto.dropna(subset=['mpg','horsepower'])
+    auto['horsepower'] = pd.to_numeric(auto['horsepower'], errors='coerce')
+    auto = auto.dropna()
+except Exception:
+    rng0 = np.random.default_rng(1)
+    hp_flat = rng0.uniform(46, 230, 392)
+    auto = type('D', (), {})()
+    import pandas as pd
+    auto = pd.DataFrame({'horsepower': hp_flat,
+                         'mpg': 56.9 - 0.4662*hp_flat + 0.0012*hp_flat**2 + rng0.normal(0,4,392)})
+
+X_auto = auto['horsepower'].to_numpy().reshape(-1, 1)
+y_auto = auto['mpg'].to_numpy()
+degrees = range(1, 11)
+
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+
+# Left: single split
+X_tr, X_val, y_tr, y_val = train_test_split(X_auto, y_auto, test_size=0.5, random_state=0)
+val_mse = []
+for d in degrees:
+    pipe = Pipeline([('poly', PolynomialFeatures(d, include_bias=False)), ('lr', LinearRegression())])
+    pipe.fit(X_tr, y_tr)
+    val_mse.append(mean_squared_error(y_val, pipe.predict(X_val)))
+axes[0].plot(degrees, val_mse, 'o-', color='tomato')
+axes[0].set(xlabel='Polynomial degree', ylabel='Validation MSE', title='Single 50/50 split')
+
+# Right: 10 random splits
+for seed in range(10):
+    X_tr2, X_val2, y_tr2, y_val2 = train_test_split(X_auto, y_auto, test_size=0.5, random_state=seed)
+    curve = []
+    for d in degrees:
+        pipe = Pipeline([('poly', PolynomialFeatures(d, include_bias=False)), ('lr', LinearRegression())])
+        pipe.fit(X_tr2, y_tr2)
+        curve.append(mean_squared_error(y_val2, pipe.predict(X_val2)))
+    axes[1].plot(degrees, curve, alpha=0.5)
+axes[1].set(xlabel='Polynomial degree', ylabel='Validation MSE', title='10 different random splits')
+
+for ax in axes: ax.set_xticks(range(1, 11))
+plt.tight_layout(); plt.show()
+print(f'Single split best degree: {1 + np.argmin(val_mse)}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">The single split correctly identifies degree ≈ 2 as good, but different splits give very different absolute MSE values and even different optimal degrees. This variability motivates K-fold CV, which uses the data much more efficiently.</script>
   </section>
 
 </section>
+
+<!-- ═══════════════════════════════════ PART 2 ════════════════════════════════ -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 2 · 0:30 – 1:15</span>
     <h1>Cross-Validation</h1>
     <p class="muted">K-fold, LOOCV, the right and wrong way</p>
   </section>
+
   <section>
     <h2>K-fold cross-validation</h2>
-<ul>
-  <li class="fragment fade-up">Randomly divide data into <strong>K equal-sized parts</strong> C<sub>1</sub>, C<sub>2</sub>, …, C<sub>K</sub>.</li>
-  <li class="fragment fade-up">Leave out part k. Fit on the other K−1 parts combined. Predict on part k. Compute MSE<sub>k</sub>.</li>
-  <li class="fragment fade-up">Repeat for each k = 1, 2, …, K. Combine the K estimates.</li>
-  <li class="fragment fade-up">CV<sub>(K)</sub> = Σ (n<sub>k</sub>/n) · MSE<sub>k</sub></li>
-  <li class="fragment fade-up">Estimates can also be used to <em>select</em> the best model (degree, hyperparameter, etc.).</li>
-</ul>
+    <ul>
+      <li class="fragment fade-up">Divide data into <strong>K equal parts</strong> C₁, C₂, …, C<sub>K</sub>.</li>
+      <li class="fragment fade-up">Leave out part k. Fit on the other K−1 parts. Predict on part k.</li>
+      <li class="fragment fade-up">CV<sub>(K)</sub> = Σ (n<sub>k</sub>/n) · MSE<sub>k</sub> — every observation is held out exactly once.</li>
+    </ul>
+    <table style="font-size:0.75em;border-collapse:collapse;margin:0.8em auto;">
+      <tr><th>Fold</th><th>Part 1</th><th>Part 2</th><th>Part 3</th><th>Part 4</th><th>Part 5</th></tr>
+      <tr><td>1</td><td style="background:#fdd;color:#900;">Valid.</td><td>Train</td><td>Train</td><td>Train</td><td>Train</td></tr>
+      <tr><td>2</td><td>Train</td><td style="background:#fdd;color:#900;">Valid.</td><td>Train</td><td>Train</td><td>Train</td></tr>
+      <tr><td>3</td><td>Train</td><td>Train</td><td style="background:#fdd;color:#900;">Valid.</td><td>Train</td><td>Train</td></tr>
+      <tr><td>4</td><td>Train</td><td>Train</td><td>Train</td><td style="background:#fdd;color:#900;">Valid.</td><td>Train</td></tr>
+      <tr><td>5</td><td>Train</td><td>Train</td><td>Train</td><td>Train</td><td style="background:#fdd;color:#900;">Valid.</td></tr>
+    </table>
   </section>
 
   <section>
-    <h2>5-fold CV — the diagram</h2>
-<div class="two-col"><div><table style="font-size:0.75em;border-collapse:collapse;"><tr><th>Fold</th><th>Part 1</th><th>Part 2</th><th>Part 3</th><th>Part 4</th><th>Part 5</th></tr><tr><td>1</td><td style="background:#fdd;color:#900;">Valid.</td><td>Train</td><td>Train</td><td>Train</td><td>Train</td></tr><tr><td>2</td><td>Train</td><td style="background:#fdd;color:#900;">Valid.</td><td>Train</td><td>Train</td><td>Train</td></tr><tr><td>3</td><td>Train</td><td>Train</td><td style="background:#fdd;color:#900;">Valid.</td><td>Train</td><td>Train</td></tr><tr><td>4</td><td>Train</td><td>Train</td><td>Train</td><td style="background:#fdd;color:#900;">Valid.</td><td>Train</td></tr><tr><td>5</td><td>Train</td><td>Train</td><td>Train</td><td>Train</td><td style="background:#fdd;color:#900;">Valid.</td></tr></table></div><div><p class="muted" style="font-size:0.9em;">Each row is one fit. Each red cell contributes its MSE to CV<sub>(5)</sub>. Every observation is held out exactly once.</p></div></div>
-    <aside class="notes">The key advantage over a single validation set: every observation is used for both training and validation across the K fits.</aside>
-  </section>
-
-  <section>
-    <h2>The CV formula in detail</h2>
-<p style="text-align:center;font-size:1.15em;">CV<sub>(K)</sub> = &Sigma;<sub>k=1</sub><sup>K</sup> (n<sub>k</sub>/n) &middot; MSE<sub>k</sub></p><p style="text-align:center;font-size:1.15em;">MSE<sub>k</sub> = &Sigma;<sub>i &isin; C<sub>k</sub></sub> (y<sub>i</sub> &minus; ŷ<sub>i</sub>)<sup>2</sup> / n<sub>k</sub></p><ul>
-  <li>n<sub>k</sub> = n/K when n is a multiple of K.</li>
-  <li>ŷ<sub>i</sub> is the prediction for obs i from the model <em>trained without part k</em>.</li>
-  <li>Setting K = n gives <strong>Leave-One-Out CV (LOOCV)</strong>.</li>
-</ul>
-    <aside class="notes">The weight n_k/n is just 1/K when folds are equal-sized. For LOOCV each fold has one observation.</aside>
-  </section>
-
-  <section>
-    <h2>LOOCV — a nice shortcut</h2>
-<p>For <strong>least-squares linear or polynomial regression</strong>:</p><p style="text-align:center;font-size:1.1em;">CV<sub>(n)</sub> = (1/n) &Sigma;<sub>i=1</sub><sup>n</sup> [(y<sub>i</sub> &minus; ŷ<sub>i</sub>) / (1 &minus; h<sub>i</sub>)]<sup>2</sup></p><ul>
-  <li class="fragment fade-up">ŷ<sub>i</sub> = fitted value from a <em>single</em> full-data OLS fit.</li>
-  <li class="fragment fade-up">h<sub>i</sub> = leverage of observation i — diagonal of the hat matrix H = X(X<sup>T</sup>X)<sup>&minus;1</sup>X<sup>T</sup>.</li>
-  <li class="fragment fade-up">One model fit computes LOOCV for free. No K refits needed.</li>
-  <li class="fragment fade-up">Observations with high leverage h<sub>i</sub> get their residual inflated more.</li>
-</ul>
-    <aside class="notes">This formula is a classic result in linear algebra. It shows that LOOCV is implicitly a form of influence analysis — high-leverage points dominate.</aside>
+    <h2>LOOCV — a nice shortcut for OLS</h2>
+    <p>For least-squares, LOOCV can be computed from a <strong>single fit</strong>:</p>
+    <p style="text-align:center;font-size:1.1em;">CV<sub>(n)</sub> = (1/n) Σ [(yᵢ − ŷᵢ) / (1 − hᵢ)]²</p>
+    <ul>
+      <li class="fragment fade-up">hᵢ = leverage — diagonal of the hat matrix H = X(XᵀX)⁻¹Xᵀ.</li>
+      <li class="fragment fade-up">One model fit → LOOCV for free. No K refits needed.</li>
+    </ul>
   </section>
 
   <section>
     <h2>LOOCV vs K = 5 or 10</h2>
-<div class="two-col"><div><ul>
-  <li>LOOCV is nearly <em>unbiased</em> — trains on n−1 observations.</li>
-  <li>But LOOCV has <strong>high variance</strong>: K=n estimates are highly correlated.</li>
-  <li>K = 5 or K = 10 provides a better <strong>bias-variance trade-off</strong>.</li>
-  <li>Each fold uses (K−1)/K of the data → some upward bias, controlled variance.</li>
-  <li><strong>Practical rule of thumb: use K = 10.</strong></li>
-</ul></div><div><img src="img/ch5_auto_loocv_vs_10fold.svg" style="width:100%;max-height:54vh;object-fit:contain;"></div></div>
-    <aside class="notes">The analogy is averaging correlated vs uncorrelated estimators. LOOCV averages n nearly identical estimates; 10-fold averages 10 more diverse ones.</aside>
+    <div class="two-col"><div><ul>
+      <li>LOOCV is nearly <em>unbiased</em> — trains on n−1 observations.</li>
+      <li>But high <strong>variance</strong>: K=n estimates are highly correlated.</li>
+      <li>K = 5 or 10 balances bias and variance.</li>
+      <li><strong>Practical rule: use K = 10.</strong></li>
+    </ul></div><div><img src="img/ch5_auto_loocv_vs_10fold.svg" style="width:100%;max-height:54vh;object-fit:contain;"></div></div>
   </section>
 
   <section>
-    <h2>Auto data: LOOCV vs 10-fold CV</h2>
-<img src="img/ch5_auto_loocv_vs_10fold.svg" style="width:100%;max-height:52vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;margin-top:0.4em;"><strong>Left:</strong> LOOCV — single smooth curve, no randomness, minimum at degree 2. <strong>Right:</strong> 10-fold CV (10 runs) — slight variation across seeds, but minimum is consistently at degree 2.</p>
-    <aside class="notes">Both methods correctly identify that quadratic (degree 2) is sufficient. LOOCV gives one answer; 10-fold is slightly noisy but gets the same answer.</aside>
+    <h2>CV: the right and wrong way</h2>
+    <div class="two-col"><div><p><strong>Wrong:</strong></p><ul>
+      <li>Step 1: select top-100 features by correlation with labels (ALL data).</li>
+      <li>Step 2: apply CV to classifier on those 100 features.</li>
+      <li>→ CV error ≈ 0%, true error = 50%.</li>
+    </ul></div><div><p><strong>Right:</strong></p><ul>
+      <li>CV folds wrap ALL steps including feature selection.</li>
+      <li>Inside each fold: select from training fold only.</li>
+      <li>→ CV error ≈ 50% — honest.</li>
+    </ul></div></div>
+    <p class="callout" style="margin-top:0.6em;">In scikit-learn: use <code>Pipeline</code> — it enforces this automatically.</p>
   </section>
 
-  <section>
-    <h2>True vs estimated test MSE</h2>
-<img src="img/ch5_true_vs_estimated_mse.svg" style="width:100%;max-height:50vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;margin-top:0.3em;">Grey = training MSE. <strong style="color:#4878d0;">Blue</strong> = true test MSE. <strong style="color:#ee854a;">Orange dashed</strong> = 10-fold CV estimate. CV reliably finds the same minimum as the true test curve even when the absolute values differ.</p>
-    <aside class="notes">The practical take: CV is reliable for model selection (finding the minimum) even if the absolute CV error is slightly off the true test error.</aside>
-  </section>
-
-  <section>
-    <h2>Bias in K-fold CV</h2>
-<ul>
-  <li class="fragment fade-up">Each fold trains on only (K−1)/K of the full data.</li>
-  <li class="fragment fade-up">Smaller training set → model is slightly worse → <strong>upward bias</strong> in error estimate.</li>
-  <li class="fragment fade-up">K = n (LOOCV) minimises this bias — trains on n−1 points, nearly the full dataset.</li>
-  <li class="fragment fade-up">But LOOCV has the highest variance (correlated fold estimates).</li>
-  <li class="fragment fade-up"><strong>K = 5 or 10 balances bias and variance.</strong> The standard choice.</li>
-</ul>
-    <aside class="notes">This is exactly the bias-variance trade-off appearing at the meta-level: bias vs variance of the CV estimator itself.</aside>
-  </section>
-
-  <section>
-    <h2>CV for classification</h2>
-<p>Replace MSE with misclassification rate:</p><p style="text-align:center;">CV<sub>K</sub> = &Sigma;<sub>k</sub> (n<sub>k</sub>/n) Err<sub>k</sub>, &nbsp;&nbsp; Err<sub>k</sub> = &Sigma;<sub>i &isin; C<sub>k</sub></sub> I(y<sub>i</sub> &ne; ŷ<sub>i</sub>) / n<sub>k</sub></p><p>Estimated SE of CV<sub>K</sub>:</p><p style="text-align:center;">SE&#772;(CV<sub>K</sub>) = &radic;[ (1/K) &Sigma;<sub>k</sub> (Err<sub>k</sub> &minus; Err&#772;<sub>k</sub>)<sup>2</sup> / (K&minus;1) ]</p><p class="muted" style="font-size:0.85em;">This SE estimate is useful but <em>not strictly valid</em> — the K fold errors are correlated (they share training data), violating the independence assumption of the SE formula.</p>
-    <aside class="notes">Despite the violation, the SE estimate gives a practical sense of uncertainty. In practice, running CV multiple times and averaging gives a better stability estimate.</aside>
-  </section>
-
-  <section>
-    <h2>CV: the right and the wrong way</h2>
-<div class="two-col"><div><p><strong>Wrong:</strong></p><ul>
-  <li>Step 1: find top-100 predictors by correlation with labels (using ALL data).</li>
-  <li>Step 2: apply CV to logistic regression on those 100 predictors.</li>
-  <li>→ CV error ≈ 0%, but true error = 50%.</li>
-</ul></div><div><p><strong>Right:</strong></p><ul>
-  <li>CV folds wrap ALL steps.</li>
-  <li>Inside each fold: select predictors from training fold only, then fit classifier.</li>
-  <li>→ CV error correctly reflects true performance.</li>
-</ul></div></div>
-    <aside class="notes">This mistake was made in many genomics papers (Ambroise &amp; McLachlan 2002). The 5000 predictors are noise; their correlations with labels are spurious but large enough to separate classes.</aside>
-  </section>
-
-  <section>
-    <h2>Why the wrong way is wrong</h2>
-<ul>
-  <li class="fragment fade-up">Step 1 (feature selection) <em>has already seen the labels</em>.</li>
-  <li class="fragment fade-up">The selected features are chosen to correlate with labels in this specific sample — noise that happens to look like signal.</li>
-  <li class="fragment fade-up">The classifier in step 2 is guaranteed to look good on these features even if they are purely random.</li>
-  <li class="fragment fade-up"><strong>The rule:</strong> everything that touches labels must be inside the CV loop.</li>
-  <li class="fragment fade-up">In scikit-learn: use <code>Pipeline</code> — it enforces this automatically.</li>
-</ul>
-  </section>
-
-  <section>
-    <h2>sklearn Pipeline enforces the right way</h2>
-<pre><code class="language-python">from sklearn.pipeline import Pipeline
-from sklearn.feature_selection import SelectKBest, f_classif
-from sklearn.linear_model import LogisticRegression
+  <!-- EXAMPLE: sklearn cross_val_score -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>K-fold CV with sklearn — cross_val_score</h2>
+    <div class="ex-prompt"><code>cross_val_score</code> returns negative MSE by convention (sklearn: higher = better). Negate it to get the real MSE. Compare 5-fold vs 10-fold on Auto data.</div>
+<textarea class="ex-code">import numpy as np, matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import pandas as pd
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
 from sklearn.model_selection import cross_val_score
 
-# RIGHT: selection is inside the pipeline, inside each fold
-pipe = Pipeline([
-    (&#x27;select&#x27;, SelectKBest(f_classif, k=100)),
-    (&#x27;clf&#x27;,    LogisticRegression()),
+# Load Auto data
+try:
+    auto = pd.read_csv("https://raw.githubusercontent.com/selva86/datasets/master/Auto.csv")
+    auto['horsepower'] = pd.to_numeric(auto['horsepower'], errors='coerce')
+    auto = auto.dropna(subset=['mpg','horsepower'])
+except Exception:
+    rng0 = np.random.default_rng(1); hp=rng0.uniform(46,230,392)
+    auto = pd.DataFrame({'horsepower':hp, 'mpg':56.9-0.4662*hp+0.0012*hp**2+rng0.normal(0,4,392)})
+
+X_auto = auto['horsepower'].to_numpy().reshape(-1,1)
+y_auto = auto['mpg'].to_numpy()
+degrees = range(1, 11)
+cv5_mse, cv10_mse = [], []
+
+for d in degrees:
+    pipe = Pipeline([('poly', PolynomialFeatures(d, include_bias=False)),
+                     ('lr',   LinearRegression())])
+    cv5  = -cross_val_score(pipe, X_auto, y_auto, cv=5,  scoring='neg_mean_squared_error')
+    cv10 = -cross_val_score(pipe, X_auto, y_auto, cv=10, scoring='neg_mean_squared_error')
+    cv5_mse.append(cv5.mean())
+    cv10_mse.append(cv10.mean())
+
+fig, ax = plt.subplots(figsize=(7, 4))
+ax.plot(degrees, cv5_mse,  'o-', label='5-fold CV',  color='steelblue')
+ax.plot(degrees, cv10_mse, 's-', label='10-fold CV', color='orange')
+ax.set_xlabel('Polynomial degree'); ax.set_ylabel('CV MSE')
+ax.set_title('5-fold vs 10-fold CV on Auto data')
+ax.set_xticks(range(1, 11)); ax.legend(); plt.tight_layout(); plt.show()
+
+print(f'5-fold  best degree: {1 + np.argmin(cv5_mse)}')
+print(f'10-fold best degree: {1 + np.argmin(cv10_mse)}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">Both K=5 and K=10 correctly identify degree 2 as the best. The curves are smooth because many observations contribute to each fold estimate. sklearn's convention: scoring='neg_mean_squared_error' returns negative values — negate with the minus sign to get the real MSE.</script>
+  </section>
+
+  <!-- EXAMPLE: manual K-fold -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Manual K-fold — the formula in action</h2>
+    <div class="ex-prompt">Implement CV<sub>(K)</sub> = Σ (n<sub>k</sub>/n) · MSE<sub>k</sub> by hand using <code>KFold</code>. Cross-check against <code>cross_val_score</code> to verify they match.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import KFold, cross_val_score
+from sklearn.metrics import mean_squared_error
+
+try:
+    auto = pd.read_csv("https://raw.githubusercontent.com/selva86/datasets/master/Auto.csv")
+    auto['horsepower'] = pd.to_numeric(auto['horsepower'], errors='coerce')
+    auto = auto.dropna(subset=['mpg','horsepower'])
+except Exception:
+    rng0 = np.random.default_rng(1); hp=rng0.uniform(46,230,392)
+    auto = pd.DataFrame({'horsepower':hp, 'mpg':56.9-0.4662*hp+0.0012*hp**2+rng0.normal(0,4,392)})
+
+X_auto = auto['horsepower'].to_numpy().reshape(-1,1)
+y_auto = auto['mpg'].to_numpy()
+
+def manual_cv(X, y, degree, K=10):
+    kf = KFold(n_splits=K, shuffle=True, random_state=0)
+    n = len(y); total = 0.0
+    for train_idx, val_idx in kf.split(X):
+        pipe = Pipeline([('poly', PolynomialFeatures(degree, include_bias=False)),
+                         ('lr',   LinearRegression())])
+        pipe.fit(X[train_idx], y[train_idx])
+        mse_k = mean_squared_error(y[val_idx], pipe.predict(X[val_idx]))
+        total += (len(val_idx) / n) * mse_k
+    return total
+
+d = 2
+manual_result = manual_cv(X_auto, y_auto, degree=d, K=10)
+
+pipe2 = Pipeline([('poly', PolynomialFeatures(d, include_bias=False)), ('lr', LinearRegression())])
+sklearn_result = -cross_val_score(
+    pipe2, X_auto, y_auto,
+    cv=KFold(10, shuffle=True, random_state=0),
+    scoring='neg_mean_squared_error'
+).mean()
+
+print(f'Manual CV_(10) for degree={d}: {manual_result:.4f}')
+print(f'sklearn CV_(10) for degree={d}: {sklearn_result:.4f}')
+print(f'Match (rtol=1e-2): {abs(manual_result - sklearn_result) / sklearn_result < 0.01}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <!-- EXAMPLE: LOOCV shortcut -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>LOOCV shortcut for OLS — one fit, same result</h2>
+    <div class="ex-prompt">The leverage formula computes LOOCV from a single OLS fit. Verify it matches running 392 actual refits via <code>LeaveOneOut</code>.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score, LeaveOneOut
+
+try:
+    auto = pd.read_csv("https://raw.githubusercontent.com/selva86/datasets/master/Auto.csv")
+    auto['horsepower'] = pd.to_numeric(auto['horsepower'], errors='coerce')
+    auto = auto.dropna(subset=['mpg','horsepower'])
+except Exception:
+    rng0 = np.random.default_rng(1); hp=rng0.uniform(46,230,392)
+    auto = pd.DataFrame({'horsepower':hp, 'mpg':56.9-0.4662*hp+0.0012*hp**2+rng0.normal(0,4,392)})
+
+X_auto = auto['horsepower'].to_numpy().reshape(-1,1)
+y_auto = auto['mpg'].to_numpy()
+d = 2
+
+# --- LOOCV shortcut via hat matrix ---
+poly = PolynomialFeatures(d, include_bias=True)
+X_poly = poly.fit_transform(X_auto)           # design matrix (n, d+1)
+H = X_poly @ np.linalg.pinv(X_poly.T @ X_poly) @ X_poly.T
+h = np.diag(H)                                # leverage values
+
+lr = LinearRegression(fit_intercept=False)
+lr.fit(X_poly, y_auto)
+resid = y_auto - lr.predict(X_poly)
+loocv_shortcut = np.mean((resid / (1 - h))**2)
+
+# --- LOOCV via actual refits (slow but exact) ---
+pipe = Pipeline([('poly', PolynomialFeatures(d, include_bias=False)), ('lr', LinearRegression())])
+loocv_actual = -cross_val_score(pipe, X_auto, y_auto,
+                                cv=LeaveOneOut(), scoring='neg_mean_squared_error').mean()
+
+print(f'LOOCV (shortcut, 1 fit):   {loocv_shortcut:.4f}')
+print(f'LOOCV (actual, {len(y_auto)} fits): {loocv_actual:.4f}')
+print(f'Match: {np.isclose(loocv_shortcut, loocv_actual, rtol=1e-2)}')
+print(f'\nLeverage range: [{h.min():.4f}, {h.max():.4f}]')
+print(f'High-leverage points inflate their residuals more in LOOCV.')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">The shortcut requires one matrix computation — same answer as running 392 separate model fits. The denominator (1 − hᵢ) inflates the residual for high-leverage observations: points at the extremes of X influence their own fitted value more, so their leave-one-out residual is larger.</script>
+  </section>
+
+  <!-- EXAMPLE: CV for classification + GridSearchCV -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>CV for classification + GridSearchCV</h2>
+    <div class="ex-prompt">10-fold CV error and estimated SE on Iris (3-class LogisticRegression). Then <code>GridSearchCV</code> selects the best K in KNN — the same CV idea, automated.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd
+from sklearn.datasets import load_iris
+from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score, KFold, GridSearchCV
+
+iris = load_iris()
+X_iris, y_iris = iris.data, iris.target
+
+pipe_lr = Pipeline([('scaler', StandardScaler()),
+                    ('clf',    LogisticRegression(max_iter=1000))])
+
+K = 10
+cv_scores = cross_val_score(pipe_lr, X_iris, y_iris,
+                             cv=KFold(K, shuffle=True, random_state=42),
+                             scoring='accuracy')
+fold_errors = 1 - cv_scores
+cv_err = fold_errors.mean()
+se_est = np.sqrt((1/K) * np.sum((fold_errors - fold_errors.mean())**2) / (K-1))
+print(f'10-fold CV error: {cv_err:.4f} ± {se_est:.4f} (estimated SE)')
+print(f'Fold errors: {fold_errors.round(4)}')
+
+# GridSearchCV: choose k in KNN automatically
+print('\n--- GridSearchCV: choosing k in KNN ---')
+grid = GridSearchCV(
+    Pipeline([('scaler', StandardScaler()), ('knn', KNeighborsClassifier())]),
+    param_grid={'knn__n_neighbors': [1, 3, 5, 7, 11, 21, 51]},
+    cv=10, scoring='accuracy', refit=True)
+grid.fit(X_iris, y_iris)
+results = pd.DataFrame(grid.cv_results_)
+print(results[['param_knn__n_neighbors','mean_test_score','std_test_score']].to_string(index=False))
+print(f'\nBest k = {grid.best_params_["knn__n_neighbors"]}  '
+      f'(CV accuracy = {grid.best_score_:.4f})')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">GridSearchCV loops over every value in param_grid, running CV for each — it's just the model selection use of CV. The refit=True flag refits the best model on the full dataset after selection, giving you a ready-to-predict estimator in grid.best_estimator_.</script>
+  </section>
+
+  <!-- EXAMPLE: leakage demo -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Data leakage — wrong vs right way</h2>
+    <div class="ex-prompt">5000 noise features, 50 samples, random binary labels. The wrong way selects features BEFORE the CV loop — it peeks at all labels. The Pipeline forces feature selection inside each fold — honest.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score
+
+rng = np.random.default_rng(7)
+n_samples, n_features, n_select = 50, 5000, 100
+X_noise = rng.standard_normal((n_samples, n_features))
+y_noise = rng.integers(0, 2, n_samples)   # completely random labels
+
+# WRONG: feature selection uses ALL data including validation obs
+corr = np.abs(X_noise.T @ (y_noise - y_noise.mean()))
+top_idx = np.argsort(corr)[-n_select:]
+X_selected = X_noise[:, top_idx]
+
+wrong_cv_error = 1 - cross_val_score(
+    LogisticRegression(max_iter=1000, C=0.01),
+    X_selected, y_noise, cv=5, scoring='accuracy'
+).mean()
+
+# RIGHT: Pipeline keeps selection inside each fold
+pipe_right = Pipeline([
+    ('select', SelectKBest(f_classif, k=n_select)),
+    ('clf',    LogisticRegression(max_iter=1000, C=0.01)),
 ])
-cv_error = 1 - cross_val_score(pipe, X, y, cv=5).mean()
-# cv_error ≈ 0.50 for random labels — honest</code></pre>
-    <aside class="notes">The Pipeline passes each fold&#x27;s training data through SelectKBest before fitting the classifier. The held-out fold is evaluated on features selected without it.</aside>
+right_cv_error = 1 - cross_val_score(pipe_right, X_noise, y_noise, cv=5, scoring='accuracy').mean()
+
+print(f'TRUE error (random labels):          ~50%')
+print(f'WRONG CV error (leakage):            {wrong_cv_error*100:.1f}%  ← looks great, is lying')
+print(f'RIGHT CV error (Pipeline):           {right_cv_error*100:.1f}%  ← honest estimate')
+print()
+print('The 5000 features are pure noise. But their spurious correlations')
+print('with labels in step 1 make the classifier look excellent.')
+print('Wrapping everything in Pipeline exposes the truth.')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">The wrong way gives CV error near 0% even though the true error is 50%. This exact mistake has appeared in published genomics papers (Ambroise & McLachlan 2002). The rule: EVERYTHING that uses labels — scaling, feature selection, dimensionality reduction — must live inside the Pipeline.</script>
+  </section>
+
+  <!-- EXERCISE: train/test split vs CV on penguins -->
+  <section class="exercise" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Exercise 1 — Single split vs 10-fold CV on Penguins</h2>
+    <div class="ex-prompt">Predict penguin <code>species</code> from <code>bill_length_mm</code> and <code>bill_depth_mm</code> with <code>LogisticRegression</code> (scaled). Store the 70/30 test accuracy in <code>split_acc</code> and the 10-fold CV accuracy in <code>cv_acc</code>.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import train_test_split, cross_val_score, KFold
+
+# Load penguins (drop rows with missing values)
+try:
+    penguins = pd.read_csv("https://raw.githubusercontent.com/mwaskom/seaborn-data/master/penguins.csv")
+except Exception:
+    # fallback: tiny synthetic version
+    rng0 = np.random.default_rng(0)
+    n = 333
+    species = rng0.choice(['Adelie','Chinstrap','Gentoo'], n)
+    bill_len = 40 + 5*(species=='Chinstrap').astype(float) + 5*(species=='Gentoo').astype(float) + rng0.normal(0,2,n)
+    bill_dep = 18 - 2*(species=='Chinstrap').astype(float) - 1*(species=='Gentoo').astype(float) + rng0.normal(0,1,n)
+    penguins = pd.DataFrame({'bill_length_mm':bill_len,'bill_depth_mm':bill_dep,'species':species})
+
+penguins = penguins.dropna(subset=['bill_length_mm','bill_depth_mm','species'])
+X = penguins[['bill_length_mm','bill_depth_mm']].to_numpy()
+y = penguins['species'].to_numpy()
+
+pipe = Pipeline([('scaler', StandardScaler()),
+                 ('clf',    LogisticRegression(max_iter=1000))])
+
+# 1. Single 70/30 stratified split — store test accuracy in `split_acc`
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, random_state=0, stratify=y)
+pipe.fit(X_tr, y_tr)
+split_acc = pipe.score(X_te, y_te)
+print(f'Single 70/30 split accuracy: {split_acc:.4f}')
+
+# 2. 10-fold CV — store mean CV accuracy in `cv_acc`
+K = 10
+cv_scores = cross_val_score(pipe, X, y,
+                             cv=KFold(n_splits=K, shuffle=True, random_state=42),
+                             scoring='accuracy')
+cv_acc = cv_scores.mean()
+fold_errors = 1 - cv_scores
+se_est = np.sqrt((1/K) * np.sum((fold_errors - fold_errors.mean())**2) / (K-1))
+print(f'10-fold CV accuracy:         {cv_acc:.4f} ± {se_est:.4f} (SE)')
+print(f'Difference (CV - split):     {cv_acc - split_acc:+.4f}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+    <script type="text/x-check">
+import numpy as np
+assert 'split_acc' in dir(), "Store single-split test accuracy in `split_acc`"
+assert 'cv_acc' in dir(),    "Store 10-fold CV accuracy in `cv_acc`"
+assert 0.7 < split_acc <= 1.0, f"split_acc should be > 0.7, got {split_acc:.4f}"
+assert 0.7 < cv_acc    <= 1.0, f"cv_acc should be > 0.7, got {cv_acc:.4f}"
+assert abs(split_acc - cv_acc) < 0.10, \
+    f"split_acc ({split_acc:.3f}) and cv_acc ({cv_acc:.3f}) should be within 10% of each other"
+    </script>
+    <script type="text/x-solution">import numpy as np, pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import train_test_split, cross_val_score, KFold
+
+try:
+    penguins = pd.read_csv("https://raw.githubusercontent.com/mwaskom/seaborn-data/master/penguins.csv")
+except Exception:
+    rng0 = np.random.default_rng(0); n=333
+    sp = rng0.choice(['Adelie','Chinstrap','Gentoo'],n)
+    bl = 40+5*(sp=='Chinstrap').astype(float)+5*(sp=='Gentoo').astype(float)+rng0.normal(0,2,n)
+    bd = 18-2*(sp=='Chinstrap').astype(float)-1*(sp=='Gentoo').astype(float)+rng0.normal(0,1,n)
+    penguins = pd.DataFrame({'bill_length_mm':bl,'bill_depth_mm':bd,'species':sp})
+penguins = penguins.dropna(subset=['bill_length_mm','bill_depth_mm','species'])
+X = penguins[['bill_length_mm','bill_depth_mm']].to_numpy()
+y = penguins['species'].to_numpy()
+pipe = Pipeline([('scaler',StandardScaler()),('clf',LogisticRegression(max_iter=1000))])
+X_tr,X_te,y_tr,y_te = train_test_split(X,y,test_size=0.3,random_state=0,stratify=y)
+pipe.fit(X_tr,y_tr)
+split_acc = pipe.score(X_te,y_te)
+K=10
+cv_scores = cross_val_score(pipe,X,y,cv=KFold(K,shuffle=True,random_state=42),scoring='accuracy')
+cv_acc = cv_scores.mean()
+fold_errors = 1 - cv_scores
+se_est = np.sqrt((1/K)*np.sum((fold_errors-fold_errors.mean())**2)/(K-1))
+print(f'Split accuracy: {split_acc:.4f}')
+print(f'CV accuracy:    {cv_acc:.4f} ± {se_est:.4f}')
+    </script>
+    <script type="text/x-explain">Bill length and bill depth together are strong predictors of species — you should see accuracy above 85%. The single-split result may differ slightly from CV: with only ~100 test observations, the split estimate has high variance. 10-fold CV uses all ~333 observations for validation (each exactly once), giving a more reliable estimate. The SE ≈ 0.02–0.04 tells you how much the fold-level accuracy varied.</script>
+  </section>
+
+  <!-- EXERCISE: CV MSE vs degree for multiple K -->
+  <section class="exercise" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Exercise 2 — CV MSE vs degree for K ∈ {2, 5, 10, LOOCV}</h2>
+    <div class="ex-prompt">Using the Auto dataset, plot CV MSE vs polynomial degree (1–10) for four values of K on the same axes. Store your results as a dict <code>cv_results</code> mapping label → list of MSE values (one per degree).</div>
+<textarea class="ex-code">import numpy as np, pandas as pd, matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score, KFold, LeaveOneOut
+
+try:
+    auto = pd.read_csv("https://raw.githubusercontent.com/selva86/datasets/master/Auto.csv")
+    auto['horsepower'] = pd.to_numeric(auto['horsepower'], errors='coerce')
+    auto = auto.dropna(subset=['mpg','horsepower'])
+except Exception:
+    rng0 = np.random.default_rng(1); hp=rng0.uniform(46,230,392)
+    auto = pd.DataFrame({'horsepower':hp,'mpg':56.9-0.4662*hp+0.0012*hp**2+rng0.normal(0,4,392)})
+
+X_a = auto['horsepower'].to_numpy().reshape(-1,1)
+y_a = auto['mpg'].to_numpy()
+degrees = range(1, 11)
+
+configs = [('K=2',  KFold(2,  shuffle=True, random_state=0)),
+           ('K=5',  KFold(5,  shuffle=True, random_state=0)),
+           ('K=10', KFold(10, shuffle=True, random_state=0)),
+           ('LOOCV',LeaveOneOut())]
+
+cv_results = {}   # label → list of MSE per degree
+fig, ax = plt.subplots(figsize=(8, 5))
+for label, cv in configs:
+    mse_list = []
+    for d in degrees:
+        pipe = Pipeline([('poly', PolynomialFeatures(d, include_bias=False)),
+                         ('lr',   LinearRegression())])
+        mse = -cross_val_score(pipe, X_a, y_a, cv=cv,
+                               scoring='neg_mean_squared_error').mean()
+        mse_list.append(mse)
+    cv_results[label] = mse_list
+    best = 1 + np.argmin(mse_list)
+    ax.plot(degrees, mse_list, 'o-', label=f'{label} (best deg={best})')
+
+ax.set(xlabel='Polynomial degree', ylabel='CV MSE',
+       title='CV MSE vs Degree for different K')
+ax.set_xticks(range(1, 11)); ax.legend(); plt.tight_layout(); plt.show()
+for label, mses in cv_results.items():
+    print(f'{label}: best degree = {1+np.argmin(mses)}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+    <script type="text/x-check">
+import numpy as np
+assert 'cv_results' in dir(), "Store results in a dict called `cv_results`"
+assert isinstance(cv_results, dict), "`cv_results` must be a dict"
+assert len(cv_results) >= 4, "cv_results must have at least 4 entries (K=2, K=5, K=10, LOOCV)"
+for label, mses in cv_results.items():
+    assert len(mses) == 10, f"Each entry must have 10 values (one per degree), got {len(mses)} for {label}"
+    best = 1 + np.argmin(mses)
+    assert 1 <= best <= 5, f"Best degree for {label} should be between 1 and 5, got {best}"
+    </script>
+    <script type="text/x-solution">import numpy as np, pandas as pd, matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score, KFold, LeaveOneOut
+try:
+    auto = pd.read_csv("https://raw.githubusercontent.com/selva86/datasets/master/Auto.csv")
+    auto['horsepower'] = pd.to_numeric(auto['horsepower'], errors='coerce')
+    auto = auto.dropna(subset=['mpg','horsepower'])
+except Exception:
+    rng0=np.random.default_rng(1); hp=rng0.uniform(46,230,392)
+    auto=pd.DataFrame({'horsepower':hp,'mpg':56.9-0.4662*hp+0.0012*hp**2+rng0.normal(0,4,392)})
+X_a=auto['horsepower'].to_numpy().reshape(-1,1); y_a=auto['mpg'].to_numpy()
+degrees=range(1,11)
+configs=[('K=2',KFold(2,shuffle=True,random_state=0)),('K=5',KFold(5,shuffle=True,random_state=0)),
+         ('K=10',KFold(10,shuffle=True,random_state=0)),('LOOCV',LeaveOneOut())]
+cv_results={}; fig,ax=plt.subplots(figsize=(8,5))
+for label,cv in configs:
+    mse_list=[-cross_val_score(Pipeline([('poly',PolynomialFeatures(d,include_bias=False)),
+              ('lr',LinearRegression())]),X_a,y_a,cv=cv,scoring='neg_mean_squared_error').mean()
+              for d in degrees]
+    cv_results[label]=mse_list
+    ax.plot(degrees,mse_list,'o-',label=f'{label} (best={1+np.argmin(mse_list)})')
+ax.set(xlabel='Degree',ylabel='CV MSE',title='CV MSE vs Degree'); ax.set_xticks(range(1,11))
+ax.legend(); plt.tight_layout(); plt.show()
+for label,mses in cv_results.items(): print(f'{label}: best={1+np.argmin(mses)}')
+    </script>
+    <script type="text/x-explain">All four K values correctly identify degree 2 as best (or very close). K=2 has the most jagged, variable curve — only two folds means high variance. LOOCV gives the smoothest curve with no randomness. K=10 is nearly as stable as LOOCV but needs only 10 model fits instead of 392. This is why K=10 is the practical default.</script>
+  </section>
+
+  <!-- EXERCISE: leakage reproduction -->
+  <section class="exercise" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Exercise 3 — Reproduce the leakage demo (averaged over 10 runs)</h2>
+    <div class="ex-prompt">Generate 5000 noise features, 50 samples, random binary labels. Run both the wrong way (feature selection outside CV) and the right way (Pipeline) 10 times each. Store average errors in <code>wrong_err</code> and <code>right_err</code>.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score
+
+rng = np.random.default_rng(7)
+n_runs, n_select = 10, 20
+wrong_errors, right_errors = [], []
+
+for _ in range(n_runs):
+    X_n = rng.standard_normal((50, 5000))
+    y_n = rng.integers(0, 2, 50)
+
+    # Wrong way: select before CV
+    corr = np.abs(X_n.T @ (y_n - y_n.mean()))
+    top_idx = np.argsort(corr)[-n_select:]
+    wrong_err_i = 1 - cross_val_score(
+        LogisticRegression(C=0.01, max_iter=1000),
+        X_n[:, top_idx], y_n, cv=5, scoring='accuracy'
+    ).mean()
+    wrong_errors.append(wrong_err_i)
+
+    # Right way: Pipeline
+    pipe = Pipeline([('sel', SelectKBest(f_classif, k=n_select)),
+                     ('clf', LogisticRegression(C=0.01, max_iter=1000))])
+    right_err_i = 1 - cross_val_score(pipe, X_n, y_n, cv=5, scoring='accuracy').mean()
+    right_errors.append(right_err_i)
+
+wrong_err = np.mean(wrong_errors)
+right_err = np.mean(right_errors)
+print(f'True error (random labels):  ~50%')
+print(f'WRONG CV error (avg 10 runs): {wrong_err*100:.1f}%  ← leakage')
+print(f'RIGHT CV error (avg 10 runs): {right_err*100:.1f}%  ← honest')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+    <script type="text/x-check">
+import numpy as np
+assert 'wrong_err' in dir(), "Store average wrong CV error in `wrong_err`"
+assert 'right_err' in dir(), "Store average right CV error in `right_err`"
+assert wrong_err < 0.35, f"Wrong CV error should be well below 35% (due to leakage), got {wrong_err*100:.1f}%"
+assert right_err > 0.35, f"Right CV error should be close to 50% (honest), got {right_err*100:.1f}%"
+assert right_err > wrong_err + 0.10, \
+    f"Right error ({right_err*100:.1f}%) should be substantially higher than wrong error ({wrong_err*100:.1f}%)"
+    </script>
+    <script type="text/x-solution">import numpy as np
+from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score
+rng=np.random.default_rng(7); n_runs,n_select=10,20
+wrong_errors,right_errors=[],[]
+for _ in range(n_runs):
+    X_n=rng.standard_normal((50,5000)); y_n=rng.integers(0,2,50)
+    corr=np.abs(X_n.T@(y_n-y_n.mean()))
+    wrong_errors.append(1-cross_val_score(LogisticRegression(C=0.01,max_iter=1000),
+        X_n[:,np.argsort(corr)[-n_select:]],y_n,cv=5,scoring='accuracy').mean())
+    pipe=Pipeline([('sel',SelectKBest(f_classif,k=n_select)),('clf',LogisticRegression(C=0.01,max_iter=1000))])
+    right_errors.append(1-cross_val_score(pipe,X_n,y_n,cv=5,scoring='accuracy').mean())
+wrong_err,right_err=np.mean(wrong_errors),np.mean(right_errors)
+print(f'WRONG: {wrong_err*100:.1f}%  RIGHT: {right_err*100:.1f}%')
+    </script>
+    <script type="text/x-explain">Averaged over 10 runs: wrong error ≈ 10–20% (looks great but is false), right error ≈ 45–55% (correctly reflects the 50% true error). The gap is entirely due to leakage: when feature selection sees all labels, it finds spurious correlations in the noise — and those same spurious features are then validated against the same labels in step 2. The Pipeline prevents this by re-running selection inside each fold.</script>
   </section>
 
 </section>
+
+<!-- ═══════════════════════════════════ PART 3 ════════════════════════════════ -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 3 · 1:15 – 1:45</span>
     <h1>The Bootstrap</h1>
     <p class="muted">Quantifying uncertainty by resampling</p>
   </section>
+
   <section>
     <h2>What is the bootstrap?</h2>
-<ul>
-  <li class="fragment fade-up">A flexible tool to quantify <strong>uncertainty</strong> of any estimator or statistical learning method.</li>
-  <li class="fragment fade-up">Provides estimates of <strong>standard error</strong> and <strong>confidence intervals</strong> without needing a new study.</li>
-  <li class="fragment fade-up">Name from Baron Munchausen: <em>"pulled himself up by his own bootstraps"</em>.</li>
-  <li class="fragment fade-up">Key idea: treat the observed sample as a stand-in for the population; repeatedly resample from it.</li>
-</ul>
+    <ul>
+      <li class="fragment fade-up">Quantify <strong>uncertainty</strong> of any estimator without needing new data.</li>
+      <li class="fragment fade-up">Treat the observed sample as a stand-in for the population: resample with replacement.</li>
+      <li class="fragment fade-up">Each bootstrap dataset Z*ᵇ has n observations, same size as original — some repeated, some absent.</li>
+      <li class="fragment fade-up">Compute your statistic on each Z*ᵇ. The spread of these B estimates approximates SE.</li>
+    </ul>
   </section>
 
   <section>
     <h2>The investment example</h2>
-<p>Invest a fraction α in asset X and 1−α in asset Y. Minimise Var(αX + (1−α)Y).</p><p style="text-align:center;font-size:1.1em;">&alpha;<sup>*</sup> = (&sigma;<sub>Y</sub><sup>2</sup> &minus; &sigma;<sub>XY</sub>) / (&sigma;<sub>X</sub><sup>2</sup> + &sigma;<sub>Y</sub><sup>2</sup> &minus; 2&sigma;<sub>XY</sub>)</p><ul>
-  <li>&sigma;<sub>X</sub><sup>2</sup> = Var(X), &sigma;<sub>Y</sub><sup>2</sup> = Var(Y), &sigma;<sub>XY</sub> = Cov(X,Y) are unknown.</li>
-  <li>Estimate them from a sample → get &alpha;&#770;.</li>
-  <li>Problem: how accurate is &alpha;&#770;? What is SE(&alpha;&#770;)?</li>
-</ul>
-    <aside class="notes">With known population parameters σ_X²=1, σ_Y²=1.25, σ_XY=0.5, the true α = 0.6.</aside>
+    <p>Invest α in X and 1−α in Y to minimise portfolio variance:</p>
+    <p style="text-align:center;font-size:1.1em;">α* = (σ²<sub>Y</sub> − σ<sub>XY</sub>) / (σ²<sub>X</sub> + σ²<sub>Y</sub> − 2σ<sub>XY</sub>)</p>
+    <ul>
+      <li class="fragment fade-up">True parameters σ²<sub>X</sub>=1, σ²<sub>Y</sub>=1.25, σ<sub>XY</sub>=0.5 → α* = 0.6.</li>
+      <li class="fragment fade-up">With real data: plug in sample estimates → get α̂. How accurate is α̂?</li>
+      <li class="fragment fade-up">No analytical formula for SE(α̂) — <strong>perfect use case for bootstrap</strong>.</li>
+    </ul>
   </section>
 
   <section>
-    <h2>Simulating from the true population</h2>
-<ul>
-  <li class="fragment fade-up">If we could repeatedly draw samples of n=100 from the true population, we could estimate SE(&alpha;&#770;) directly.</li>
-  <li class="fragment fade-up">Draw 1000 datasets → compute &alpha;&#770; for each → histogram of &alpha;&#770;<sub>1</sub>, …, &alpha;&#770;<sub>1000</sub>.</li>
-  <li class="fragment fade-up">Mean ≈ 0.5996 (very close to true α = 0.6).</li>
-  <li class="fragment fade-up">SD ≈ 0.083 → SE(&alpha;&#770;) ≈ 0.083.</li>
-  <li class="fragment fade-up">This is the <em>gold standard</em> — but requires knowing the population.</li>
-</ul>
-    <aside class="notes">In practice we have one sample, not 1000. The bootstrap mimics this process using only that one sample.</aside>
+    <h2>Bootstrap standard error and CI</h2>
+    <div class="two-col"><div>
+      <p>SE<sub>B</sub>(α̂) = √[ 1/(B−1) Σ (α̂*ʳ − ᾱ*)² ]</p>
+      <ul>
+        <li>Investment: SE<sub>B</sub>(α̂) ≈ 0.087, true SE = 0.083.</li>
+        <li>B = 1000 resamples is typically enough.</li>
+        <li><strong>Percentile CI:</strong> 5th and 95th percentiles of the B estimates → 90% CI.</li>
+      </ul>
+    </div><div><img src="img/ch5_bootstrap_alpha.svg" style="width:100%;max-height:55vh;object-fit:contain;"></div></div>
   </section>
 
   <section>
-    <h2>Bootstrap: resample from your one dataset</h2>
-<ul>
-  <li class="fragment fade-up">We cannot generate new data from the population.</li>
-  <li class="fragment fade-up">Instead: treat the observed sample Z = (z<sub>1</sub>,…,z<sub>n</sub>) as the estimated population P&#770;.</li>
-  <li class="fragment fade-up">Draw bootstrap datasets Z*<sup>1</sup>, Z*<sup>2</sup>, …, Z*<sup>B</sup> by sampling <strong>n observations with replacement</strong> from Z.</li>
-  <li class="fragment fade-up">Some observations appear multiple times; some not at all.</li>
-  <li class="fragment fade-up">Compute &alpha;&#770;*<sup>1</sup>, …, &alpha;&#770;*<sup>B</sup> on each bootstrap dataset.</li>
-</ul>
+    <h2>Bootstrap is NOT for prediction error</h2>
+    <div class="two-col"><div><ul>
+      <li>Each bootstrap sample contains ~63.2% of the original observations.</li>
+      <li>Testing on the full dataset after training on a bootstrap sample → model saw most of the test set.</li>
+      <li>Result: severely <em>underestimates</em> test error.</li>
+      <li><strong>Use CV for prediction error. Use bootstrap for SE and CI.</strong></li>
+    </ul></div><div><img src="img/ch5_bootstrap_overlap.svg" style="width:100%;max-height:55vh;object-fit:contain;"></div></div>
   </section>
 
-  <section>
-    <h2>Bootstrap standard error</h2>
-<div class="two-col"><div><p>Estimate SE using the bootstrap estimates:</p><p style="text-align:center;font-size:1em;">SE<sub>B</sub>(&alpha;&#770;) = &radic;[ 1/(B&minus;1) &Sigma;<sub>r=1</sub><sup>B</sup> (&alpha;&#770;*<sup>r</sup> &minus; &#x101;*)<sup>2</sup> ]</p><ul>
-  <li>Investment example: SE<sub>B</sub>(&alpha;&#770;) ≈ 0.087, true SE = 0.083.</li>
-  <li>B = 1000 resamples is typically enough.</li>
-  <li>Works for <em>any</em> estimator — OLS, medians, ML models.</li>
-</ul></div><div><img src="img/ch5_bootstrap_alpha.svg" style="width:100%;max-height:55vh;object-fit:contain;"></div></div>
-    <aside class="notes">The bootstrap distribution of α̂* closely tracks the true distribution from 1000 simulated datasets. This is the remarkable fact that makes bootstrap work.</aside>
+  <!-- EXAMPLE: investment bootstrap -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Bootstrap SE — investment example</h2>
+    <div class="ex-prompt">Simulate 1000 datasets from the true population to get the real SE(α̂). Then bootstrap from ONE dataset. Compare — bootstrap approximates the truth remarkably well.</div>
+<textarea class="ex-code">import numpy as np, matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
+sig2_X, sig2_Y, sig_XY = 1.0, 1.25, 0.5
+alpha_true = (sig2_Y - sig_XY) / (sig2_X + sig2_Y - 2*sig_XY)
+cov_matrix = [[sig2_X, sig_XY], [sig_XY, sig2_Y]]
+print(f'True alpha = {alpha_true:.4f}')
+
+def alpha_hat(X, Y):
+    s2x = np.var(X, ddof=1); s2y = np.var(Y, ddof=1)
+    sxy = np.cov(X, Y, ddof=1)[0, 1]
+    return (s2y - sxy) / (s2x + s2y - 2*sxy)
+
+rng = np.random.default_rng(42)
+n = 100
+
+# True SE: simulate 1000 datasets from the population
+n_sim = 1000
+alphas_sim = [alpha_hat(*rng.multivariate_normal([0,0], cov_matrix, n).T)
+              for _ in range(n_sim)]
+print(f'True SE (1000 simulated datasets):   {np.std(alphas_sim):.4f}')
+
+# Bootstrap SE: resample from ONE dataset
+sample = rng.multivariate_normal([0, 0], cov_matrix, n)
+X_one, Y_one = sample[:,0], sample[:,1]
+print(f'alpha_hat from one sample: {alpha_hat(X_one, Y_one):.4f}')
+
+B = 1000
+alphas_boot = [alpha_hat(X_one[idx:=rng.integers(0,n,n)], Y_one[idx]) for _ in range(B)]
+se_boot = np.std(alphas_boot, ddof=1)
+print(f'Bootstrap SE (B={B} resamples): {se_boot:.4f}')
+
+fig, axes = plt.subplots(1, 2, figsize=(11, 4))
+for ax, data, title, color in zip(axes,
+    [alphas_sim, alphas_boot],
+    ['True distribution\n(1000 simulated datasets)', f'Bootstrap distribution\n({B} resamples)'],
+    ['orange', 'steelblue']):
+    ax.hist(data, bins=30, color=color, edgecolor='white')
+    ax.axvline(alpha_true, color='red', lw=2, label=f'True α={alpha_true}')
+    ax.set(title=title, xlabel='α̂'); ax.legend(fontsize=9)
+plt.tight_layout(); plt.show()
+
+ci_90 = np.quantile(alphas_boot, [0.05, 0.95])
+print(f'\n90% bootstrap CI: ({ci_90[0]:.3f}, {ci_90[1]:.3f})')
+print(f'True alpha inside CI: {ci_90[0] <= alpha_true <= ci_90[1]}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">The bootstrap SE (≈ 0.087) closely matches the true SE (≈ 0.083) — derived from just ONE dataset, not 1000. This is the remarkable power of the bootstrap: the sample distribution approximates the population distribution, so resampling from the sample mimics drawing new datasets from the population.</script>
   </section>
 
-  <section>
-    <h2>Bootstrap percentile confidence interval</h2>
-<ul>
-  <li class="fragment fade-up">Sort the B bootstrap estimates &alpha;&#770;*<sup>1</sup>, …, &alpha;&#770;*<sup>B</sup>.</li>
-  <li class="fragment fade-up">The 5th and 95th percentiles form an approximate <strong>90% CI</strong>.</li>
-  <li class="fragment fade-up">For the investment example: 90% CI ≈ (0.43, 0.72). True α = 0.6 is well inside.</li>
-  <li class="fragment fade-up">This is the <strong>Bootstrap Percentile interval</strong> — the simplest CI from the bootstrap.</li>
-  <li class="fragment fade-up">More sophisticated variants (BCa, studentised bootstrap) correct for skew and bias.</li>
-</ul>
-    <aside class="notes">Interpretation: 90% of the time, the interval we construct this way contains the true α. This is the standard frequentist CI interpretation.</aside>
+  <!-- EXAMPLE: bootstrap for regression coefficients -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Bootstrap SE for regression coefficients</h2>
+    <div class="ex-prompt">Bootstrap SE of OLS coefficients on the Diabetes dataset. Compare to the analytical OLS formula (which only works for linear regression). Bootstrap works for <em>any</em> model.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.datasets import load_diabetes
+from sklearn.linear_model import LinearRegression
+
+diabetes = load_diabetes()
+X_dia, y_dia = diabetes.data, diabetes.target
+n_dia = len(y_dia)
+
+rng = np.random.default_rng(42)
+B = 1000
+boot_coefs = []
+for _ in range(B):
+    idx = rng.integers(0, n_dia, size=n_dia)
+    coef = LinearRegression().fit(X_dia[idx], y_dia[idx]).coef_
+    boot_coefs.append(coef)
+boot_coefs = np.array(boot_coefs)
+se_boot = boot_coefs.std(axis=0, ddof=1)
+
+# Analytical OLS SE
+lr_full = LinearRegression().fit(X_dia, y_dia)
+resid   = y_dia - lr_full.predict(X_dia)
+s2      = np.sum(resid**2) / (n_dia - X_dia.shape[1] - 1)
+Xd      = np.column_stack([np.ones(n_dia), X_dia])
+se_ols  = np.sqrt(s2 * np.diag(np.linalg.inv(Xd.T @ Xd)))[1:]  # skip intercept
+
+print(f'{"Feature":<10}  {"Bootstrap SE":>12}  {"OLS SE":>10}')
+for i, name in enumerate(diabetes.feature_names):
+    print(f'{name:<10}  {se_boot[i]:>12.4f}  {se_ols[i]:>10.4f}')
+print('\nBootstrap and OLS SE closely match — confirms the bootstrap works.')
+print('Advantage: bootstrap works for any model (trees, ensembles, custom stats).')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">Bootstrap SE and OLS SE agree closely on every coefficient. The key advantage of bootstrap: the OLS SE formula requires knowing the model's algebraic form. Bootstrap needs none of that — just a function that maps data to an estimate. Apply it to random forests, neural networks, or any custom statistic.</script>
   </section>
 
-  <section>
-    <h2>Bootstrap is NOT suitable for prediction error</h2>
-<div class="two-col"><div><ul>
-  <li>Attempt: use Z*<sup>b</sup> as training set, original Z as validation.</li>
-  <li>Problem: ~2/3 of obs appear in each bootstrap sample.</li>
-  <li>Model has already 'seen' ~63% of the validation set.</li>
-  <li>Result: bootstrap <em>severely underestimates</em> test error.</li>
-  <li><strong>Use CV for prediction error. Use bootstrap for SE and CI.</strong></li>
-</ul></div><div><img src="img/ch5_bootstrap_overlap.svg" style="width:100%;max-height:55vh;object-fit:contain;"></div></div>
-    <aside class="notes">Fraction out-of-bag ≈ 1 − (1 − 1/n)^n → 1 − 1/e ≈ 36.8% as n→∞. The other 63.2% were seen during training.</aside>
-  </section>
-
-  <section>
-    <h2>Bootstrap for regression coefficients</h2>
-<pre><code class="language-python">import numpy as np
-rng = np.random.default_rng(0)
-
-# One bootstrap iteration
-n = len(y)
-idx = rng.choice(n, size=n, replace=True)
-X_boot, y_boot = X[idx], y[idx]
-coef_boot = np.linalg.lstsq(X_boot, y_boot, rcond=None)[0]
-
-# Repeat B times, collect SE
-coefs = [fit_once(rng) for _ in range(1000)]
-se_boot = np.std(coefs, axis=0)  # compare to statsmodels .bse</code></pre>
-    <aside class="notes">Bootstrap SE of OLS coefficients matches statsmodels .bse closely. But bootstrap works for any model, not just OLS.</aside>
-  </section>
-
-  <section>
+  <!-- EXAMPLE: scipy.stats.bootstrap -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
     <h2>scipy.stats.bootstrap — the modern API</h2>
-<pre><code class="language-python">from scipy.stats import bootstrap
+    <div class="ex-prompt"><code>scipy.stats.bootstrap</code> computes CI for any statistic. Here: 95% CI for the median flipper length of penguins. Compare percentile vs BCa (bias-corrected accelerated) methods.</div>
+<textarea class="ex-code">import numpy as np, scipy.stats, pandas as pd
 
-# Bootstrap CI for the median of a 1-D sample
-result = bootstrap(
-    (sample,),          # data as tuple of arrays
-    statistic=np.median,
-    n_resamples=1000,
-    confidence_level=0.95,
-    random_state=0,
+try:
+    penguins = pd.read_csv("https://raw.githubusercontent.com/mwaskom/seaborn-data/master/penguins.csv")
+    flipper = penguins['flipper_length_mm'].dropna().to_numpy()
+except Exception:
+    rng0 = np.random.default_rng(0)
+    flipper = rng0.normal(200, 14, 333).clip(170, 235)
+
+print(f'n = {len(flipper)},  sample median = {np.median(flipper):.1f} mm')
+
+# Percentile bootstrap CI
+res_pct = scipy.stats.bootstrap(
+    (flipper,), statistic=np.median, n_resamples=2000,
+    confidence_level=0.95, method='percentile', random_state=0
 )
-print(result.confidence_interval)  # ConfidenceInterval(low=..., high=...)</code></pre>
-    <aside class="notes">scipy.stats.bootstrap was added in SciPy 1.7. It handles any statistic — just pass a function. Supports both percentile and BCa (bias-corrected accelerated) intervals.</aside>
+print(f'\n95% CI (percentile): ({res_pct.confidence_interval.low:.1f}, {res_pct.confidence_interval.high:.1f}) mm')
+print(f'Bootstrap SE:        {res_pct.standard_error:.3f} mm')
+
+# BCa bootstrap CI
+res_bca = scipy.stats.bootstrap(
+    (flipper,), statistic=np.median, n_resamples=2000,
+    confidence_level=0.95, method='BCa', random_state=0
+)
+print(f'95% CI (BCa):        ({res_bca.confidence_interval.low:.1f}, {res_bca.confidence_interval.high:.1f}) mm')
+
+# Normal-approximation CI for the MEAN (for comparison)
+mean_f = flipper.mean(); se_f = scipy.stats.sem(flipper)
+ci_norm = scipy.stats.t.interval(0.95, df=len(flipper)-1, loc=mean_f, scale=se_f)
+print(f'\nNormal CI for MEAN:  ({ci_norm[0]:.1f}, {ci_norm[1]:.1f}) mm  (mean={mean_f:.1f})')
+print('\nWhy not normal approx for median?')
+print('SE(mean) = σ/√n analytically. SE(median) requires the density at the median — unknown.')
+print('Bootstrap handles this without any distributional assumption.')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">Percentile CI and BCa CI are usually very close for symmetric distributions. BCa is more accurate when the bootstrap distribution is skewed (it corrects for bias and skewness). The median has no simple SE formula — the Central Limit Theorem gives you SE(mean) = σ/√n, but SE(median) requires knowing the population density at the median, which you don't have. Bootstrap needs no such formula.</script>
   </section>
 
-  <section>
-    <h2>Bootstrap vs permutation tests</h2>
-<div class="two-col"><div><p><strong>Bootstrap</strong></p><ul>
-  <li>Samples from the <em>estimated population</em> P&#770;.</li>
-  <li>Estimates SE and CI for any estimator.</li>
-  <li>Answers: how variable is my estimate?</li>
-</ul></div><div><p><strong>Permutation test</strong></p><ul>
-  <li>Samples from the <em>null distribution</em> (shuffle labels).</li>
-  <li>Estimates p-values and False Discovery Rates.</li>
-  <li>Answers: is there any effect at all?</li>
-</ul></div></div>
-    <aside class="notes">Bootstrap can test H₀: θ=0 by checking if the CI contains zero. But permutation tests are generally more powerful for hypothesis testing. Use each for what it&#x27;s designed for.</aside>
+  <!-- EXAMPLE: bootstrap underestimates prediction error -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Why bootstrap underestimates prediction error</h2>
+    <div class="ex-prompt">~63% of observations appear in each bootstrap sample. Training on a bootstrap sample and testing on the original dataset is not a fair test — the model saw most of the "test" data during training.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score
+from sklearn.metrics import mean_squared_error
+
+try:
+    auto = pd.read_csv("https://raw.githubusercontent.com/selva86/datasets/master/Auto.csv")
+    auto['horsepower'] = pd.to_numeric(auto['horsepower'], errors='coerce')
+    auto = auto.dropna(subset=['mpg','horsepower'])
+except Exception:
+    rng0=np.random.default_rng(1); hp=rng0.uniform(46,230,392)
+    auto=pd.DataFrame({'horsepower':hp,'mpg':56.9-0.4662*hp+0.0012*hp**2+rng0.normal(0,4,392)})
+
+X_a = auto['horsepower'].to_numpy().reshape(-1,1)
+y_a = auto['mpg'].to_numpy()
+n   = len(X_a)
+
+# Fraction out-of-bag: (1 - 1/n)^n → 1/e as n→∞
+print(f'n={n}: fraction NOT in bootstrap sample = {(1-1/n)**n:.4f}')
+print(f'Theoretical limit (1/e) = {1/np.e:.4f}')
+print(f'→ ~{(1-(1-1/n)**n)*100:.1f}% of obs appear in each bootstrap sample\n')
+
+# Bootstrap prediction error (unfair: model sees ~63% of test set)
+rng = np.random.default_rng(42); B = 100
+boot_pred_errors = []
+for _ in range(B):
+    idx = rng.integers(0, n, size=n)
+    pipe = Pipeline([('poly', PolynomialFeatures(2, include_bias=False)),
+                     ('lr',   LinearRegression())])
+    pipe.fit(X_a[idx], y_a[idx])
+    boot_pred_errors.append(mean_squared_error(y_a, pipe.predict(X_a)))  # full dataset!
+
+# 10-fold CV (honest)
+pipe10 = Pipeline([('poly', PolynomialFeatures(2, include_bias=False)), ('lr', LinearRegression())])
+cv10_mse = -cross_val_score(pipe10, X_a, y_a, cv=10, scoring='neg_mean_squared_error').mean()
+
+print(f'Bootstrap pred. error (unfair): {np.mean(boot_pred_errors):.3f}')
+print(f'10-fold CV pred. error (honest): {cv10_mse:.3f}')
+print(f'\nBootstrap is LOWER — it underestimates because the model saw most of the test set.')
+print('Rule: use CV for prediction error, bootstrap for SE and CI.')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <!-- EXERCISE: scipy.stats.bootstrap for median CI -->
+  <section class="exercise" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Exercise 4 — Bootstrap CI for median flipper length</h2>
+    <div class="ex-prompt">Use <code>scipy.stats.bootstrap</code> to compute a 95% CI for the <strong>median</strong> of penguin flipper length. Store the percentile CI as a tuple <code>ci_pct = (low, high)</code>. Also try the BCa method.</div>
+<textarea class="ex-code">import numpy as np, scipy.stats, pandas as pd
+
+try:
+    penguins = pd.read_csv("https://raw.githubusercontent.com/mwaskom/seaborn-data/master/penguins.csv")
+    flipper = penguins['flipper_length_mm'].dropna().to_numpy()
+except Exception:
+    rng0 = np.random.default_rng(0)
+    flipper = rng0.normal(200, 14, 333).clip(170, 235)
+
+print(f'n = {len(flipper)},  sample median = {np.median(flipper):.1f} mm')
+
+# 1. Percentile bootstrap CI for the MEDIAN (n_resamples=2000)
+res_pct = scipy.stats.bootstrap(
+    (flipper,), statistic=np.median, n_resamples=2000,
+    confidence_level=0.95, method='percentile', random_state=0
+)
+ci_pct = (res_pct.confidence_interval.low, res_pct.confidence_interval.high)
+print(f'95% CI (percentile): ({ci_pct[0]:.1f}, {ci_pct[1]:.1f}) mm')
+
+# 2. BCa bootstrap CI
+res_bca = scipy.stats.bootstrap(
+    (flipper,), statistic=np.median, n_resamples=2000,
+    confidence_level=0.95, method='BCa', random_state=0
+)
+ci_bca = (res_bca.confidence_interval.low, res_bca.confidence_interval.high)
+print(f'95% CI (BCa):        ({ci_bca[0]:.1f}, {ci_bca[1]:.1f}) mm')
+
+# 3. Normal CI for the MEAN (for comparison)
+mean_f = flipper.mean(); se_f = scipy.stats.sem(flipper)
+ci_norm = scipy.stats.t.interval(0.95, df=len(flipper)-1, loc=mean_f, scale=se_f)
+print(f'Normal CI for MEAN:  ({ci_norm[0]:.1f}, {ci_norm[1]:.1f}) mm')
+print('\nNote: the normal CI is for the MEAN, not the median.')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+    <script type="text/x-check">
+import numpy as np
+assert 'ci_pct' in dir(), "Store percentile CI as `ci_pct = (low, high)`"
+assert isinstance(ci_pct, tuple) and len(ci_pct) == 2, "`ci_pct` must be a tuple of (low, high)"
+low, high = ci_pct
+assert high > low, "CI upper bound must be greater than lower bound"
+assert 185 < low < 205, f"CI lower bound should be around 190–200 mm, got {low:.1f}"
+assert 200 < high < 215, f"CI upper bound should be around 200–210 mm, got {high:.1f}"
+assert (high - low) < 20, f"CI width should be less than 20 mm, got {high-low:.1f}"
+    </script>
+    <script type="text/x-solution">import numpy as np, scipy.stats, pandas as pd
+try:
+    penguins = pd.read_csv("https://raw.githubusercontent.com/mwaskom/seaborn-data/master/penguins.csv")
+    flipper = penguins['flipper_length_mm'].dropna().to_numpy()
+except Exception:
+    rng0=np.random.default_rng(0); flipper=rng0.normal(200,14,333).clip(170,235)
+print(f'n={len(flipper)},  median={np.median(flipper):.1f} mm')
+res_pct = scipy.stats.bootstrap((flipper,),statistic=np.median,n_resamples=2000,
+                                confidence_level=0.95,method='percentile',random_state=0)
+ci_pct = (res_pct.confidence_interval.low, res_pct.confidence_interval.high)
+print(f'95% CI (percentile): ({ci_pct[0]:.1f}, {ci_pct[1]:.1f}) mm')
+res_bca = scipy.stats.bootstrap((flipper,),statistic=np.median,n_resamples=2000,
+                                confidence_level=0.95,method='BCa',random_state=0)
+ci_bca = (res_bca.confidence_interval.low, res_bca.confidence_interval.high)
+print(f'95% CI (BCa):        ({ci_bca[0]:.1f}, {ci_bca[1]:.1f}) mm')
+mean_f=flipper.mean(); se_f=scipy.stats.sem(flipper)
+ci_norm=scipy.stats.t.interval(0.95,df=len(flipper)-1,loc=mean_f,scale=se_f)
+print(f'Normal CI for MEAN:  ({ci_norm[0]:.1f}, {ci_norm[1]:.1f}) mm')
+    </script>
+    <script type="text/x-explain">The percentile and BCa CIs should be very similar (within 1 mm). BCa corrects for two things: (1) bias — whether the bootstrap distribution is centered on the observed statistic, and (2) skewness — whether the bootstrap distribution is symmetric. For the penguin median, the distribution is roughly symmetric so BCa ≈ percentile. The key advantage: no distributional assumption needed. SE(median) has no clean closed form — you would need to know the population density at the median point to use a normal approximation.</script>
   </section>
 
 </section>
+
+<!-- ═══════════════════════════════════ RECAP ════════════════════════════════ -->
 <section class="title-slide">
   <span class="kicker">Recap</span>
   <h2>Three things to leave with</h2>
   <ol>
-<li class="fragment fade-up"><strong>Cross-validate everything — including preprocessing.</strong> Use sklearn's Pipeline so that feature selection and scaling happen inside each fold, not outside.</li>
-<li class="fragment fade-up"><strong>K = 5 or 10 is the practical default.</strong> LOOCV is nearly unbiased but has high variance; large K finds the right minimum with less computation.</li>
-<li class="fragment fade-up"><strong>Bootstrap gives SE and CI for any estimator.</strong> Use scipy.stats.bootstrap; avoid using bootstrap for prediction error — use CV instead.</li>
+    <li class="fragment fade-up"><strong>Cross-validate everything — including preprocessing.</strong> Use sklearn's <code>Pipeline</code> so feature selection and scaling happen inside each fold, not outside.</li>
+    <li class="fragment fade-up"><strong>K = 5 or 10 is the practical default.</strong> LOOCV is nearly unbiased but has high variance and is slow; K=10 finds the same minimum with far less computation.</li>
+    <li class="fragment fade-up"><strong>Bootstrap gives SE and CI for any estimator.</strong> Use <code>scipy.stats.bootstrap</code>; avoid using bootstrap for prediction error — use CV instead.</li>
   </ol>
   <p class="callout fragment fade-up">Next: Classification — when Y is categorical. The same ideas of regularisation and model selection reappear, now with logistic loss.</p>
 </section>
@@ -368,6 +1148,7 @@ print(result.confidence_interval)  # ConfidenceInterval(low=..., high=...)</code
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="../../../../shared/slides-template/interactive.js"></script>
 <script>
   Reveal.initialize({
     hash: true, slideNumber: 'c/t', transition: 'slide',

@@ -9,14 +9,18 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/interactive.css" />
 </head>
 <body>
 <div class="reveal"><div class="slides">
+
+<!-- ══════════════════════════════════ TITLE ══════════════════════════════════ -->
 <section class="title-slide">
   <span class="kicker">Week 3 · Course 2</span>
   <h1>Linear Regression</h1>
   <p class="muted" style="font-size:1.1em;">From simple least squares to interactions, qualitative predictors and polynomial fits</p>
 </section>
+
 <section>
   <span class="kicker">Roadmap</span>
   <h2>Where we are heading</h2>
@@ -33,344 +37,1424 @@
       <p class="muted" style="margin:0.3em 0 0;">Forward/backward selection, AIC, BIC, CV.</p></div>
     <div class="card"><h4>Part 6</h4><strong>Qualitative predictors</strong>
       <p class="muted" style="margin:0.3em 0 0;">Dummy variables, baseline, multi-level factors.</p></div>
-    <div class="card"><h4>Part 7</h4><strong>Interactions & non-linearity</strong>
+    <div class="card"><h4>Part 7</h4><strong>Interactions &amp; non-linearity</strong>
       <p class="muted" style="margin:0.3em 0 0;">Interaction terms, hierarchy principle, polynomial regression.</p></div>
   </div>
   <p class="callout" style="margin-top:1.2em;">Linear regression is the foundation: every concept — coefficients, residuals, R², p-values — reappears in every model you'll ever build. Understand it deeply and the rest of the course is revision.</p>
 </section>
+
+<!-- ═══════════════════════════════════ PART 1 ════════════════════════════════ -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 1</span>
     <h1>Simple Linear Regression</h1>
     <p class="muted">one predictor, one line, one loss</p>
   </section>
+
   <section>
     <h2>The linear regression model</h2>
-<ul>
-  <li class="fragment fade-up">We assume <strong>Y = β₀ + β₁X + ε</strong></li>
-  <li class="fragment fade-up">β₀ (intercept) and β₁ (slope) are unknown constants — the <em>coefficients</em>.</li>
-  <li class="fragment fade-up">ε is the error term: everything the model doesn't explain.</li>
-  <li class="fragment fade-up">True regression functions are <em>never</em> linear — but linear is often a useful approximation.</li>
-</ul>
-    <aside class="notes">Slide 1 of ISLR Ch3. Stress that the model is an approximation. George Box: &#x27;All models are wrong, but some are useful.&#x27;</aside>
+    <ul>
+      <li class="fragment fade-up">We assume <strong>Y = β₀ + β₁X + ε</strong></li>
+      <li class="fragment fade-up">β₀ (intercept) and β₁ (slope) are unknown constants — the <em>coefficients</em>.</li>
+      <li class="fragment fade-up">ε is the error term: everything the model doesn't explain.</li>
+      <li class="fragment fade-up">True regression functions are <em>never</em> linear — but linear is often a useful approximation.</li>
+    </ul>
+    <aside class="notes">Slide 1 of ISLR Ch3. Stress that the model is an approximation. George Box: 'All models are wrong, but some are useful.'</aside>
   </section>
 
   <section>
     <h2>Advertising data — the running example</h2>
-<img src="img/ch3_tv_sales_scatter.svg" style="width:100%;max-height:52vh;object-fit:contain;"><p class="muted" style="font-size:0.85em;margin-top:0.4em;">200 markets · TV, radio, newspaper budgets ($thousands) · sales (thousands of units). Positive trend — a straight line looks reasonable.</p>
-    <aside class="notes">The Advertising dataset is the workhorse for ISLR Ch3. Make sure students understand what a row represents.</aside>
+    <img src="img/ch3_tv_sales_scatter.svg" style="width:100%;max-height:52vh;object-fit:contain;">
+    <p class="muted" style="font-size:0.85em;margin-top:0.4em;">200 markets · TV, radio, newspaper budgets ($thousands) · sales (thousands of units). Positive trend — a straight line looks reasonable.</p>
   </section>
 
   <section>
     <h2>Least-squares estimation</h2>
-<ul>
-  <li class="fragment fade-up">Prediction for the i-th point: ŷᵢ = β̂₀ + β̂₁xᵢ</li>
-  <li class="fragment fade-up">Residual: eᵢ = yᵢ − ŷᵢ  (actual minus predicted)</li>
-  <li class="fragment fade-up"><strong>RSS</strong> = e₁² + e₂² + … + eₙ² = Σ(yᵢ − β̂₀ − β̂₁xᵢ)²</li>
-  <li class="fragment fade-up">Least-squares minimises RSS. The closed-form solution: β̂₁ = Σ(xᵢ−x̄)(yᵢ−ȳ) / Σ(xᵢ−x̄)², β̂₀ = ȳ − β̂₁x̄</li>
-</ul>
-    <aside class="notes">This is the core algebra. Stress that RSS is the training loss; minimising it gives us the OLS estimates.</aside>
+    <ul>
+      <li class="fragment fade-up">Prediction: ŷᵢ = β̂₀ + β̂₁xᵢ &nbsp;· &nbsp; Residual: eᵢ = yᵢ − ŷᵢ</li>
+      <li class="fragment fade-up"><strong>RSS</strong> = Σeᵢ² = Σ(yᵢ − β̂₀ − β̂₁xᵢ)²</li>
+      <li class="fragment fade-up">Closed form: β̂₁ = Σ(xᵢ−x̄)(yᵢ−ȳ) / Σ(xᵢ−x̄)², &nbsp; β̂₀ = ȳ − β̂₁x̄</li>
+    </ul>
   </section>
 
   <section>
-    <h2>Advertising example: fitted line</h2>
-<div class="two-col"><div><ul>
-  <li>β̂₀ = 7.03 → expected sales when TV = 0</li>
-  <li>β̂₁ = 0.0475 → each extra $1 000 on TV is associated with ~47 additional units sold</li>
-  <li>The fit captures the trend but under-predicts at low TV spend.</li>
-</ul></div><div><img src="img/ch3_tv_sales_fitted.svg" style="width:100%;max-height:46vh;object-fit:contain;"></div></div>
-    <aside class="notes">β̂₁ = 0.0475 means a $1 000 increase in TV spend → about 47.5 extra units. Not causation — this is observational data.</aside>
+    <h2>Fitted line &amp; results table</h2>
+    <div class="two-col">
+      <div>
+        <img src="img/ch3_tv_sales_fitted.svg" style="width:100%;max-height:46vh;object-fit:contain;">
+      </div>
+      <div>
+        <table style="font-size:0.85em;margin:0.5em auto;">
+          <tr><th></th><th>Coef.</th><th>SE</th><th>t</th><th>p</th></tr>
+          <tr><td>Intercept</td><td>7.03</td><td>0.458</td><td>15.36</td><td>&lt;.0001</td></tr>
+          <tr><td>TV</td><td>0.0475</td><td>0.0027</td><td>17.67</td><td>&lt;.0001</td></tr>
+        </table>
+        <p class="muted" style="font-size:0.82em;">β̂₁ = 0.0475 → each extra $1k on TV ≈ +47.5 units sold.</p>
+      </div>
+    </div>
   </section>
 
-  <section>
-    <h2>Predictions & residual diagnostics</h2>
-<img src="img/ch3_residuals_vs_fitted.svg" style="width:100%;max-height:50vh;object-fit:contain;"><p class="muted" style="font-size:0.85em;margin-top:0.3em;">Left: fitted line. Right: residuals vs fitted — any pattern here signals a mis-specified model. Predict: ŷ = β̂₀ + β̂₁x. Extrapolation beyond the training range is risky.</p>
+  <!-- EXAMPLE: load advertising data -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Load the Advertising dataset</h2>
+    <div class="ex-prompt">Every example in Part 1 uses this 200-row dataset. Run this cell first — it defines <code>adv</code>, <code>x</code>, and <code>y</code> used throughout.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
+try:
+    adv = pd.read_csv("https://www.statlearning.com/s/Advertising.csv", index_col=0)
+except Exception:
+    rng = np.random.default_rng(42)
+    TV  = rng.uniform(0.7, 296.4, 200)
+    rad = rng.uniform(0, 49.6, 200)
+    nwp = rng.uniform(0.3, 114.0, 200)
+    sal = 2.939 + 0.046*TV + 0.189*rad - 0.001*nwp + rng.normal(0, 1.69, 200)
+    adv = pd.DataFrame({'TV': TV, 'radio': rad, 'newspaper': nwp, 'sales': sal})
+
+x = adv['TV'].values
+y = adv['sales'].values
+print(adv.shape)
+print(adv.describe().round(2))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <!-- EXAMPLE: least-squares by hand -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Least-squares by hand (NumPy)</h2>
+    <div class="ex-prompt">Derive β̂₀ and β̂₁ from the closed-form formulas — no library needed. This is exactly what <code>LinearRegression</code> does internally.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd
+try:
+    adv = pd.read_csv("https://www.statlearning.com/s/Advertising.csv", index_col=0)
+except Exception:
+    rng = np.random.default_rng(42)
+    TV = rng.uniform(0.7,296.4,200); rad=rng.uniform(0,49.6,200)
+    sal=2.939+0.046*TV+0.189*rad+rng.normal(0,1.69,200)
+    adv = pd.DataFrame({'TV':TV,'radio':rad,'newspaper':rng.uniform(0.3,114,200),'sales':sal})
+x, y = adv['TV'].values, adv['sales'].values
+
+x_bar, y_bar = x.mean(), y.mean()
+beta1 = np.sum((x - x_bar)*(y - y_bar)) / np.sum((x - x_bar)**2)
+beta0 = y_bar - beta1 * x_bar
+
+print(f"β̂₀ (intercept) = {beta0:.4f}")   # ≈ 7.03
+print(f"β̂₁ (slope)     = {beta1:.4f}")   # ≈ 0.0475
+print(f"\nEach extra $1k on TV → +{beta1*1000:.1f} units sold")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">These are the OLS formulas. β̂₁ measures co-movement of x and y relative to x's own variance. β̂₀ anchors the line through (x̄, ȳ). sklearn's LinearRegression gives identical numbers.</script>
+  </section>
+
+  <!-- EXAMPLE: sklearn fit -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Fitting with scikit-learn</h2>
+    <div class="ex-prompt">sklearn's <code>LinearRegression</code> wraps the same least-squares math. It needs a 2-D X array (shape n×p). The plot shows the fitted line and residuals vs fitted.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd, matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score, mean_squared_error
+
+try:
+    adv = pd.read_csv("https://www.statlearning.com/s/Advertising.csv", index_col=0)
+except Exception:
+    rng=np.random.default_rng(42); TV=rng.uniform(0.7,296.4,200); rad=rng.uniform(0,49.6,200)
+    adv=pd.DataFrame({'TV':TV,'radio':rad,'newspaper':rng.uniform(0.3,114,200),
+                      'sales':2.939+0.046*TV+0.189*rad+rng.normal(0,1.69,200)})
+x, y = adv['TV'].values, adv['sales'].values
+
+model = LinearRegression()
+model.fit(adv[['TV']], y)          # needs 2-D input
+print(f"intercept : {model.intercept_:.4f}")
+print(f"slope     : {model.coef_[0]:.4f}")
+
+y_hat = model.predict(adv[['TV']])
+print(f"R²        : {r2_score(y, y_hat):.3f}")
+print(f"RMSE      : {mean_squared_error(y, y_hat)**0.5:.3f}  (sklearn divides by n, not n-2)")
+
+fig, axes = plt.subplots(1, 2, figsize=(11, 4))
+tv_rng = np.linspace(x.min(), x.max(), 200)
+axes[0].scatter(x, y, alpha=0.4, edgecolors='k', lw=0.3)
+axes[0].plot(tv_rng, model.intercept_ + model.coef_[0]*tv_rng, color='steelblue', lw=2)
+axes[0].set(xlabel='TV', ylabel='Sales', title='Fitted line')
+axes[1].scatter(y_hat, y-y_hat, alpha=0.4, edgecolors='k', lw=0.3)
+axes[1].axhline(0, color='red', ls='--')
+axes[1].set(xlabel='Fitted', ylabel='Residuals', title='Residuals vs Fitted')
+plt.tight_layout(); plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <!-- EXAMPLE: statsmodels OLS -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Fitting with statsmodels — full inference table</h2>
+    <div class="ex-prompt">statsmodels gives what sklearn doesn't: standard errors, t-statistics, p-values, 95% CI, F-statistic — all in one <code>.summary()</code> call.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd, statsmodels.api as sm
+
+try:
+    adv = pd.read_csv("https://www.statlearning.com/s/Advertising.csv", index_col=0)
+except Exception:
+    rng=np.random.default_rng(42); TV=rng.uniform(0.7,296.4,200); rad=rng.uniform(0,49.6,200)
+    adv=pd.DataFrame({'TV':TV,'radio':rad,'newspaper':rng.uniform(0.3,114,200),
+                      'sales':2.939+0.046*TV+0.189*rad+rng.normal(0,1.69,200)})
+y = adv['sales'].values
+
+X_const = sm.add_constant(adv[['TV']])   # adds intercept column
+result = sm.OLS(y, X_const).fit()
+print(result.summary())
+
+# Quick pointers:
+print("\ncoef (β̂):", result.params.round(4).to_dict())
+print("SE       :", result.bse.round(4).to_dict())
+print("t-stat   :", result.tvalues.round(2).to_dict())
+print("95% CI   :")
+print(result.conf_int().round(4))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">Rule of thumb: use sklearn for predictions, statsmodels for inference. The two frameworks give identical coefficients — they differ only in what else they compute.</script>
+  </section>
+
+  <!-- EXERCISE: SLR on California housing -->
+  <section class="exercise" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Exercise 1 — SLR on California Housing</h2>
+    <div class="ex-prompt">Fit a simple linear regression of <code>MedHouseVal</code> on <code>MedInc</code> using statsmodels. Store the fitted model in a variable called <code>m</code>.</div>
+<textarea class="ex-code">import numpy as np, statsmodels.formula.api as smf
+from sklearn.datasets import fetch_california_housing
+
+cal = fetch_california_housing(as_frame=True).frame
+
+# Fit: MedHouseVal ~ MedInc
+# Store result in variable `m`
+m = smf.ols('MedHouseVal ~ MedInc', data=cal).fit()
+print(m.summary())
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+    <script type="text/x-check">
+import numpy as np
+assert 'm' in dir(), "Store your fitted model in a variable called `m`"
+assert hasattr(m, 'rsquared'), "`m` should be a statsmodels OLS result (call .fit())"
+assert abs(m.params['MedInc'] - 0.42) < 0.05, f"Slope for MedInc should be ≈ 0.42, got {m.params['MedInc']:.4f}"
+assert abs(m.rsquared - 0.47) < 0.05, f"R² should be ≈ 0.47, got {m.rsquared:.3f}"
+assert m.pvalues['MedInc'] < 0.001, "MedInc should be highly significant (p << 0.001)"
+    </script>
+    <script type="text/x-solution">import statsmodels.formula.api as smf
+from sklearn.datasets import fetch_california_housing
+cal = fetch_california_housing(as_frame=True).frame
+m = smf.ols('MedHouseVal ~ MedInc', data=cal).fit()
+print(m.summary())
+    </script>
+    <script type="text/x-explain">β̂₁ ≈ 0.42 means each extra unit of median income is associated with $42k higher median house value. R² ≈ 0.47 — income alone explains 47% of house value variance. The t-statistic for MedInc is enormous (≈ 135), so p ≈ 0.</script>
   </section>
 
 </section>
+
+<!-- ═══════════════════════════════════ PART 2 ════════════════════════════════ -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 2</span>
     <h1>Assessing Coefficient Accuracy</h1>
     <p class="muted">standard errors, confidence intervals, hypothesis tests</p>
   </section>
-  <section>
-    <h2>Standard errors of the estimates</h2>
-<ul>
-  <li class="fragment fade-up">β̂₁ varies across repeated samples — its spread is SE(β̂₁).</li>
-  <li class="fragment fade-up">SE(β̂₁)² = σ² / Σ(xᵢ − x̄)²</li>
-  <li class="fragment fade-up">SE(β̂₀)² = σ²[1/n + x̄² / Σ(xᵢ − x̄)²]</li>
-  <li class="fragment fade-up">σ² = Var(ε) is estimated from the residuals (RSE²).</li>
-  <li class="fragment fade-up"><em>Wider spread in X → smaller SE(β̂₁)</em> — more information about the slope.</li>
-</ul>
-    <aside class="notes">Intuition: if X barely varies, we can&#x27;t pin down the slope precisely. More X-spread = better leverage on β₁.</aside>
-  </section>
 
   <section>
-    <h2>95 % confidence intervals</h2>
-<img src="img/ch3_ci_beta1.svg" style="width:100%;max-height:30vh;object-fit:contain;"><ul>
-  <li class="fragment fade-up">A 95 % CI contains the true β with 95 % probability over repeated samples.</li>
-  <li class="fragment fade-up">Approximate formula: β̂₁ ± 2 · SE(β̂₁)</li>
-  <li class="fragment fade-up">Advertising TV: CI = [0.042, 0.053] — <em>excludes zero</em> → TV spend is reliably associated with sales.</li>
-</ul>
-    <aside class="notes">Stress the frequentist interpretation: if we repeated the study 100 times, about 95 of the CIs would contain the true β₁.</aside>
+    <h2>Standard errors and confidence intervals</h2>
+    <img src="img/ch3_ci_beta1.svg" style="width:100%;max-height:30vh;object-fit:contain;">
+    <ul>
+      <li class="fragment fade-up">SE(β̂₁)² = σ² / Σ(xᵢ − x̄)² &nbsp; — wider X spread → smaller SE.</li>
+      <li class="fragment fade-up">95 % CI ≈ β̂₁ ± 2·SE(β̂₁). Advertising TV: [0.042, 0.053] — excludes zero.</li>
+    </ul>
   </section>
 
   <section>
     <h2>Hypothesis test: is β₁ = 0?</h2>
-<img src="img/ch3_t_distribution.svg" style="width:100%;max-height:36vh;object-fit:contain;"><ul>
-  <li class="fragment fade-up">H₀: β₁ = 0 (no relationship). Hₐ: β₁ ≠ 0.</li>
-  <li class="fragment fade-up">t-statistic: t = β̂₁ / SE(β̂₁) = 17.67 for TV — far into the tail.</li>
-  <li class="fragment fade-up">p-value = P(|T| ≥ |t| | H₀) — shaded area above. Here p ≪ 0.001.</li>
-</ul>
-    <aside class="notes">t ≈ N(0,1) for large n. For Advertising TV: t = 0.0475/0.0027 = 17.67, p &lt; 0.0001 — overwhelming evidence.</aside>
+    <img src="img/ch3_t_distribution.svg" style="width:100%;max-height:36vh;object-fit:contain;">
+    <ul>
+      <li class="fragment fade-up">H₀: β₁ = 0.&nbsp; t = β̂₁ / SE(β̂₁) = 17.67 for TV — far in the tail.</li>
+      <li class="fragment fade-up">p = P(|T| ≥ 17.67 | H₀) ≪ 0.001. We reject H₀.</li>
+    </ul>
   </section>
 
-  <section>
-    <h2>Results table: TV → Sales</h2>
-<table style="font-size:0.95em;margin:0.5em auto;"><tr><th></th><th>Coefficient</th><th>Std. Error</th><th>t-statistic</th><th>p-value</th></tr><tr><td>Intercept</td><td>7.03</td><td>0.4578</td><td>15.36</td><td>&lt; 0.0001</td></tr><tr><td>TV</td><td>0.0475</td><td>0.0027</td><td>17.67</td><td>&lt; 0.0001</td></tr></table><p class="muted" style="margin-top:1em;">Both coefficients are highly significant. The t-statistics are far from zero.</p>
-    <aside class="notes">Walk through every column. The p-value for the intercept tests whether mean sales = 0 when TV = 0, which is also significant but less interesting.</aside>
+  <!-- EXAMPLE: SE and CI -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>SE and 95% CI in code (statsmodels)</h2>
+    <div class="ex-prompt">statsmodels exposes <code>.bse</code> for standard errors and <code>.conf_int()</code> for CI. The CI for TV excludes zero — strong evidence of a relationship.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd, statsmodels.api as sm, matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
+try:
+    adv = pd.read_csv("https://www.statlearning.com/s/Advertising.csv", index_col=0)
+except Exception:
+    rng=np.random.default_rng(42); TV=rng.uniform(0.7,296.4,200); rad=rng.uniform(0,49.6,200)
+    adv=pd.DataFrame({'TV':TV,'radio':rad,'newspaper':rng.uniform(0.3,114,200),
+                      'sales':2.939+0.046*TV+0.189*rad+rng.normal(0,1.69,200)})
+
+result = sm.OLS(adv['sales'], sm.add_constant(adv[['TV']])).fit()
+
+print("Standard errors:")
+print(result.bse.round(4))
+
+ci = result.conf_int(); ci.columns = ['lower', 'upper']
+print("\n95% confidence intervals:")
+print(ci.round(4))
+
+# Approximate CI manually
+b1, se = result.params['TV'], result.bse['TV']
+print(f"\nApprox CI ≈ β̂₁ ± 2·SE = [{b1-2*se:.4f}, {b1+2*se:.4f}]")
+
+# Visualise
+fig, ax = plt.subplots(figsize=(5, 2))
+lo, hi = ci.loc['TV']
+ax.errorbar(b1, 0, xerr=[[b1-lo],[hi-b1]], fmt='o', color='steelblue', capsize=8, lw=2)
+ax.axvline(0, color='red', ls='--', lw=1, label='zero')
+ax.set_yticks([]); ax.set_xlabel('β̂₁ (TV slope)')
+ax.set_title('95% CI for slope — excludes 0'); ax.legend()
+plt.tight_layout(); plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <!-- EXAMPLE: t-stat with scipy -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>t-statistic and p-value manually (scipy)</h2>
+    <div class="ex-prompt">Reproduce the statsmodels t-stat and p-value from scratch using <code>scipy.stats.t</code>. This demystifies what the summary table is showing.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd, statsmodels.api as sm
+from scipy import stats
+
+try:
+    adv = pd.read_csv("https://www.statlearning.com/s/Advertising.csv", index_col=0)
+except Exception:
+    rng=np.random.default_rng(42); TV=rng.uniform(0.7,296.4,200); rad=rng.uniform(0,49.6,200)
+    adv=pd.DataFrame({'TV':TV,'radio':rad,'newspaper':rng.uniform(0.3,114,200),
+                      'sales':2.939+0.046*TV+0.189*rad+rng.normal(0,1.69,200)})
+
+result = sm.OLS(adv['sales'], sm.add_constant(adv[['TV']])).fit()
+
+b1  = result.params['TV']
+se  = result.bse['TV']
+n   = len(adv)
+dof = n - 2          # degrees of freedom for SLR
+
+t_stat  = b1 / se
+p_value = 2 * stats.t.sf(abs(t_stat), df=dof)   # two-sided
+
+print(f"β̂₁      = {b1:.6f}")
+print(f"SE(β̂₁)  = {se:.6f}")
+print(f"t        = β̂₁ / SE = {t_stat:.4f}")
+print(f"dof      = {dof}")
+print(f"p-value  = 2·P(T > |t|) = {p_value:.2e}")
+print()
+print("Statsmodels cross-check:")
+print(f"  tvalue = {result.tvalues['TV']:.4f}  pvalue = {result.pvalues['TV']:.2e}")
+print("\nConclusion: p << 0.05 → reject H₀: β₁ = 0")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">stats.t.sf(t, df) is the survival function: P(T > t). Two-sided p = 2 × that area. When t = 17.67 and df = 198, the p-value is essentially zero — conclusive evidence against H₀.</script>
+  </section>
+
+  <!-- EXERCISE: CI and p-value -->
+  <section class="exercise" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Exercise 2 — Interpret CI and p-value for HouseAge</h2>
+    <div class="ex-prompt">Fit <code>MedHouseVal ~ HouseAge</code> on the California housing dataset using statsmodels. Store the result in <code>m</code>. Then compute the 95% CI and t-statistic for <code>HouseAge</code> manually using scipy.</div>
+<textarea class="ex-code">import numpy as np, statsmodels.formula.api as smf
+from sklearn.datasets import fetch_california_housing
+from scipy import stats
+
+cal = fetch_california_housing(as_frame=True).frame
+
+# Step 1: fit the model, store in `m`
+m = smf.ols('MedHouseVal ~ HouseAge', data=cal).fit()
+print(m.summary().tables[1])
+
+# Step 2: compute t-stat manually
+b1 = m.params['HouseAge']
+se = m.bse['HouseAge']
+n  = len(cal)
+t_stat  = b1 / se
+p_value = 2 * stats.t.sf(abs(t_stat), df=n-2)
+print(f"\nManual t = {t_stat:.4f},  p = {p_value:.4f}")
+
+# Step 3: Is HouseAge as strong as MedInc?
+m2 = smf.ols('MedHouseVal ~ MedInc', data=cal).fit()
+print(f"\nHouseAge R² = {m.rsquared:.3f}  vs  MedInc R² = {m2.rsquared:.3f}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+    <script type="text/x-check">
+import numpy as np
+assert 'm' in dir(), "Store your model in variable `m`"
+assert hasattr(m, 'rsquared'), "`m` must be a fitted statsmodels model"
+assert 'HouseAge' in m.params.index, "Model must include HouseAge as a predictor"
+assert abs(m.params['HouseAge'] - 0.021) < 0.005, f"HouseAge slope ≈ 0.021, got {m.params['HouseAge']:.4f}"
+assert 't_stat' in dir(), "Compute t_stat manually and store it in `t_stat`"
+assert abs(t_stat - m.tvalues['HouseAge']) < 0.1, "Manual t_stat doesn't match statsmodels"
+    </script>
+    <script type="text/x-solution">import numpy as np, statsmodels.formula.api as smf
+from sklearn.datasets import fetch_california_housing
+from scipy import stats
+
+cal = fetch_california_housing(as_frame=True).frame
+m = smf.ols('MedHouseVal ~ HouseAge', data=cal).fit()
+print(m.summary().tables[1])
+
+b1 = m.params['HouseAge']
+se = m.bse['HouseAge']
+n  = len(cal)
+t_stat  = b1 / se
+p_value = 2 * stats.t.sf(abs(t_stat), df=n-2)
+print(f"\nManual t = {t_stat:.4f},  p = {p_value:.4f}")
+
+m2 = smf.ols('MedHouseVal ~ MedInc', data=cal).fit()
+print(f"\nHouseAge R² = {m.rsquared:.3f}  vs  MedInc R² = {m2.rsquared:.3f}")
+    </script>
+    <script type="text/x-explain">HouseAge slope ≈ 0.021 (statistically significant, p ≈ 0), but R² ≈ 0.01 — tiny. Age is associated with value but explains almost none of its variance. MedInc R² ≈ 0.47 is vastly more informative. Statistical significance does not imply practical importance.</script>
   </section>
 
 </section>
+
+<!-- ═══════════════════════════════════ PART 3 ════════════════════════════════ -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 3</span>
     <h1>Assessing Model Accuracy</h1>
     <p class="muted">RSE and R²</p>
   </section>
-  <section>
-    <h2>Residual Standard Error (RSE)</h2>
-<ul>
-  <li class="fragment fade-up">RSE = √(RSS / (n − 2)) — the average size of a residual.</li>
-  <li class="fragment fade-up">It estimates σ, the standard deviation of ε.</li>
-  <li class="fragment fade-up">RSE is in the same units as Y (thousands of units of sales).</li>
-  <li class="fragment fade-up">Advertising TV: RSE = 3.26 → typical prediction error ≈ 3 260 units.</li>
-  <li class="fragment fade-up">Whether 3.26 is 'large' depends on the mean of Y (avg sales ≈ 14.0 → ~23 % error).</li>
-</ul>
-    <aside class="notes">RSE is an absolute measure of fit; R² is relative. Always report both.</aside>
-  </section>
 
   <section>
-    <h2>R-squared (fraction of variance explained)</h2>
-<ul>
-  <li class="fragment fade-up">TSS = Σ(yᵢ − ȳ)² — total variance in Y before the model.</li>
-  <li class="fragment fade-up">RSS = Σ(yᵢ − ŷᵢ)² — residual variance after the model.</li>
-  <li class="fragment fade-up"><strong>R² = (TSS − RSS) / TSS = 1 − RSS/TSS</strong></li>
-  <li class="fragment fade-up">R² ∈ [0, 1]: 0 means the model explains nothing; 1 means a perfect fit.</li>
-  <li class="fragment fade-up">Advertising TV: R² = 0.612 → TV alone explains 61 % of the variance in sales.</li>
-</ul>
-    <aside class="notes">In SLR, R² = r² where r is the Pearson correlation coefficient between X and Y.</aside>
+    <h2>RSE and R²</h2>
+    <ul>
+      <li class="fragment fade-up"><strong>RSE</strong> = √(RSS / (n−2)) — typical residual size, in the units of Y.</li>
+      <li class="fragment fade-up"><strong>R²</strong> = (TSS − RSS) / TSS = 1 − RSS/TSS &nbsp;∈ [0, 1].</li>
+      <li class="fragment fade-up">Advertising TV: RSE = 3.26 (≈ 23% of mean sales), R² = 0.612.</li>
+      <li class="fragment fade-up">In SLR: R² = r² where r is the Pearson correlation.</li>
+    </ul>
+    <table style="font-size:0.9em;margin:1em auto;">
+      <tr><th>Quantity</th><th>Value</th></tr>
+      <tr><td>RSE</td><td>3.26</td></tr>
+      <tr><td>R²</td><td>0.612</td></tr>
+      <tr><td>F-statistic</td><td>312.1</td></tr>
+    </table>
   </section>
 
-  <section>
-    <h2>Summary for TV → Sales SLR</h2>
-<table style="font-size:0.95em;margin:0.5em auto;"><tr><th>Quantity</th><th>Value</th></tr><tr><td>RSE</td><td>3.26</td></tr><tr><td>R²</td><td>0.612</td></tr><tr><td>F-statistic</td><td>312.1</td></tr></table><p class="muted" style="margin-top:1em;">61 % of variance in sales is explained by TV spend. Decent, but there is clearly more going on.</p>
-    <aside class="notes">The F-statistic tests whether at least one predictor is useful. In SLR it equals t². 312 = 17.67² — consistent.</aside>
+  <!-- EXAMPLE: RSE and R² three routes -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>RSE and R² — manual, statsmodels, sklearn</h2>
+    <div class="ex-prompt">Three ways to compute the same two quantities. Note: sklearn's RMSE divides by <em>n</em>, not <em>n−2</em> — it's slightly different from RSE.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd, statsmodels.api as sm
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score, mean_squared_error
+
+try:
+    adv = pd.read_csv("https://www.statlearning.com/s/Advertising.csv", index_col=0)
+except Exception:
+    rng=np.random.default_rng(42); TV=rng.uniform(0.7,296.4,200); rad=rng.uniform(0,49.6,200)
+    adv=pd.DataFrame({'TV':TV,'radio':rad,'newspaper':rng.uniform(0.3,114,200),
+                      'sales':2.939+0.046*TV+0.189*rad+rng.normal(0,1.69,200)})
+x, y = adv['TV'].values, adv['sales'].values
+
+result = sm.OLS(y, sm.add_constant(adv[['TV']])).fit()
+y_hat  = result.fittedvalues
+
+# --- manual ---
+tss = np.sum((y - y.mean())**2)
+rss = np.sum((y - y_hat)**2)
+r2_manual  = (tss - rss) / tss
+rse_manual = np.sqrt(rss / (len(y) - 2))
+
+# --- statsmodels ---
+r2_sm  = result.rsquared
+rse_sm = np.sqrt(result.mse_resid)
+
+# --- sklearn ---
+sk = LinearRegression().fit(adv[['TV']], y)
+r2_sk   = r2_score(y, sk.predict(adv[['TV']]))
+rmse_sk = mean_squared_error(y, sk.predict(adv[['TV']]))**0.5  # divides by n
+
+print(f"{'':15s}  {'R²':>7s}  {'RSE/RMSE':>10s}")
+print(f"{'manual':15s}  {r2_manual:7.4f}  {rse_manual:10.4f}")
+print(f"{'statsmodels':15s}  {r2_sm:7.4f}  {rse_sm:10.4f}")
+print(f"{'sklearn RMSE':15s}  {r2_sk:7.4f}  {rmse_sk:10.4f}  ← divides by n, not n-2")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <!-- EXERCISE: compare features by R² and RSE -->
+  <section class="exercise" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Exercise 3 — Which feature explains the most variance?</h2>
+    <div class="ex-prompt">Fit a SLR for each of four features against <code>MedHouseVal</code>. Store your results as a pandas DataFrame called <code>results_df</code> with columns <code>feature</code>, <code>R2</code>, and <code>RSE</code>. Print it sorted by R² descending.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd, statsmodels.formula.api as smf
+from sklearn.datasets import fetch_california_housing
+
+cal = fetch_california_housing(as_frame=True).frame
+features = ['MedInc', 'HouseAge', 'AveRooms', 'Population']
+
+rows = []
+for feat in features:
+    m = smf.ols(f'MedHouseVal ~ {feat}', data=cal).fit()
+    rows.append({'feature': feat, 'R2': m.rsquared, 'RSE': m.mse_resid**0.5})
+
+results_df = pd.DataFrame(rows).sort_values('R2', ascending=False)
+print(results_df.to_string(index=False))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+    <script type="text/x-check">
+import numpy as np
+assert 'results_df' in dir(), "Store your DataFrame in `results_df`"
+assert list(results_df.columns) == ['feature','R2','RSE'] or set(['feature','R2','RSE']).issubset(set(results_df.columns)), "results_df must have columns: feature, R2, RSE"
+assert len(results_df) == 4, "results_df must have 4 rows (one per feature)"
+best = results_df.sort_values('R2', ascending=False).iloc[0]
+assert best['feature'] == 'MedInc', f"MedInc should have the highest R², but got {best['feature']}"
+r2_medinc = results_df.loc[results_df['feature']=='MedInc', 'R2'].values[0]
+assert abs(r2_medinc - 0.47) < 0.05, f"MedInc R² should be ≈ 0.47, got {r2_medinc:.3f}"
+    </script>
+    <script type="text/x-solution">import pandas as pd, statsmodels.formula.api as smf
+from sklearn.datasets import fetch_california_housing
+cal = fetch_california_housing(as_frame=True).frame
+features = ['MedInc', 'HouseAge', 'AveRooms', 'Population']
+rows = []
+for feat in features:
+    m = smf.ols(f'MedHouseVal ~ {feat}', data=cal).fit()
+    rows.append({'feature': feat, 'R2': m.rsquared, 'RSE': m.mse_resid**0.5})
+results_df = pd.DataFrame(rows).sort_values('R2', ascending=False)
+print(results_df.to_string(index=False))
+    </script>
+    <script type="text/x-explain">MedInc dominates (R² ≈ 0.47). HouseAge is statistically significant but practically useless (R² ≈ 0.01). AveRooms is negative — more rooms in a tract means cheaper housing (rooms per household, not total rooms). Population has virtually no linear relationship with median value. Always report RSE alongside R² — a model can have high R² but still predict with large absolute error.</script>
   </section>
 
 </section>
+
+<!-- ═══════════════════════════════════ PART 4 ════════════════════════════════ -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 4</span>
     <h1>Multiple Linear Regression</h1>
     <p class="muted">more predictors, one model</p>
   </section>
+
   <section>
     <h2>The MLR model</h2>
-<ul>
-  <li class="fragment fade-up"><strong>Y = β₀ + β₁X₁ + β₂X₂ + … + βₚXₚ + ε</strong></li>
-  <li class="fragment fade-up">Each βⱼ is the expected change in Y per unit increase in Xⱼ, <em>holding all other predictors fixed</em>.</li>
-  <li class="fragment fade-up">Advertising: sales = β₀ + β₁·TV + β₂·radio + β₃·newspaper + ε</li>
-  <li class="fragment fade-up">Least squares extends naturally — minimise RSS over all coefficients simultaneously.</li>
-  <li class="fragment fade-up">The fit is now a <em>hyperplane</em> in p+1 dimensions.</li>
-</ul>
-    <aside class="notes">The interpretation &#x27;holding others fixed&#x27; is ideal; in practice predictors are correlated and change together.</aside>
+    <ul>
+      <li class="fragment fade-up"><strong>Y = β₀ + β₁X₁ + β₂X₂ + … + βₚXₚ + ε</strong></li>
+      <li class="fragment fade-up">Each βⱼ = expected change in Y per unit ↑ in Xⱼ, <em>holding all others fixed</em>.</li>
+      <li class="fragment fade-up">The fit is a hyperplane in p+1 dimensions.</li>
+    </ul>
   </section>
 
   <section>
-    <h2>Woes of interpreting regression coefficients</h2>
-<div class="two-col"><div><ul>
-  <li>Mosteller & Tukey (1977): predictors usually change <em>together</em> — ceteris-paribus is theoretical.</li>
-  <li><strong>Example:</strong> newspaper appears significant alone, but insignificant in MLR — its signal was radio's.</li>
-  <li><em>Correlations among predictors inflate variance and shift coefficients.</em></li>
-</ul></div><div><img src="img/ch3_correlation_heatmap.svg" style="width:100%;max-height:46vh;object-fit:contain;"></div></div>
-    <aside class="notes">These examples from ISLR Ch3 are classic suppressors. The key lesson: MLR coefficients are partial effects, not marginal effects.</aside>
+    <h2>The woes of interpreting MLR coefficients</h2>
+    <div class="two-col">
+      <div><ul>
+        <li>Predictors usually move <em>together</em> — ceteris-paribus is theoretical.</li>
+        <li><strong>Example:</strong> newspaper looks significant alone, but collapses once radio is in the model.</li>
+      </ul></div>
+      <div><img src="img/ch3_correlation_heatmap.svg" style="width:100%;max-height:46vh;object-fit:contain;"></div>
+    </div>
   </section>
 
   <section>
-    <h2>MLR results: Advertising data</h2>
-<table style="font-size:0.88em;margin:0.3em auto;"><tr><th></th><th>Coef.</th><th>SE</th><th>t</th><th>p-value</th></tr><tr><td>Intercept</td><td>2.939</td><td>0.312</td><td>9.42</td><td>&lt;0.0001</td></tr><tr><td>TV</td><td>0.046</td><td>0.001</td><td>32.81</td><td>&lt;0.0001</td></tr><tr><td>radio</td><td>0.189</td><td>0.009</td><td>21.89</td><td>&lt;0.0001</td></tr><tr><td>newspaper</td><td>−0.001</td><td>0.006</td><td>−0.18</td><td>0.8599</td></tr></table><p class="muted" style="font-size:0.85em;margin-top:0.5em;">Newspaper is <em>insignificant</em> once radio is in the model (corr(radio, newspaper) = 0.35).</p>
-    <aside class="notes">Key insight: newspaper was significant in isolation because of its correlation with radio. MLR removes that spurious signal.</aside>
+    <h2>MLR results and model fit</h2>
+    <div class="two-col">
+      <div><img src="img/ch3_mlr_coefficients.svg" style="width:100%;max-height:46vh;object-fit:contain;"></div>
+      <div>
+        <table style="font-size:0.85em;margin:0.5em auto;">
+          <tr><th></th><th>SLR (TV)</th><th>MLR (all)</th></tr>
+          <tr><td>RSE</td><td>3.26</td><td>1.69</td></tr>
+          <tr><td>R²</td><td>0.612</td><td>0.897</td></tr>
+          <tr><td>F-stat</td><td>312</td><td>570</td></tr>
+        </table>
+        <p class="muted" style="font-size:0.82em;">MLR R² = 89.7 %. Newspaper CI crosses zero.</p>
+      </div>
+    </div>
   </section>
 
-  <section>
-    <h2>MLR coefficients and model fit</h2>
-<div class="two-col"><div><img src="img/ch3_mlr_coefficients.svg" style="width:100%;max-height:46vh;object-fit:contain;"></div><div><table style="font-size:0.88em;margin:0.5em auto;"><tr><th>Quantity</th><th>SLR (TV)</th><th>MLR (all)</th></tr><tr><td>RSE</td><td>3.26</td><td>1.69</td></tr><tr><td>R²</td><td>0.612</td><td>0.897</td></tr><tr><td>F-stat</td><td>312</td><td>570</td></tr></table><p class="muted" style="font-size:0.85em;margin-top:0.5em;">Newspaper CI crosses zero — not significant. MLR R² = 89.7 %.</p></div></div>
-    <aside class="notes">R² always increases when you add predictors (even noise). Adjusted R² and test-set MSE penalise model complexity.</aside>
+  <!-- EXAMPLE: suppressor effect -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Suppressor effect — newspaper alone vs. with radio</h2>
+    <div class="ex-prompt">Newspaper looks significant in SLR but vanishes in MLR. The reason is its correlation with radio (r ≈ 0.35) — newspaper was borrowing radio's predictive signal.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd, statsmodels.formula.api as smf
+
+try:
+    adv = pd.read_csv("https://www.statlearning.com/s/Advertising.csv", index_col=0)
+except Exception:
+    rng=np.random.default_rng(42); TV=rng.uniform(0.7,296.4,200); rad=rng.uniform(0,49.6,200)
+    nwp=rng.uniform(0.3,114,200)
+    adv=pd.DataFrame({'TV':TV,'radio':rad,'newspaper':nwp,
+                      'sales':2.939+0.046*TV+0.189*rad-0.001*nwp+rng.normal(0,1.69,200)})
+
+# Newspaper alone — looks significant
+m_news = smf.ols('sales ~ newspaper', data=adv).fit()
+print("=== Newspaper alone ===")
+print(f"  coef={m_news.params['newspaper']:.4f}  p={m_news.pvalues['newspaper']:.4f}")
+
+# Radio + newspaper — newspaper disappears
+m_both = smf.ols('sales ~ radio + newspaper', data=adv).fit()
+print("\n=== Radio + Newspaper ===")
+print(f"  radio coef={m_both.params['radio']:.4f}  p={m_both.pvalues['radio']:.4f}")
+print(f"  newspaper coef={m_both.params['newspaper']:.4f}  p={m_both.pvalues['newspaper']:.4f}")
+
+print(f"\ncorr(radio, newspaper) = {adv[['radio','newspaper']].corr().iloc[0,1]:.3f}")
+print("→ newspaper was 'borrowing' radio's signal.")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
-    <h2>MLR — least-squares plane</h2>
-<img src="img/ch3_mlr_plane.svg" style="width:100%;max-height:54vh;object-fit:contain;"><p class="muted" style="font-size:0.85em;margin-top:0.3em;">The least-squares plane through TV × radio space. Red dots: observations. Residuals are vertical distances from the plane to each point.</p>
-    <aside class="notes">Geometric intuition for MLR: one hyperplane per predictor dimension. Residuals are still vertical distances from the plane to the data points.</aside>
+  <!-- EXAMPLE: fit MLR sklearn vs statsmodels -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Fitting MLR — sklearn vs. statsmodels</h2>
+    <div class="ex-prompt">Both frameworks give identical coefficients. sklearn is for predictions; statsmodels adds inference. The comparison table shows how much radio improves the fit.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd, statsmodels.api as sm
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score
+
+try:
+    adv = pd.read_csv("https://www.statlearning.com/s/Advertising.csv", index_col=0)
+except Exception:
+    rng=np.random.default_rng(42); TV=rng.uniform(0.7,296.4,200); rad=rng.uniform(0,49.6,200)
+    nwp=rng.uniform(0.3,114,200)
+    adv=pd.DataFrame({'TV':TV,'radio':rad,'newspaper':nwp,
+                      'sales':2.939+0.046*TV+0.189*rad-0.001*nwp+rng.normal(0,1.69,200)})
+y = adv['sales'].values
+features = ['TV','radio','newspaper']
+
+# sklearn
+sk = LinearRegression().fit(adv[features], y)
+print("sklearn coef:", dict(zip(features, sk.coef_.round(4))))
+
+# statsmodels
+sm_mlr = sm.OLS(y, sm.add_constant(adv[features])).fit()
+print(sm_mlr.summary())
+
+# Comparison
+sm_slr = sm.OLS(y, sm.add_constant(adv[['TV']])).fit()
+print("\n{'Model':20s}  {'R²':>6s}  {'Adj R²':>8s}  {'RSE':>6s}")
+for name, res in [('SLR (TV)', sm_slr), ('MLR (TV+rad+nwp)', sm_mlr)]:
+    print(f"{name:20s}  {res.rsquared:6.3f}  {res.rsquared_adj:8.3f}  {res.mse_resid**0.5:6.3f}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <!-- EXERCISE: MLR on California housing -->
+  <section class="exercise" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Exercise 4 — MLR on California Housing</h2>
+    <div class="ex-prompt">Fit <code>MedHouseVal ~ MedInc + HouseAge + AveRooms</code>. Store the result in <code>m</code>. Compare R² and RSE to the SLR from Exercise 1.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd, statsmodels.formula.api as smf
+from sklearn.datasets import fetch_california_housing
+
+cal = fetch_california_housing(as_frame=True).frame
+
+# Fit MLR — store in `m`
+m = smf.ols('MedHouseVal ~ MedInc + HouseAge + AveRooms', data=cal).fit()
+print(m.summary())
+
+# Compare to SLR
+m_slr = smf.ols('MedHouseVal ~ MedInc', data=cal).fit()
+print(f"\nSLR  R²={m_slr.rsquared:.3f}  RSE={m_slr.mse_resid**0.5:.3f}")
+print(f"MLR  R²={m.rsquared:.3f}  RSE={m.mse_resid**0.5:.3f}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+    <script type="text/x-check">
+import numpy as np
+assert 'm' in dir(), "Store your fitted model in variable `m`"
+assert hasattr(m, 'rsquared'), "`m` must be a fitted statsmodels model"
+assert set(['MedInc','HouseAge','AveRooms']).issubset(set(m.params.index)), "Model must include MedInc, HouseAge, AveRooms"
+assert m.rsquared > 0.50, f"R² should be > 0.50 for this MLR, got {m.rsquared:.3f}"
+assert abs(m.params['MedInc'] - 0.45) < 0.05, f"MedInc coefficient ≈ 0.45, got {m.params['MedInc']:.4f}"
+    </script>
+    <script type="text/x-solution">import pandas as pd, statsmodels.formula.api as smf
+from sklearn.datasets import fetch_california_housing
+cal = fetch_california_housing(as_frame=True).frame
+m = smf.ols('MedHouseVal ~ MedInc + HouseAge + AveRooms', data=cal).fit()
+print(m.summary())
+m_slr = smf.ols('MedHouseVal ~ MedInc', data=cal).fit()
+print(f"\nSLR  R²={m_slr.rsquared:.3f}  RSE={m_slr.mse_resid**0.5:.3f}")
+print(f"MLR  R²={m.rsquared:.3f}  RSE={m.mse_resid**0.5:.3f}")
+    </script>
+    <script type="text/x-explain">Adding HouseAge and AveRooms raises R² from 0.47 to ~0.53 and lowers RSE — they add real signal. Notice AveRooms has a negative coefficient: tracts with many rooms per household tend to be less dense and cheaper (it's an average, not a total). This is the "holding others fixed" interpretation: for the same income level, more rooms per house correlates with lower value.</script>
   </section>
 
 </section>
+
+<!-- ═══════════════════════════════════ PART 5 ════════════════════════════════ -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 5</span>
     <h1>Variable Selection</h1>
-    <p class="muted">F-statistic, forward/backward selection, information criteria</p>
+    <p class="muted">F-statistic, forward/backward, AIC/BIC</p>
   </section>
+
   <section>
     <h2>Is at least one predictor useful? — the F-test</h2>
-<ul>
-  <li class="fragment fade-up">H₀: β₁ = β₂ = … = βₚ = 0 (none of the predictors help)</li>
-  <li class="fragment fade-up">F = [(TSS − RSS) / p] / [RSS / (n − p − 1)]</li>
-  <li class="fragment fade-up">Under H₀, F ~ Fₚ,ₙ₋ₚ₋₁. A large F rejects H₀.</li>
-  <li class="fragment fade-up">Advertising MLR: F = 570, p ≈ 0 → at least one of TV/radio/newspaper predicts sales.</li>
-  <li class="fragment fade-up"><em>Do not rely on individual t-tests alone when p is large</em> — you'll get false positives by chance.</li>
-</ul>
-    <aside class="notes">With p = 100 predictors and α = 0.05, expect ~5 false positives by chance. The F-test controls for this.</aside>
+    <ul>
+      <li class="fragment fade-up">H₀: β₁ = β₂ = … = βₚ = 0. F = [(TSS−RSS)/p] / [RSS/(n−p−1)]</li>
+      <li class="fragment fade-up">Under H₀: F ~ F(p, n−p−1). Large F → reject H₀.</li>
+      <li class="fragment fade-up">Advertising MLR: F = 570, p ≈ 0 → at least one predictor helps.</li>
+      <li class="fragment fade-up"><em>Don't use individual t-tests when p is large</em> — you'll accumulate false positives.</li>
+    </ul>
   </section>
 
   <section>
-    <h2>Deciding which variables matter</h2>
-<div class="two-col"><div><ul>
-  <li><strong>All-subsets:</strong> 2ᵖ models — infeasible for p ≥ 40.</li>
-  <li><strong>Forward selection:</strong> greedily add the predictor that most reduces AIC.</li>
-  <li><strong>Backward selection:</strong> drop the predictor with the largest p-value.</li>
-  <li>Both are heuristics — no global optimality guarantee.</li>
-</ul></div><div><img src="img/ch3_forward_selection.svg" style="width:100%;max-height:46vh;object-fit:contain;"></div></div>
-    <aside class="notes">Forward selection cannot remove a variable once added; backward cannot add one once removed. Stepwise selection allows both directions.</aside>
+    <h2>Selection strategies and model-size criteria</h2>
+    <div class="two-col">
+      <div>
+        <ul>
+          <li><strong>Forward:</strong> greedily add predictor that most reduces AIC.</li>
+          <li><strong>Backward:</strong> drop predictor with largest p-value.</li>
+          <li>Both are heuristics — no global guarantee.</li>
+        </ul>
+      </div>
+      <div>
+        <img src="img/ch3_forward_selection.svg" style="width:100%;max-height:46vh;object-fit:contain;">
+      </div>
+    </div>
+    <ul>
+      <li class="fragment fade-up"><strong>Adj R²</strong> = 1 − [RSS/(n−p−1)] / [TSS/(n−1)]</li>
+      <li class="fragment fade-up"><strong>AIC</strong> = n·log(RSS/n) + 2p &nbsp;· &nbsp;<strong>BIC</strong> = n·log(RSS/n) + p·log(n)</li>
+    </ul>
   </section>
 
-  <section>
-    <h2>Choosing the optimal model size</h2>
-<ul>
-  <li class="fragment fade-up"><strong>Adjusted R²</strong> = 1 − [RSS/(n−p−1)] / [TSS/(n−1)] — penalises for adding uninformative predictors.</li>
-  <li class="fragment fade-up"><strong>AIC</strong> = n·log(RSS/n) + 2p — prefer smaller AIC.</li>
-  <li class="fragment fade-up"><strong>BIC</strong> = n·log(RSS/n) + p·log(n) — stronger penalty than AIC; prefers sparser models.</li>
-  <li class="fragment fade-up"><strong>Cross-validation (CV)</strong> — the gold standard; directly estimates test MSE.</li>
-  <li class="fragment fade-up">All four criteria trade training fit against model complexity.</li>
-</ul>
-    <aside class="notes">CV is most reliable but computationally expensive. AIC/BIC are fast analytical approximations. We&#x27;ll study CV in depth in a later course.</aside>
+  <!-- EXAMPLE: F-test -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>F-test in code</h2>
+    <div class="ex-prompt">Compute the F-statistic from the statsmodels result and also manually from TSS and RSS. Compare to the critical value from scipy.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd, statsmodels.api as sm
+from scipy import stats
+
+try:
+    adv = pd.read_csv("https://www.statlearning.com/s/Advertising.csv", index_col=0)
+except Exception:
+    rng=np.random.default_rng(42); TV=rng.uniform(0.7,296.4,200); rad=rng.uniform(0,49.6,200)
+    nwp=rng.uniform(0.3,114,200)
+    adv=pd.DataFrame({'TV':TV,'radio':rad,'newspaper':nwp,
+                      'sales':2.939+0.046*TV+0.189*rad-0.001*nwp+rng.normal(0,1.69,200)})
+y = adv['sales'].values
+sm_mlr = sm.OLS(y, sm.add_constant(adv[['TV','radio','newspaper']])).fit()
+
+p = 3; n = len(y)
+tss = np.sum((y - y.mean())**2)
+rss = sm_mlr.ssr
+F_manual = ((tss - rss) / p) / (rss / (n - p - 1))
+F_crit   = stats.f.ppf(0.95, dfn=p, dfd=n-p-1)
+
+print(f"F (statsmodels) : {sm_mlr.fvalue:.1f}")
+print(f"F (manual)      : {F_manual:.1f}")
+print(f"F critical 0.05 : {F_crit:.2f}")
+print(f"p-value         : {sm_mlr.f_pvalue:.2e}")
+print(f"\nF >> F_crit → reject H₀ — at least one predictor is useful.")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <!-- EXAMPLE: forward selection -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Forward selection by AIC</h2>
+    <div class="ex-prompt">Greedily add the predictor that most reduces AIC. The algorithm correctly identifies TV and radio as useful — and stops before adding newspaper.</div>
+<textarea class="ex-code">import pandas as pd, statsmodels.formula.api as smf
+
+try:
+    adv = pd.read_csv("https://www.statlearning.com/s/Advertising.csv", index_col=0)
+except Exception:
+    import numpy as np
+    rng=np.random.default_rng(42); TV=rng.uniform(0.7,296.4,200); rad=rng.uniform(0,49.6,200)
+    nwp=rng.uniform(0.3,114,200)
+    adv=pd.DataFrame({'TV':TV,'radio':rad,'newspaper':nwp,
+                      'sales':2.939+0.046*TV+0.189*rad-0.001*nwp+rng.normal(0,1.69,200)})
+
+def forward_aic(df, target):
+    remaining = set(df.columns) - {target}
+    selected, aic = [], smf.ols(f'{target} ~ 1', data=df).fit().aic
+    while remaining:
+        aics = {v: smf.ols(f"{target} ~ {' + '.join(selected + [v])}", data=df).fit().aic
+                for v in remaining}
+        best = min(aics, key=aics.get)
+        if aics[best] < aic:
+            selected.append(best); remaining.remove(best); aic = aics[best]
+            print(f"+ {best:<12}  AIC={aic:.2f}  selected={selected}")
+        else:
+            print(f"Stop — adding any variable increases AIC."); break
+    return selected
+
+selected = forward_aic(adv, 'sales')
+print(f"\nFinal model: {selected}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">Forward selection picks radio first (it has the strongest signal once TV is absent), then TV. Newspaper increases AIC — it adds complexity without improving fit. This matches the p-value result: newspaper is not significant in the MLR.</script>
+  </section>
+
+  <!-- EXAMPLE: AIC/BIC all-subsets -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>All-subsets comparison — AIC, BIC, Adj R²</h2>
+    <div class="ex-prompt">Exhaustively compare all 7 non-empty subsets of the three Advertising predictors. AIC, BIC, and Adjusted R² all agree on the same best model.</div>
+<textarea class="ex-code">import pandas as pd, numpy as np, statsmodels.formula.api as smf
+from itertools import combinations
+
+try:
+    adv = pd.read_csv("https://www.statlearning.com/s/Advertising.csv", index_col=0)
+except Exception:
+    rng=np.random.default_rng(42); TV=rng.uniform(0.7,296.4,200); rad=rng.uniform(0,49.6,200)
+    nwp=rng.uniform(0.3,114,200)
+    adv=pd.DataFrame({'TV':TV,'radio':rad,'newspaper':nwp,
+                      'sales':2.939+0.046*TV+0.189*rad-0.001*nwp+rng.normal(0,1.69,200)})
+
+features = ['TV','radio','newspaper']
+rows = []
+for k in range(1, len(features)+1):
+    for combo in combinations(features, k):
+        m = smf.ols(f"sales ~ {' + '.join(combo)}", data=adv).fit()
+        rows.append({'predictors': '+'.join(combo), 'R²': round(m.rsquared,3),
+                     'Adj R²': round(m.rsquared_adj,3), 'AIC': round(m.aic,1),
+                     'BIC': round(m.bic,1)})
+
+sel = pd.DataFrame(rows).sort_values('AIC')
+print(sel.to_string(index=False))
+print(f"\nBest AIC: {sel.iloc[0]['predictors']}")
+print(f"Best BIC: {sel.sort_values('BIC').iloc[0]['predictors']}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <!-- EXERCISE: variable selection on California housing -->
+  <section class="exercise" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Exercise 5 — Variable selection on California housing</h2>
+    <div class="ex-prompt">Run an all-subsets comparison for <code>MedInc</code>, <code>HouseAge</code>, and <code>AveRooms</code> predicting <code>MedHouseVal</code>. Store the results DataFrame (sorted by AIC) in <code>sel_df</code>. Print the best model by AIC.</div>
+<textarea class="ex-code">import pandas as pd, statsmodels.formula.api as smf
+from sklearn.datasets import fetch_california_housing
+from itertools import combinations
+
+cal = fetch_california_housing(as_frame=True).frame
+features = ['MedInc', 'HouseAge', 'AveRooms']
+
+rows = []
+for k in range(1, len(features)+1):
+    for combo in combinations(features, k):
+        m = smf.ols(f"MedHouseVal ~ {' + '.join(combo)}", data=cal).fit()
+        rows.append({'predictors': '+'.join(combo), 'R²': round(m.rsquared,3),
+                     'Adj R²': round(m.rsquared_adj,3), 'AIC': round(m.aic,1),
+                     'BIC': round(m.bic,1)})
+
+sel_df = pd.DataFrame(rows).sort_values('AIC')
+print(sel_df.to_string(index=False))
+print(f"\nBest by AIC: {sel_df.iloc[0]['predictors']}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+    <script type="text/x-check">
+import numpy as np
+assert 'sel_df' in dir(), "Store your results DataFrame in `sel_df`"
+assert len(sel_df) == 7, f"Expected 7 rows (all non-empty subsets of 3 features), got {len(sel_df)}"
+assert 'AIC' in sel_df.columns, "sel_df must have an AIC column"
+best = sel_df.iloc[0]['predictors']
+assert 'MedInc' in best and 'HouseAge' in best and 'AveRooms' in best, \
+    f"Best model by AIC should include all three features. Got: {best}"
+    </script>
+    <script type="text/x-solution">import pandas as pd, statsmodels.formula.api as smf
+from sklearn.datasets import fetch_california_housing
+from itertools import combinations
+cal = fetch_california_housing(as_frame=True).frame
+features = ['MedInc','HouseAge','AveRooms']
+rows = []
+for k in range(1, len(features)+1):
+    for combo in combinations(features, k):
+        m = smf.ols(f"MedHouseVal ~ {' + '.join(combo)}", data=cal).fit()
+        rows.append({'predictors': '+'.join(combo), 'R²': round(m.rsquared,3),
+                     'Adj R²': round(m.rsquared_adj,3), 'AIC': round(m.aic,1), 'BIC': round(m.bic,1)})
+sel_df = pd.DataFrame(rows).sort_values('AIC')
+print(sel_df.to_string(index=False))
+print(f"\nBest by AIC: {sel_df.iloc[0]['predictors']}")
+    </script>
+    <script type="text/x-explain">All three features together give the best AIC and BIC — each one adds genuine signal. Unlike the Advertising case where newspaper added noise, HouseAge and AveRooms both carry real (if modest) information about house value beyond income. The Adj R² penalty is not large enough to drop either one. With only n=20640 and p=3, we're far from overfitting.</script>
   </section>
 
 </section>
+
+<!-- ═══════════════════════════════════ PART 6 ════════════════════════════════ -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 6</span>
     <h1>Qualitative Predictors</h1>
     <p class="muted">dummy variables, baselines, multi-level factors</p>
   </section>
+
   <section>
     <h2>Encoding binary qualitative predictors</h2>
-<ul>
-  <li class="fragment fade-up">Qualitative (categorical) variables can't enter the model as raw values.</li>
-  <li class="fragment fade-up">Create a <strong>dummy variable</strong>: xᵢ = 1 if female, 0 if male.</li>
-  <li class="fragment fade-up">Model: yᵢ = β₀ + β₁xᵢ + εᵢ = β₀ + β₁ (female) or β₀ (male).</li>
-  <li class="fragment fade-up">β₁ = expected difference in balance between females and males.</li>
-  <li class="fragment fade-up">pandas: <code>pd.get_dummies(df, drop_first=True)</code></li>
-</ul>
-    <aside class="notes">The baseline (reference) category is the one without a dummy variable — here, male. β₀ is the intercept for the baseline.</aside>
+    <ul>
+      <li class="fragment fade-up">Create a <strong>dummy variable</strong>: xᵢ = 1 if female, 0 if male (baseline).</li>
+      <li class="fragment fade-up">Model: balance = β₀ + β₁·female + ε</li>
+      <li class="fragment fade-up">β₀ = expected balance for males; β₁ = female − male difference.</li>
+    </ul>
+    <table style="font-size:0.88em;margin:0.8em auto;">
+      <tr><th></th><th>Coef.</th><th>SE</th><th>t</th><th>p</th></tr>
+      <tr><td>Intercept</td><td>509.80</td><td>33.13</td><td>15.39</td><td>&lt;.0001</td></tr>
+      <tr><td>gender[Female]</td><td>19.73</td><td>46.05</td><td>0.43</td><td>0.669</td></tr>
+    </table>
+    <p class="muted">Female cardholders carry $19.73 more — but p = 0.67, not significant.</p>
   </section>
 
   <section>
-    <h2>Credit card data: gender model</h2>
-<table style="font-size:0.95em;margin:0.5em auto;"><tr><th></th><th>Coefficient</th><th>SE</th><th>t</th><th>p-value</th></tr><tr><td>Intercept</td><td>509.80</td><td>33.13</td><td>15.39</td><td>&lt;0.0001</td></tr><tr><td>gender[Female]</td><td>19.73</td><td>46.05</td><td>0.43</td><td>0.669</td></tr></table><p class="muted" style="margin-top:0.8em;">Female cardholders carry $19.73 more balance on average — but p = 0.67, not significant.</p>
-    <aside class="notes">The baseline (Male) has expected balance = $509.80. Females: 509.80 + 19.73 = $529.53. The difference is not statistically meaningful.</aside>
+    <h2>Multi-level factors: ethnicity (3 levels)</h2>
+    <ul>
+      <li class="fragment fade-up">k levels → k−1 dummy variables. Omitted level = baseline.</li>
+      <li class="fragment fade-up">Ethnicity: Asian and Caucasian dummies, African American is baseline.</li>
+      <li class="fragment fade-up">β₀ = AA balance; β₁ = Asian − AA; β₂ = Caucasian − AA.</li>
+    </ul>
+    <table style="font-size:0.88em;margin:0.8em auto;">
+      <tr><th></th><th>Coef.</th><th>SE</th><th>t</th><th>p</th></tr>
+      <tr><td>Intercept (AA)</td><td>531.00</td><td>46.32</td><td>11.46</td><td>&lt;.0001</td></tr>
+      <tr><td>Asian</td><td>−18.69</td><td>65.02</td><td>−0.29</td><td>0.774</td></tr>
+      <tr><td>Caucasian</td><td>−12.50</td><td>56.68</td><td>−0.22</td><td>0.826</td></tr>
+    </table>
   </section>
 
-  <section>
-    <h2>Multi-level factors: ethnicity example</h2>
-<ul>
-  <li class="fragment fade-up">For k levels, create <strong>k − 1 dummy variables</strong>. The omitted level is the <em>baseline</em>.</li>
-  <li class="fragment fade-up">Ethnicity (3 levels): create Asian and Caucasian dummies; African American is baseline.</li>
-  <li class="fragment fade-up">yᵢ = β₀ + β₁·Asian + β₂·Caucasian + εᵢ</li>
-  <li class="fragment fade-up">β₀ = expected balance for AA; β₁ = AA–Asian difference; β₂ = AA–Caucasian difference.</li>
-</ul>
-    <aside class="notes">Changing the baseline level doesn&#x27;t change predictions or model fit — only the interpretation of coefficients changes.</aside>
+  <!-- EXAMPLE: dummy encoding three ways -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Dummy encoding — three approaches</h2>
+    <div class="ex-prompt">Using a simulated Credit dataset. Three equivalent approaches: statsmodels formula <code>C()</code>, <code>pd.get_dummies(drop_first=True)</code>, and sklearn's <code>OneHotEncoder</code>.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd
+import statsmodels.formula.api as smf
+from sklearn.preprocessing import OneHotEncoder
+
+# Simulate Credit dataset
+rng = np.random.default_rng(0); N = 400
+income   = rng.uniform(10, 180, N)
+gender   = rng.choice(['Male','Female'], N)
+student  = rng.choice(['No','Yes'], N, p=[0.7,0.3])
+balance  = 0.8*income + 19.73*(gender=='Female').astype(float) \
+         + 400*(student=='Yes').astype(float) + rng.normal(0,200,N)
+credit = pd.DataFrame({'income':income,'gender':gender,'student':student,'balance':balance})
+
+# 1. statsmodels C() — handles encoding automatically
+m1 = smf.ols('balance ~ C(gender)', data=credit).fit()
+print("=== C(gender) ===")
+print(m1.params.round(2))
+
+# 2. pd.get_dummies — manual, drop_first avoids perfect collinearity
+credit2 = pd.get_dummies(credit, columns=['gender'], drop_first=True, dtype=float)
+m2 = smf.ols('balance ~ gender_Male', data=credit2).fit()
+print("\n=== get_dummies (Male dummy) ===")
+print(m2.params.round(2))
+
+# 3. sklearn OneHotEncoder
+enc = OneHotEncoder(drop='first', sparse_output=False)
+enc_arr = enc.fit_transform(credit[['gender']])
+print("\n=== OneHotEncoder ===")
+print("feature names:", enc.get_feature_names_out())
+print("first 5 rows:", enc_arr[:5])
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">All three approaches produce identical model coefficients (within sign, depending on which category is the reference). Changing the baseline changes the interpretation of coefficients but never the fitted values, R², or RSE.</script>
   </section>
 
-  <section>
-    <h2>Credit card data: ethnicity model</h2>
-<table style="font-size:0.95em;margin:0.5em auto;"><tr><th></th><th>Coefficient</th><th>SE</th><th>t</th><th>p-value</th></tr><tr><td>Intercept (AA)</td><td>531.00</td><td>46.32</td><td>11.46</td><td>&lt;0.0001</td></tr><tr><td>ethnicity[Asian]</td><td>−18.69</td><td>65.02</td><td>−0.29</td><td>0.774</td></tr><tr><td>ethnicity[Caucasian]</td><td>−12.50</td><td>56.68</td><td>−0.22</td><td>0.826</td></tr></table><p class="muted" style="margin-top:0.8em;">Neither Asian nor Caucasian is significantly different from African American in balance.</p>
+  <!-- EXAMPLE: multi-level factor -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Multi-level factor: ethnicity and changing the baseline</h2>
+    <div class="ex-prompt">Fitting with 3-level ethnicity. The coefficients change when we change the baseline — but predictions stay identical. This is the key point about reference categories.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd, statsmodels.formula.api as smf
+
+rng = np.random.default_rng(0); N = 400
+income    = rng.uniform(10, 180, N)
+ethnicity = rng.choice(['African American','Asian','Caucasian'], N, p=[0.15,0.30,0.55])
+balance   = 531 + 0.8*income - 18.69*(ethnicity=='Asian').astype(float) \
+          - 12.50*(ethnicity=='Caucasian').astype(float) + rng.normal(0,200,N)
+credit = pd.DataFrame({'income':income,'ethnicity':ethnicity,'balance':balance})
+
+# Baseline = African American
+m_aa = smf.ols('balance ~ C(ethnicity, Treatment(reference="African American"))',
+               data=credit).fit()
+print("=== Baseline: African American ===")
+print(m_aa.params.round(2))
+
+# Baseline = Caucasian
+m_cau = smf.ols('balance ~ C(ethnicity, Treatment(reference="Caucasian"))',
+                data=credit).fit()
+print("\n=== Baseline: Caucasian ===")
+print(m_cau.params.round(2))
+
+# Predictions are IDENTICAL regardless of baseline
+import numpy as np
+preds_diff = np.max(np.abs(m_aa.fittedvalues - m_cau.fittedvalues))
+print(f"\nMax difference in predictions: {preds_diff:.10f}  (should be ≈ 0)")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <!-- EXERCISE: qualitative predictor -->
+  <section class="exercise" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Exercise 6 — Qualitative predictor on the Credit dataset</h2>
+    <div class="ex-prompt">Using the simulated credit dataset below, fit <code>balance ~ income + C(student)</code>. Store the result in <code>m</code>. Report the expected balance for a student with income=50 and a non-student with income=50.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd, statsmodels.formula.api as smf
+
+rng = np.random.default_rng(0); N = 400
+income  = rng.uniform(10, 180, N)
+student = rng.choice(['No','Yes'], N, p=[0.7,0.3])
+balance = 500 + 0.8*income + 400*(student=='Yes').astype(float) + rng.normal(0,200,N)
+credit = pd.DataFrame({'income':income,'student':student,'balance':balance})
+
+# Fit balance ~ income + C(student), store in `m`
+m = smf.ols('balance ~ income + C(student)', data=credit).fit()
+print(m.summary().tables[1])
+
+# Predict for income=50
+pred_nonstudent = m.predict(pd.DataFrame({'income':[50],'student':['No']}))
+pred_student    = m.predict(pd.DataFrame({'income':[50],'student':['Yes']}))
+print(f"\nNon-student (income=50): {pred_nonstudent.values[0]:.1f}")
+print(f"Student     (income=50): {pred_student.values[0]:.1f}")
+print(f"Difference (student premium): {pred_student.values[0] - pred_nonstudent.values[0]:.1f}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+    <script type="text/x-check">
+import numpy as np
+assert 'm' in dir(), "Store your model in variable `m`"
+assert hasattr(m, 'rsquared'), "`m` must be a fitted statsmodels model"
+assert 'income' in m.params.index, "Model must include 'income'"
+student_coef = [v for k,v in m.params.items() if 'Yes' in str(k)]
+assert len(student_coef) > 0, "Model must include C(student) — no student coefficient found"
+assert abs(student_coef[0] - 400) < 50, f"Student premium ≈ 400, got {student_coef[0]:.1f}"
+assert 'pred_student' in dir() and 'pred_nonstudent' in dir(), \
+    "Compute pred_student and pred_nonstudent"
+diff = float(pred_student) - float(pred_nonstudent)
+assert abs(diff - 400) < 50, f"Student−non-student difference should be ≈ 400, got {diff:.1f}"
+    </script>
+    <script type="text/x-solution">import numpy as np, pandas as pd, statsmodels.formula.api as smf
+rng = np.random.default_rng(0); N = 400
+income  = rng.uniform(10, 180, N)
+student = rng.choice(['No','Yes'], N, p=[0.7,0.3])
+balance = 500 + 0.8*income + 400*(student=='Yes').astype(float) + rng.normal(0,200,N)
+credit = pd.DataFrame({'income':income,'student':student,'balance':balance})
+m = smf.ols('balance ~ income + C(student)', data=credit).fit()
+print(m.summary().tables[1])
+pred_nonstudent = m.predict(pd.DataFrame({'income':[50],'student':['No']}))
+pred_student    = m.predict(pd.DataFrame({'income':[50],'student':['Yes']}))
+print(f"\nNon-student (income=50): {pred_nonstudent.values[0]:.1f}")
+print(f"Student     (income=50): {pred_student.values[0]:.1f}")
+print(f"Difference: {pred_student.values[0] - pred_nonstudent.values[0]:.1f}")
+    </script>
+    <script type="text/x-explain">The student dummy absorbs about $400 in expected balance: students carry $400 more debt at the same income level. The income slope (≈ 0.8) applies equally to both groups — the two predicted lines are parallel. If you want different slopes, you need an interaction term: income × C(student).</script>
   </section>
 
 </section>
+
+<!-- ═══════════════════════════════════ PART 7 ════════════════════════════════ -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 7</span>
-    <h1>Interactions & Non-linearity</h1>
+    <h1>Interactions &amp; Non-linearity</h1>
     <p class="muted">synergy effects, hierarchy principle, polynomial regression</p>
   </section>
+
   <section>
-    <h2>The additive assumption and its limits</h2>
-<ul>
-  <li class="fragment fade-up">The standard MLR model assumes each predictor's effect on Y is <em>additive</em> and <em>independent</em>.</li>
-  <li class="fragment fade-up">Advertising: the effect of TV on sales is the same regardless of radio spend.</li>
-  <li class="fragment fade-up">But: if radio boosts the effectiveness of TV ads, the model <em>underestimates</em> sales when both are high.</li>
-  <li class="fragment fade-up">This is a <strong>synergy</strong> (marketing) or <strong>interaction</strong> (statistics) effect.</li>
-</ul>
-    <aside class="notes">Visually: the residual plot against a 3D surface of TV × radio shows clear non-random structure when both channels are moderate.</aside>
+    <h2>Interaction terms</h2>
+    <ul>
+      <li class="fragment fade-up">sales = β₀ + β₁·TV + β₂·radio + β₃·(TV×radio) + ε</li>
+      <li class="fragment fade-up">Effective slope of TV = β̂₁ + β̂₃·radio → slope depends on radio.</li>
+      <li class="fragment fade-up">R² jumps from 89.7% (additive) to <strong>96.8%</strong> — interaction explains 69% of remaining variance.</li>
+      <li class="fragment fade-up"><strong>Hierarchy principle:</strong> if interaction is included, always include main effects too.</li>
+    </ul>
   </section>
 
   <section>
-    <h2>Adding an interaction term</h2>
-<ul>
-  <li class="fragment fade-up">Interaction model: sales = β₀ + β₁·TV + β₂·radio + β₃·(TV × radio) + ε</li>
-  <li class="fragment fade-up">β₃ captures how the effect of TV on sales <em>changes</em> as radio increases.</li>
-  <li class="fragment fade-up">The effective slope for TV is: β̂₁ + β̂₃ × radio.</li>
-  <li class="fragment fade-up">An extra $1 000 on TV → (19 + 1.1 × radio) additional units sold.</li>
-</ul>
-    <aside class="notes">This is the key insight: the interaction term makes the slope of one predictor a function of another.</aside>
+    <h2>Qualitative × quantitative &amp; polynomial</h2>
+    <div class="two-col">
+      <div>
+        <img src="img/ch3_student_interact.svg" style="width:100%;height:38vh;object-fit:contain;">
+        <p class="muted" style="font-size:0.8em;text-align:center;">With interaction — different slopes per group</p>
+      </div>
+      <div>
+        <img src="img/ch3_polynomial_fits.svg" style="width:100%;height:38vh;object-fit:contain;">
+        <p class="muted" style="font-size:0.8em;text-align:center;">Polynomial: same framework, engineered features</p>
+      </div>
+    </div>
+    <aside class="notes">Polynomial regression is still linear in the coefficients — just MLR with x, x², x³ as features.</aside>
   </section>
 
-  <section>
-    <h2>Interaction model: results</h2>
-<table style="font-size:0.88em;margin:0.3em auto;"><tr><th></th><th>Coef.</th><th>SE</th><th>t</th><th>p-value</th></tr><tr><td>Intercept</td><td>6.750</td><td>0.248</td><td>27.23</td><td>&lt;0.0001</td></tr><tr><td>TV</td><td>0.019</td><td>0.002</td><td>12.70</td><td>&lt;0.0001</td></tr><tr><td>radio</td><td>0.029</td><td>0.009</td><td>3.24</td><td>0.0014</td></tr><tr><td>TV×radio</td><td>0.0011</td><td>0.000</td><td>20.73</td><td>&lt;0.0001</td></tr></table><p class="muted" style="font-size:0.85em;margin-top:0.4em;">R² jumps from 89.7 % (additive) to <strong>96.8 %</strong>. The interaction term explains 69 % of the remaining variance.</p>
-    <aside class="notes">R² increase: (96.8 − 89.7) / (100 − 89.7) = 69 %. This is massive — the interaction is the dominant signal.</aside>
+  <!-- EXAMPLE: interaction model -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Interaction model in code</h2>
+    <div class="ex-prompt">Add TV×radio to the model. The shorthand <code>TV * radio</code> in the formula automatically includes both main effects and the interaction.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd, statsmodels.formula.api as smf
+
+try:
+    adv = pd.read_csv("https://www.statlearning.com/s/Advertising.csv", index_col=0)
+except Exception:
+    rng=np.random.default_rng(42); TV=rng.uniform(0.7,296.4,200); rad=rng.uniform(0,49.6,200)
+    nwp=rng.uniform(0.3,114,200)
+    adv=pd.DataFrame({'TV':TV,'radio':rad,'newspaper':nwp,
+                      'sales':2.939+0.046*TV+0.189*rad+0.0011*TV*rad-0.001*nwp+rng.normal(0,1.0,200)})
+
+m_add = smf.ols('sales ~ TV + radio', data=adv).fit()
+m_int = smf.ols('sales ~ TV * radio', data=adv).fit()  # TV*radio = TV+radio+TV:radio
+
+print("=== Additive ===")
+print(m_add.params.round(4))
+print(f"R² = {m_add.rsquared:.4f}")
+
+print("\n=== Interaction ===")
+print(m_int.params.round(6))
+print(f"R² = {m_int.rsquared:.4f}")
+
+b1 = m_int.params['TV']
+b3 = m_int.params['TV:radio']
+print("\nEffective TV slope at different radio levels:")
+for rad_level in [0, 20, 40]:
+    eff = b1 + b3 * rad_level
+    print(f"  radio={rad_level:2d}  → +{eff*1000:.0f} units per $1k TV")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">The interaction coefficient β₃ ≈ 0.0011 means: for each unit of radio spend, the TV slope increases by 0.0011 — so TV ads are more effective when combined with radio. R² increase ≈ 7 percentage points, which is large given we already had 90%.</script>
   </section>
 
-  <section>
-    <h2>The hierarchy principle</h2>
-<ul>
-  <li class="fragment fade-up">If an interaction term is included, <em>always</em> include the main effects too — even if their p-values are not significant.</li>
-  <li class="fragment fade-up">Reason: without main effects, the interaction term also absorbs them — its coefficient changes meaning.</li>
-  <li class="fragment fade-up">Rule of thumb: <strong>interaction in → main effects in</strong>.</li>
-  <li class="fragment fade-up">Applies equally to qualitative × quantitative interactions (e.g., student × income).</li>
-</ul>
-    <aside class="notes">This is a modelling convention, not a statistical test. Violating it leads to uninterpretable interaction coefficients.</aside>
+  <!-- EXAMPLE: qualitative x quantitative -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Qualitative × Quantitative interaction</h2>
+    <div class="ex-prompt">Without interaction: parallel income lines for students and non-students. With interaction: different slopes. Compare the two plots and the interaction p-value.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd, statsmodels.formula.api as smf
+import matplotlib; matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
+rng = np.random.default_rng(0); N = 400
+income  = rng.uniform(10, 180, N)
+student = rng.choice(['No','Yes'], N, p=[0.7,0.3])
+balance = 500 + 0.8*income + 400*(student=='Yes').astype(float) \
+        - 0.5*income*(student=='Yes').astype(float) + rng.normal(0,200,N)
+credit = pd.DataFrame({'income':income,'student':student,'balance':balance})
+
+m_no  = smf.ols('balance ~ income + C(student)', data=credit).fit()
+m_int = smf.ols('balance ~ income * C(student)', data=credit).fit()
+
+inc_range = np.linspace(credit['income'].min(), credit['income'].max(), 200)
+fig, axes = plt.subplots(1, 2, figsize=(11, 4))
+for ax, model, title in zip(axes, [m_no, m_int], ['No interaction','With interaction']):
+    for s, color, label in [('No','steelblue','non-student'),('Yes','tomato','student')]:
+        sub = credit[credit.student==s]
+        ax.scatter(sub['income'], sub['balance'], alpha=0.2, s=10, color=color)
+        pred = model.predict(pd.DataFrame({'income':inc_range,'student':s}))
+        ax.plot(inc_range, pred, lw=2, color=color, label=label)
+    ax.set(xlabel='Income', ylabel='Balance', title=title); ax.legend()
+plt.tight_layout(); plt.show()
+
+b_int_key = [k for k in m_int.params.index if 'Yes' in k and 'income' in k.lower()]
+if b_int_key:
+    print(f"\nInteraction coef: {m_int.params[b_int_key[0]]:.3f}  p={m_int.pvalues[b_int_key[0]]:.4f}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
-    <h2>Qualitative × quantitative: student example</h2>
-<div class="two-col"><div><img src="img/ch3_student_parallel.svg" style="width:100%;height:38vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;text-align:center;">No interaction — parallel lines (same slope)</p></div><div><img src="img/ch3_student_interact.svg" style="width:100%;height:38vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;text-align:center;">With interaction — different slopes</p></div></div>
-    <aside class="notes">The interaction term allows the income–balance slope to differ between students and non-students.</aside>
+  <!-- EXAMPLE: polynomial with sklearn Pipeline -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Polynomial regression — sklearn Pipeline</h2>
+    <div class="ex-prompt"><code>PolynomialFeatures + LinearRegression</code> in a Pipeline fits mpg ~ hp + hp² + … cleanly. Higher degree fits the training data better but may overfit.</div>
+<textarea class="ex-code">import numpy as np, matplotlib; matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
+from sklearn.metrics import r2_score
+from sklearn.datasets import fetch_openml
+
+try:
+    auto_raw = fetch_openml('autompg', version=1, as_frame=True, parser='auto')
+    auto = auto_raw.frame[['horsepower','mpg']].dropna().copy()
+    auto['horsepower'] = pd.to_numeric(auto['horsepower'], errors='coerce')
+    auto = auto.dropna()
+    import pandas as pd
+except Exception:
+    import pandas as pd
+    rng = np.random.default_rng(1)
+    hp  = rng.uniform(46, 230, 392)
+    mpg = 56.9 - 0.4662*hp + 0.0012*hp**2 + rng.normal(0,4,392)
+    auto = pd.DataFrame({'horsepower':hp,'mpg':mpg})
+
+hp  = auto['horsepower'].values.reshape(-1,1)
+mpg = auto['mpg'].values
+hp_range = np.linspace(hp.min(), hp.max(), 300).reshape(-1,1)
+
+fig, ax = plt.subplots(figsize=(9,5))
+ax.scatter(hp, mpg, alpha=0.3, s=15, edgecolors='k', lw=0.3, label='data')
+colors = {1:'orange', 2:'steelblue', 5:'green'}
+
+for deg in [1, 2, 5]:
+    pipe = Pipeline([('poly', PolynomialFeatures(deg, include_bias=False)),
+                     ('lr',   LinearRegression())])
+    pipe.fit(hp, mpg)
+    r2 = r2_score(mpg, pipe.predict(hp))
+    ax.plot(hp_range, pipe.predict(hp_range), lw=2, color=colors[deg],
+            label=f'degree {deg}  (R²={r2:.3f})')
+
+ax.set(xlabel='Horsepower', ylabel='MPG', title='Polynomial regression — Auto data')
+ax.legend(fontsize=9); plt.tight_layout(); plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">Degree 2 fits the curvature well. Degree 5 achieves slightly higher training R² but wiggles badly at the extremes — a classic sign of overfitting. Cross-validation (next example) correctly selects degree 2.</script>
   </section>
 
-  <section>
-    <h2>Non-linearity: polynomial regression</h2>
-<img src="img/ch3_polynomial_fits.svg" style="width:100%;max-height:50vh;object-fit:contain;"><p class="muted" style="font-size:0.85em;margin-top:0.3em;">Linear under-fits (misses curvature). Quadratic (degree 2) fits well. Degree 5 overfits — wiggles at the extremes. sklearn: <code>PolynomialFeatures(degree=2) + Pipeline</code>.</p>
-    <aside class="notes">Polynomial regression is still linear in the coefficients — it&#x27;s multiple linear regression with engineered features x, x², x³, ...</aside>
+  <!-- EXAMPLE: polynomial degree via cross-validation -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Choosing polynomial degree via cross-validation</h2>
+    <div class="ex-prompt">5-fold CV penalises complexity: degree 2 typically wins even though degree 5 has higher training R². This is the right way to choose model complexity.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score
+
+try:
+    from sklearn.datasets import fetch_openml
+    import pandas as pd
+    auto_raw = fetch_openml('autompg', version=1, as_frame=True, parser='auto')
+    auto = auto_raw.frame[['horsepower','mpg']].dropna().copy()
+    auto['horsepower'] = pd.to_numeric(auto['horsepower'], errors='coerce')
+    auto = auto.dropna()
+    hp  = auto['horsepower'].values.reshape(-1,1)
+    mpg = auto['mpg'].values
+except Exception:
+    rng=np.random.default_rng(1); hp_flat=rng.uniform(46,230,392)
+    mpg=56.9-0.4662*hp_flat+0.0012*hp_flat**2+rng.normal(0,4,392)
+    hp=hp_flat.reshape(-1,1)
+
+print(f"{'Degree':>6}  {'Train R²':>10}  {'CV RMSE':>10}")
+best_deg, best_rmse = 1, float('inf')
+for deg in range(1, 8):
+    pipe = Pipeline([('poly', PolynomialFeatures(deg, include_bias=False)),
+                     ('lr',   LinearRegression())])
+    pipe.fit(hp, mpg)
+    train_r2 = pipe.score(hp, mpg)
+    cv_rmse  = (-cross_val_score(pipe, hp, mpg, cv=5,
+                                 scoring='neg_mean_squared_error')).mean()**0.5
+    marker = ' ← best' if cv_rmse < best_rmse else ''
+    if cv_rmse < best_rmse: best_rmse = cv_rmse; best_deg = deg
+    print(f"{deg:>6}  {train_r2:>10.4f}  {cv_rmse:>10.4f}{marker}")
+print(f"\nCV selects degree {best_deg}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <section>
-    <h2>Residual diagnostics: linear vs quadratic</h2>
-<img src="img/ch3_residuals_poly.svg" style="width:100%;max-height:50vh;object-fit:contain;"><p class="muted" style="font-size:0.85em;margin-top:0.3em;">Left: linear residuals show a clear arch — the model is mis-specified. Right: quadratic residuals are random — the curvature has been captured. Cross-validation would select degree 2.</p>
-    <aside class="notes">Horsepower² coefficient = 0.0012 with t = 10.1 — very significant. Higher degrees give diminishing returns and eventually overfit.</aside>
+  <!-- EXERCISE: interaction + polynomial -->
+  <section class="exercise" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Exercise 7 — Interaction and polynomial on California housing</h2>
+    <div class="ex-prompt">Part A: fit <code>MedHouseVal ~ MedInc * HouseAge</code> — store in <code>m_int</code>. Is the interaction significant?<br>Part B: fit polynomial models (degree 1–4) of <code>MedHouseVal ~ MedInc</code> and find the best degree by 5-fold CV RMSE — store it in <code>best_deg</code>.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd, statsmodels.formula.api as smf
+from sklearn.datasets import fetch_california_housing
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score
+
+cal = fetch_california_housing(as_frame=True).frame
+
+# Part A: interaction model
+m_int = smf.ols('MedHouseVal ~ MedInc * HouseAge', data=cal).fit()
+print("=== Interaction model ===")
+print(m_int.summary().tables[1])
+int_key = [k for k in m_int.params.index if 'MedInc' in k and 'HouseAge' in k]
+if int_key:
+    print(f"\nInteraction p-value: {m_int.pvalues[int_key[0]]:.4f}")
+
+# Part B: polynomial degree selection via CV
+X = cal[['MedInc']].values
+y = cal['MedHouseVal'].values
+print(f"\n{'Degree':>6}  {'CV RMSE':>10}")
+best_deg, best_rmse = 1, float('inf')
+for deg in range(1, 5):
+    pipe = Pipeline([('poly', PolynomialFeatures(deg, include_bias=False)),
+                     ('lr',   LinearRegression())])
+    rmse = (-cross_val_score(pipe, X, y, cv=5,
+                             scoring='neg_mean_squared_error')).mean()**0.5
+    marker = ' ← best' if rmse < best_rmse else ''
+    if rmse < best_rmse: best_rmse = rmse; best_deg = deg
+    print(f"{deg:>6}  {rmse:>10.4f}{marker}")
+print(f"\nbest_deg = {best_deg}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+    <script type="text/x-check">
+import numpy as np
+assert 'm_int' in dir(), "Store the interaction model in `m_int`"
+assert hasattr(m_int, 'rsquared'), "`m_int` must be a fitted statsmodels model"
+int_keys = [k for k in m_int.params.index if 'MedInc' in k and 'HouseAge' in k]
+assert len(int_keys) > 0, "m_int must include MedInc:HouseAge interaction term"
+assert m_int.pvalues[int_keys[0]] < 0.05, \
+    f"Interaction MedInc:HouseAge should be statistically significant, p={m_int.pvalues[int_keys[0]]:.4f}"
+assert 'best_deg' in dir(), "Store best polynomial degree in `best_deg`"
+assert isinstance(best_deg, (int, np.integer)), "`best_deg` must be an integer"
+assert 2 <= best_deg <= 4, f"`best_deg` should be 2, 3, or 4 — got {best_deg}"
+    </script>
+    <script type="text/x-solution">import numpy as np, pandas as pd, statsmodels.formula.api as smf
+from sklearn.datasets import fetch_california_housing
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score
+
+cal = fetch_california_housing(as_frame=True).frame
+
+# Part A
+m_int = smf.ols('MedHouseVal ~ MedInc * HouseAge', data=cal).fit()
+print(m_int.summary().tables[1])
+int_key = [k for k in m_int.params.index if 'MedInc' in k and 'HouseAge' in k]
+print(f"\nInteraction p = {m_int.pvalues[int_key[0]]:.4f}")
+
+# Part B
+X, y = cal[['MedInc']].values, cal['MedHouseVal'].values
+best_deg, best_rmse = 1, float('inf')
+for deg in range(1, 5):
+    pipe = Pipeline([('poly', PolynomialFeatures(deg, include_bias=False)),
+                     ('lr', LinearRegression())])
+    rmse = (-cross_val_score(pipe, X, y, cv=5,
+                             scoring='neg_mean_squared_error')).mean()**0.5
+    if rmse < best_rmse: best_rmse = rmse; best_deg = deg
+    print(f"degree={deg}  CV-RMSE={rmse:.4f}")
+print(f"\nbest_deg = {best_deg}")
+    </script>
+    <script type="text/x-explain">Part A: the MedInc × HouseAge interaction IS significant (p &lt; 0.05). This means older houses have a weaker income-value relationship — in high-income areas, older housing stock is penalised more. Part B: CV typically selects degree 2 or 3 for MedInc. The income-value relationship is not linear — there's diminishing returns at very high incomes. Degree 5+ overfits and CV RMSE rises again. Always use CV (or a held-out test set) to choose polynomial degree — training R² always increases.</script>
   </section>
 
 </section>
+
+<!-- ═══════════════════════════════════ RECAP ════════════════════════════════ -->
 <section class="title-slide">
   <span class="kicker">Recap</span>
   <h2>Three things to leave with</h2>
   <ol>
-<li class="fragment fade-up"><strong>OLS</strong> minimises RSS to produce β̂₀ and β̂₁; statsmodels gives you SE, t, p, CI in one <code>.summary()</code> call.</li>
-<li class="fragment fade-up"><strong>R² and RSE</strong> measure how much variance is explained and what the typical error is — always report both.</li>
-<li class="fragment fade-up"><strong>MLR, dummies, interactions, and polynomial terms</strong> all fit inside the same linear-regression framework — just with different X columns.</li>
+    <li class="fragment fade-up"><strong>OLS</strong> minimises RSS; statsmodels gives SE, t, p, CI in one <code>.summary()</code> call — sklearn gives predictions.</li>
+    <li class="fragment fade-up"><strong>R² and RSE</strong> measure explained variance and typical error — always report both.</li>
+    <li class="fragment fade-up"><strong>MLR, dummies, interactions, and polynomial terms</strong> all live inside the same linear-regression framework — different X columns, same math.</li>
   </ol>
   <p class="callout fragment fade-up">Next: Classification — when Y is categorical. The same ideas (loss, coefficients, regularisation) reappear in logistic regression.</p>
 </section>
@@ -380,6 +1464,7 @@
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="../../../../shared/slides-template/interactive.js"></script>
 <script>
   Reveal.initialize({
     hash: true, slideNumber: 'c/t', transition: 'slide',

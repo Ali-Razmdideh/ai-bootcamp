@@ -9,20 +9,24 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/interactive.css" />
 </head>
 <body>
 <div class="reveal"><div class="slides">
+
+<!-- ══════════════════════════════════ TITLE ══════════════════════════════════ -->
 <section class="title-slide">
   <span class="kicker">Week 3 · Course 4</span>
   <h1>Model Selection and Regularization</h1>
-  <p class="muted" style="font-size:1.1em;">Subset selection, shrinkage (Ridge & Lasso), and dimension reduction</p>
+  <p class="muted" style="font-size:1.1em;">Subset selection, shrinkage (Ridge &amp; Lasso), and dimension reduction</p>
 </section>
+
 <section>
   <span class="kicker">Roadmap</span>
   <h2>Where we are heading</h2>
   <div class="three-col">
     <div class="card"><h4>Part 1 · 0:00–0:30</h4><strong>Subset Selection</strong>
-      <p class="muted" style="margin:0.3em 0 0;">Best subset, forward & backward stepwise, comparison.</p></div>
+      <p class="muted" style="margin:0.3em 0 0;">Best subset, forward &amp; backward stepwise, comparison.</p></div>
     <div class="card"><h4>Part 2 · 0:30–1:00</h4><strong>Choosing the Optimal Model</strong>
       <p class="muted" style="margin:0.3em 0 0;">Cp, AIC, BIC, Adj-R², validation set, CV, one-SE rule.</p></div>
     <div class="card"><h4>Part 3 · 1:00–1:20</h4><strong>Ridge Regression</strong>
@@ -34,143 +38,98 @@
   </div>
   <p class="callout" style="margin-top:1.2em;">Least squares is not the only way. Regularization and selection give you models that <em>generalise</em> better — trading a little bias for a large drop in variance.</p>
 </section>
+
+<!-- ═══════════════════════════════════ PART 1 ════════════════════════════════ -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 1 · 0:00 – 0:30</span>
     <h1>Subset Selection</h1>
     <p class="muted">Best subset, forward stepwise, backward stepwise</p>
   </section>
+
   <section>
     <h2>Why replace least squares?</h2>
-<ul>
-  <li class="fragment fade-up"><strong>Prediction accuracy:</strong> OLS has low bias but can have high variance, especially when p is large relative to n.</li>
-  <li class="fragment fade-up"><strong>Model interpretability:</strong> setting irrelevant coefficients to zero yields a simpler, more interpretable model.</li>
-  <li class="fragment fade-up">Two families of fix: <em>subset selection</em> (keep only some predictors) and <em>shrinkage</em> (shrink all coefficients toward zero).</li>
-  <li class="fragment fade-up">A third approach — <em>dimension reduction</em> — projects predictors into a lower-dimensional subspace.</li>
-</ul>
-    <aside class="notes">The key tension: OLS minimises training error; we care about test error. Adding variables always reduces training RSS but may increase test error.</aside>
+    <ul>
+      <li class="fragment fade-up"><strong>Prediction accuracy:</strong> OLS has low bias but can have high variance, especially when p is large relative to n.</li>
+      <li class="fragment fade-up"><strong>Model interpretability:</strong> setting irrelevant coefficients to zero yields a simpler model.</li>
+      <li class="fragment fade-up">Two families of fix: <em>subset selection</em> (keep only some predictors) and <em>shrinkage</em> (shrink all toward zero).</li>
+      <li class="fragment fade-up">A third approach — <em>dimension reduction</em> — projects predictors into a lower-dimensional subspace.</li>
+    </ul>
   </section>
 
   <section>
     <h2>Best Subset Selection</h2>
-<div class="two-col"><div><ul>
-  <li>Fit all <strong>2<sup>p</sup></strong> possible models (one per predictor subset).</li>
-  <li>For each size k, keep the model with smallest RSS — call it M<sub>k</sub>.</li>
-  <li>Finally choose the single best M<sub>k</sub> using an external criterion (CV, AIC, BIC).</li>
-  <li>Guaranteed to find the globally best subset — but <strong>2<sup>40</sup> ≈ 10<sup>12</sup></strong> models for p=40!</li>
-</ul></div><div><div class="diagram-wrap" style="margin:0 auto; display:block;">
-<svg class="diagram" viewBox="0 0 640 300" width="620" height="290">
-  <defs>
-    <marker id="axArr" viewBox="0 0 10 10" refX="9" refY="5"
-            markerWidth="6" markerHeight="6" orient="auto">
-      <path d="M0,0 L10,5 L0,10 z" fill="#64748b"/>
-    </marker>
-  </defs>
-  <line x1="60" y1="250" x2="600" y2="250" stroke="#64748b" stroke-width="1.5" marker-end="url(#axArr)"/>
-  <line x1="60" y1="250" x2="60"  y2="20"  stroke="#64748b" stroke-width="1.5" marker-end="url(#axArr)"/>
-  <text x="320" y="278" text-anchor="middle" font-size="13" fill="#0f172a">Number of Predictors</text>
-  <text x="20"  y="140" text-anchor="middle" font-size="13" fill="#0f172a" transform="rotate(-90 20 140)">RSS</text>
-  <circle cx="110" cy="215" r="4" fill="#94a3b8" opacity="0.6"/>
-  <circle cx="180" cy="185" r="4" fill="#94a3b8" opacity="0.6"/>
-  <circle cx="180" cy="170" r="4" fill="#94a3b8" opacity="0.6"/>
-  <circle cx="180" cy="200" r="4" fill="#94a3b8" opacity="0.6"/>
-  <circle cx="250" cy="150" r="4" fill="#94a3b8" opacity="0.6"/>
-  <circle cx="250" cy="135" r="4" fill="#94a3b8" opacity="0.6"/>
-  <circle cx="250" cy="165" r="4" fill="#94a3b8" opacity="0.6"/>
-  <circle cx="250" cy="175" r="4" fill="#94a3b8" opacity="0.6"/>
-  <circle cx="320" cy="120" r="4" fill="#94a3b8" opacity="0.6"/>
-  <circle cx="320" cy="108" r="4" fill="#94a3b8" opacity="0.6"/>
-  <circle cx="320" cy="140" r="4" fill="#94a3b8" opacity="0.6"/>
-  <circle cx="390" cy="95"  r="4" fill="#94a3b8" opacity="0.6"/>
-  <circle cx="390" cy="82"  r="4" fill="#94a3b8" opacity="0.6"/>
-  <circle cx="390" cy="110" r="4" fill="#94a3b8" opacity="0.6"/>
-  <circle cx="460" cy="78"  r="4" fill="#94a3b8" opacity="0.6"/>
-  <circle cx="460" cy="70"  r="4" fill="#94a3b8" opacity="0.6"/>
-  <circle cx="530" cy="65"  r="4" fill="#94a3b8" opacity="0.6"/>
-  <polyline points="110,215 180,170 250,135 320,108 390,82 460,70 530,65"
-            fill="none" stroke="#dc2626" stroke-width="2.5"/>
-  <circle cx="110" cy="215" r="6" fill="#dc2626"/>
-  <circle cx="180" cy="170" r="6" fill="#dc2626"/>
-  <circle cx="250" cy="135" r="6" fill="#dc2626"/>
-  <circle cx="320" cy="108" r="6" fill="#dc2626"/>
-  <circle cx="390" cy="82"  r="6" fill="#dc2626"/>
-  <circle cx="460" cy="70"  r="6" fill="#dc2626"/>
-  <circle cx="530" cy="65"  r="6" fill="#dc2626"/>
-  <text x="110" y="265" text-anchor="middle" font-size="11" fill="#64748b">1</text>
-  <text x="180" y="265" text-anchor="middle" font-size="11" fill="#64748b">2</text>
-  <text x="250" y="265" text-anchor="middle" font-size="11" fill="#64748b">3</text>
-  <text x="320" y="265" text-anchor="middle" font-size="11" fill="#64748b">4</text>
-  <text x="390" y="265" text-anchor="middle" font-size="11" fill="#64748b">5</text>
-  <text x="460" y="265" text-anchor="middle" font-size="11" fill="#64748b">6</text>
-  <text x="530" y="265" text-anchor="middle" font-size="11" fill="#64748b">p</text>
-  <circle cx="400" cy="40" r="5" fill="#94a3b8" opacity="0.6"/>
-  <text x="412" y="44" font-size="11" fill="#64748b">all 2ᵖ models</text>
-  <circle cx="400" cy="58" r="6" fill="#dc2626"/>
-  <text x="412" y="62" font-size="11" fill="#dc2626">best for each k (frontier)</text>
-</svg>
-</div></div></div>
-    <aside class="notes">Grey dots = all possible models. Red frontier = best model at each size k. RSS always decreases as k grows, so we cannot use RSS alone to pick k.</aside>
+    <div class="two-col"><div><ul>
+      <li>Fit all <strong>2<sup>p</sup></strong> possible models (one per predictor subset).</li>
+      <li>For each size k, keep the model with smallest RSS — call it M<sub>k</sub>.</li>
+      <li>Choose the single best M<sub>k</sub> using CV, AIC, or BIC.</li>
+      <li><strong>2<sup>40</sup> ≈ 10<sup>12</sup></strong> models for p=40 — intractable!</li>
+    </ul></div><div>
+      <svg class="diagram" viewBox="0 0 500 260" width="480" height="250">
+        <defs><marker id="ax1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+        <line x1="50" y1="220" x2="470" y2="220" stroke="#64748b" stroke-width="1.5" marker-end="url(#ax1)"/>
+        <line x1="50" y1="220" x2="50" y2="20"  stroke="#64748b" stroke-width="1.5" marker-end="url(#ax1)"/>
+        <text x="260" y="245" text-anchor="middle" font-size="12" fill="#0f172a">Number of Predictors</text>
+        <text x="18"  y="125" text-anchor="middle" font-size="12" fill="#0f172a" transform="rotate(-90 18 125)">RSS</text>
+        <circle cx="100" cy="195" r="4" fill="#94a3b8" opacity="0.6"/>
+        <circle cx="170" cy="168" r="4" fill="#94a3b8" opacity="0.6"/>
+        <circle cx="170" cy="182" r="4" fill="#94a3b8" opacity="0.6"/>
+        <circle cx="240" cy="145" r="4" fill="#94a3b8" opacity="0.6"/>
+        <circle cx="240" cy="158" r="4" fill="#94a3b8" opacity="0.6"/>
+        <circle cx="310" cy="118" r="4" fill="#94a3b8" opacity="0.6"/>
+        <circle cx="310" cy="130" r="4" fill="#94a3b8" opacity="0.6"/>
+        <circle cx="380" cy="92"  r="4" fill="#94a3b8" opacity="0.6"/>
+        <circle cx="380" cy="105" r="4" fill="#94a3b8" opacity="0.6"/>
+        <circle cx="450" cy="75"  r="4" fill="#94a3b8" opacity="0.6"/>
+        <polyline points="100,195 170,168 240,145 310,118 380,92 450,75" fill="none" stroke="#dc2626" stroke-width="2.5"/>
+        <circle cx="100" cy="195" r="6" fill="#dc2626"/>
+        <circle cx="170" cy="168" r="6" fill="#dc2626"/>
+        <circle cx="240" cy="145" r="6" fill="#dc2626"/>
+        <circle cx="310" cy="118" r="6" fill="#dc2626"/>
+        <circle cx="380" cy="92"  r="6" fill="#dc2626"/>
+        <circle cx="450" cy="75"  r="6" fill="#dc2626"/>
+        <circle cx="360" cy="35" r="4" fill="#94a3b8" opacity="0.6"/>
+        <text x="372" y="39" font-size="11" fill="#64748b">all 2ᵖ models</text>
+        <circle cx="360" cy="52" r="6" fill="#dc2626"/>
+        <text x="372" y="56" font-size="11" fill="#dc2626">best for each k</text>
+      </svg>
+    </div></div>
   </section>
 
   <section>
-    <h2>Forward Stepwise Selection</h2>
-<ul>
-  <li class="fragment fade-up">Start with M<sub>0</sub>: the null model (intercept only).</li>
-  <li class="fragment fade-up">For k = 0, …, p−1: add the <em>one predictor</em> that most improves fit (smallest RSS / largest R²).</li>
-  <li class="fragment fade-up">Produces a nested sequence M<sub>0</sub> ⊂ M<sub>1</sub> ⊂ … ⊂ M<sub>p</sub>.</li>
-  <li class="fragment fade-up">Considers only <strong>1 + p(p+1)/2</strong> models vs 2<sup>p</sup> — computationally feasible for large p.</li>
-  <li class="fragment fade-up"><strong>Caveat:</strong> not guaranteed to find the globally best subset.</li>
-</ul>
-    <aside class="notes">Forward stepwise is greedy: once a variable is added it stays. This can miss the optimal model if two variables together explain Y but neither alone does.</aside>
+    <h2>Forward &amp; Backward Stepwise</h2>
+    <div class="two-col"><div>
+      <h3 style="font-size:1em;margin:0 0 0.3em;">Forward</h3>
+      <ul style="font-size:0.88em;">
+        <li>Start with null model (intercept only).</li>
+        <li>Add one predictor at a time — the one that most improves fit.</li>
+        <li>Considers <strong>1 + p(p+1)/2</strong> models.</li>
+        <li>Works even when n &lt; p.</li>
+      </ul>
+    </div><div>
+      <h3 style="font-size:1em;margin:0 0 0.3em;">Backward</h3>
+      <ul style="font-size:0.88em;">
+        <li>Start with full model (all p predictors).</li>
+        <li>Remove one at a time — the one with the largest p-value.</li>
+        <li>Requires n &gt; p so the full model can be fit.</li>
+      </ul>
+    </div></div>
+    <table style="font-size:0.8em;margin:0.8em auto;border-collapse:collapse;">
+      <tr style="background:#f1f5f9;"><th style="padding:4px 8px;border:1px solid #cbd5e1;"># Vars</th><th style="padding:4px 8px;border:1px solid #cbd5e1;">Best Subset</th><th style="padding:4px 8px;border:1px solid #cbd5e1;">Forward Stepwise</th></tr>
+      <tr><td style="padding:4px 8px;border:1px solid #cbd5e1;">1</td><td style="padding:4px 8px;border:1px solid #cbd5e1;">Rating</td><td style="padding:4px 8px;border:1px solid #cbd5e1;">Rating</td></tr>
+      <tr style="background:#f8fafc;"><td style="padding:4px 8px;border:1px solid #cbd5e1;">2</td><td style="padding:4px 8px;border:1px solid #cbd5e1;">Rating, Income</td><td style="padding:4px 8px;border:1px solid #cbd5e1;">Rating, Income</td></tr>
+      <tr style="background:#fef2f2;"><td style="padding:4px 8px;border:1px solid #cbd5e1;">4</td><td style="padding:4px 8px;border:1px solid #cbd5e1;"><strong>Cards, Income, Student, Limit</strong></td><td style="padding:4px 8px;border:1px solid #cbd5e1;"><strong>Rating, Income, Student, Limit</strong></td></tr>
+    </table>
+    <p class="muted" style="font-size:0.85em;">First 3 models agree; they can diverge later — forward is greedy.</p>
   </section>
 
-  <section>
-    <h2>Backward Stepwise Selection</h2>
-<ul>
-  <li class="fragment fade-up">Start with M<sub>p</sub>: the full model with all p predictors.</li>
-  <li class="fragment fade-up">At each step remove the <em>least useful</em> predictor (largest p-value / smallest |t-statistic|).</li>
-  <li class="fragment fade-up">Requires <strong>n &gt; p</strong> so the full model can be fit — forward stepwise can handle n &lt; p.</li>
-  <li class="fragment fade-up">Also searches only 1 + p(p+1)/2 models.</li>
-  <li class="fragment fade-up">Neither forward nor backward stepwise is universally better — use CV to choose.</li>
-</ul>
-    <aside class="notes">Backward stepwise starts from the opposite end. It can also miss the optimal subset.</aside>
-  </section>
-
-  <section>
-    <h2>Forward vs. Best Subset — Credit data</h2>
-<div class="two-col"><div><table style="font-size:0.85em; border-collapse:collapse; width:100%;">
-<tr style="background:#f1f5f9;">
-  <th style="padding:4px 8px; border:1px solid #cbd5e1;"># Vars</th>
-  <th style="padding:4px 8px; border:1px solid #cbd5e1;">Best Subset</th>
-  <th style="padding:4px 8px; border:1px solid #cbd5e1;">Forward Stepwise</th>
-</tr>
-<tr><td style="padding:4px 8px; border:1px solid #cbd5e1; text-align:center;">1</td>
-    <td style="padding:4px 8px; border:1px solid #cbd5e1;">rating</td>
-    <td style="padding:4px 8px; border:1px solid #cbd5e1;">rating</td></tr>
-<tr style="background:#f8fafc;"><td style="padding:4px 8px; border:1px solid #cbd5e1; text-align:center;">2</td>
-    <td style="padding:4px 8px; border:1px solid #cbd5e1;">rating, income</td>
-    <td style="padding:4px 8px; border:1px solid #cbd5e1;">rating, income</td></tr>
-<tr><td style="padding:4px 8px; border:1px solid #cbd5e1; text-align:center;">3</td>
-    <td style="padding:4px 8px; border:1px solid #cbd5e1;">rating, income, student</td>
-    <td style="padding:4px 8px; border:1px solid #cbd5e1;">rating, income, student</td></tr>
-<tr style="background:#fef2f2;"><td style="padding:4px 8px; border:1px solid #cbd5e1; text-align:center;">4</td>
-    <td style="padding:4px 8px; border:1px solid #cbd5e1;"><strong>cards, income,<br/>student, limit</strong></td>
-    <td style="padding:4px 8px; border:1px solid #cbd5e1;"><strong>rating, income,<br/>student, limit</strong></td></tr>
-</table></div><div><ul>
-  <li>First three models identical.</li>
-  <li>4-variable models <strong>differ</strong> — forward selection is greedy.</li>
-  <li>In practice the difference rarely matters for prediction.</li>
-  <li>Always validate with CV, not just training RSS.</li>
-</ul></div></div>
-    <aside class="notes">The takeaway: stepwise methods are practical approximations that work well in practice.</aside>
-  </section>
-
-  <section class="example" data-packages="numpy,matplotlib,sklearn">
-    <h2>Best subset selection — live</h2>
-    <div class="ex-prompt">Enumerate all 2ᵖ models on a simulated dataset. Plot the RSS frontier and print the best predictor set for each size k.</div>
+  <!-- EXAMPLE: best subset selection -->
+  <section class="example" data-packages="numpy,matplotlib,scikit-learn">
+    <h2>Best subset selection — all 2ᵖ models</h2>
+    <div class="ex-prompt">Enumerate every subset of 5 predictors. Plot the RSS frontier (best-of-k) and all model RSS values. The frontier always drops — you need an external criterion to pick k.</div>
 <textarea class="ex-code">import numpy as np
 import matplotlib
-matplotlib.use(&#x27;AGG&#x27;)
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from itertools import combinations
 from sklearn.linear_model import LinearRegression
@@ -178,28 +137,31 @@ from sklearn.linear_model import LinearRegression
 rng = np.random.default_rng(42)
 n, p = 100, 5
 X = rng.normal(size=(n, p))
-beta = np.array([3, 1.5, 0, 0, -2])
+beta = np.array([3, 1.5, 0, 0, -2])   # X3 and X4 are noise
 y = X @ beta + rng.normal(size=n)
-names = [f&#x27;X{i+1}&#x27; for i in range(p)]
+names = [f'X{i+1}' for i in range(p)]
 
 best = {}
+all_rss, all_k = [], []
 for k in range(1, p + 1):
     best_rss, best_combo = np.inf, None
     for combo in combinations(range(p), k):
         Xk = X[:, combo]
         lr = LinearRegression().fit(Xk, y)
         rss = np.sum((y - lr.predict(Xk))**2)
-        if rss &lt; best_rss:
+        all_rss.append(rss); all_k.append(k)
+        if rss < best_rss:
             best_rss, best_combo = rss, combo
     best[k] = (best_rss, best_combo)
-    print(f&#x27;k={k}: predictors={[names[i] for i in best_combo]}, RSS={best_rss:.2f}&#x27;)
+    print(f'k={k}: {[names[i] for i in best_combo]}, RSS={best_rss:.2f}')
 
 ks = list(best.keys())
 rss_vals = [best[k][0] for k in ks]
 fig, ax = plt.subplots(figsize=(6, 3))
-ax.plot(ks, rss_vals, &#x27;ro-&#x27;, ms=8, label=&#x27;best-of-k frontier&#x27;)
-ax.set_xlabel(&#x27;# predictors&#x27;); ax.set_ylabel(&#x27;RSS&#x27;)
-ax.set_title(&#x27;Best Subset — RSS frontier&#x27;)
+ax.scatter(all_k, all_rss, alpha=0.4, s=18, color='steelblue', label='all models')
+ax.plot(ks, rss_vals, 'ro-', ms=8, lw=2, label='best-of-k frontier', zorder=5)
+ax.set_xlabel('# predictors'); ax.set_ylabel('RSS')
+ax.set_title('Best Subset — RSS always decreases (not a valid selection criterion!)')
 ax.legend(); plt.tight_layout(); plt.show()
 </textarea>
     <div class="ex-controls">
@@ -208,128 +170,148 @@ ax.legend(); plt.tight_layout(); plt.show()
       <span class="ex-status"></span>
     </div>
     <pre class="ex-output"></pre>
+<script type="text/x-explain">The red frontier always decreases — adding predictors always improves RSS on the training data, even if they are pure noise (X3, X4). This is why we need BIC, AIC, or CV to pick k: they penalise complexity so noise predictors don't get included.</script>
+  </section>
+
+  <!-- EXAMPLE: forward and backward stepwise -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Forward (AIC) &amp; backward (p-value) stepwise</h2>
+    <div class="ex-prompt">Two greedy strategies on simulated data with 6 predictors, only 2 of which matter. Both should agree — forward adds by AIC, backward removes by p-value.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd
+import statsmodels.formula.api as smf
+
+rng = np.random.default_rng(0)
+n = 200
+df = pd.DataFrame({f'x{i}': rng.normal(size=n) for i in range(1, 7)})
+df['y'] = 3*df['x1'] - 2*df['x3'] + rng.normal(size=n)
+
+# Forward selection by AIC
+def forward_aic(df, target):
+    cols = [c for c in df.columns if c != target]
+    selected, aic = [], smf.ols(f'{target} ~ 1', data=df).fit().aic
+    while cols:
+        aics = {v: smf.ols(f"{target} ~ {' + '.join(selected + [v])}", data=df).fit().aic
+                for v in cols}
+        best = min(aics, key=aics.get)
+        if aics[best] < aic:
+            selected.append(best); cols.remove(best); aic = aics[best]
+            print(f'+ {best:<5}  AIC={aic:.2f}  selected={selected}')
+        else:
+            print(f'Stop (adding anything increases AIC)'); break
+    return selected
+
+# Backward elimination by p-value
+def backward_pval(df, target, alpha=0.05):
+    preds = [c for c in df.columns if c != target]
+    while preds:
+        result = smf.ols(f"{target} ~ {' + '.join(preds)}", data=df).fit()
+        pvals = result.pvalues.drop('Intercept', errors='ignore')
+        worst = pvals.idxmax()
+        if pvals[worst] > alpha:
+            preds.remove(worst)
+            print(f'- {worst:<5}  p={pvals[worst]:.4f}  remaining={preds}')
+        else:
+            print(f'Stop  final model: {preds}'); break
+    return preds
+
+print('=== Forward (AIC) ===')
+fwd = forward_aic(df, 'y')
+print(f'\n=== Backward (p>0.05) ===')
+bwd = backward_pval(df, 'y')
+print(f'\nForward selected:  {fwd}')
+print(f'Backward selected: {bwd}')
+print(f'Truth: x1 and x3')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">Both methods correctly identify x1 and x3 — the two true predictors. Forward adds variables greedily until AIC stops improving. Backward removes the most insignificant variable at each step. They can give different results for larger p — neither is guaranteed to find the globally best subset.</script>
   </section>
 
 </section>
+
+<!-- ═══════════════════════════════════ PART 2 ════════════════════════════════ -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 2 · 0:30 – 1:00</span>
     <h1>Choosing the Optimal Model</h1>
     <p class="muted">Cp, AIC, BIC, Adj-R², validation, and cross-validation</p>
   </section>
+
   <section>
     <h2>Training error is a bad guide</h2>
-<ul>
-  <li class="fragment fade-up">The full model (all p predictors) always has the <strong>smallest RSS</strong> and <strong>largest R²</strong> on the training set.</li>
-  <li class="fragment fade-up">But training error <em>underestimates</em> test error — it does not account for overfitting.</li>
-  <li class="fragment fade-up">RSS and R² cannot compare models with <em>different numbers of predictors</em>.</li>
-  <li class="fragment fade-up">We need an honest estimate of test error: either by <strong>adjusting</strong> training error upward, or by <strong>directly estimating</strong> it via held-out data.</li>
-</ul>
-    <aside class="notes">This is the core tension: training error rewards complexity; test error punishes it.</aside>
+    <ul>
+      <li class="fragment fade-up">The full model always has the smallest RSS and largest R² on training data.</li>
+      <li class="fragment fade-up">Training error <em>underestimates</em> test error — it doesn't account for overfitting.</li>
+      <li class="fragment fade-up">We need criteria that <strong>penalise complexity</strong>.</li>
+    </ul>
+    <table style="font-size:0.85em;margin:0.8em auto;border-collapse:collapse;">
+      <tr style="background:#f1f5f9;"><th style="padding:5px 10px;border:1px solid #cbd5e1;">Criterion</th><th style="padding:5px 10px;border:1px solid #cbd5e1;">Formula</th><th style="padding:5px 10px;border:1px solid #cbd5e1;">Goal</th></tr>
+      <tr><td style="padding:5px 10px;border:1px solid #cbd5e1;">Mallow's Cₚ</td><td style="padding:5px 10px;border:1px solid #cbd5e1;">(RSS + 2dσ̂²) / n</td><td style="padding:5px 10px;border:1px solid #cbd5e1;">minimise</td></tr>
+      <tr style="background:#f8fafc;"><td style="padding:5px 10px;border:1px solid #cbd5e1;">AIC</td><td style="padding:5px 10px;border:1px solid #cbd5e1;">−2 log L + 2d</td><td style="padding:5px 10px;border:1px solid #cbd5e1;">minimise</td></tr>
+      <tr><td style="padding:5px 10px;border:1px solid #cbd5e1;">BIC</td><td style="padding:5px 10px;border:1px solid #cbd5e1;">(RSS + log(n)·d·σ̂²) / n</td><td style="padding:5px 10px;border:1px solid #cbd5e1;">minimise</td></tr>
+      <tr style="background:#f8fafc;"><td style="padding:5px 10px;border:1px solid #cbd5e1;">Adjusted R²</td><td style="padding:5px 10px;border:1px solid #cbd5e1;">1 − RSS/(n−d−1) / TSS/(n−1)</td><td style="padding:5px 10px;border:1px solid #cbd5e1;">maximise</td></tr>
+    </table>
   </section>
 
   <section>
-    <h2>Mallow’s Cₚ and AIC</h2>
-<div class="two-col"><div><p style="font-size:0.9em;">
-<strong>Mallow’s C<sub>p</sub></strong><br/>
-<code>C<sub>p</sub> = (RSS + 2dσ̂²) / n</code><br/>
-<span class="muted">d = # parameters, σ̂² = estimated error variance.<br/>
-Adds a penalty of 2σ̂² per parameter. Select <strong>smallest C<sub>p</sub></strong>.</span>
-</p>
-<hr style="margin:0.5em 0; border-color:#e2e8f0;"/>
-<p style="font-size:0.9em;">
-<strong>AIC</strong><br/>
-<code>AIC = −2 log L + 2d</code><br/>
-<span class="muted">For Gaussian OLS: <strong>AIC and C<sub>p</sub> are equivalent</strong>.</span>
-</p></div><div><ul>
-  <li>Both add a <strong>complexity penalty</strong> proportional to d.</li>
-  <li>Select the model that <strong>minimises</strong> C<sub>p</sub> or AIC.</li>
-  <li>σ̂² is estimated from the full model.</li>
-  <li>AIC generalises to any maximum-likelihood model.</li>
-</ul></div></div>
-    <aside class="notes">AIC generalises Cp to non-Gaussian models. The penalty 2d is the same.</aside>
+    <h2>BIC vs AIC — penalty strength</h2>
+    <ul>
+      <li class="fragment fade-up">AIC/Cₚ penalty per parameter: <strong>2</strong></li>
+      <li class="fragment fade-up">BIC penalty per parameter: <strong>log(n)</strong> — for n=400: log(400) ≈ 6.0</li>
+      <li class="fragment fade-up">BIC penalises ~3× more than AIC → tends to select <strong>smaller models</strong>.</li>
+      <li class="fragment fade-up">Rule of thumb: AIC/Cₚ for prediction; BIC for model identification.</li>
+    </ul>
   </section>
 
   <section>
-    <h2>BIC and Adjusted R²</h2>
-<div class="two-col"><div><p style="font-size:0.9em;">
-<strong>BIC</strong><br/>
-<code>BIC = (RSS + log(n)·d·σ̂²) / n</code><br/>
-<span class="muted">Replaces 2 with log(n). Since log(n) &gt; 2 for n &gt; 7, BIC <strong>penalises more</strong> and picks smaller models.</span>
-</p>
-<hr style="margin:0.5em 0; border-color:#e2e8f0;"/>
-<p style="font-size:0.9em;">
-<strong>Adjusted R²</strong><br/>
-<code>Adj R² = 1 − RSS/(n−d−1) / TSS/(n−1)</code><br/>
-<span class="muted">Can <em>decrease</em> when an unhelpful predictor is added. <strong>Maximise</strong> Adj R².</span>
-</p></div><div><ul>
-  <li>BIC tends to select <strong>smaller</strong> models than AIC.</li>
-  <li>Adj R² penalises by (n−d−1) in denominator.</li>
-  <li>All four adjust for model complexity.</li>
-  <li>In practice BIC and CV often agree.</li>
-</ul></div></div>
-    <aside class="notes">BIC has a Bayesian justification and consistently selects the true model for large n.</aside>
+    <h2>Validation set and CV</h2>
+    <ul>
+      <li class="fragment fade-up"><strong>Validation set:</strong> reserve 20–30% of data; fit on rest; pick model with smallest held-out MSE.</li>
+      <li class="fragment fade-up"><strong>K-fold CV:</strong> rotate the hold-out K times; average MSEs. More stable, no σ̂² needed.</li>
+      <li class="fragment fade-up"><strong>One-SE rule:</strong> pick the <em>simplest</em> model within 1 SE of the CV minimum — prefers parsimony.</li>
+    </ul>
   </section>
 
-  <section>
-    <h2>Validation set and cross-validation</h2>
-<ul>
-  <li class="fragment fade-up"><strong>Validation set:</strong> reserve 20–30% of data. Fit on the rest; pick model with smallest held-out MSE.</li>
-  <li class="fragment fade-up"><strong>K-fold CV:</strong> rotate the hold-out set K times; average the MSE estimates. More stable.</li>
-  <li class="fragment fade-up">Advantage over AIC/BIC: <strong>no estimate of σ² needed</strong> — works for any loss and any method.</li>
-  <li class="fragment fade-up">Use <code>cross_val_score</code> from sklearn with <code>scoring='neg_mean_squared_error'</code>.</li>
-</ul>
-    <aside class="notes">CV is the most widely recommended approach for model selection today.</aside>
-  </section>
-
-  <section>
-    <h2>The one-standard-error rule</h2>
-<ul>
-  <li class="fragment fade-up">CV picks the model with the <em>absolute</em> minimum CV error.</li>
-  <li class="fragment fade-up">Neighbouring model sizes often have CV errors <strong>within one SE</strong> — statistically indistinguishable.</li>
-  <li class="fragment fade-up"><strong>One-SE rule:</strong> pick the <em>simplest</em> model whose CV error is within one SE of the minimum.</li>
-  <li class="fragment fade-up">Rationale: prefer fewer predictors when the predictive gain is within noise.</li>
-</ul>
-    <aside class="notes">The one-SE rule is a practical heuristic for preferring parsimony.</aside>
-  </section>
-
-  <section class="example" data-packages="numpy,matplotlib,sklearn,statsmodels">
+  <!-- EXAMPLE: AIC, BIC, Adj-R² comparison -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
     <h2>AIC, BIC, Adj-R² — live comparison</h2>
-    <div class="ex-prompt">Enumerate all subset models on simulated data. Compare AIC, BIC, and Adj-R². Red dot = best model per criterion.</div>
-<textarea class="ex-code">import numpy as np
-import matplotlib
-matplotlib.use(&#x27;AGG&#x27;)
+    <div class="ex-prompt">Enumerate all subset models on simulated data (truth: only x1 and x2 matter). Compare AIC, BIC, and Adj-R². Red dot = best model per criterion.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd, matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import statsmodels.formula.api as smf
-import pandas as pd
 from itertools import combinations
 
 rng = np.random.default_rng(0)
 n = 200
-df = pd.DataFrame({
-    &#x27;x1&#x27;: rng.normal(size=n), &#x27;x2&#x27;: rng.normal(size=n),
-    &#x27;x3&#x27;: rng.normal(size=n), &#x27;x4&#x27;: rng.normal(size=n),
-})
-df[&#x27;y&#x27;] = 2*df[&#x27;x1&#x27;] - 1.5*df[&#x27;x2&#x27;] + rng.normal(size=n)
+df = pd.DataFrame({'x1': rng.normal(size=n), 'x2': rng.normal(size=n),
+                   'x3': rng.normal(size=n), 'x4': rng.normal(size=n)})
+df['y'] = 2*df['x1'] - 1.5*df['x2'] + rng.normal(size=n)
 
 rows = []
 for k in range(1, 5):
-    for combo in combinations([&#x27;x1&#x27;,&#x27;x2&#x27;,&#x27;x3&#x27;,&#x27;x4&#x27;], k):
-        m = smf.ols(f&quot;y ~ {&#x27; + &#x27;.join(combo)}&quot;, data=df).fit()
-        rows.append({&#x27;k&#x27;: k, &#x27;preds&#x27;: combo,
-                     &#x27;AIC&#x27;: m.aic, &#x27;BIC&#x27;: m.bic, &#x27;AdjR2&#x27;: m.rsquared_adj})
+    for combo in combinations(['x1','x2','x3','x4'], k):
+        m = smf.ols(f"y ~ {' + '.join(combo)}", data=df).fit()
+        rows.append({'k': k, 'preds': combo,
+                     'AIC': m.aic, 'BIC': m.bic, 'AdjR2': m.rsquared_adj})
 res = pd.DataFrame(rows)
 
-for col in [&#x27;AIC&#x27;,&#x27;BIC&#x27;,&#x27;AdjR2&#x27;]:
-    best = res.loc[res[col].idxmin() if col != &#x27;AdjR2&#x27; else res[col].idxmax()]
-    print(f&#x27;Best by {col}: {list(best.preds)}&#x27;)
+for col, low_good in [('AIC', True), ('BIC', True), ('AdjR2', False)]:
+    best = res.loc[res[col].idxmin() if low_good else res[col].idxmax()]
+    print(f'Best by {col}: {list(best.preds)}')
 
 fig, axes = plt.subplots(1, 3, figsize=(11, 3))
-for ax, col, low_good in zip(axes, [&#x27;AIC&#x27;,&#x27;BIC&#x27;,&#x27;AdjR2&#x27;], [True, True, False]):
-    ax.scatter(res[&#x27;k&#x27;], res[col], alpha=0.6)
+for ax, col, low_good in zip(axes, ['AIC','BIC','AdjR2'], [True,True,False]):
+    ax.scatter(res['k'], res[col], alpha=0.6, s=30)
     best_row = res.loc[res[col].idxmin() if low_good else res[col].idxmax()]
-    ax.scatter(best_row[&#x27;k&#x27;], best_row[col], color=&#x27;red&#x27;, s=80, zorder=5)
-    ax.set_xlabel(&#x27;# predictors&#x27;); ax.set_title(col)
+    ax.scatter(best_row['k'], best_row[col], color='red', s=100, zorder=5,
+               label=f'best: {list(best_row["preds"])}')
+    ax.set_xlabel('# predictors'); ax.set_title(col)
+    ax.legend(fontsize=8)
 plt.tight_layout(); plt.show()
 </textarea>
     <div class="ex-controls">
@@ -338,138 +320,160 @@ plt.tight_layout(); plt.show()
       <span class="ex-status"></span>
     </div>
     <pre class="ex-output"></pre>
+<script type="text/x-explain">All three criteria correctly identify x1 + x2 as the best 2-predictor model (the true model). BIC gives a larger penalty for models with 3+ predictors, making it more aggressive about ruling out noise features like x3 and x4.</script>
+  </section>
+
+  <!-- EXAMPLE: validation set + CV + one-SE rule -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Validation set vs. 10-fold CV vs. BIC — with one-SE rule</h2>
+    <div class="ex-prompt">Use the Credit dataset numeric predictors (6 features). Compare all three model selection approaches and show the one-SE rule on the CV panel.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd, matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import statsmodels.api as sm
+from itertools import combinations
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import cross_val_score, KFold, train_test_split
+from sklearn.metrics import mean_squared_error
+
+# Simulate Credit-like data
+rng = np.random.default_rng(0); N = 400
+income = rng.uniform(10,180,N); limit = 1000+5*income+rng.normal(0,500,N)
+rating = limit/5+rng.normal(0,20,N); cards = rng.integers(1,9,N).astype(float)
+age = rng.uniform(23,98,N); edu = rng.integers(5,20,N).astype(float)
+student = rng.choice([0.,1.], N, p=[0.7,0.3])
+balance = np.clip(0.8*income+0.05*limit+400*student+rng.normal(0,200,N), 0, None)
+X_cr = np.column_stack([income, limit, rating, cards, age, edu])
+y_cr = balance
+names = ['Income','Limit','Rating','Cards','Age','Education']
+p_cr, n_cr = 6, N
+
+# Best subsets
+best_subsets = {}
+for k in range(1, p_cr+1):
+    best_rss, best_combo = np.inf, None
+    for combo in combinations(range(p_cr), k):
+        Xk = X_cr[:, combo]
+        lr = LinearRegression().fit(Xk, y_cr)
+        rss = np.sum((y_cr - lr.predict(Xk))**2)
+        if rss < best_rss: best_rss, best_combo = rss, combo
+    best_subsets[k] = best_combo
+
+# BIC
+m_full = sm.OLS(y_cr, sm.add_constant(X_cr)).fit(); sigma2 = m_full.mse_resid
+bic_vals = []
+for k, combo in best_subsets.items():
+    mk = sm.OLS(y_cr, sm.add_constant(X_cr[:,combo])).fit()
+    bic_vals.append(mk.bic)
+
+# Validation set (75/25)
+X_tr, X_val, y_tr, y_val = train_test_split(X_cr, y_cr, test_size=0.25, random_state=42)
+val_mse = {k: mean_squared_error(y_val, LinearRegression().fit(X_tr[:,combo], y_tr).predict(X_val[:,combo]))
+           for k, combo in best_subsets.items()}
+
+# 10-fold CV
+kf = KFold(10, shuffle=True, random_state=0)
+cv_mean, cv_se = {}, {}
+for k, combo in best_subsets.items():
+    sc = -cross_val_score(LinearRegression(), X_cr[:,combo], y_cr, cv=kf,
+                          scoring='neg_mean_squared_error')
+    cv_mean[k] = sc.mean(); cv_se[k] = sc.std()/np.sqrt(10)
+
+ks = list(range(1, p_cr+1))
+fig, axes = plt.subplots(1, 3, figsize=(14, 4))
+
+axes[0].plot(ks, bic_vals, 'go-', ms=8, lw=2)
+axes[0].scatter(1+np.argmin(bic_vals), min(bic_vals), s=150, marker='x', color='k', lw=2.5, zorder=5)
+axes[0].set(xlabel='# Predictors', title='BIC')
+
+axes[1].plot(ks, [val_mse[k] for k in ks], 'bs-', ms=8, lw=2)
+bv = min(val_mse, key=val_mse.get)
+axes[1].scatter(bv, val_mse[bv], s=150, marker='x', color='k', lw=2.5, zorder=5)
+axes[1].set(xlabel='# Predictors', title='Validation Set MSE')
+
+cv_arr = np.array([cv_mean[k] for k in ks]); cv_se_arr = np.array([cv_se[k] for k in ks])
+axes[2].errorbar(ks, cv_arr, yerr=cv_se_arr, fmt='ro-', ms=8, lw=2, capsize=4)
+best_cv = ks[np.argmin(cv_arr)]
+axes[2].scatter(best_cv, cv_mean[best_cv], s=150, marker='x', color='k', lw=2.5, zorder=5)
+threshold = cv_mean[best_cv] + cv_se[best_cv]
+axes[2].axhline(threshold, color='purple', ls='--', lw=1.5, label='min + 1 SE')
+one_se_k = min(k for k in ks if cv_mean[k] <= threshold)
+axes[2].axvline(one_se_k, color='purple', ls=':', lw=1.5, label=f'1-SE rule: k={one_se_k}')
+axes[2].set(xlabel='# Predictors', title='10-fold CV MSE'); axes[2].legend(fontsize=8)
+
+plt.suptitle('Model selection criteria comparison', fontsize=12); plt.tight_layout(); plt.show()
+print(f'BIC selects k={1+np.argmin(bic_vals)}, Validation k={bv}, CV k={best_cv}, 1-SE k={one_se_k}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">The one-SE rule: the simplest model whose CV error is within 1 standard error of the minimum. This chooses a smaller, more interpretable model when the predictive gain of adding more variables is within noise. All three criteria usually agree on the same or adjacent k.</script>
   </section>
 
 </section>
+
+<!-- ═══════════════════════════════════ PART 3 ════════════════════════════════ -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 3 · 1:00 – 1:20</span>
     <h1>Ridge Regression</h1>
     <p class="muted">L2 shrinkage, coefficient paths, and the bias–variance trade-off</p>
   </section>
+
   <section>
     <h2>Ridge regression — the objective</h2>
-<div class="two-col"><div><p style="font-size:0.88em;">
-<strong>OLS objective:</strong><br/>
-<code>minimise  RSS = Σ(yᵢ − β₀ − Σβⱼxᵢⱼ)²</code>
-</p>
-<hr style="margin:0.5em 0; border-color:#e2e8f0;"/>
-<p style="font-size:0.88em;">
-<strong>Ridge objective:</strong><br/>
-<code>minimise  RSS + λ Σβⱼ²</code><br/>
-<span class="muted">λ ≥ 0 is the <em>tuning parameter</em>.<br/>
-λΣβⱼ² is the <strong>L2 shrinkage penalty</strong>.</span>
-</p>
-<p class="callout" style="font-size:0.85em; margin-top:0.6em;">β̂₀ is <em>not</em> penalised — only slope coefficients are shrunk.</p></div><div><ul>
-  <li>λ = 0 → <strong>OLS</strong> (no penalty).</li>
-  <li>λ → ∞ → all coefficients → <strong>zero</strong>.</li>
-  <li>Intermediate λ → coefficients shrunk <em>toward</em> zero but not exactly zero.</li>
-  <li>Ridge <strong>never performs variable selection</strong> — all p predictors remain.</li>
-  <li>Selecting λ is critical; use <strong>cross-validation</strong>.</li>
-</ul></div></div>
-    <aside class="notes">The ridge penalty has a Bayesian interpretation: it corresponds to a Gaussian prior on the coefficients centered at zero.</aside>
+    <div class="two-col"><div>
+      <p style="font-size:0.88em;"><strong>OLS:</strong> minimise RSS = Σ(yᵢ − β₀ − Σβⱼxᵢⱼ)²</p>
+      <hr style="margin:0.5em 0;border-color:#e2e8f0;"/>
+      <p style="font-size:0.88em;"><strong>Ridge:</strong> minimise RSS + λΣβⱼ²</p>
+      <p class="callout" style="font-size:0.85em;margin-top:0.6em;">β̂₀ is NOT penalised. Must standardise X first.</p>
+    </div><div><ul>
+      <li>λ = 0 → OLS. λ → ∞ → all βⱼ → 0.</li>
+      <li>Shrinks toward zero but <strong>never exactly zero</strong>.</li>
+      <li>All p predictors stay in the model.</li>
+      <li>Select λ with <strong>cross-validation</strong>.</li>
+    </ul></div></div>
   </section>
 
   <section>
-    <h2>Coefficient paths and the need to standardise</h2>
-<div class="two-col"><div><div class="diagram-wrap" style="margin:0 auto; display:block;">
-<svg class="diagram" viewBox="0 0 620 280" width="600" height="270">
-  <defs>
-    <marker id="axArr2" viewBox="0 0 10 10" refX="9" refY="5"
-            markerWidth="6" markerHeight="6" orient="auto">
-      <path d="M0,0 L10,5 L0,10 z" fill="#64748b"/>
-    </marker>
-  </defs>
-  <line x1="60" y1="230" x2="570" y2="230" stroke="#64748b" stroke-width="1.5" marker-end="url(#axArr2)"/>
-  <line x1="60" y1="230" x2="60"  y2="20"  stroke="#64748b" stroke-width="1.5" marker-end="url(#axArr2)"/>
-  <line x1="60" y1="130" x2="568" y2="130" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4,3"/>
-  <text x="315" y="258" text-anchor="middle" font-size="12" fill="#0f172a">λ (regularization strength) →</text>
-  <text x="18"  y="130" text-anchor="middle" font-size="12" fill="#0f172a" transform="rotate(-90 18 130)">Coefficient</text>
-  <text x="65"  y="245" font-size="10" fill="#64748b">small λ</text>
-  <text x="510" y="245" font-size="10" fill="#64748b">large λ</text>
-  <text x="67" y="18" font-size="10" fill="#64748b">← OLS estimates</text>
-  <text x="575" y="133" font-size="10" fill="#64748b">0</text>
-  <path d="M70,200 C150,195 280,160 560,128" fill="none" stroke="#0f172a" stroke-width="2.2"/>
-  <text x="62" y="204" text-anchor="end" font-size="10" fill="#0f172a">Income</text>
-  <path d="M70,55 C150,60 280,90 560,129" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-dasharray="6,3"/>
-  <text x="62" y="58" text-anchor="end" font-size="10" fill="#dc2626">Limit</text>
-  <path d="M70,72 C160,78 290,100 560,130" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-dasharray="4,2"/>
-  <text x="62" y="90" text-anchor="end" font-size="10" fill="#2563eb">Rating</text>
-  <path d="M70,100 C160,105 290,118 560,130" fill="none" stroke="#d97706" stroke-width="2.2" stroke-dasharray="2,2"/>
-  <text x="62" y="118" text-anchor="end" font-size="10" fill="#d97706">Student</text>
-  <text x="560" y="120" font-size="10" fill="#64748b">→ 0</text>
-  <text x="310" y="22" text-anchor="middle" font-size="12" font-weight="bold" fill="#0f172a">Ridge: coefficients shrink toward 0 as λ grows</text>
-</svg>
-</div></div><div><ul>
-  <li>Each curve = one coefficient as λ increases from left (OLS) to right (zero).</li>
-  <li>All shrink smoothly — none reaches exactly zero.</li>
-  <li><strong>Must standardise predictors</strong> before fitting ridge: the L2 penalty is not scale-equivariant.</li>
-  <li>Use <code>StandardScaler</code> (zero mean, unit variance).</li>
-</ul></div></div>
-    <aside class="notes">Without standardisation a predictor in millions is penalised more than one in single digits.</aside>
+    <h2>Why ridge improves over OLS: bias–variance</h2>
+    <div class="two-col"><div>
+      <svg class="diagram" viewBox="0 0 480 250" width="460" height="240">
+        <defs><marker id="ax3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+        <line x1="50" y1="210" x2="450" y2="210" stroke="#64748b" stroke-width="1.5" marker-end="url(#ax3)"/>
+        <line x1="50" y1="210" x2="50" y2="20"  stroke="#64748b" stroke-width="1.5" marker-end="url(#ax3)"/>
+        <text x="250" y="235" text-anchor="middle" font-size="11" fill="#0f172a">λ →</text>
+        <text x="15"  y="115" text-anchor="middle" font-size="11" fill="#0f172a" transform="rotate(-90 15 115)">Error</text>
+        <line x1="50" y1="130" x2="445" y2="130" stroke="#64748b" stroke-width="1" stroke-dasharray="4,3"/>
+        <text x="450" y="133" font-size="9" fill="#64748b">σ²</text>
+        <path d="M60,128 C110,128 190,130 290,148 C360,162 420,185 440,200" fill="none" stroke="#0f172a" stroke-width="2.2"/>
+        <text x="445" y="202" font-size="9" fill="#0f172a">Bias²</text>
+        <path d="M60,50 C100,58 180,80 280,112 C360,138 420,162 440,180" fill="none" stroke="#16a34a" stroke-width="2.2"/>
+        <text x="445" y="182" font-size="9" fill="#16a34a">Var</text>
+        <path d="M60,80 C90,68 150,55 210,52 C270,50 320,60 370,82 C410,100 435,125 440,145" fill="none" stroke="#7c3aed" stroke-width="2.5"/>
+        <text x="445" y="147" font-size="9" fill="#7c3aed">MSE</text>
+        <line x1="210" y1="210" x2="210" y2="20" stroke="#7c3aed" stroke-width="1" stroke-dasharray="4,3"/>
+        <text x="213" y="218" font-size="9" fill="#7c3aed">opt λ</text>
+        <text x="215" y="54" font-size="12" fill="#7c3aed">×</text>
+      </svg>
+    </div><div><ul>
+      <li>OLS: zero bias, high variance when p is large.</li>
+      <li>As λ grows: bias ↑ a little, variance ↓ sharply.</li>
+      <li>Test MSE = Bias² + Variance + σ² has a U-shape.</li>
+      <li>Ridge wins when variance reduction &gt; bias cost.</li>
+    </ul></div></div>
   </section>
 
-  <section>
-    <h2>Why ridge improves over OLS: bias–variance trade-off</h2>
-<div class="two-col"><div><div class="diagram-wrap" style="margin:0 auto; display:block;">
-<svg class="diagram" viewBox="0 0 600 280" width="580" height="270">
-  <defs>
-    <marker id="axArr3" viewBox="0 0 10 10" refX="9" refY="5"
-            markerWidth="6" markerHeight="6" orient="auto">
-      <path d="M0,0 L10,5 L0,10 z" fill="#64748b"/>
-    </marker>
-  </defs>
-  <line x1="60" y1="230" x2="560" y2="230" stroke="#64748b" stroke-width="1.5" marker-end="url(#axArr3)"/>
-  <line x1="60" y1="230" x2="60"  y2="20"  stroke="#64748b" stroke-width="1.5" marker-end="url(#axArr3)"/>
-  <text x="310" y="258" text-anchor="middle" font-size="12" fill="#0f172a">Regularization strength λ →</text>
-  <text x="18"  y="130" text-anchor="middle" font-size="12" fill="#0f172a" transform="rotate(-90 18 130)">Error</text>
-  <line x1="60" y1="150" x2="550" y2="150" stroke="#64748b" stroke-width="1" stroke-dasharray="5,4"/>
-  <text x="555" y="153" font-size="10" fill="#64748b">σ²</text>
-  <path d="M70,148 C120,148 200,150 300,165 C380,178 460,200 540,220"
-        fill="none" stroke="#0f172a" stroke-width="2.2"/>
-  <path d="M70,60 C120,70 200,95 300,130 C380,155 460,175 540,190"
-        fill="none" stroke="#16a34a" stroke-width="2.2"/>
-  <path d="M70,90 C100,75 150,62 220,58 C280,56 330,65 380,85 C430,106 480,135 540,165"
-        fill="none" stroke="#7c3aed" stroke-width="2.5"/>
-  <line x1="220" y1="230" x2="220" y2="20" stroke="#7c3aed" stroke-width="1" stroke-dasharray="4,3"/>
-  <text x="225" y="240" font-size="10" fill="#7c3aed">optimal λ</text>
-  <text x="215" y="62" font-size="14" fill="#7c3aed">×</text>
-  <line x1="370" y1="35" x2="400" y2="35" stroke="#0f172a" stroke-width="2"/>
-  <text x="406" y="39" font-size="11" fill="#0f172a">Bias²</text>
-  <line x1="370" y1="52" x2="400" y2="52" stroke="#16a34a" stroke-width="2"/>
-  <text x="406" y="56" font-size="11" fill="#16a34a">Variance</text>
-  <line x1="370" y1="69" x2="400" y2="69" stroke="#7c3aed" stroke-width="2.5"/>
-  <text x="406" y="73" font-size="11" fill="#7c3aed">Test MSE</text>
-  <text x="310" y="22" text-anchor="middle" font-size="12" font-weight="bold" fill="#0f172a">Ridge: bias–variance trade-off</text>
-</svg>
-</div></div><div><ul>
-  <li>OLS: zero bias, but <strong>high variance</strong> when p is large.</li>
-  <li>As λ grows, bias increases slightly but <strong>variance drops sharply</strong>.</li>
-  <li>Test MSE = Bias² + Variance + σ² has a <strong>U-shape</strong> — minimum at optimal λ.</li>
-  <li>Ridge wins when variance reduction outweighs bias increase.</li>
-  <li>Especially helpful when p is close to n or predictors are correlated.</li>
-</ul></div></div>
-    <aside class="notes">Ridge adds a spring that pulls all coefficients toward zero, reducing wild swinging from multicollinearity.</aside>
-  </section>
-
-  <section>
-    <h2>Selecting λ by cross-validation</h2>
-<ul>
-  <li class="fragment fade-up">Try a grid of λ values (log-spaced from very small to very large).</li>
-  <li class="fragment fade-up">For each λ, compute the <strong>K-fold CV error</strong>.</li>
-  <li class="fragment fade-up">Select the λ that minimises CV error (or one-SE rule).</li>
-  <li class="fragment fade-up">Re-fit the final model on <em>all</em> training data using the selected λ.</li>
-  <li class="fragment fade-up"><code>sklearn.linear_model.RidgeCV</code> does this automatically and efficiently.</li>
-</ul>
-    <aside class="notes">RidgeCV uses an efficient leave-one-out formula (GCV) so it is much faster than running Ridge K times per lambda.</aside>
-  </section>
-
-  <section class="example" data-packages="numpy,matplotlib,sklearn">
-    <h2>Ridge regression — coefficient paths & CV</h2>
-    <div class="ex-prompt">Fit Ridge on the Diabetes dataset. Plot how each coefficient shrinks as λ grows. Use RidgeCV to pick the optimal λ.</div>
+  <!-- EXAMPLE: Ridge coefficient paths & RidgeCV -->
+  <section class="example" data-packages="numpy,matplotlib,scikit-learn">
+    <h2>Ridge regression — coefficient paths &amp; CV</h2>
+    <div class="ex-prompt">Fit Ridge on the Diabetes dataset. Plot how each coefficient shrinks as λ grows. Use RidgeCV to find the optimal λ. Notice: no coefficient ever hits exactly zero.</div>
 <textarea class="ex-code">import numpy as np
 import matplotlib
-matplotlib.use(&#x27;AGG&#x27;)
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from sklearn.linear_model import Ridge, RidgeCV
 from sklearn.preprocessing import StandardScaler
@@ -483,18 +487,28 @@ feature_names = load_diabetes().feature_names
 alphas = np.logspace(-2, 4, 200)
 coefs = np.array([Ridge(alpha=a).fit(Xs, y).coef_ for a in alphas])
 
-fig, ax = plt.subplots(figsize=(8, 4))
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
 for i, name in enumerate(feature_names):
-    ax.plot(np.log10(alphas), coefs[:, i], label=name, lw=1.6)
-ax.axhline(0, color=&#x27;k&#x27;, lw=0.8, ls=&#x27;--&#x27;)
-ax.set_xlabel(&#x27;log10(lambda)&#x27;); ax.set_ylabel(&#x27;Standardised coefficient&#x27;)
-ax.set_title(&#x27;Ridge regression - coefficient paths&#x27;)
-ax.legend(fontsize=8, ncol=2, loc=&#x27;upper right&#x27;)
-plt.tight_layout(); plt.show()
+    axes[0].plot(np.log10(alphas), coefs[:, i], label=name, lw=1.6)
+axes[0].axhline(0, color='k', lw=0.8, ls='--')
+axes[0].set_xlabel('log10(lambda)'); axes[0].set_ylabel('Standardised coefficient')
+axes[0].set_title('Ridge: coefficient paths — all shrink but never reach 0')
+axes[0].legend(fontsize=8, ncol=2, loc='upper right')
 
+# CV error curve
+from sklearn.model_selection import cross_val_score
+cv_mse = [-cross_val_score(Ridge(alpha=a), Xs, y, cv=10,
+           scoring='neg_mean_squared_error').mean() for a in alphas]
 rcv = RidgeCV(alphas=alphas, cv=10).fit(Xs, y)
-print(f&#x27;RidgeCV best alpha = {rcv.alpha_:.3f}&#x27;)
-print(f&#x27;All {len(rcv.coef_)} coefficients non-zero (Ridge never zeros out)&#x27;)
+axes[1].plot(np.log10(alphas), cv_mse, color='steelblue', lw=2)
+axes[1].axvline(np.log10(rcv.alpha_), color='red', ls='--', lw=1.5,
+                label=f'CV-selected lambda={rcv.alpha_:.2f}')
+axes[1].set_xlabel('log10(lambda)'); axes[1].set_ylabel('CV MSE')
+axes[1].set_title('RidgeCV: 10-fold CV error vs lambda'); axes[1].legend()
+
+plt.tight_layout(); plt.show()
+print(f'RidgeCV best lambda = {rcv.alpha_:.4f}')
+print(f'All {len(rcv.coef_)} coefficients are non-zero (Ridge never zeroes out)')
 </textarea>
     <div class="ex-controls">
       <button class="ex-run">Run</button>
@@ -502,175 +516,118 @@ print(f&#x27;All {len(rcv.coef_)} coefficients non-zero (Ridge never zeros out)&
       <span class="ex-status"></span>
     </div>
     <pre class="ex-output"></pre>
+<script type="text/x-explain">Left: every coefficient approaches zero as λ grows but never reaches it — this is the fundamental difference from Lasso. Right: CV MSE has a U-shape; RidgeCV finds the minimum. At λ=0 (OLS) variance is high; at large λ bias dominates.</script>
   </section>
 
 </section>
+
+<!-- ═══════════════════════════════════ PART 4 ════════════════════════════════ -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 4 · 1:20 – 1:40</span>
     <h1>The Lasso</h1>
     <p class="muted">L1 sparsity, variable selection, and the geometric picture</p>
   </section>
+
   <section>
     <h2>The Lasso objective</h2>
-<div class="two-col"><div><p style="font-size:0.88em;">
-<strong>Lasso objective:</strong><br/>
-<code>minimise  RSS + λ Σ|βⱼ|</code><br/>
-<span class="muted">Uses the <em>L1 norm</em> (sum of absolute values).<br/>
-When λ is large enough, some coefficients are forced to be <strong>exactly zero</strong>.</span>
-</p>
-<p class="callout" style="font-size:0.85em; margin-top:0.6em;">
-The lasso performs <em>variable selection</em> — the kink at zero in |β| is what causes exact zeros.
-</p></div><div><ul>
-  <li>λ = 0 → OLS (no penalty).</li>
-  <li>λ → ∞ → null model (all slopes = 0).</li>
-  <li>Intermediate λ → some coefficients are <strong>exactly zero</strong>.</li>
-  <li>Lasso gives a <strong>sparse model</strong> — interpretable like best subset.</li>
-  <li>Also called LASSO: <em>Least Absolute Shrinkage and Selection Operator</em>.</li>
-</ul></div></div>
-    <aside class="notes">The lasso was proposed by Tibshirani in 1996.</aside>
+    <div class="two-col"><div>
+      <p style="font-size:0.88em;"><strong>Lasso:</strong> minimise RSS + λΣ|βⱼ|</p>
+      <p class="callout" style="font-size:0.85em;margin-top:0.6em;">The L1 kink at zero forces some coefficients to be <em>exactly zero</em> → variable selection.</p>
+    </div><div><ul>
+      <li>λ = 0 → OLS. λ → ∞ → null model.</li>
+      <li>Intermediate λ → <strong>sparse model</strong>.</li>
+      <li>Also called LASSO: Least Absolute Shrinkage and Selection Operator.</li>
+    </ul></div></div>
   </section>
 
   <section>
-    <h2>Why the lasso produces exact zeros — geometry</h2>
-<div class="two-col"><div><div class="diagram-wrap" style="margin:0 auto; display:block;">
-<svg class="diagram" viewBox="0 0 640 300" width="620" height="290">
-  <text x="155" y="22" text-anchor="middle" font-size="13" font-weight="bold" fill="#0f172a">Lasso (L1 — diamond)</text>
-  <polygon points="155,70 210,145 155,220 100,145" fill="#06b6d4" opacity="0.25" stroke="#06b6d4" stroke-width="2"/>
-  <ellipse cx="220" cy="90" rx="85" ry="50" fill="none" stroke="#dc2626" stroke-width="1.8" opacity="0.7"/>
-  <ellipse cx="220" cy="90" rx="60" ry="36" fill="none" stroke="#dc2626" stroke-width="1.8" opacity="0.7"/>
-  <ellipse cx="220" cy="90" rx="40" ry="24" fill="none" stroke="#dc2626" stroke-width="1.8" opacity="0.7"/>
-  <circle cx="220" cy="90" r="5" fill="#dc2626"/>
-  <text x="228" y="88" font-size="10" fill="#dc2626">β̂ (OLS)</text>
-  <circle cx="100" cy="145" r="6" fill="#0f172a"/>
-  <text x="60" y="148" font-size="10" fill="#0f172a">contact</text>
-  <text x="60" y="160" font-size="10" fill="#0f172a">at corner</text>
-  <text x="60" y="172" font-size="10" fill="#0f172a">→ β₁=0</text>
-  <text x="155" y="240" text-anchor="middle" font-size="11" fill="#64748b">β₁</text>
-  <text x="86"  y="148" text-anchor="end"    font-size="11" fill="#64748b">β₂</text>
-  <text x="465" y="22" text-anchor="middle" font-size="13" font-weight="bold" fill="#0f172a">Ridge (L2 — circle)</text>
-  <circle cx="465" cy="145" r="75" fill="#06b6d4" opacity="0.25" stroke="#06b6d4" stroke-width="2"/>
-  <ellipse cx="535" cy="90" rx="85" ry="50" fill="none" stroke="#dc2626" stroke-width="1.8" opacity="0.7"/>
-  <ellipse cx="535" cy="90" rx="60" ry="36" fill="none" stroke="#dc2626" stroke-width="1.8" opacity="0.7"/>
-  <ellipse cx="535" cy="90" rx="40" ry="24" fill="none" stroke="#dc2626" stroke-width="1.8" opacity="0.7"/>
-  <circle cx="535" cy="90" r="5" fill="#dc2626"/>
-  <text x="543" y="88" font-size="10" fill="#dc2626">β̂ (OLS)</text>
-  <circle cx="415" cy="110" r="6" fill="#0f172a"/>
-  <text x="350" y="108" font-size="10" fill="#0f172a">contact on</text>
-  <text x="350" y="120" font-size="10" fill="#0f172a">smooth arc</text>
-  <text x="350" y="132" font-size="10" fill="#0f172a">→ β≠ 0</text>
-  <text x="465" y="240" text-anchor="middle" font-size="11" fill="#64748b">β₁</text>
-  <text x="385" y="148" text-anchor="end"    font-size="11" fill="#64748b">β₂</text>
-  <line x1="320" y1="15" x2="320" y2="285" stroke="#e2e8f0" stroke-width="1.5" stroke-dasharray="5,4"/>
-</svg>
-</div></div><div><ul>
-  <li>Lasso: <code>min RSS  s.t.  Σ|βⱼ| ≤ s</code></li>
-  <li>Ridge: <code>min RSS  s.t.  Σβⱼ² ≤ s</code></li>
-  <li>RSS ellipses expand outward from β̂ (OLS minimum).</li>
-  <li>Lasso constraint is a <strong>diamond</strong> with corners on axes.</li>
-  <li>Ellipse hits the corner first → coefficient is <strong>exactly zero</strong>.</li>
-  <li>Ridge constraint is a <strong>sphere</strong> — smooth, no corners → never exactly zero.</li>
-</ul></div></div>
-    <aside class="notes">The corners of the L1 diamond lie on the coordinate axes. The expanding ellipse contacts a corner instead of a smooth edge.</aside>
-  </section>
-
-  <section>
-    <h2>Lasso coefficient paths</h2>
-<div class="two-col"><div><div class="diagram-wrap" style="margin:0 auto; display:block;">
-<svg class="diagram" viewBox="0 0 620 280" width="600" height="270">
-  <defs>
-    <marker id="axArr4" viewBox="0 0 10 10" refX="9" refY="5"
-            markerWidth="6" markerHeight="6" orient="auto">
-      <path d="M0,0 L10,5 L0,10 z" fill="#64748b"/>
-    </marker>
-  </defs>
-  <line x1="60" y1="230" x2="570" y2="230" stroke="#64748b" stroke-width="1.5" marker-end="url(#axArr4)"/>
-  <line x1="60" y1="230" x2="60"  y2="20"  stroke="#64748b" stroke-width="1.5" marker-end="url(#axArr4)"/>
-  <line x1="60" y1="130" x2="568" y2="130" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4,3"/>
-  <text x="315" y="258" text-anchor="middle" font-size="12" fill="#0f172a">λ →  (L1 penalty grows)</text>
-  <text x="18"  y="130" text-anchor="middle" font-size="12" fill="#0f172a" transform="rotate(-90 18 130)">Coefficient</text>
-  <text x="568" y="133" font-size="10" fill="#64748b">0</text>
-  <path d="M70,200 C140,196 220,165 340,130 L555,130" fill="none" stroke="#0f172a" stroke-width="2.2"/>
-  <text x="62" y="204" text-anchor="end" font-size="10" fill="#0f172a">Income</text>
-  <path d="M70,55 C150,60 260,85 390,130 L555,130" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-dasharray="6,3"/>
-  <text x="62" y="58" text-anchor="end" font-size="10" fill="#dc2626">Limit</text>
-  <path d="M70,72 C170,79 290,103 430,130 L555,130" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-dasharray="4,2"/>
-  <text x="62" y="90" text-anchor="end" font-size="10" fill="#2563eb">Rating</text>
-  <path d="M70,100 C130,105 210,123 295,130 L555,130" fill="none" stroke="#d97706" stroke-width="2.2" stroke-dasharray="2,2"/>
-  <text x="62" y="118" text-anchor="end" font-size="10" fill="#d97706">Student</text>
-  <text x="300" y="22" text-anchor="middle" font-size="11" fill="#0f172a" font-weight="bold">Lasso: coefficients hit exactly zero (sparsity!)</text>
-  <text x="298" y="120" font-size="10" fill="#d97706">↑ Student zeroed first</text>
-  <line x1="340" y1="130" x2="340" y2="240" stroke="#0f172a" stroke-width="1" stroke-dasharray="3,3"/>
-  <text x="344" y="245" font-size="9" fill="#0f172a">Income=0</text>
-</svg>
-</div></div><div><ul>
-  <li>As λ grows, coefficients are driven to exactly zero <strong>one by one</strong>.</li>
-  <li>The order of zeroing reflects predictor importance.</li>
-  <li>Contrast with ridge: all approach zero but <em>never reach it</em>.</li>
-  <li>LassoCV selects the λ minimising CV error.</li>
-  <li>Always standardise predictors before fitting lasso.</li>
-</ul></div></div>
-    <aside class="notes">Reading the path: at small lambda all coefficients equal OLS. As lambda grows, the least important predictors are zeroed first.</aside>
+    <h2>Why lasso produces exact zeros — geometry</h2>
+    <div class="two-col"><div>
+      <svg class="diagram" viewBox="0 0 560 270" width="540" height="260">
+        <text x="140" y="18" text-anchor="middle" font-size="12" font-weight="bold" fill="#0f172a">Lasso (L1 — diamond)</text>
+        <polygon points="140,55 200,130 140,205 80,130" fill="#06b6d4" opacity="0.25" stroke="#06b6d4" stroke-width="2"/>
+        <ellipse cx="205" cy="75" rx="80" ry="48" fill="none" stroke="#dc2626" stroke-width="1.8" opacity="0.7"/>
+        <ellipse cx="205" cy="75" rx="56" ry="34" fill="none" stroke="#dc2626" stroke-width="1.8" opacity="0.7"/>
+        <ellipse cx="205" cy="75" rx="36" ry="22" fill="none" stroke="#dc2626" stroke-width="1.8" opacity="0.7"/>
+        <circle cx="205" cy="75" r="5" fill="#dc2626"/>
+        <text x="213" y="73" font-size="9" fill="#dc2626">β̂ OLS</text>
+        <circle cx="80" cy="130" r="6" fill="#0f172a"/>
+        <text x="30" y="128" font-size="9" fill="#0f172a">contact</text>
+        <text x="30" y="140" font-size="9" fill="#0f172a">→ β₁=0</text>
+        <text x="280" y="18" text-anchor="middle" font-size="12" font-weight="bold" fill="#0f172a">Ridge (L2 — circle)</text>
+        <circle cx="400" cy="130" r="70" fill="#06b6d4" opacity="0.25" stroke="#06b6d4" stroke-width="2"/>
+        <ellipse cx="465" cy="75" rx="80" ry="48" fill="none" stroke="#dc2626" stroke-width="1.8" opacity="0.7"/>
+        <ellipse cx="465" cy="75" rx="56" ry="34" fill="none" stroke="#dc2626" stroke-width="1.8" opacity="0.7"/>
+        <ellipse cx="465" cy="75" rx="36" ry="22" fill="none" stroke="#dc2626" stroke-width="1.8" opacity="0.7"/>
+        <circle cx="465" cy="75" r="5" fill="#dc2626"/>
+        <text x="473" y="73" font-size="9" fill="#dc2626">β̂ OLS</text>
+        <circle cx="346" cy="98" r="6" fill="#0f172a"/>
+        <text x="288" y="96" font-size="9" fill="#0f172a">smooth arc</text>
+        <text x="288" y="108" font-size="9" fill="#0f172a">→ β ≠ 0</text>
+        <line x1="278" y1="10" x2="278" y2="268" stroke="#e2e8f0" stroke-width="1.5" stroke-dasharray="5,4"/>
+      </svg>
+    </div><div><ul>
+      <li>Lasso: constraint region is a <strong>diamond</strong> with corners on axes.</li>
+      <li>RSS ellipse contacts a corner → β = exactly 0.</li>
+      <li>Ridge: constraint is a <strong>sphere</strong> — smooth surface, no corners → never exactly 0.</li>
+    </ul></div></div>
   </section>
 
   <section>
     <h2>Lasso vs Ridge — when to choose which</h2>
-<div class="two-col"><div><div>
-<h3 style="color:#2563eb; margin:0 0 0.3em;">Lasso</h3>
-<ul style="font-size:0.88em; margin:0; padding-left:1.2em;">
-  <li>Sparse models (exact zeros).</li>
-  <li>Automatic <strong>variable selection</strong>.</li>
-  <li>Best when <strong>few predictors</strong> truly matter.</li>
-  <li>More interpretable output.</li>
-</ul>
-</div></div><div><div>
-<h3 style="color:#dc2626; margin:0 0 0.3em;">Ridge</h3>
-<ul style="font-size:0.88em; margin:0; padding-left:1.2em;">
-  <li>Keeps all predictors (shrinks but never zeros).</li>
-  <li>Best when <strong>many predictors</strong> all contribute a little.</li>
-  <li>Handles multicollinearity well.</li>
-  <li>Slightly better MSE when signal is diffuse.</li>
-</ul>
-</div></div></div>
-    <aside class="notes">Cross-validation can tell you which is better for your dataset. Elastic Net interpolates between the two.</aside>
+    <div class="two-col"><div>
+      <h3 style="color:#2563eb;margin:0 0 0.3em;">Lasso</h3>
+      <ul style="font-size:0.88em;">
+        <li>Sparse models (exact zeros).</li>
+        <li>Automatic variable selection.</li>
+        <li>Best when <strong>few predictors</strong> truly matter.</li>
+      </ul>
+    </div><div>
+      <h3 style="color:#dc2626;margin:0 0 0.3em;">Ridge</h3>
+      <ul style="font-size:0.88em;">
+        <li>Keeps all predictors (shrinks, never zeros).</li>
+        <li>Best when <strong>many predictors</strong> all contribute a little.</li>
+        <li>Handles multicollinearity well.</li>
+      </ul>
+    </div></div>
+    <p class="callout" style="margin-top:0.8em;">Use cross-validation to decide which is better for your data. Elastic Net interpolates between the two.</p>
   </section>
 
-  <section class="example" data-packages="numpy,matplotlib,sklearn">
+  <!-- EXAMPLE: Lasso paths & LassoCV -->
+  <section class="example" data-packages="numpy,matplotlib,scikit-learn">
     <h2>Lasso — sparsity and variable selection</h2>
-    <div class="ex-prompt">Plot Lasso coefficient paths on the Diabetes dataset. Use LassoCV to find optimal λ and report which features are zeroed out.</div>
+    <div class="ex-prompt">Plot Lasso coefficient paths on the Diabetes dataset. Use LassoCV to find optimal λ. Watch coefficients hit exactly zero — the first to go are the least important predictors.</div>
 <textarea class="ex-code">import numpy as np
 import matplotlib
-matplotlib.use(&#x27;AGG&#x27;)
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from sklearn.linear_model import Lasso, LassoCV
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import load_diabetes
 
 X, y = load_diabetes(return_X_y=True)
-scaler = StandardScaler()
-Xs = scaler.fit_transform(X)
+Xs = StandardScaler().fit_transform(X)
 feature_names = load_diabetes().feature_names
 
 alphas = np.logspace(-2, 1, 200)
-coefs = np.array([
-    Lasso(alpha=a, max_iter=5000).fit(Xs, y).coef_ for a in alphas
-])
+coefs = np.array([Lasso(alpha=a, max_iter=5000).fit(Xs, y).coef_ for a in alphas])
 
 fig, ax = plt.subplots(figsize=(8, 4))
 for i, name in enumerate(feature_names):
     ax.plot(np.log10(alphas), coefs[:, i], label=name, lw=1.6)
-ax.axhline(0, color=&#x27;k&#x27;, lw=0.8, ls=&#x27;--&#x27;)
-ax.set_xlabel(&#x27;log10(lambda)&#x27;); ax.set_ylabel(&#x27;Standardised coefficient&#x27;)
-ax.set_title(&#x27;Lasso - coefficient paths (exact zeros!)&#x27;)
-ax.legend(fontsize=8, ncol=2, loc=&#x27;lower right&#x27;)
+ax.axhline(0, color='k', lw=0.8, ls='--')
+ax.set_xlabel('log10(lambda)'); ax.set_ylabel('Standardised coefficient')
+ax.set_title('Lasso: coefficient paths — features hit exactly zero!')
+ax.legend(fontsize=8, ncol=2, loc='lower right')
 plt.tight_layout(); plt.show()
 
 lcv = LassoCV(cv=10, max_iter=10000, random_state=0).fit(Xs, y)
-print(f&#x27;LassoCV best alpha = {lcv.alpha_:.4f}&#x27;)
+print(f'LassoCV best lambda = {lcv.alpha_:.4f}')
 zeroed = [n for n, c in zip(feature_names, lcv.coef_) if c == 0]
 kept   = [n for n, c in zip(feature_names, lcv.coef_) if c != 0]
-print(f&#x27;Zeroed out: {zeroed}&#x27;)
-print(f&#x27;Kept: {kept}&#x27;)
+print(f'Zeroed out: {zeroed}')
+print(f'Kept: {kept}')
 </textarea>
     <div class="ex-controls">
       <button class="ex-run">Run</button>
@@ -678,146 +635,180 @@ print(f&#x27;Kept: {kept}&#x27;)
       <span class="ex-status"></span>
     </div>
     <pre class="ex-output"></pre>
+<script type="text/x-explain">Lasso zeroes out several features — it performs variable selection automatically. The least informative predictors are zeroed first as λ increases. Compare with Ridge from Part 3: Ridge paths approach zero asymptotically but never arrive.</script>
+  </section>
+
+  <!-- EXAMPLE: Lasso vs Ridge CV comparison -->
+  <section class="example" data-packages="numpy,matplotlib,scikit-learn">
+    <h2>Lasso vs Ridge — CV error comparison</h2>
+    <div class="ex-prompt">Plot 10-fold CV-MSE vs log10(λ) for both methods on the same axes. Which achieves lower minimum CV-MSE on the Diabetes dataset?</div>
+<textarea class="ex-code">import numpy as np, matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from sklearn.linear_model import Lasso, Ridge
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import cross_val_score
+from sklearn.datasets import load_diabetes
+
+X, y = load_diabetes(return_X_y=True)
+Xs = StandardScaler().fit_transform(X)
+
+alphas = np.logspace(-2, 1, 80)
+lasso_cv, ridge_cv = [], []
+
+for a in alphas:
+    l = -cross_val_score(Lasso(alpha=a, max_iter=5000), Xs, y,
+                         cv=10, scoring='neg_mean_squared_error').mean()
+    r = -cross_val_score(Ridge(alpha=a), Xs, y,
+                         cv=10, scoring='neg_mean_squared_error').mean()
+    lasso_cv.append(l); ridge_cv.append(r)
+
+fig, ax = plt.subplots(figsize=(8, 4))
+ax.plot(np.log10(alphas), lasso_cv, color='steelblue', lw=2, label='Lasso CV MSE')
+ax.plot(np.log10(alphas), ridge_cv, color='tomato', lw=2, ls='--', label='Ridge CV MSE')
+best_l = alphas[np.argmin(lasso_cv)]
+best_r = alphas[np.argmin(ridge_cv)]
+ax.axvline(np.log10(best_l), color='steelblue', ls=':', lw=1.2)
+ax.axvline(np.log10(best_r), color='tomato', ls=':', lw=1.2)
+ax.set_xlabel('log10(lambda)'); ax.set_ylabel('CV MSE')
+ax.set_title('Lasso vs Ridge — 10-fold CV MSE on Diabetes'); ax.legend()
+plt.tight_layout(); plt.show()
+
+print(f'Lasso: best lambda={best_l:.4f}, min CV-MSE={min(lasso_cv):.2f}')
+print(f'Ridge: best lambda={best_r:.4f}, min CV-MSE={min(ridge_cv):.2f}')
+print(f'Winner: {"Lasso" if min(lasso_cv) < min(ridge_cv) else "Ridge"}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">On the Diabetes dataset the two methods are very close in CV-MSE. Lasso gives a sparse model; Ridge keeps all 10 features. When CV-MSE is similar, prefer Lasso for interpretability (fewer features). When predictors all have small but real effects, Ridge often wins.</script>
   </section>
 
 </section>
+
+<!-- ═══════════════════════════════════ PART 5 ════════════════════════════════ -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 5 · 1:40 – 2:00</span>
     <h1>Dimension Reduction</h1>
     <p class="muted">Principal Components Regression and Partial Least Squares</p>
   </section>
+
   <section>
     <h2>Dimension reduction — the idea</h2>
-<ul>
-  <li class="fragment fade-up">Rather than selecting or shrinking the original p predictors, <strong>transform</strong> them into M &lt; p new features Z₁, …, Z<sub>M</sub>.</li>
-  <li class="fragment fade-up">Each Z<sub>m</sub> = Σ φ<sub>mj</sub> X<sub>j</sub> — a <em>linear combination</em> of the originals.</li>
-  <li class="fragment fade-up">Then fit OLS of Y on Z₁, …, Z<sub>M</sub>.</li>
-  <li class="fragment fade-up">Constraints on the coefficient space → <strong>variance reduction</strong>.</li>
-  <li class="fragment fade-up">Key question: <em>how do we choose the linear combinations?</em></li>
-</ul>
-    <aside class="notes">Dimension reduction can be seen as a form of regularisation: it constrains coefficients to lie in a lower-dimensional subspace.</aside>
+    <ul>
+      <li class="fragment fade-up">Transform p predictors into M &lt; p new features Z₁, …, Z<sub>M</sub> (linear combinations).</li>
+      <li class="fragment fade-up">Fit OLS of Y on Z₁, …, Z<sub>M</sub>. M &lt; p → constrains coefficient space → variance reduction.</li>
+      <li class="fragment fade-up">Key question: <em>how do we choose the linear combinations?</em></li>
+    </ul>
+    <div class="two-col" style="margin-top:0.8em;">
+      <div class="card"><h4>PCR</h4><strong>Unsupervised</strong><p class="muted">Directions of max variance in X (PCA). Ignores Y when finding components.</p></div>
+      <div class="card"><h4>PLS</h4><strong>Supervised</strong><p class="muted">Directions that maximise covariance with Y. Uses the response to guide extraction.</p></div>
+    </div>
   </section>
 
   <section>
-    <h2>Principal Components Regression (PCR)</h2>
-<div class="two-col"><div><ul>
-  <li><strong>Step 1:</strong> compute the first M principal components (PCA) of X — directions of maximum variance.</li>
-  <li><strong>Step 2:</strong> regress Y on these M PCs using OLS.</li>
-  <li>PCA is <em>unsupervised</em> — the response Y is not used to determine the directions.</li>
-  <li>Assumption: highest-variance directions in X are also most relevant to Y.</li>
-  <li>Choose M by cross-validation.</li>
-</ul></div><div><ul>
-  <li>M = p → OLS (no reduction).</li>
-  <li>M = 1 → regress on single direction of most variance.</li>
-  <li>Works well when a few PCs capture most variation in X.</li>
-  <li>Drawback: PC directions may not correlate with Y.</li>
-</ul></div></div>
-    <aside class="notes">PCR was proposed by Hotelling in the 1930s. It is the simplest dimension reduction method and still widely used.</aside>
-  </section>
-
-  <section>
-    <h2>Partial Least Squares (PLS)</h2>
-<ul>
-  <li class="fragment fade-up">PLS also finds M &lt; p linear combinations — but in a <strong>supervised</strong> way.</li>
-  <li class="fragment fade-up">Z₁ is the linear combination of X most correlated with Y.</li>
-  <li class="fragment fade-up">Subsequent directions are orthogonalised against previous ones.</li>
-  <li class="fragment fade-up">PLS uses the response to <em>guide</em> direction choice → often better directions than PCR.</li>
-  <li class="fragment fade-up">In practice PLS and PCR often give similar results with CV tuning.</li>
-</ul>
-    <aside class="notes">PLS was developed by Herman Wold for chemometrics in the 1970s. It is especially popular in genomics where p &gt;&gt; n.</aside>
-  </section>
-
-  <section>
-    <h2>PCR vs PLS — choosing M</h2>
-<div class="two-col"><div><div class="diagram-wrap" style="margin:0 auto; display:block;">
-<svg class="diagram" viewBox="0 0 580 270" width="560" height="260">
-  <defs>
-    <marker id="axArr5" viewBox="0 0 10 10" refX="9" refY="5"
-            markerWidth="6" markerHeight="6" orient="auto">
-      <path d="M0,0 L10,5 L0,10 z" fill="#64748b"/>
-    </marker>
-  </defs>
-  <line x1="60" y1="220" x2="530" y2="220" stroke="#64748b" stroke-width="1.5" marker-end="url(#axArr5)"/>
-  <line x1="60" y1="220" x2="60"  y2="20"  stroke="#64748b" stroke-width="1.5" marker-end="url(#axArr5)"/>
-  <text x="295" y="248" text-anchor="middle" font-size="12" fill="#0f172a">Number of components M</text>
-  <text x="16"  y="125" text-anchor="middle" font-size="12" fill="#0f172a" transform="rotate(-90 16 125)">CV MSE</text>
-  <polyline points="100,190 160,155 220,120 280,90 340,75 400,72 460,71 510,70"
-            fill="none" stroke="#2563eb" stroke-width="2.5"/>
-  <polyline points="100,190 160,140 220,95 280,72 340,68 400,67 460,66 510,66"
-            fill="none" stroke="#16a34a" stroke-width="2.5" stroke-dasharray="6,3"/>
-  <line x1="60" y1="68" x2="525" y2="68" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4,3"/>
-  <text x="535" y="71" font-size="10" fill="#dc2626">OLS</text>
-  <circle cx="340" cy="75" r="6" fill="#2563eb"/>
-  <text x="344" y="65" font-size="10" fill="#2563eb">PCR opt M=5</text>
-  <circle cx="280" cy="72" r="6" fill="#16a34a"/>
-  <text x="284" y="60" font-size="10" fill="#16a34a">PLS opt M=4</text>
-  <text x="100" y="234" text-anchor="middle" font-size="11" fill="#64748b">1</text>
-  <text x="160" y="234" text-anchor="middle" font-size="11" fill="#64748b">2</text>
-  <text x="220" y="234" text-anchor="middle" font-size="11" fill="#64748b">3</text>
-  <text x="280" y="234" text-anchor="middle" font-size="11" fill="#64748b">4</text>
-  <text x="340" y="234" text-anchor="middle" font-size="11" fill="#64748b">5</text>
-  <text x="400" y="234" text-anchor="middle" font-size="11" fill="#64748b">6</text>
-  <text x="460" y="234" text-anchor="middle" font-size="11" fill="#64748b">7</text>
-  <line x1="370" y1="30" x2="400" y2="30" stroke="#2563eb" stroke-width="2.5"/>
-  <text x="406" y="34" font-size="11" fill="#2563eb">PCR</text>
-  <line x1="370" y1="47" x2="400" y2="47" stroke="#16a34a" stroke-width="2.5" stroke-dasharray="6,3"/>
-  <text x="406" y="51" font-size="11" fill="#16a34a">PLS</text>
-  <text x="295" y="18" text-anchor="middle" font-size="12" font-weight="bold" fill="#0f172a">PCR vs PLS: cross-validation MSE by M</text>
-</svg>
-</div></div><div><ul>
-  <li>Choose M by <strong>K-fold CV</strong> — plot CV-MSE vs number of components.</li>
-  <li>PLS often needs fewer components than PCR.</li>
-  <li>Both typically outperform OLS when p is large relative to n.</li>
-  <li>sklearn: <code>PCA + LinearRegression</code> pipeline for PCR; <code>PLSRegression</code> for PLS.</li>
-</ul></div></div>
-    <aside class="notes">PLS reaches its minimum CV-MSE with fewer components because its directions are guided by the response.</aside>
+    <h2>PCR vs PLS — choosing M by CV</h2>
+    <div class="two-col"><div>
+      <svg class="diagram" viewBox="0 0 480 240" width="460" height="230">
+        <defs><marker id="ax5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+        <line x1="50" y1="200" x2="440" y2="200" stroke="#64748b" stroke-width="1.5" marker-end="url(#ax5)"/>
+        <line x1="50" y1="200" x2="50" y2="20"  stroke="#64748b" stroke-width="1.5" marker-end="url(#ax5)"/>
+        <text x="245" y="225" text-anchor="middle" font-size="11" fill="#0f172a">M (components)</text>
+        <text x="16"  y="115" text-anchor="middle" font-size="11" fill="#0f172a" transform="rotate(-90 16 115)">CV MSE</text>
+        <polyline points="90,178 150,148 210,112 270,86 330,72 390,70 430,69" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+        <polyline points="90,178 150,138 210,92 270,68 330,65 390,64 430,63" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-dasharray="6,3"/>
+        <line x1="50" y1="64" x2="435" y2="64" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="440" y="67" font-size="9" fill="#dc2626">OLS</text>
+        <circle cx="330" cy="72" r="6" fill="#2563eb"/>
+        <text x="334" y="62" font-size="9" fill="#2563eb">PCR opt M=5</text>
+        <circle cx="270" cy="68" r="6" fill="#16a34a"/>
+        <text x="274" y="56" font-size="9" fill="#16a34a">PLS opt M=4</text>
+        <line x1="360" y1="28" x2="388" y2="28" stroke="#2563eb" stroke-width="2.5"/>
+        <text x="393" y="32" font-size="10" fill="#2563eb">PCR</text>
+        <line x1="360" y1="43" x2="388" y2="43" stroke="#16a34a" stroke-width="2.5" stroke-dasharray="6,3"/>
+        <text x="393" y="47" font-size="10" fill="#16a34a">PLS</text>
+      </svg>
+    </div><div><ul>
+      <li>PLS often needs fewer components than PCR.</li>
+      <li>PLS directions are guided by Y → more relevant.</li>
+      <li>Both use <strong>K-fold CV</strong> to pick M.</li>
+      <li>Both typically outperform OLS when p is large relative to n.</li>
+      <li>sklearn: <code>Pipeline(PCA + LinearRegression)</code> for PCR; <code>PLSRegression</code> for PLS.</li>
+    </ul></div></div>
   </section>
 
   <section>
     <h2>Comparing all methods — practical guide</h2>
-<table style="font-size:0.82em; border-collapse:collapse; width:100%;">
-<tr style="background:#f1f5f9;">
-  <th style="padding:5px 8px; border:1px solid #cbd5e1;">Method</th>
-  <th style="padding:5px 8px; border:1px solid #cbd5e1;">Variable selection?</th>
-  <th style="padding:5px 8px; border:1px solid #cbd5e1;">Best when…</th>
-  <th style="padding:5px 8px; border:1px solid #cbd5e1;">Key parameter</th>
-</tr>
-<tr><td style="padding:5px 8px; border:1px solid #cbd5e1;"><strong>Best Subset</strong></td>
-    <td style="padding:5px 8px; border:1px solid #cbd5e1;">Yes (exact)</td>
-    <td style="padding:5px 8px; border:1px solid #cbd5e1;">p ≤ 30, computation OK</td>
-    <td style="padding:5px 8px; border:1px solid #cbd5e1;">k (# predictors)</td></tr>
-<tr style="background:#f8fafc;"><td style="padding:5px 8px; border:1px solid #cbd5e1;"><strong>Forward/Backward</strong></td>
-    <td style="padding:5px 8px; border:1px solid #cbd5e1;">Yes (greedy)</td>
-    <td style="padding:5px 8px; border:1px solid #cbd5e1;">Large p, fast needed</td>
-    <td style="padding:5px 8px; border:1px solid #cbd5e1;">k (stop criterion)</td></tr>
-<tr><td style="padding:5px 8px; border:1px solid #cbd5e1;"><strong>Ridge</strong></td>
-    <td style="padding:5px 8px; border:1px solid #cbd5e1;">No (shrinks all)</td>
-    <td style="padding:5px 8px; border:1px solid #cbd5e1;">Many small effects, multicollinearity</td>
-    <td style="padding:5px 8px; border:1px solid #cbd5e1;">λ</td></tr>
-<tr style="background:#f8fafc;"><td style="padding:5px 8px; border:1px solid #cbd5e1;"><strong>Lasso</strong></td>
-    <td style="padding:5px 8px; border:1px solid #cbd5e1;">Yes (exact zeros)</td>
-    <td style="padding:5px 8px; border:1px solid #cbd5e1;">Few true predictors, interpretability</td>
-    <td style="padding:5px 8px; border:1px solid #cbd5e1;">λ</td></tr>
-<tr><td style="padding:5px 8px; border:1px solid #cbd5e1;"><strong>PCR</strong></td>
-    <td style="padding:5px 8px; border:1px solid #cbd5e1;">No</td>
-    <td style="padding:5px 8px; border:1px solid #cbd5e1;">Highly correlated X, p &gt; n</td>
-    <td style="padding:5px 8px; border:1px solid #cbd5e1;">M (# components)</td></tr>
-<tr style="background:#f8fafc;"><td style="padding:5px 8px; border:1px solid #cbd5e1;"><strong>PLS</strong></td>
-    <td style="padding:5px 8px; border:1px solid #cbd5e1;">No</td>
-    <td style="padding:5px 8px; border:1px solid #cbd5e1;">p &gt; n, Y-relevant structure</td>
-    <td style="padding:5px 8px; border:1px solid #cbd5e1;">M (# components)</td></tr>
-</table>
-<p class="muted" style="margin-top:0.5em; font-size:0.88em;">Always use cross-validation to select the key parameter. No method universally dominates.</p>
-    <aside class="notes">The right method depends on whether you believe the true model is sparse (Lasso) or dense (Ridge/PCR/PLS).</aside>
+    <table style="font-size:0.8em;border-collapse:collapse;width:100%;">
+      <tr style="background:#f1f5f9;"><th style="padding:5px 8px;border:1px solid #cbd5e1;">Method</th><th style="padding:5px 8px;border:1px solid #cbd5e1;">Variable selection?</th><th style="padding:5px 8px;border:1px solid #cbd5e1;">Best when…</th><th style="padding:5px 8px;border:1px solid #cbd5e1;">Key parameter</th></tr>
+      <tr><td style="padding:5px 8px;border:1px solid #cbd5e1;"><strong>Best Subset</strong></td><td style="padding:5px 8px;border:1px solid #cbd5e1;">Yes (exact)</td><td style="padding:5px 8px;border:1px solid #cbd5e1;">p ≤ 30, computation OK</td><td style="padding:5px 8px;border:1px solid #cbd5e1;">k</td></tr>
+      <tr style="background:#f8fafc;"><td style="padding:5px 8px;border:1px solid #cbd5e1;"><strong>Forward/Backward</strong></td><td style="padding:5px 8px;border:1px solid #cbd5e1;">Yes (greedy)</td><td style="padding:5px 8px;border:1px solid #cbd5e1;">Large p, fast needed</td><td style="padding:5px 8px;border:1px solid #cbd5e1;">k</td></tr>
+      <tr><td style="padding:5px 8px;border:1px solid #cbd5e1;"><strong>Ridge</strong></td><td style="padding:5px 8px;border:1px solid #cbd5e1;">No (shrinks all)</td><td style="padding:5px 8px;border:1px solid #cbd5e1;">Many small effects, multicollinearity</td><td style="padding:5px 8px;border:1px solid #cbd5e1;">λ</td></tr>
+      <tr style="background:#f8fafc;"><td style="padding:5px 8px;border:1px solid #cbd5e1;"><strong>Lasso</strong></td><td style="padding:5px 8px;border:1px solid #cbd5e1;">Yes (exact zeros)</td><td style="padding:5px 8px;border:1px solid #cbd5e1;">Few true predictors, interpretability</td><td style="padding:5px 8px;border:1px solid #cbd5e1;">λ</td></tr>
+      <tr><td style="padding:5px 8px;border:1px solid #cbd5e1;"><strong>PCR</strong></td><td style="padding:5px 8px;border:1px solid #cbd5e1;">No</td><td style="padding:5px 8px;border:1px solid #cbd5e1;">Correlated X, p &gt; n</td><td style="padding:5px 8px;border:1px solid #cbd5e1;">M</td></tr>
+      <tr style="background:#f8fafc;"><td style="padding:5px 8px;border:1px solid #cbd5e1;"><strong>PLS</strong></td><td style="padding:5px 8px;border:1px solid #cbd5e1;">No</td><td style="padding:5px 8px;border:1px solid #cbd5e1;">p &gt; n, Y-relevant structure</td><td style="padding:5px 8px;border:1px solid #cbd5e1;">M</td></tr>
+    </table>
+    <p class="muted" style="margin-top:0.5em;font-size:0.88em;">Always use cross-validation to select the key parameter. No method universally dominates.</p>
   </section>
 
-  <section class="example" data-packages="numpy,matplotlib,sklearn">
+  <!-- EXAMPLE: PCA scree plot -->
+  <section class="example" data-packages="numpy,matplotlib,scikit-learn">
+    <h2>PCA scree plot — how many components?</h2>
+    <div class="ex-prompt">Before running PCR, inspect the explained variance per PC. The scree plot guides the choice of M — we want to capture most variance in X before regressing on Y.</div>
+<textarea class="ex-code">import numpy as np, matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_diabetes
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+
+X, y = load_diabetes(return_X_y=True)
+Xs = StandardScaler().fit_transform(X)
+pca = PCA().fit(Xs)
+
+explained = pca.explained_variance_ratio_
+cumulative = np.cumsum(explained)
+
+fig, axes = plt.subplots(1, 2, figsize=(11, 4))
+
+# Scree plot
+axes[0].bar(range(1, len(explained)+1), explained, color='steelblue', alpha=0.8)
+axes[0].set_xlabel('Principal Component'); axes[0].set_ylabel('Explained Variance Ratio')
+axes[0].set_title('Scree plot — Diabetes data')
+
+# Cumulative
+axes[1].plot(range(1, len(cumulative)+1), cumulative, 'o-', color='steelblue', ms=7)
+n90 = int(np.argmax(cumulative >= 0.9)) + 1
+axes[1].axhline(0.9, color='red', ls='--', lw=1, label='90% threshold')
+axes[1].axvline(n90, color='red', ls=':', lw=1, label=f'{n90} PCs for 90%')
+axes[1].set_xlabel('Number of PCs'); axes[1].set_ylabel('Cumulative Explained Variance')
+axes[1].set_title('Cumulative variance explained'); axes[1].legend()
+
+plt.suptitle('PCA on Diabetes data', fontsize=12)
+plt.tight_layout(); plt.show()
+print(f'PCs needed for 90% variance: {n90}')
+print(f'Explained per PC: {explained.round(3)}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">The scree plot shows how much variance each PC captures. A sharp elbow indicates where additional PCs add little. The cumulative plot shows how many PCs are needed to hit a threshold (e.g. 90%). But for PCR, remember: the PCs that explain most variance in X may not be the ones most correlated with Y — that's why PLS can outperform PCR with fewer components.</script>
+  </section>
+
+  <!-- EXAMPLE: PCR vs PLS comparison -->
+  <section class="example" data-packages="numpy,matplotlib,scikit-learn">
     <h2>PCR vs PLS — live comparison</h2>
     <div class="ex-prompt">Fit PCR and PLS on the Diabetes dataset. Plot 10-fold CV-MSE vs number of components M. Find the optimal M for each and compare to OLS.</div>
 <textarea class="ex-code">import numpy as np
 import matplotlib
-matplotlib.use(&#x27;AGG&#x27;)
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LinearRegression
@@ -833,28 +824,29 @@ Xs = StandardScaler().fit_transform(X)
 pcr_mse, pls_mse = [], []
 Ms = range(1, 11)
 for M in Ms:
-    pcr = Pipeline([(&#x27;pca&#x27;, PCA(n_components=M)), (&#x27;lr&#x27;, LinearRegression())])
+    pcr = Pipeline([('pca', PCA(n_components=M)), ('lr', LinearRegression())])
     pcr_mse.append(-cross_val_score(pcr, Xs, y, cv=10,
-                   scoring=&#x27;neg_mean_squared_error&#x27;).mean())
+                   scoring='neg_mean_squared_error').mean())
     pls = PLSRegression(n_components=M)
     pls_mse.append(-cross_val_score(pls, Xs, y, cv=10,
-                   scoring=&#x27;neg_mean_squared_error&#x27;).mean())
+                   scoring='neg_mean_squared_error').mean())
 
 fig, ax = plt.subplots(figsize=(7, 4))
-ax.plot(Ms, pcr_mse, &#x27;b-o&#x27;, label=&#x27;PCR (unsupervised PCA)&#x27;, ms=7)
-ax.plot(Ms, pls_mse, &#x27;g--s&#x27;, label=&#x27;PLS (supervised)&#x27;, ms=7)
+ax.plot(Ms, pcr_mse, 'b-o', label='PCR (unsupervised PCA)', ms=7)
+ax.plot(Ms, pls_mse, 'g--s', label='PLS (supervised)', ms=7)
 ols_mse = -cross_val_score(LinearRegression(), Xs, y, cv=10,
-                           scoring=&#x27;neg_mean_squared_error&#x27;).mean()
-ax.axhline(ols_mse, color=&#x27;red&#x27;, ls=&#x27;:&#x27;, label=f&#x27;OLS ({ols_mse:.0f})&#x27;)
-ax.set_xlabel(&#x27;M (components)&#x27;); ax.set_ylabel(&#x27;CV MSE&#x27;)
-ax.set_title(&#x27;PCR vs PLS on Diabetes data&#x27;)
-ax.legend(); plt.tight_layout(); plt.show()
-
+                           scoring='neg_mean_squared_error').mean()
+ax.axhline(ols_mse, color='red', ls=':', label=f'OLS ({ols_mse:.0f})')
 best_M_pcr = int(np.argmin(pcr_mse)) + 1
 best_M_pls = int(np.argmin(pls_mse)) + 1
-print(f&#x27;Best PCR: M={best_M_pcr}, CV-MSE={pcr_mse[best_M_pcr-1]:.1f}&#x27;)
-print(f&#x27;Best PLS: M={best_M_pls}, CV-MSE={pls_mse[best_M_pls-1]:.1f}&#x27;)
-print(f&#x27;OLS CV-MSE: {ols_mse:.1f}&#x27;)
+ax.scatter(best_M_pcr, pcr_mse[best_M_pcr-1], s=130, color='blue', marker='x', lw=2.5, zorder=6)
+ax.scatter(best_M_pls, pls_mse[best_M_pls-1], s=130, color='green', marker='x', lw=2.5, zorder=6)
+ax.set_xlabel('M (components)'); ax.set_ylabel('CV MSE')
+ax.set_title('PCR vs PLS on Diabetes data'); ax.legend(); plt.tight_layout(); plt.show()
+
+print(f'Best PCR: M={best_M_pcr}, CV-MSE={pcr_mse[best_M_pcr-1]:.1f}')
+print(f'Best PLS: M={best_M_pls}, CV-MSE={pls_mse[best_M_pls-1]:.1f}')
+print(f'OLS CV-MSE: {ols_mse:.1f}')
 </textarea>
     <div class="ex-controls">
       <button class="ex-run">Run</button>
@@ -862,16 +854,399 @@ print(f&#x27;OLS CV-MSE: {ols_mse:.1f}&#x27;)
       <span class="ex-status"></span>
     </div>
     <pre class="ex-output"></pre>
+<script type="text/x-explain">PLS typically reaches its minimum CV-MSE with fewer components than PCR. PCR finds the directions of maximum variance in X — but those may not be the most predictive of Y. PLS explicitly maximises covariance with Y, so its components are more directly relevant.</script>
   </section>
 
 </section>
+
+<!-- ════════════════════════════ EXERCISES ════════════════════════════════════ -->
+<section>
+  <section class="title-slide">
+    <span class="kicker">Exercises</span>
+    <h1>Practice</h1>
+    <p class="muted">All exercises use the Diabetes dataset from sklearn</p>
+  </section>
+
+  <!-- EXERCISE 1: Best Subset + BIC -->
+  <section class="exercise" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Exercise 1 — Best Subset Selection + BIC on Diabetes</h2>
+    <div class="ex-prompt">Run best subset selection over all 2¹⁰ subsets of the 10 Diabetes features. For each best-of-size-k model, compute BIC with statsmodels. Store the BIC values in a list <code>bic_vals</code> (index 0 = k=1). Print the BIC-selected features.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd, matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import statsmodels.api as sm
+from itertools import combinations
+from sklearn.linear_model import LinearRegression
+from sklearn.datasets import load_diabetes
+
+diab = load_diabetes()
+Xs = diab.data   # already standardised
+y  = diab.target
+feature_names = list(diab.feature_names)
+p = Xs.shape[1]
+
+# Step 1: best subset search — find best combo for each k
+best_subsets = {}  # k -> best feature index combo
+for k in range(1, p+1):
+    best_rss, best_combo = np.inf, None
+    for combo in combinations(range(p), k):
+        Xk = Xs[:, combo]
+        lr = LinearRegression().fit(Xk, y)
+        rss = np.sum((y - lr.predict(Xk))**2)
+        if rss < best_rss:
+            best_rss, best_combo = rss, combo
+    best_subsets[k] = best_combo
+
+# Step 2: compute BIC for each best-subset model (store in bic_vals)
+bic_vals = []
+for k, combo in best_subsets.items():
+    Xk = sm.add_constant(Xs[:, combo])
+    mk = sm.OLS(y, Xk).fit()
+    bic_vals.append(mk.bic)
+
+best_k = 1 + np.argmin(bic_vals)
+best_features = [feature_names[i] for i in best_subsets[best_k]]
+
+# Plot
+fig, ax = plt.subplots(figsize=(7, 4))
+ax.plot(range(1, p+1), bic_vals, 'go-', ms=8, lw=2)
+ax.scatter(best_k, bic_vals[best_k-1], s=200, color='black',
+           marker='x', zorder=6, lw=2.5, label=f'Selected k={best_k}')
+ax.set_xlabel('# Predictors'); ax.set_ylabel('BIC')
+ax.set_title('Best Subset BIC — Diabetes'); ax.legend()
+plt.tight_layout(); plt.show()
+
+print(f'BIC-selected k = {best_k}')
+print(f'Selected features: {best_features}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+    <script type="text/x-check">
+import numpy as np
+assert 'bic_vals' in dir(), "Store BIC values in a list called `bic_vals`"
+assert len(bic_vals) == 10, f"bic_vals must have 10 entries (one per k), got {len(bic_vals)}"
+assert bic_vals[0] > bic_vals[1], "BIC should generally decrease as k grows from 1 to 2"
+best_k = 1 + int(np.argmin(bic_vals))
+assert 2 <= best_k <= 8, f"BIC-selected k should be between 2 and 8, got {best_k}"
+assert 'best_features' in dir(), "Store selected feature names in `best_features`"
+assert len(best_features) == best_k, f"best_features should have {best_k} features"
+    </script>
+    <script type="text/x-solution">import numpy as np, matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import statsmodels.api as sm
+from itertools import combinations
+from sklearn.linear_model import LinearRegression
+from sklearn.datasets import load_diabetes
+diab=load_diabetes(); Xs=diab.data; y=diab.target; feature_names=list(diab.feature_names); p=10
+best_subsets={}
+for k in range(1,p+1):
+    best_rss,best_combo=np.inf,None
+    for combo in combinations(range(p),k):
+        Xk=Xs[:,combo]; lr=LinearRegression().fit(Xk,y)
+        rss=np.sum((y-lr.predict(Xk))**2)
+        if rss<best_rss: best_rss,best_combo=rss,combo
+    best_subsets[k]=best_combo
+bic_vals=[sm.OLS(y,sm.add_constant(Xs[:,combo])).fit().bic for combo in best_subsets.values()]
+best_k=1+int(np.argmin(bic_vals)); best_features=[feature_names[i] for i in best_subsets[best_k]]
+fig,ax=plt.subplots(figsize=(7,4)); ax.plot(range(1,p+1),bic_vals,'go-',ms=8,lw=2)
+ax.scatter(best_k,bic_vals[best_k-1],s=200,color='black',marker='x',zorder=6,lw=2.5,label=f'k={best_k}')
+ax.set(xlabel='# Predictors',ylabel='BIC',title='Best Subset BIC'); ax.legend()
+plt.tight_layout(); plt.show()
+print(f'BIC-selected k={best_k}'); print(f'Selected: {best_features}')
+    </script>
+    <script type="text/x-explain">BIC usually selects k ≈ 5–7 for the Diabetes dataset. The search over all 2¹⁰ = 1024 subsets is feasible here (p=10). For p=40, this becomes 2⁴⁰ ≈ 10¹² — intractable, which is why forward/backward stepwise or Lasso are preferred for large p. BIC's log(n) penalty (n=442, log(442) ≈ 6.1) is about 3× stronger than AIC's penalty of 2, so BIC will select fewer features than AIC would.</script>
+  </section>
+
+  <!-- EXERCISE 2: RidgeCV coefficient paths + optimal alpha -->
+  <section class="exercise" data-packages="numpy,matplotlib,scikit-learn">
+    <h2>Exercise 2 — RidgeCV: coefficient paths and optimal λ</h2>
+    <div class="ex-prompt">Fit <code>RidgeCV</code> with <code>cv=10</code> on the standardised Diabetes data. Store the CV-selected lambda in <code>best_alpha</code>. Plot coefficient paths with a vertical line at the selected lambda. How many coefficients are exactly zero?</div>
+<textarea class="ex-code">import numpy as np, matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from sklearn.linear_model import Ridge, RidgeCV
+from sklearn.preprocessing import StandardScaler
+from sklearn.datasets import load_diabetes
+
+diab = load_diabetes()
+Xs = StandardScaler().fit_transform(diab.data)
+y  = diab.target
+feature_names = list(diab.feature_names)
+
+alphas = np.logspace(-3, 5, 300)
+coefs  = np.array([Ridge(alpha=a).fit(Xs, y).coef_ for a in alphas])
+
+# Fit RidgeCV — store CV-selected lambda in `best_alpha`
+rcv = RidgeCV(alphas=alphas, cv=10).fit(Xs, y)
+best_alpha = rcv.alpha_
+
+# Plot coefficient paths
+colors = plt.cm.tab10(np.linspace(0, 1, len(feature_names)))
+fig, ax = plt.subplots(figsize=(9, 5))
+for i, (name, color) in enumerate(zip(feature_names, colors)):
+    ax.plot(np.log10(alphas), coefs[:, i], color=color, lw=2, label=name)
+ax.axhline(0, color='k', lw=0.8, ls='--')
+ax.axvline(np.log10(best_alpha), color='red', ls='--', lw=2,
+           label=f'CV lambda={best_alpha:.3f}')
+ax.set_xlabel('log10(lambda)'); ax.set_ylabel('Coefficient')
+ax.set_title('RidgeCV — Diabetes data')
+ax.legend(fontsize=8, ncol=2); plt.tight_layout(); plt.show()
+
+n_zero = (rcv.coef_ == 0).sum()
+print(f'CV-selected lambda = {best_alpha:.4f}')
+print(f'Exact zeros: {n_zero} — Ridge never zeroes out features')
+print('Coefficients:')
+for name, c in zip(feature_names, rcv.coef_):
+    print(f'  {name:<6} {c:+.4f}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+    <script type="text/x-check">
+import numpy as np
+assert 'best_alpha' in dir(), "Store the CV-selected lambda in `best_alpha`"
+assert isinstance(float(best_alpha), float), "`best_alpha` must be a number"
+assert 0.001 < best_alpha < 10000, f"best_alpha looks unreasonable: {best_alpha}"
+assert 'rcv' in dir(), "Keep the fitted RidgeCV in variable `rcv`"
+assert hasattr(rcv, 'coef_'), "`rcv` must be a fitted RidgeCV estimator"
+n_zero = (rcv.coef_ == 0).sum()
+assert n_zero == 0, f"Ridge should have 0 exact zeros, got {n_zero} — did you accidentally use Lasso?"
+    </script>
+    <script type="text/x-solution">import numpy as np, matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from sklearn.linear_model import Ridge, RidgeCV
+from sklearn.preprocessing import StandardScaler
+from sklearn.datasets import load_diabetes
+diab=load_diabetes(); Xs=StandardScaler().fit_transform(diab.data); y=diab.target
+feature_names=list(diab.feature_names); alphas=np.logspace(-3,5,300)
+coefs=np.array([Ridge(alpha=a).fit(Xs,y).coef_ for a in alphas])
+rcv=RidgeCV(alphas=alphas,cv=10).fit(Xs,y); best_alpha=rcv.alpha_
+colors=plt.cm.tab10(np.linspace(0,1,len(feature_names)))
+fig,ax=plt.subplots(figsize=(9,5))
+for i,(name,color) in enumerate(zip(feature_names,colors)):
+    ax.plot(np.log10(alphas),coefs[:,i],color=color,lw=2,label=name)
+ax.axhline(0,color='k',lw=0.8,ls='--')
+ax.axvline(np.log10(best_alpha),color='red',ls='--',lw=2,label=f'CV lambda={best_alpha:.3f}')
+ax.set_xlabel('log10(lambda)'); ax.legend(fontsize=8,ncol=2); plt.tight_layout(); plt.show()
+print(f'CV lambda={best_alpha:.4f}, zeros={(rcv.coef_==0).sum()}')
+    </script>
+    <script type="text/x-explain">Ridge ALWAYS has 0 exact zeros — all 10 features remain in the model regardless of λ. The selected λ trades off variance reduction (large λ) against bias (large λ), finding the CV minimum. Compare: Lasso in Exercise 3 will zero out some of these same features.</script>
+  </section>
+
+  <!-- EXERCISE 3: LassoCV — which features are zeroed? -->
+  <section class="exercise" data-packages="numpy,matplotlib,scikit-learn">
+    <h2>Exercise 3 — LassoCV: which features are zeroed out?</h2>
+    <div class="ex-prompt">Fit <code>LassoCV</code> with <code>cv=10</code> on standardised Diabetes data. Store the CV-selected lambda in <code>best_alpha</code>, zeroed feature names in <code>zeroed</code>, and kept feature names in <code>kept</code>. Plot coefficient paths.</div>
+<textarea class="ex-code">import numpy as np, matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from sklearn.linear_model import Lasso, LassoCV
+from sklearn.preprocessing import StandardScaler
+from sklearn.datasets import load_diabetes
+
+diab = load_diabetes()
+Xs = StandardScaler().fit_transform(diab.data)
+y  = diab.target
+feature_names = list(diab.feature_names)
+
+alphas = np.logspace(-3, 1, 300)
+coefs  = np.array([Lasso(alpha=a, max_iter=10000).fit(Xs, y).coef_ for a in alphas])
+
+# Fit LassoCV — store results in best_alpha, zeroed, kept
+lcv = LassoCV(cv=10, max_iter=20000, random_state=0).fit(Xs, y)
+best_alpha = lcv.alpha_
+zeroed = [n for n, c in zip(feature_names, lcv.coef_) if c == 0.0]
+kept   = [n for n, c in zip(feature_names, lcv.coef_) if c != 0.0]
+
+# Plot
+colors = plt.cm.tab10(np.linspace(0, 1, len(feature_names)))
+fig, ax = plt.subplots(figsize=(9, 5))
+for i, (name, color) in enumerate(zip(feature_names, colors)):
+    ax.plot(np.log10(alphas), coefs[:, i], color=color, lw=2, label=name)
+ax.axhline(0, color='k', lw=0.8, ls='--')
+ax.axvline(np.log10(best_alpha), color='red', ls='--', lw=2,
+           label=f'CV lambda={best_alpha:.4f}')
+ax.set_xlabel('log10(lambda)'); ax.set_ylabel('Coefficient')
+ax.set_title('LassoCV — Diabetes data')
+ax.legend(fontsize=8, ncol=2); plt.tight_layout(); plt.show()
+
+print(f'LassoCV lambda = {best_alpha:.4f}')
+print(f'Zeroed ({len(zeroed)}): {zeroed}')
+print(f'Kept   ({len(kept)}):   {kept}')
+print(f'\nRidge keeps all 10; Lasso keeps only {len(kept)}.')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+    <script type="text/x-check">
+import numpy as np
+assert 'best_alpha' in dir(), "Store CV-selected lambda in `best_alpha`"
+assert 'zeroed' in dir(), "Store zeroed feature names in `zeroed`"
+assert 'kept' in dir(), "Store kept feature names in `kept`"
+assert isinstance(zeroed, list) and isinstance(kept, list), "`zeroed` and `kept` must be lists"
+assert len(zeroed) + len(kept) == 10, "zeroed + kept must together account for all 10 features"
+assert len(zeroed) >= 1, f"Lasso should zero out at least 1 feature, got {len(zeroed)}"
+assert len(kept) >= 1, f"Lasso should keep at least 1 feature, got {len(kept)}"
+assert 'lcv' in dir() and hasattr(lcv, 'coef_'), "Keep the fitted LassoCV in variable `lcv`"
+    </script>
+    <script type="text/x-solution">import numpy as np, matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from sklearn.linear_model import Lasso, LassoCV
+from sklearn.preprocessing import StandardScaler
+from sklearn.datasets import load_diabetes
+diab=load_diabetes(); Xs=StandardScaler().fit_transform(diab.data); y=diab.target
+feature_names=list(diab.feature_names); alphas=np.logspace(-3,1,300)
+coefs=np.array([Lasso(alpha=a,max_iter=10000).fit(Xs,y).coef_ for a in alphas])
+lcv=LassoCV(cv=10,max_iter=20000,random_state=0).fit(Xs,y)
+best_alpha=lcv.alpha_
+zeroed=[n for n,c in zip(feature_names,lcv.coef_) if c==0.0]
+kept  =[n for n,c in zip(feature_names,lcv.coef_) if c!=0.0]
+colors=plt.cm.tab10(np.linspace(0,1,len(feature_names)))
+fig,ax=plt.subplots(figsize=(9,5))
+for i,(name,color) in enumerate(zip(feature_names,colors)):
+    ax.plot(np.log10(alphas),coefs[:,i],color=color,lw=2,label=name)
+ax.axhline(0,color='k',lw=0.8,ls='--')
+ax.axvline(np.log10(best_alpha),color='red',ls='--',lw=2,label=f'CV={best_alpha:.4f}')
+ax.legend(fontsize=8,ncol=2); plt.tight_layout(); plt.show()
+print(f'lambda={best_alpha:.4f}\nZeroed({len(zeroed)}): {zeroed}\nKept({len(kept)}): {kept}')
+    </script>
+    <script type="text/x-explain">Lasso typically zeroes out 2–4 features on this dataset (often sex, s1/s2/s3/s4 depending on the CV random state). The zeroed features are those with the least marginal predictive value given the others. This is the key advantage over Ridge: Lasso gives you a sparse, interpretable model that explicitly tells you which features matter most.</script>
+  </section>
+
+  <!-- EXERCISE 4: PCR vs PLS CV-MSE vs M -->
+  <section class="exercise" data-packages="numpy,matplotlib,scikit-learn">
+    <h2>Exercise 4 — PCR vs PLS: CV-MSE vs M</h2>
+    <div class="ex-prompt">For M = 1–10: compute 10-fold CV-MSE for PCR and PLS on standardised Diabetes data. Store results in <code>pcr_mse</code> and <code>pls_mse</code> (lists of length 10). Store the optimal M values in <code>best_M_pcr</code> and <code>best_M_pls</code>. Plot both curves with an OLS baseline.</div>
+<textarea class="ex-code">import numpy as np, matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+from sklearn.linear_model import LinearRegression
+from sklearn.cross_decomposition import PLSRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import cross_val_score
+from sklearn.pipeline import Pipeline
+from sklearn.datasets import load_diabetes
+
+diab = load_diabetes()
+Xs = StandardScaler().fit_transform(diab.data)
+y  = diab.target
+Ms = range(1, 11)
+
+# Compute 10-fold CV-MSE for PCR and PLS — store in pcr_mse and pls_mse
+pcr_mse, pls_mse = [], []
+for M in Ms:
+    pipe_pcr = Pipeline([('pca', PCA(n_components=M)), ('lr', LinearRegression())])
+    pcr_mse.append(-cross_val_score(pipe_pcr, Xs, y, cv=10,
+                                    scoring='neg_mean_squared_error').mean())
+    pls = PLSRegression(n_components=M)
+    pls_mse.append(-cross_val_score(pls, Xs, y, cv=10,
+                                    scoring='neg_mean_squared_error').mean())
+
+best_M_pcr = int(np.argmin(pcr_mse)) + 1
+best_M_pls = int(np.argmin(pls_mse)) + 1
+
+ols_mse = -cross_val_score(LinearRegression(), Xs, y, cv=10,
+                            scoring='neg_mean_squared_error').mean()
+
+fig, ax = plt.subplots(figsize=(8, 4.5))
+ax.plot(Ms, pcr_mse, 'b-o', ms=7, lw=2, label=f'PCR (best M={best_M_pcr})')
+ax.plot(Ms, pls_mse, 'g--s', ms=7, lw=2, label=f'PLS (best M={best_M_pls})')
+ax.axhline(ols_mse, color='red', ls=':', lw=1.5, label=f'OLS ({ols_mse:.0f})')
+ax.scatter(best_M_pcr, pcr_mse[best_M_pcr-1], s=150, color='blue', marker='x', lw=2.5, zorder=6)
+ax.scatter(best_M_pls, pls_mse[best_M_pls-1], s=150, color='green', marker='x', lw=2.5, zorder=6)
+ax.set_xlabel('Number of Components M'); ax.set_ylabel('10-fold CV MSE')
+ax.set_title('PCR vs PLS — Diabetes dataset'); ax.legend()
+plt.tight_layout(); plt.show()
+
+first_pls = next((m for m, v in zip(Ms, pls_mse) if v < ols_mse), None)
+first_pcr = next((m for m, v in zip(Ms, pcr_mse) if v < ols_mse), None)
+print(f'PCR: best M={best_M_pcr}, CV-MSE={pcr_mse[best_M_pcr-1]:.1f}')
+print(f'PLS: best M={best_M_pls}, CV-MSE={pls_mse[best_M_pls-1]:.1f}')
+print(f'OLS CV-MSE={ols_mse:.1f}')
+print(f'PLS first beats OLS at M={first_pls}; PCR at M={first_pcr}.')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run &amp; Check</button>
+      <button class="ex-reset">Reset</button>
+      <button class="ex-show">Show solution</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <div class="ex-feedback"></div>
+    <script type="text/x-check">
+import numpy as np
+assert 'pcr_mse' in dir() and 'pls_mse' in dir(), "Store results in `pcr_mse` and `pls_mse`"
+assert len(pcr_mse) == 10 and len(pls_mse) == 10, "Each list must have 10 entries (M=1..10)"
+assert 'best_M_pcr' in dir() and 'best_M_pls' in dir(), "Store optimal M in `best_M_pcr` and `best_M_pls`"
+assert 1 <= best_M_pcr <= 10, f"best_M_pcr should be 1-10, got {best_M_pcr}"
+assert 1 <= best_M_pls <= 10, f"best_M_pls should be 1-10, got {best_M_pls}"
+# PLS should need fewer or equal components than PCR (supervised advantage)
+assert best_M_pls <= best_M_pcr + 2, \
+    f"PLS should need <= components than PCR (got PLS={best_M_pls}, PCR={best_M_pcr})"
+# Both should have lower MSE at their best M than at M=1
+assert pcr_mse[best_M_pcr-1] < pcr_mse[0], "PCR should improve from M=1 to best M"
+assert pls_mse[best_M_pls-1] < pls_mse[0], "PLS should improve from M=1 to best M"
+    </script>
+    <script type="text/x-solution">import numpy as np, matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+from sklearn.linear_model import LinearRegression
+from sklearn.cross_decomposition import PLSRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import cross_val_score
+from sklearn.pipeline import Pipeline
+from sklearn.datasets import load_diabetes
+diab=load_diabetes(); Xs=StandardScaler().fit_transform(diab.data); y=diab.target; Ms=range(1,11)
+pcr_mse,pls_mse=[],[]
+for M in Ms:
+    pipe=Pipeline([('pca',PCA(n_components=M)),('lr',LinearRegression())])
+    pcr_mse.append(-cross_val_score(pipe,Xs,y,cv=10,scoring='neg_mean_squared_error').mean())
+    pls_mse.append(-cross_val_score(PLSRegression(n_components=M),Xs,y,cv=10,scoring='neg_mean_squared_error').mean())
+best_M_pcr=int(np.argmin(pcr_mse))+1; best_M_pls=int(np.argmin(pls_mse))+1
+ols_mse=-cross_val_score(LinearRegression(),Xs,y,cv=10,scoring='neg_mean_squared_error').mean()
+fig,ax=plt.subplots(figsize=(8,4.5))
+ax.plot(Ms,pcr_mse,'b-o',ms=7,lw=2,label=f'PCR (best M={best_M_pcr})')
+ax.plot(Ms,pls_mse,'g--s',ms=7,lw=2,label=f'PLS (best M={best_M_pls})')
+ax.axhline(ols_mse,color='red',ls=':',label=f'OLS ({ols_mse:.0f})')
+ax.scatter(best_M_pcr,pcr_mse[best_M_pcr-1],s=150,color='blue',marker='x',lw=2.5,zorder=6)
+ax.scatter(best_M_pls,pls_mse[best_M_pls-1],s=150,color='green',marker='x',lw=2.5,zorder=6)
+ax.set(xlabel='M',ylabel='CV MSE',title='PCR vs PLS'); ax.legend(); plt.tight_layout(); plt.show()
+print(f'PCR: best M={best_M_pcr}\nPLS: best M={best_M_pls}\nOLS: {ols_mse:.1f}')
+    </script>
+    <script type="text/x-explain">PLS typically reaches its minimum CV-MSE with fewer components than PCR (often 2–3 vs 5–7). This is the supervised advantage: PLS directions maximise covariance with Y, so even the first PLS component is more predictive than the first PCR component (which only maximises variance in X). Both methods typically match or beat OLS when their M is tuned by CV. On this dataset (n=442, p=10), the advantage is modest — it grows substantially when p >> n.</script>
+  </section>
+
+</section>
+
+<!-- ═══════════════════════════════════ RECAP ════════════════════════════════ -->
 <section class="title-slide">
   <span class="kicker">Recap</span>
   <h2>Three things to leave with</h2>
   <ol>
-<li class="fragment fade-up"><strong>Subset selection</strong> (best subset, forward, backward) identifies which predictors to include. CV or BIC chooses the model size.</li>
-<li class="fragment fade-up"><strong>Ridge (L2) and Lasso (L1)</strong> shrink coefficients toward zero. Lasso creates exact zeros — variable selection. CV picks λ.</li>
-<li class="fragment fade-up"><strong>PCR and PLS</strong> reduce dimension first, then regress. PCR is unsupervised; PLS uses the response to guide directions.</li>
+    <li class="fragment fade-up"><strong>Subset selection</strong> (best subset, forward, backward) identifies which predictors to include. CV or BIC chooses the model size.</li>
+    <li class="fragment fade-up"><strong>Ridge (L2) and Lasso (L1)</strong> shrink coefficients toward zero. Lasso creates exact zeros — variable selection. CV picks λ.</li>
+    <li class="fragment fade-up"><strong>PCR and PLS</strong> reduce dimension first, then regress. PCR is unsupervised; PLS uses the response to guide directions.</li>
   </ol>
   <p class="callout fragment fade-up">No single method wins everywhere. Use cross-validation to compare them on your data. Lasso is usually the first choice when you want sparsity; Ridge when you expect many small effects.</p>
 </section>
@@ -881,6 +1256,7 @@ print(f&#x27;OLS CV-MSE: {ols_mse:.1f}&#x27;)
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="../../../../shared/slides-template/interactive.js"></script>
 <script>
   Reveal.initialize({
     hash: true, slideNumber: 'c/t', transition: 'slide',
