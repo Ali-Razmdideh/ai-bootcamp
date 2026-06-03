@@ -286,6 +286,32 @@ print(m.summary())
     <p class="muted">standard errors, confidence intervals, hypothesis tests</p>
   </section>
 
+  <!-- CONCEPT: Confidence Interval -->
+  <section>
+    <h2>Confidence Interval — what it really means</h2>
+    <div class="concept-box" style="background:#f0f7ff;border-left:4px solid #3b82f6;padding:1em 1.4em;border-radius:6px;margin-bottom:.8em;">
+      <p style="margin:0 0 .4em;"><strong>Definition:</strong> A 95 % CI is a range built from sample data such that, if we repeated the experiment many times, <em>~95 % of the intervals would contain the true β₁</em>.</p>
+      <p style="margin:0;color:#555;font-size:.9em;">⚠️ Not: "95 % chance β₁ is in this interval." The true β₁ is fixed — the randomness is in the interval itself.</p>
+    </div>
+    <div class="two-col" style="display:grid;grid-template-columns:1fr 1fr;gap:1em;align-items:start;">
+      <div>
+        <p><strong>🎣 Fishing net analogy</strong></p>
+        <ul style="font-size:.88em;">
+          <li class="fragment fade-up">The <strong>fish</strong> = true β₁ (doesn't move).</li>
+          <li class="fragment fade-up">Each sample = one net cast at a random spot.</li>
+          <li class="fragment fade-up">A 95 % CI means: your net-casting procedure catches the fish 95 % of the time.</li>
+        </ul>
+      </div>
+      <div style="background:#fff8f0;border-radius:6px;padding:.8em;">
+        <p style="margin:0 0 .4em;"><strong>Formula</strong></p>
+        <p style="font-size:.9em;margin:0;">$$\hat{\beta}_1 \pm t^*_{\alpha/2,\,n-2} \cdot \text{SE}(\hat{\beta}_1)$$</p>
+        <p style="font-size:.82em;margin:.5em 0 0;">where &nbsp; $\text{SE}(\hat{\beta}_1) = \hat{\sigma}/\sqrt{\sum(x_i-\bar{x})^2}$</p>
+        <p style="font-size:.82em;margin:.3em 0 0;">and &nbsp; $t^*_{0.025,\,n-2} \approx 1.96$ for large $n$.</p>
+        <p style="font-size:.82em;margin:.5em 0 0;color:#555;">Sampling distribution: &nbsp; $\displaystyle\frac{\hat{\beta}_1 - \beta_1}{\text{SE}(\hat{\beta}_1)} \sim t_{n-2}$</p>
+      </div>
+    </div>
+  </section>
+
   <section>
     <h2>Standard errors and confidence intervals</h2>
     <img src="img/ch3_ci_beta1.svg" style="width:100%;max-height:30vh;object-fit:contain;">
@@ -295,6 +321,34 @@ print(m.summary())
     </ul>
   </section>
 
+  <!-- CONCEPT: Student's t-Test -->
+  <section>
+    <h2>Student's t-Test — signal vs noise</h2>
+    <div class="concept-box" style="background:#f0f7ff;border-left:4px solid #3b82f6;padding:1em 1.4em;border-radius:6px;margin-bottom:.8em;">
+      <p style="margin:0 0 .4em;"><strong>Question:</strong> Is this coefficient large enough relative to its uncertainty to be considered real?</p>
+      <p style="margin:0;"><strong>H₀:</strong> β<sub>j</sub> = 0 &nbsp;(predictor has no effect) &nbsp; vs &nbsp; <strong>Hₐ:</strong> β<sub>j</sub> ≠ 0</p>
+    </div>
+    <div class="two-col" style="display:grid;grid-template-columns:1fr 1fr;gap:1em;align-items:start;">
+      <div>
+        <p><strong>📻 Noisy room analogy</strong></p>
+        <ul style="font-size:.88em;">
+          <li class="fragment fade-up"><strong>Signal</strong> = estimated effect β̂ (your voice).</li>
+          <li class="fragment fade-up"><strong>Noise</strong> = standard error SE (background noise).</li>
+          <li class="fragment fade-up">t = signal / noise. Large |t| → your voice cuts through → likely real.</li>
+          <li class="fragment fade-up">|t| &lt; 1: effect could easily be noise. &nbsp; |t| &gt; 2: strong evidence.</li>
+        </ul>
+      </div>
+      <div style="background:#fff8f0;border-radius:6px;padding:.8em;">
+        <p style="margin:0 0 .4em;"><strong>Formula</strong></p>
+        <p style="font-size:.9em;margin:0;">$$t = \frac{\hat{\beta}_j}{\text{SE}(\hat{\beta}_j)}, \quad \text{SE}(\hat{\beta}_j) = \hat{\sigma}\sqrt{(X^\top X)^{-1}_{jj}}$$</p>
+        <p style="font-size:.82em;margin:.5em 0 0;">where &nbsp; $\hat{\sigma}^2 = \text{RSS}/(n-p-1)$</p>
+        <p style="font-size:.82em;margin:.5em 0 0;"><strong>Distribution under H₀:</strong></p>
+        <p style="font-size:.82em;margin:.2em 0 0;">$t \sim t_{n-p-1}$</p>
+        <p style="font-size:.78em;margin:.4em 0 0;color:#555;">Heavy tails (vs Normal) account for estimating σ. As n → ∞ it converges to N(0,1).</p>
+      </div>
+    </div>
+  </section>
+
   <section>
     <h2>Hypothesis test: is β₁ = 0?</h2>
     <img src="img/ch3_t_distribution.svg" style="width:100%;max-height:36vh;object-fit:contain;">
@@ -302,6 +356,38 @@ print(m.summary())
       <li class="fragment fade-up">H₀: β₁ = 0.&nbsp; t = β̂₁ / SE(β̂₁) = 17.67 for TV — far in the tail.</li>
       <li class="fragment fade-up">p = P(|T| ≥ 17.67 | H₀) ≪ 0.001. We reject H₀.</li>
     </ul>
+  </section>
+
+  <!-- CONCEPT: P-Value -->
+  <section>
+    <h2>P-Value — the probability of surprise</h2>
+    <div class="concept-box" style="background:#f0f7ff;border-left:4px solid #3b82f6;padding:1em 1.4em;border-radius:6px;margin-bottom:.8em;">
+      <p style="margin:0 0 .4em;"><strong>Definition:</strong> Probability of observing a test statistic at least as extreme as the one we got, <em>if H₀ were true</em>.</p>
+      <p style="margin:0;color:#c00;font-size:.88em;">⚠️ NOT the probability H₀ is true. NOT the probability the result is "due to chance."</p>
+    </div>
+    <div class="two-col" style="display:grid;grid-template-columns:1fr 1fr;gap:1em;align-items:start;">
+      <div>
+        <p><strong>⚖️ Juror analogy</strong></p>
+        <ul style="font-size:.88em;">
+          <li class="fragment fade-up">H₀ = "defendant is innocent."</li>
+          <li class="fragment fade-up">Small p-value: evidence is very improbable under innocence → lean toward rejecting H₀.</li>
+          <li class="fragment fade-up">Large p-value: evidence is consistent with innocence → not enough to convict.</li>
+          <li class="fragment fade-up">p does not say how likely the alternative is — only how inconsistent the data is with H₀.</li>
+        </ul>
+      </div>
+      <div style="background:#fff8f0;border-radius:6px;padding:.8em;">
+        <p style="margin:0 0 .4em;"><strong>Formula (two-sided)</strong></p>
+        <p style="font-size:.88em;margin:0;">$$p = 2 \cdot P(T_{n-p-1} > |t_{\text{obs}}|)$$</p>
+        <p style="font-size:.82em;margin:.5em 0 .2em;"><strong>Thresholds</strong></p>
+        <table style="font-size:.78em;border-collapse:collapse;width:100%;">
+          <tr><td style="padding:1px 6px;">p &lt; 0.001</td><td>Very strong evidence</td></tr>
+          <tr><td style="padding:1px 6px;">0.001–0.01</td><td>Strong evidence</td></tr>
+          <tr><td style="padding:1px 6px;">0.01–0.05</td><td>Moderate (conventional cutoff)</td></tr>
+          <tr><td style="padding:1px 6px;">&gt; 0.10</td><td>Little to no evidence</td></tr>
+        </table>
+        <p style="font-size:.8em;margin:.5em 0 0;color:#555;">p-value = shaded tail area beyond |t_obs| under the t-distribution.</p>
+      </div>
+    </div>
   </section>
 
   <!-- EXAMPLE: SE and CI -->
@@ -454,6 +540,89 @@ m2 = smf.ols('MedHouseVal ~ MedInc', data=cal).fit()
 print(f"\nHouseAge R² = {m.rsquared:.3f}  vs  MedInc R² = {m2.rsquared:.3f}")
     </script>
     <script type="text/x-explain">HouseAge slope ≈ 0.021 (statistically significant, p ≈ 0), but R² ≈ 0.01 — tiny. Age is associated with value but explains almost none of its variance. MedInc R² ≈ 0.47 is vastly more informative. Statistical significance does not imply practical importance.</script>
+  </section>
+
+  <!-- CONCEPT: Chi-Squared Test -->
+  <section>
+    <h2>Chi-Squared Test — are categories independent?</h2>
+    <div class="concept-box" style="background:#f0f7ff;border-left:4px solid #3b82f6;padding:1em 1.4em;border-radius:6px;margin-bottom:.8em;">
+      <p style="margin:0 0 .3em;"><strong>Use when:</strong> your variables are <em>categorical</em> (counts / frequencies).</p>
+      <p style="margin:0;">H₀: the two variables are independent &nbsp;|&nbsp; Hₐ: they are associated.</p>
+    </div>
+    <div class="two-col" style="display:grid;grid-template-columns:1fr 1fr;gap:1em;align-items:start;">
+      <div>
+        <p><strong>🎲 Loaded die analogy</strong></p>
+        <ul style="font-size:.88em;">
+          <li class="fragment fade-up">Roll a die 600×. Expected under fairness: 100 per face.</li>
+          <li class="fragment fade-up">χ² measures total "surprise": how far observed counts deviate from expected.</li>
+          <li class="fragment fade-up">Fair die → small χ², large p → can't reject H₀.</li>
+          <li class="fragment fade-up">Loaded die → large χ², small p → reject H₀.</li>
+        </ul>
+        <p style="font-size:.82em;margin:.6em 0 0;"><strong>vs t-test:</strong> t is for continuous outcomes; χ² is for categorical counts. χ² is always right-skewed and one-sided.</p>
+      </div>
+      <div style="background:#fff8f0;border-radius:6px;padding:.8em;">
+        <p style="margin:0 0 .4em;"><strong>Formula</strong></p>
+        <p style="font-size:.88em;margin:0;">$$\chi^2 = \sum_{i,j} \frac{(O_{ij} - E_{ij})^2}{E_{ij}}$$</p>
+        <p style="font-size:.82em;margin:.4em 0 .2em;">Expected cell count: &nbsp; $E_{ij} = \dfrac{(\text{row}_i \text{ total}) \times (\text{col}_j \text{ total})}{n}$</p>
+        <p style="font-size:.82em;margin:.4em 0 .2em;"><strong>Distribution under H₀:</strong></p>
+        <p style="font-size:.82em;margin:0;">$\chi^2 \sim \chi^2_k$ &nbsp; where &nbsp; $k = (r-1)(c-1)$</p>
+        <p style="font-size:.78em;margin:.4em 0 0;color:#555;">Right-skewed, non-negative. Only the right tail counts (large χ² → evidence against H₀).</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXAMPLE: Chi-squared test -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,statsmodels,scikit-learn">
+    <h2>Chi-squared test: student status vs gender</h2>
+    <div class="ex-prompt">Test whether student status and gender are independent in the Credit dataset. <code>scipy.stats.chi2_contingency</code> takes a contingency table and returns χ², p-value, degrees of freedom, and expected counts.</div>
+<textarea class="ex-code">import numpy as np, pandas as pd, matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from scipy import stats
+
+# Simulate Credit dataset
+rng = np.random.default_rng(0)
+N = 400
+gender  = rng.choice(['Male', 'Female'], N, p=[0.5, 0.5])
+student = rng.choice(['No', 'Yes'], N, p=[0.7, 0.3])
+credit  = pd.DataFrame({'gender': gender, 'student': student})
+
+# Build contingency table
+contingency = pd.crosstab(credit['student'], credit['gender'])
+print("Observed counts:")
+print(contingency)
+
+# Chi-squared test
+chi2, p, dof, expected = stats.chi2_contingency(contingency)
+print(f"\nExpected counts:")
+print(pd.DataFrame(expected, index=contingency.index,
+                   columns=contingency.columns).round(1))
+print(f"\nχ²  = {chi2:.4f}")
+print(f"df  = {dof}  (= (r-1)(c-1) = {contingency.shape[0]-1}×{contingency.shape[1]-1})")
+print(f"p   = {p:.4f}")
+print()
+if p < 0.05:
+    print("p < 0.05 → reject H₀: variables are NOT independent.")
+else:
+    print("p ≥ 0.05 → fail to reject H₀: no evidence of association.")
+
+# Visualise
+fig, axes = plt.subplots(1, 2, figsize=(9, 3))
+contingency.plot(kind='bar', ax=axes[0], rot=0, title='Observed')
+pd.DataFrame(expected, index=contingency.index,
+             columns=contingency.columns).plot(kind='bar', ax=axes[1], rot=0,
+             title='Expected (under H₀)')
+for ax in axes:
+    ax.set_xlabel('Student'); ax.set_ylabel('Count')
+plt.tight_layout(); plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+    <script type="text/x-explain">chi2_contingency computes E_ij = (row_i_total × col_j_total) / n, then χ² = Σ(O−E)²/E. The degrees of freedom = (rows−1)(cols−1). A large p-value here means the gender split is roughly the same for students and non-students — the two variables are independent.</script>
   </section>
 
 </section>
