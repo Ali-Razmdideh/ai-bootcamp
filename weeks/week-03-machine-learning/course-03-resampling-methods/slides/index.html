@@ -1140,7 +1140,7 @@ print(f'Normal CI for MEAN:  ({ci_norm[0]:.1f}, {ci_norm[1]:.1f}) mm')
     <li class="fragment fade-up"><strong>K = 5 or 10 is the practical default.</strong> LOOCV is nearly unbiased but has high variance and is slow; K=10 finds the same minimum with far less computation.</li>
     <li class="fragment fade-up"><strong>Bootstrap gives SE and CI for any estimator.</strong> Use <code>scipy.stats.bootstrap</code>; avoid using bootstrap for prediction error — use CV instead.</li>
   </ol>
-  <p class="callout fragment fade-up">Next: Classification — when Y is categorical. The same ideas of regularisation and model selection reappear, now with logistic loss.</p>
+  <p class="callout fragment fade-up">Next: Model Selection and Regularization — Ridge, Lasso, and subset selection. Cross-validation is the engine that makes all of them work.</p>
 </section>
 
 </div></div>
