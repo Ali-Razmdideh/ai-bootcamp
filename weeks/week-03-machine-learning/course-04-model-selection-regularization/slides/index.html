@@ -252,7 +252,7 @@ print(f'Truth: x1 and x3')
       <tr style="background:#f1f5f9;"><th style="padding:5px 10px;border:1px solid #cbd5e1;">Criterion</th><th style="padding:5px 10px;border:1px solid #cbd5e1;">Formula</th><th style="padding:5px 10px;border:1px solid #cbd5e1;">Goal</th></tr>
       <tr><td style="padding:5px 10px;border:1px solid #cbd5e1;">Mallow's Cₚ</td><td style="padding:5px 10px;border:1px solid #cbd5e1;">(RSS + 2dσ̂²) / n</td><td style="padding:5px 10px;border:1px solid #cbd5e1;">minimise</td></tr>
       <tr style="background:#f8fafc;"><td style="padding:5px 10px;border:1px solid #cbd5e1;">AIC</td><td style="padding:5px 10px;border:1px solid #cbd5e1;">−2 log L + 2d</td><td style="padding:5px 10px;border:1px solid #cbd5e1;">minimise</td></tr>
-      <tr><td style="padding:5px 10px;border:1px solid #cbd5e1;">BIC</td><td style="padding:5px 10px;border:1px solid #cbd5e1;">(RSS + log(n)·d·σ̂²) / n</td><td style="padding:5px 10px;border:1px solid #cbd5e1;">minimise</td></tr>
+      <tr><td style="padding:5px 10px;border:1px solid #cbd5e1;">BIC</td><td style="padding:5px 10px;border:1px solid #cbd5e1;">−2 log L̂ + log(n)·d</td><td style="padding:5px 10px;border:1px solid #cbd5e1;">minimise</td></tr>
       <tr style="background:#f8fafc;"><td style="padding:5px 10px;border:1px solid #cbd5e1;">Adjusted R²</td><td style="padding:5px 10px;border:1px solid #cbd5e1;">1 − RSS/(n−d−1) / TSS/(n−1)</td><td style="padding:5px 10px;border:1px solid #cbd5e1;">maximise</td></tr>
     </table>
   </section>
@@ -262,8 +262,9 @@ print(f'Truth: x1 and x3')
     <ul>
       <li class="fragment fade-up">AIC/Cₚ penalty per parameter: <strong>2</strong></li>
       <li class="fragment fade-up">BIC penalty per parameter: <strong>log(n)</strong> — for n=400: log(400) ≈ 6.0</li>
-      <li class="fragment fade-up">BIC penalises ~3× more than AIC → tends to select <strong>smaller models</strong>.</li>
-      <li class="fragment fade-up">Rule of thumb: AIC/Cₚ for prediction; BIC for model identification.</li>
+      <li class="fragment fade-up">BIC penalises ~3× more than AIC for n=400 → tends to select <strong>smaller, more parsimonious models</strong>.</li>
+      <li class="fragment fade-up">Rule of thumb: use AIC/Cₚ when predictive accuracy is the goal; use BIC when you want to identify the true model (if one exists).</li>
+      <li class="fragment fade-up">Both are equivalent to CV asymptotically under different conditions — in practice, check both and report when they disagree.</li>
     </ul>
   </section>
 
@@ -460,10 +461,10 @@ print(f'BIC selects k={1+np.argmin(bic_vals)}, Validation k={bv}, CV k={best_cv}
         <text x="215" y="54" font-size="12" fill="#7c3aed">×</text>
       </svg>
     </div><div><ul>
-      <li>OLS: zero bias, high variance when p is large.</li>
-      <li>As λ grows: bias ↑ a little, variance ↓ sharply.</li>
-      <li>Test MSE = Bias² + Variance + σ² has a U-shape.</li>
-      <li>Ridge wins when variance reduction &gt; bias cost.</li>
+      <li>OLS: zero bias, but high variance when p is large or predictors are correlated — small changes in data produce large changes in coefficients.</li>
+      <li>As λ grows: bias ↑ a little, variance ↓ sharply — a favourable trade when n is small relative to p.</li>
+      <li>Test MSE = Bias² + Variance + σ² has a U-shape as a function of λ — there is an optimal λ &gt; 0.</li>
+      <li>Ridge wins (over OLS) when the variance reduction exceeds the bias cost, which is typical when predictors are correlated or p approaches n.</li>
     </ul></div></div>
   </section>
 

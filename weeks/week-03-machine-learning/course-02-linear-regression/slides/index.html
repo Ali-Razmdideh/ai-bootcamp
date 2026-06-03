@@ -638,7 +638,7 @@ plt.tight_layout(); plt.show()
   <section>
     <h2>RSE and R²</h2>
     <ul>
-      <li class="fragment fade-up"><strong>RSE</strong> = √(RSS / (n−2)) — typical residual size, in the units of Y.</li>
+      <li class="fragment fade-up"><strong>RSE</strong> = √(RSS / (n−p−1)) — typical residual size, in the units of Y. For simple linear regression (p=1) this becomes √(RSS / (n−2)).</li>
       <li class="fragment fade-up"><strong>R²</strong> = (TSS − RSS) / TSS = 1 − RSS/TSS &nbsp;∈ [0, 1].</li>
       <li class="fragment fade-up">Advertising TV: RSE = 3.26 (≈ 23% of mean sales), R² = 0.612.</li>
       <li class="fragment fade-up">In SLR: R² = r² where r is the Pearson correlation.</li>
@@ -952,7 +952,7 @@ print(f"MLR  R²={m.rsquared:.3f}  RSE={m.mse_resid**0.5:.3f}")
     </div>
     <ul>
       <li class="fragment fade-up"><strong>Adj R²</strong> = 1 − [RSS/(n−p−1)] / [TSS/(n−1)]</li>
-      <li class="fragment fade-up"><strong>AIC</strong> = n·log(RSS/n) + 2p &nbsp;· &nbsp;<strong>BIC</strong> = n·log(RSS/n) + p·log(n)</li>
+      <li class="fragment fade-up"><strong>AIC</strong> = −2 log L̂ + 2p; &nbsp; <strong>BIC</strong> = −2 log L̂ + p·log(n) — BIC penalises extra predictors more heavily than AIC (log(n) &gt; 2 when n &gt; 7).</li>
     </ul>
   </section>
 
@@ -1625,7 +1625,7 @@ print(f"\nbest_deg = {best_deg}")
     <li class="fragment fade-up"><strong>R² and RSE</strong> measure explained variance and typical error — always report both.</li>
     <li class="fragment fade-up"><strong>MLR, dummies, interactions, and polynomial terms</strong> all live inside the same linear-regression framework — different X columns, same math.</li>
   </ol>
-  <p class="callout fragment fade-up">Next: Classification — when Y is categorical. The same ideas (loss, coefficients, regularisation) reappear in logistic regression.</p>
+  <p class="callout fragment fade-up">Next: Resampling Methods — cross-validation and the bootstrap. How to honestly estimate test error and quantify uncertainty in any statistic.</p>
 </section>
 
 </div></div>

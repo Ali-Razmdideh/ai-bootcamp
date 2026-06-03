@@ -154,7 +154,7 @@ plt.show()
   <li class="fragment fade-up">A piecewise cubic with K knots fits a degree-3 polynomial in each of the K+1 intervals — that's 4(K+1) parameters.</li>
   <li class="fragment fade-up"><strong>Problem:</strong> the polynomials need not join smoothly — there can be jumps and kinks at the knots.</li>
   <li class="fragment fade-up">Adding <em>continuity constraints</em> reduces the parameter count but keeps the fit smooth.</li>
-  <li class="fragment fade-up"><em>Splines</em> have the <strong>maximum</strong> continuity: the function and its first d−1 derivatives are continuous at every knot.</li>
+  <li class="fragment fade-up"><em>Splines</em> have the <strong>maximum useful</strong> continuity: for a degree-d spline, the function and its first d−1 derivatives are continuous at every knot. For cubic splines (d=3), this means the curve, its slope, and its curvature are all continuous — producing a visually smooth fit with 4(K+1) − 3K = K+4 free parameters after imposing 3K constraints across K knots.</li>
 </ul>
     <aside class="notes">4 panels: piecewise cubic → continuous → cubic spline → linear spline. Each step adds a smoothness constraint.</aside>
   </section>
@@ -241,9 +241,9 @@ ax.legend(); plt.tight_layout(); plt.show()
     <h2>Natural Cubic Splines</h2>
 <div class="two-col"><div><ul>
   <li>Cubic splines can behave badly in the <em>tails</em> (beyond the boundary knots) — high variance, wild extrapolation.</li>
-  <li>A <strong>natural cubic spline</strong> adds the constraint that f(x) is <em>linear</em> beyond the boundary knots.</li>
-  <li>This adds 4 constraints (2 per boundary) → reduces df by 4 vs a regular cubic spline.</li>
-  <li>With the same df, we can place <strong>more internal knots</strong> → better fit in the interior.</li>
+  <li>A <strong>natural cubic spline</strong> adds the constraint that f(x) is <em>linear</em> beyond the boundary knots (zero second and third derivatives in the tails).</li>
+  <li>This imposes 4 constraints (2 per boundary knot) → reduces df by 4 vs a regular cubic spline with the same knots, giving <strong>K df</strong> for K internal knots (vs K+4 for an unconstrained cubic spline).</li>
+  <li>With the same df budget, we can place <strong>more internal knots</strong> → better fit in the interior.</li>
   <li>In Python: <code>scipy.interpolate.UnivariateSpline</code> with boundary conditions.</li>
 </ul></div><div><img src="img/ch7_natural_spline_compare.svg" style="width:100%;border-radius:8px;"></div></div>
     <aside class="notes">The natural spline (red) stays sensible near the boundaries. The cubic spline (blue) has wider CI bands at the edges.</aside>
@@ -253,7 +253,7 @@ ax.legend(); plt.tight_layout(); plt.show()
     <h2>Knot placement and degrees of freedom</h2>
 <div class="two-col"><div><ul>
   <li>Strategy: pick K (number of knots), then place them at uniform <strong>quantiles</strong> of X — this puts more knots where the data is dense.</li>
-  <li>Cubic spline: <strong>K+4 df</strong>; Natural spline: <strong>K df</strong>.</li>
+  <li>Cubic spline with K internal knots: <strong>K+4 df</strong>; Natural cubic spline with K internal knots: <strong>K df</strong>.</li>
   <li>More df = more flexibility = more variance. Choose K by cross-validation.</li>
   <li>At the same df, natural splines almost always beat polynomials in the tails.</li>
 </ul></div><div><img src="img/ch7_knot_df_compare.svg" style="width:100%;border-radius:8px;"></div></div>
@@ -343,7 +343,7 @@ plt.tight_layout(); plt.show()
   <li class="fragment fade-up"><code>scipy.interpolate.UnivariateSpline(x, y, k=3, s=smoothing_factor)</code></li>
   <li class="fragment fade-up">The <code>s</code> parameter controls smoothing: s=0 → interpolating, s large → very smooth.</li>
   <li class="fragment fade-up">Set s ≈ n × σ² as a rule of thumb; use CV to tune.</li>
-  <li class="fragment fade-up"><code>spl.get_residual()</code> returns RSS; effective df via <code>spl.get_knots()</code> count.</li>
+  <li class="fragment fade-up"><code>spl.get_residual()</code> returns RSS; <code>spl.get_knots()</code> returns interior knots (note: true effective df requires the smoother matrix trace — not simply the knot count).</li>
   <li class="fragment fade-up">No need to choose knot locations — the algorithm places them automatically at the data points.</li>
 </ul>
     <aside class="notes">In R: smooth.spline(x, y, df=10) specifies df directly; smooth.spline(x, y) uses LOOCV automatically.</aside>
@@ -565,7 +565,7 @@ plt.tight_layout(); plt.show()
 </section>
 <section class="title-slide">
   <span class="kicker">Recap</span>
-  <h2>Three things to leave with</h2>
+  <h2>Six things to leave with</h2>
   <ol>
 <li class="fragment fade-up"><strong>Polynomial regression</strong>: replace X with X, X², …, Xᵈ — standard OLS, but watch the tails.</li>
 <li class="fragment fade-up"><strong>Step functions</strong>: cut X into regions, create dummies — piecewise constant, easy interaction terms.</li>
