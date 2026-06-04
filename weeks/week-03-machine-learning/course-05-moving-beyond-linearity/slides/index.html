@@ -582,12 +582,14 @@ plt.tight_layout(); plt.show()
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/math/math.js"></script>
 <script>
   Reveal.initialize({
     hash: true, slideNumber: 'c/t', transition: 'slide',
     transitionSpeed: 'fast', backgroundTransition: 'fade',
     width: 1280, height: 760, margin: 0.06,
-    plugins: [ RevealNotes, RevealHighlight ],
+    math: { mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js' },
+    plugins: [ RevealNotes, RevealHighlight, RevealMath.MathJax3 ],
   });
 </script>
 </body>

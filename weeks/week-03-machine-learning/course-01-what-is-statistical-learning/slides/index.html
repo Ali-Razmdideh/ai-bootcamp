@@ -95,7 +95,7 @@
 
   <section>
     <h2>Phoneme classification — aa vs ao</h2>
-<img src="img/ch1_phoneme.svg" style="width:100%;max-height:52vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;margin-top:0.3em;"><strong>Top:</strong> log-periodograms for "aa" (green) and "ao" (orange) overlap at high frequencies. <strong>Bottom:</strong> raw LR coefficients (grey bars, noisy) vs. smooth restricted fit (red curve) — regularisation is needed.</p>
+<img src="img/ch1_phoneme.svg" style="width:100%;max-height:35vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;margin-top:0.3em;"><strong>Top:</strong> log-periodograms for "aa" (green) and "ao" (orange) overlap at high frequencies. <strong>Bottom:</strong> raw LR coefficients (grey bars, noisy) vs. smooth restricted fit (red curve) — regularisation is needed.</p>
     <aside class="notes">The bottom panel shows raw LR coefficients (grey bars — very noisy) vs. a restricted smooth fit (red curve). The smooth version is correct — it imposes that nearby frequencies should have similar coefficients. This motivates regularisation.</aside>
   </section>
 
@@ -112,13 +112,13 @@
 
   <section>
     <h2>Spam detection — customised filters</h2>
-<img src="img/ch1_spam_table.svg" style="width:100%;max-height:60vh;object-fit:contain;">
+<img src="img/ch1_spam_table.svg" style="width:100%;max-height:40vh;object-fit:contain;">
     <aside class="notes">The word &#x27;george&#x27; appears frequently in legitimate email (it&#x27;s the recipient) but never in spam — a personalised signal. &#x27;free&#x27;, &#x27;!&#x27;, and &#x27;remove&#x27; are classic spam signals. The key word &#x27;customised&#x27; in the problem statement: a generic spam filter trained on someone else&#x27;s email would miss the &#x27;hp&#x27; and &#x27;george&#x27; signals.</aside>
   </section>
 
   <section>
     <h2>Handwritten zip codes — digit recognition</h2>
-<img src="img/ch1_digits.svg" style="width:100%;max-height:55vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;margin-top:0.3em;">p = 256 features (16×16 pixels) · K = 10 classes · N ≈ 9000 training images. The same digit looks dramatically different across writers.</p>
+<img src="img/ch1_digits.svg" style="width:100%;max-height:37vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;margin-top:0.3em;">p = 256 features (16×16 pixels) · K = 10 classes · N ≈ 9000 training images. The same digit looks dramatically different across writers.</p>
     <aside class="notes">Key teaching point: 256 inputs, 10 output classes, no natural ordering of classes. A 9 can look like a 4; an 8 can look like a 3. This dataset was a key early benchmark for neural networks (LeCun et al., 1989).</aside>
   </section>
 
@@ -135,13 +135,13 @@
 
   <section>
     <h2>Salary and demographics</h2>
-<img src="img/ch1_salary.svg" style="width:100%;max-height:57vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;margin-top:0.2em;">Central Atlantic USA males, 2009 CPS. <strong>Age:</strong> non-linear (peaks ~40). <strong>Year:</strong> slight upward trend. <strong>Education:</strong> ordered categorical, clear step-up effect.</p>
+<img src="img/ch1_salary.svg" style="width:100%;max-height:37vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;margin-top:0.2em;">Central Atlantic USA males, 2009 CPS. <strong>Age:</strong> non-linear (peaks ~40). <strong>Year:</strong> slight upward trend. <strong>Education:</strong> ordered categorical, clear step-up effect.</p>
     <aside class="notes">The three panels show three different types of predictor-response relationships: non-linear continuous (Age), linear continuous (Year), and ordered categorical (Education). A good model of Wage needs to handle all three.</aside>
   </section>
 
   <section>
     <h2>LANDSAT image classification</h2>
-<img src="img/ch1_landsat.svg" style="width:100%;max-height:58vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;margin-top:0.2em;">4 spectral bands per pixel → classify into: red soil, cotton crop, vegetation stubble, mixture, grey soil, damp grey soil. Predicted map (right) nearly matches the true map (middle).</p>
+<img src="img/ch1_landsat.svg" style="width:100%;max-height:25vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;margin-top:0.2em;">4 spectral bands per pixel → classify into: red soil, cotton crop, vegetation stubble, mixture, grey soil, damp grey soil. Predicted map (right) nearly matches the true map (middle).</p>
     <aside class="notes">Multi-class pixel-level classification. Only 4 features per pixel, but the classes are well-separated in spectral space — KNN and LDA work well here.</aside>
   </section>
 
@@ -232,7 +232,7 @@
   </section>
   <section>
     <h2>Running example: the Advertising data</h2>
-<img src="img/ch2_advertising.svg" style="width:100%;max-height:55vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;margin-top:0.2em;">200 markets. <strong>TV</strong>: strong (but non-linear). <strong>Radio</strong>: moderate. <strong>Newspaper</strong>: weak. Goal: Sales ≈ f(TV, Radio, Newspaper).</p>
+<img src="img/ch2_advertising.svg" style="width:100%;max-height:37vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;margin-top:0.2em;">200 markets. <strong>TV</strong>: strong (but non-linear). <strong>Radio</strong>: moderate. <strong>Newspaper</strong>: weak. Goal: Sales ≈ f(TV, Radio, Newspaper).</p>
     <aside class="notes">The Advertising dataset is the canonical ISLR example. Three predictors, one outcome, 200 rows. The simplicity lets us focus on the methodology without fighting the data.</aside>
   </section>
 
@@ -282,7 +282,7 @@
 
   <section>
     <h2>Curse of dimensionality</h2>
-<img src="img/ch2_curse_dim.svg" style="width:100%;max-height:52vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;margin-top:0.2em;"><strong>Left:</strong> 10% neighbourhood in 2D stays local. <strong>Right:</strong> radius needed to capture 10% of volume grows rapidly — at p=10 it spans almost the entire space.</p>
+<img src="img/ch2_curse_dim.svg" style="width:100%;max-height:35vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;margin-top:0.2em;"><strong>Left:</strong> 10% neighbourhood in 2D stays local. <strong>Right:</strong> radius needed to capture 10% of volume grows rapidly — at p=10 it spans almost the entire space.</p>
     <aside class="notes">At p=10, capturing 10% of the data requires going out to radius 0.80 in a unit hypercube. The &#x27;neighbourhood&#x27; is no longer local — you are averaging points that are nothing like x. This is why parametric models (that impose structure on f) become necessary as p grows.</aside>
   </section>
 
@@ -298,13 +298,13 @@
 
   <section>
     <h2>Linear vs quadratic fit</h2>
-<img src="img/ch2_linear_quad.svg" style="width:100%;max-height:57vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;margin-top:0.2em;"><strong>Top:</strong> linear f̂<sub>L</sub>(x) = β̂₀ + β̂₁x — misses the curvature (high bias). <strong>Bottom:</strong> quadratic f̂<sub>Q</sub>(x) = β̂₀ + β̂₁x + β̂₂x² — fits much better.</p>
+<img src="img/ch2_linear_quad.svg" style="width:100%;max-height:37vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;margin-top:0.2em;"><strong>Top:</strong> linear f̂<sub>L</sub>(x) = β̂₀ + β̂₁x — misses the curvature (high bias). <strong>Bottom:</strong> quadratic f̂<sub>Q</sub>(x) = β̂₀ + β̂₁x + β̂₂x² — fits much better.</p>
     <aside class="notes">The quadratic model is still parametric but more flexible than linear. Adding basis terms keeps increasing flexibility. The question is always: how flexible should f̂ be? Too rigid → underfit. Too flexible → overfit.</aside>
   </section>
 
   <section>
     <h2>The income surface — three fits</h2>
-<div class="two-col"><div><img src="img/ch2_income_true.svg" style="width:100%;height:26vh;object-fit:contain;"><p class="muted" style="font-size:0.75em;text-align:center;margin:0;">True f — smooth curved surface</p></div><div><img src="img/ch2_income_linear.svg" style="width:100%;height:26vh;object-fit:contain;"><p class="muted" style="font-size:0.75em;text-align:center;margin:0;">Linear f̂ — flat plane (underfit)</p></div></div><img src="img/ch2_income_overfit.svg" style="width:50%;display:block;margin:0.4em auto 0;"><p class="muted" style="font-size:0.75em;text-align:center;margin:0;"><strong>Overfit spline</strong> — zero training error, generalises poorly</p><p class="callout" style="margin-top:0.4em;"><strong>Overfitting</strong>: the model memorised training noise. Training error ≈ 0, test error is large.</p>
+<div class="two-col"><div><img src="img/ch2_income_true.svg" style="width:100%;height:17vh;object-fit:contain;"><p class="muted" style="font-size:0.75em;text-align:center;margin:0;">True f — smooth curved surface</p></div><div><img src="img/ch2_income_linear.svg" style="width:100%;height:17vh;object-fit:contain;"><p class="muted" style="font-size:0.75em;text-align:center;margin:0;">Linear f̂ — flat plane (underfit)</p></div></div><img src="img/ch2_income_overfit.svg" style="width:50%;display:block;margin:0.4em auto 0;"><p class="muted" style="font-size:0.75em;text-align:center;margin:0;"><strong>Overfit spline</strong> — zero training error, generalises poorly</p><p class="callout" style="margin-top:0.4em;"><strong>Overfitting</strong>: the model memorised training noise. Training error ≈ 0, test error is large.</p>
     <aside class="notes">The three surface plots from ISLR Figs 3.2–3.4. True f is non-linear; linear model misses curvature but is still useful; overfit spline has zero training error but learns the noise.</aside>
   </section>
 
@@ -326,13 +326,13 @@
 
   <section>
     <h2>The U-shaped test MSE curve — three scenarios</h2>
-<div style="display:flex;gap:0.5em;justify-content:center;"><div style="flex:1;text-align:center;"><img src="img/ch2_mse_scenario1.svg" style="width:100%;height:28vh;object-fit:contain;"><p class="muted" style="font-size:0.72em;margin:0;">Curved truth: moderate flexibility optimal</p></div><div style="flex:1;text-align:center;"><img src="img/ch2_mse_scenario2.svg" style="width:100%;height:28vh;object-fit:contain;"><p class="muted" style="font-size:0.72em;margin:0;">Linear truth: linear model wins</p></div><div style="flex:1;text-align:center;"><img src="img/ch2_mse_scenario3.svg" style="width:100%;height:28vh;object-fit:contain;"><p class="muted" style="font-size:0.72em;margin:0;">Wiggly truth: high flexibility needed</p></div></div><p class="muted" style="font-size:0.8em;margin-top:0.4em;">Each panel: grey = train MSE (decreases monotonically), red = test MSE (U-shape), dashed = irreducible Var(ε).</p>
+<div style="display:flex;gap:0.5em;justify-content:center;"><div style="flex:1;text-align:center;"><img src="img/ch2_mse_scenario1.svg" style="width:100%;height:18vh;object-fit:contain;"><p class="muted" style="font-size:0.72em;margin:0;">Curved truth: moderate flexibility optimal</p></div><div style="flex:1;text-align:center;"><img src="img/ch2_mse_scenario2.svg" style="width:100%;height:18vh;object-fit:contain;"><p class="muted" style="font-size:0.72em;margin:0;">Linear truth: linear model wins</p></div><div style="flex:1;text-align:center;"><img src="img/ch2_mse_scenario3.svg" style="width:100%;height:18vh;object-fit:contain;"><p class="muted" style="font-size:0.72em;margin:0;">Wiggly truth: high flexibility needed</p></div></div><p class="muted" style="font-size:0.8em;margin-top:0.4em;">Each panel: grey = train MSE (decreases monotonically), red = test MSE (U-shape), dashed = irreducible Var(ε).</p>
     <aside class="notes">The U-shaped test MSE curve is one of the central images of the course. Students should be able to sketch it from memory: training MSE monotonically decreasing, test MSE U-shaped, minimum of the U is what we want.</aside>
   </section>
 
   <section>
     <h2>Bias-Variance Trade-off</h2>
-<p style="text-align:center;font-size:1.05em;margin:0.4em 0;">E[(y₀ − f̂(x₀))²] = <span style="color:#e07000;">Var(f̂(x₀))</span> + <span style="color:#0066cc;">[Bias(f̂(x₀))]²</span> + <span style="color:#888;">Var(ε)</span></p><img src="img/ch2_bias_variance.svg" style="width:100%;max-height:50vh;object-fit:contain;"><p class="muted" style="font-size:0.78em;margin-top:0.2em;">Three scenarios: MSE (dark red), Bias² (cyan), Variance (orange), Var(ε) (dashed). As flexibility ↑: Bias² ↓, Variance ↑. The U-shape is their sum.</p>
+<p style="text-align:center;font-size:1.05em;margin:0.4em 0;">E[(y₀ − f̂(x₀))²] = <span style="color:#e07000;">Var(f̂(x₀))</span> + <span style="color:#0066cc;">[Bias(f̂(x₀))]²</span> + <span style="color:#888;">Var(ε)</span></p><img src="img/ch2_bias_variance.svg" style="width:100%;max-height:33vh;object-fit:contain;"><p class="muted" style="font-size:0.78em;margin-top:0.2em;">Three scenarios: MSE (dark red), Bias² (cyan), Variance (orange), Var(ε) (dashed). As flexibility ↑: Bias² ↓, Variance ↑. The U-shape is their sum.</p>
     <aside class="notes">The bias-variance decomposition is the theoretical foundation for the U-shaped test MSE curve. The minimum of the U is where bias and variance balance. This formula explains why it exists.</aside>
   </section>
 
@@ -371,19 +371,19 @@
 
   <section>
     <h2>KNN in two dimensions — the decision boundary</h2>
-<div class="two-col"><div><img src="img/ch2_knn_raw.svg" style="width:100%;height:38vh;object-fit:contain;"><p class="muted" style="font-size:0.75em;text-align:center;margin:0;">Raw data + Bayes boundary (dashed purple)</p></div><div><img src="img/ch2_knn_k10.svg" style="width:100%;height:38vh;object-fit:contain;"><p class="muted" style="font-size:0.75em;text-align:center;margin:0;">KNN K=10 boundary (black) vs Bayes (dashed)</p></div></div><p class="muted" style="font-size:0.8em;margin-top:0.4em;">KNN K=10 closely tracks the Bayes boundary without any parametric assumptions.</p>
+<div class="two-col"><div><img src="img/ch2_knn_raw.svg" style="width:100%;height:25vh;object-fit:contain;"><p class="muted" style="font-size:0.75em;text-align:center;margin:0;">Raw data + Bayes boundary (dashed purple)</p></div><div><img src="img/ch2_knn_k10.svg" style="width:100%;height:25vh;object-fit:contain;"><p class="muted" style="font-size:0.75em;text-align:center;margin:0;">KNN K=10 boundary (black) vs Bayes (dashed)</p></div></div><p class="muted" style="font-size:0.8em;margin-top:0.4em;">KNN K=10 closely tracks the Bayes boundary without any parametric assumptions.</p>
     <aside class="notes">KNN with K=10 produces a non-linear decision boundary that closely approximates the Bayes boundary. The dashed purple curve is the Bayes (optimal) boundary.</aside>
   </section>
 
   <section>
     <h2>K controls the bias-variance dial</h2>
-<img src="img/ch2_knn_k1_k100.svg" style="width:100%;max-height:48vh;object-fit:contain;"><div class="two-col"><div><p><strong>K = 1</strong>: zero training error, extremely wiggly boundary — overfit.</p><p><strong>K = 100</strong>: too smooth, misses non-linearities — underfit.</p></div><div><p class="callout">K = 1 → max flexibility. K = N → predict majority class. Pick K by cross-validation.</p></div></div>
+<img src="img/ch2_knn_k1_k100.svg" style="width:100%;max-height:32vh;object-fit:contain;"><div class="two-col"><div><p><strong>K = 1</strong>: zero training error, extremely wiggly boundary — overfit.</p><p><strong>K = 100</strong>: too smooth, misses non-linearities — underfit.</p></div><div><p class="callout">K = 1 → max flexibility. K = N → predict majority class. Pick K by cross-validation.</p></div></div>
     <aside class="notes">The two-panel figure from ISLR Fig 2.16. K=1 is very jagged (overfits); K=100 is too smooth (underfits). The sweet spot was K=10 shown in the previous slide.</aside>
   </section>
 
   <section>
     <h2>Classification error rate and the KNN U-shape</h2>
-<img src="img/ch2_knn_error.svg" style="width:100%;max-height:50vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;margin-top:0.3em;"><strong>Blue (training):</strong> 0 at K=1, rises as K grows. <strong>Orange (test):</strong> U-shape, minimum at K≈10. <strong>Dashed:</strong> Bayes error — irreducible floor.</p><p class="callout" style="margin-top:0.4em;">Same story as regression: training error decreases with flexibility, test error has a U-shape.</p>
+<img src="img/ch2_knn_error.svg" style="width:100%;max-height:33vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;margin-top:0.3em;"><strong>Blue (training):</strong> 0 at K=1, rises as K grows. <strong>Orange (test):</strong> U-shape, minimum at K≈10. <strong>Dashed:</strong> Bayes error — irreducible floor.</p><p class="callout" style="margin-top:0.4em;">Same story as regression: training error decreases with flexibility, test error has a U-shape.</p>
     <aside class="notes">This plot from ISLR Fig 2.17 closes the circle. KNN already demonstrates all the core ideas: training vs test error, overfitting, underfitting, the U-shape, and the Bayes floor. Every more sophisticated model is a more elaborate version of the same story.</aside>
   </section>
 
@@ -404,12 +404,14 @@
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/math/math.js"></script>
 <script>
   Reveal.initialize({
     hash: true, slideNumber: 'c/t', transition: 'slide',
     transitionSpeed: 'fast', backgroundTransition: 'fade',
-    width: 1280, height: 760, margin: 0.06,
-    plugins: [ RevealNotes, RevealHighlight ],
+    width: 1280, height: 760, margin: 0.06, center: false,
+    math: { mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js' },
+    plugins: [ RevealNotes, RevealHighlight, RevealMath.MathJax3 ],
   });
 </script>
 </body>

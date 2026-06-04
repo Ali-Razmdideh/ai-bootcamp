@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/interactive.css" />
+  <style>.reveal { font-size: 28px; }</style>
 </head>
 <body>
 <div class="reveal"><div class="slides">
@@ -284,6 +285,101 @@ print(m.summary())
     <span class="kicker">Part 2</span>
     <h1>Assessing Coefficient Accuracy</h1>
     <p class="muted">standard errors, confidence intervals, hypothesis tests</p>
+  </section>
+
+  <!-- INTRO: Population → Sample → Random Error -->
+  <section>
+    <h2>Why inference? — samples have random error</h2>
+    <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:1.2em;align-items:center;margin-bottom:.8em;">
+      <!-- Population -->
+      <div style="text-align:center;">
+        <div style="font-size:.55em;line-height:1.1;letter-spacing:.05em;color:#0e7490;display:flex;flex-wrap:wrap;justify-content:center;width:220px;margin:0 auto;">
+          <span>🧑🧑🧑🧑🧑🧑🧑🧑🧑🧑</span><span>🧑🧑🧑🧑🧑🧑🧑🧑🧑🧑</span><span>🧑🧑🧑🧑🧑🧑🧑🧑🧑🧑</span><span>🧑🧑🧑🧑🧑🧑🧑🧑🧑🧑</span><span>🧑🧑🧑🧑🧑🧑🧑🧑🧑🧑</span><span>🧑🧑🧑🧑🧑🧑🧑🧑🧑🧑</span><span>🧑🧑🧑🧑🧑🧑🧑🧑🧑🧑</span><span>🧑🧑🧑🧑🧑🧑🧑🧑🧑🧑</span><span>🧑🧑🧑🧑🧑🧑🧑🧑🧑🧑</span><span>🧑🧑🧑🧑🧑🧑🧑🧑🧑🧑</span>
+        </div>
+        <div style="margin-top:.5em;border:2px solid #0e7490;border-radius:20px;display:inline-block;padding:.15em .9em;color:#0e7490;font-weight:600;font-size:.85em;">Population</div>
+      </div>
+      <!-- Arrow -->
+      <div style="text-align:center;font-size:2em;color:#0e7490;">→</div>
+      <!-- Sample + Random Error -->
+      <div>
+        <div style="text-align:center;margin-bottom:.4em;">
+          <div style="font-size:.75em;color:#0e7490;">🧑🧑🧑🧑🧑🧑🧑🧑</div>
+          <div style="font-weight:600;font-size:.85em;color:#0e7490;">Sample</div>
+        </div>
+        <div style="border-bottom:2px solid #b91c1c;padding-bottom:.3em;margin-bottom:.4em;">
+          <p style="margin:0;font-weight:700;color:#b91c1c;font-size:.9em;">Random error</p>
+          <p style="margin:.2em 0 0;font-size:.82em;color:#444;">Can be different from population<br>just due to random variation</p>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4em;font-size:.8em;color:#555;">
+          <div>sample size<br>variability</div>
+          <div>sampling method<br>measurement</div>
+        </div>
+        <div style="display:flex;gap:1.5em;margin-top:.6em;font-size:.88em;">
+          <span style="color:#b91c1c;font-weight:600;">Real?</span>
+          <span style="color:#0e7490;font-weight:600;">Chance?</span>
+        </div>
+        <div style="display:flex;gap:1.5em;margin-top:.3em;font-size:.82em;">
+          <span style="color:#b45309;">Confidence interval</span>
+          <span style="color:#1d4ed8;">P value</span>
+        </div>
+      </div>
+    </div>
+    <div class="callout" style="font-size:.85em;margin-top:.2em;">We never observe the whole population — we estimate from a sample. Every estimate carries uncertainty from random variation.</div>
+  </section>
+
+  <!-- INTRO: P-value number line -->
+  <section>
+    <h2>P-value — where does your result land?</h2>
+
+    <!-- Top row: hypothesis setup + p-value definition -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1em;margin-bottom:.9em;font-size:.85em;">
+      <div style="color:#444;">
+        <p style="color:#1d4ed8;margin:0 0 .25em;font-style:italic;font-weight:600;">Hypothesis testing</p>
+        <p style="margin:0 0 .15em;">Null — <span style="border:1.5px solid #b91c1c;border-radius:10px;padding:.05em .5em;color:#b91c1c;">no difference</span></p>
+        <p style="margin:0;">Alternative — true difference</p>
+      </div>
+      <div style="border:1.5px solid #cbd5e1;border-radius:6px;padding:.5em .8em;background:#f8fafc;">
+        <p style="margin:0 0 .2em;font-weight:600;color:#1d4ed8;">↗ P value</p>
+        <p style="margin:0;line-height:1.4;">Probability of getting observed result<br>
+          <span style="text-decoration:underline;">or more extreme</span>,<br>
+          <span style="text-decoration:underline;">if null hypothesis is true</span></p>
+      </div>
+    </div>
+
+    <!-- Number line (SVG for precise control) -->
+    <svg viewBox="0 0 700 90" style="width:100%;height:auto;display:block;margin-bottom:.4em;" xmlns="http://www.w3.org/2000/svg">
+      <!-- axis labels top -->
+      <text x="30" y="14" font-size="11" fill="#b91c1c" font-style="italic">suggests real effect</text>
+      <text x="570" y="14" font-size="11" fill="#555" text-anchor="end">likely due to chance</text>
+      <!-- line -->
+      <line x1="40" y1="40" x2="660" y2="40" stroke="#333" stroke-width="2.5"/>
+      <!-- 0 and 1 labels -->
+      <text x="40" y="58" font-size="13" fill="#333" text-anchor="middle" font-weight="bold">0</text>
+      <text x="660" y="58" font-size="13" fill="#333" text-anchor="middle" font-weight="bold">1</text>
+      <!-- p-value dot at 2% (~53px from left on 620px range) -->
+      <circle cx="53" cy="40" r="7" fill="#16a34a"/>
+      <text x="53" y="28" font-size="10" fill="#16a34a" text-anchor="middle" font-weight="bold">0.02 (2%)</text>
+      <!-- significance level line at 5% (~71px) -->
+      <line x1="71" y1="22" x2="71" y2="58" stroke="#b45309" stroke-width="2"/>
+      <text x="71" y="72" font-size="10" fill="#b45309" text-anchor="middle">significance</text>
+      <text x="71" y="83" font-size="10" fill="#b45309" text-anchor="middle">level (0.05)</text>
+    </svg>
+
+    <!-- Two zones -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1em;font-size:.83em;">
+      <div style="border-left:3px solid #b45309;padding-left:.7em;">
+        <p style="margin:0 0 .2em;color:#b45309;font-weight:700;">← statistically significant</p>
+        <p style="margin:0 0 .15em;font-weight:600;">Reject the null hypothesis</p>
+        <p style="margin:0;color:#555;font-style:italic;">suggests real effect</p>
+        <p style="margin:.4em 0 0;color:#777;font-size:.9em;">→ determine what is considered significant</p>
+      </div>
+      <div style="border-left:3px solid #94a3b8;padding-left:.7em;">
+        <p style="margin:0 0 .2em;color:#64748b;font-weight:700;">not statistically significant →</p>
+        <p style="margin:0 0 .15em;font-weight:600;">No evidence to reject the null</p>
+        <p style="margin:0;color:#555;font-style:italic;">result may be due to chance</p>
+        <p style="margin:.4em 0 0;color:#777;font-size:.9em;">→ reliable, consistent conclusions</p>
+      </div>
+    </div>
   </section>
 
   <!-- CONCEPT: Confidence Interval -->
@@ -635,19 +731,93 @@ plt.tight_layout(); plt.show()
     <p class="muted">RSE and R²</p>
   </section>
 
+  <!-- RSE sub-slide 1: What is TSS? -->
   <section>
-    <h2>RSE and R²</h2>
-    <ul>
-      <li class="fragment fade-up"><strong>RSE</strong> = √(RSS / (n−p−1)) — typical residual size, in the units of Y. For simple linear regression (p=1) this becomes √(RSS / (n−2)).</li>
-      <li class="fragment fade-up"><strong>R²</strong> = (TSS − RSS) / TSS = 1 − RSS/TSS &nbsp;∈ [0, 1].</li>
-      <li class="fragment fade-up">Advertising TV: RSE = 3.26 (≈ 23% of mean sales), R² = 0.612.</li>
-      <li class="fragment fade-up">In SLR: R² = r² where r is the Pearson correlation.</li>
-    </ul>
-    <table style="font-size:0.9em;margin:1em auto;">
-      <tr><th>Quantity</th><th>Value</th></tr>
-      <tr><td>RSE</td><td>3.26</td></tr>
-      <tr><td>R²</td><td>0.612</td></tr>
-      <tr><td>F-statistic</td><td>312.1</td></tr>
+    <h2>TSS — Total Sum of Squares</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1em;font-size:.87em;margin-bottom:.7em;">
+      <div>
+        <p style="margin:0 0 .4em;"><strong>TSS</strong> measures how much Y varies <em>before</em> we fit any model — it is the baseline variance:</p>
+        <p style="text-align:center;font-size:1.05em;margin:.5em 0;">$$\text{TSS} = \sum_{i=1}^{n}(y_i - \bar{y})^2$$</p>
+        <p style="margin:.4em 0 0;color:#555;">Each squared deviation asks: how far is this observation from the mean? Sum them up → total spread in Y.</p>
+      </div>
+      <div>
+        <p style="margin:0 0 .3em;"><strong>Three sums that tell the whole story:</strong></p>
+        <table style="font-size:.9em;width:100%;border-collapse:collapse;">
+          <tr style="border-bottom:1px solid #e2e8f0;"><th style="padding:.3em .5em;text-align:left;">Name</th><th style="padding:.3em .5em;text-align:left;">Formula</th><th style="padding:.3em .5em;text-align:left;">Meaning</th></tr>
+          <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:.3em .5em;"><strong>TSS</strong></td><td style="padding:.3em .5em;">Σ(yᵢ−ȳ)²</td><td style="padding:.3em .5em;color:#555;">Total variance in Y</td></tr>
+          <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:.3em .5em;"><strong>RSS</strong></td><td style="padding:.3em .5em;">Σ(yᵢ−ŷᵢ)²</td><td style="padding:.3em .5em;color:#555;">Variance left unexplained</td></tr>
+          <tr><td style="padding:.3em .5em;"><strong>ESS</strong></td><td style="padding:.3em .5em;">TSS − RSS</td><td style="padding:.3em .5em;color:#555;">Variance explained by model</td></tr>
+        </table>
+        <div class="callout" style="margin-top:.6em;font-size:.88em;">R² = ESS / TSS = 1 − RSS/TSS &nbsp;∈ [0, 1] — the fraction of variance the model captures.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RSE sub-slide 2: Why n−p−1? -->
+  <section>
+    <h2>RSE — why divide by <em>n − p − 1</em>?</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1em;font-size:.87em;">
+      <div>
+        <p style="margin:0 0 .4em;"><strong>RSE</strong> = $\sqrt{\text{RSS}/(n-p-1)}$</p>
+        <p style="margin:0 0 .5em;color:#555;">Dividing by <em>n − p − 1</em> (not n) makes RSE an <strong>unbiased</strong> estimator of the true σ.</p>
+        <div style="background:#f0f7ff;border-left:3px solid #2563eb;padding:.6em .8em;border-radius:4px;margin-bottom:.5em;">
+          <p style="margin:0 0 .3em;font-weight:600;">Degrees of freedom intuition</p>
+          <ul style="margin:0;padding-left:1em;">
+            <li class="fragment fade-up">We have <strong>n</strong> observations.</li>
+            <li class="fragment fade-up">We spend <strong>p + 1</strong> of them estimating β₀, β₁, …, βₚ.</li>
+            <li class="fragment fade-up">Only <strong>n − p − 1</strong> remain "free" to estimate noise.</li>
+          </ul>
+        </div>
+        <p style="margin:0;font-size:.88em;color:#555;">If you divided by n instead, RSS would systematically undercount the true variance — you'd be overconfident about your fit.</p>
+      </div>
+      <div>
+        <p style="margin:0 0 .4em;font-weight:600;">Concrete example (Advertising TV, n=200, p=1):</p>
+        <table style="font-size:.9em;width:100%;border-collapse:collapse;">
+          <tr style="border-bottom:1px solid #e2e8f0;"><th style="padding:.3em .5em;text-align:left;">Formula</th><th style="padding:.3em .5em;">Value</th></tr>
+          <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:.3em .5em;">√(RSS / n)</td><td style="padding:.3em .5em;color:#b91c1c;">3.25 (biased)</td></tr>
+          <tr><td style="padding:.3em .5em;">√(RSS / (n−2))</td><td style="padding:.3em .5em;color:#16a34a;">3.26 (unbiased RSE)</td></tr>
+        </table>
+        <p style="margin:.6em 0 0;font-size:.85em;color:#555;">Difference is tiny here (n=200 is large), but matters for small datasets.</p>
+        <div class="tip" style="margin-top:.5em;font-size:.85em;">sklearn divides by n (biased). statsmodels uses n−p−1 (correct RSE). Always check which you're using.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RSE sub-slide 3: RSE vs R² pros and cons -->
+  <section>
+    <h2>RSE vs R² — when to use which</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1em;font-size:.86em;margin-bottom:.6em;">
+      <div style="border:1.5px solid #2563eb;border-radius:8px;padding:.7em .9em;">
+        <p style="margin:0 0 .4em;font-weight:700;color:#2563eb;">RSE &nbsp; √(RSS / (n−p−1))</p>
+        <p style="margin:0 0 .3em;font-weight:600;color:#16a34a;">✓ Pros</p>
+        <ul style="margin:0 0 .4em;padding-left:1em;color:#444;">
+          <li class="fragment fade-up">Same units as Y — directly interpretable ("predictions are off by ±3.26 thousand $").</li>
+          <li class="fragment fade-up">Not bounded — useful for comparing absolute error across models.</li>
+          <li class="fragment fade-up">Tells you if the error is <em>practically</em> acceptable.</li>
+        </ul>
+        <p style="margin:0 0 .3em;font-weight:600;color:#b91c1c;">✗ Cons</p>
+        <ul style="margin:0;padding-left:1em;color:#444;">
+          <li class="fragment fade-up">Scale-dependent — can't compare RSE across datasets with different Y units.</li>
+        </ul>
+      </div>
+      <div style="border:1.5px solid #b45309;border-radius:8px;padding:.7em .9em;">
+        <p style="margin:0 0 .4em;font-weight:700;color:#b45309;">R² &nbsp; 1 − RSS/TSS</p>
+        <p style="margin:0 0 .3em;font-weight:600;color:#16a34a;">✓ Pros</p>
+        <ul style="margin:0 0 .4em;padding-left:1em;color:#444;">
+          <li class="fragment fade-up">Unitless, always in [0, 1] — comparable across any dataset or Y scale.</li>
+          <li class="fragment fade-up">Intuitive: "the model explains 61% of variance in sales."</li>
+          <li class="fragment fade-up">Benchmark is clear: 0 = no better than predicting ȳ.</li>
+        </ul>
+        <p style="margin:0 0 .3em;font-weight:600;color:#b91c1c;">✗ Cons</p>
+        <ul style="margin:0;padding-left:1em;color:#444;">
+          <li class="fragment fade-up">Always increases when you add predictors — use <strong>adjusted R²</strong> for MLR.</li>
+          <li class="fragment fade-up">High R² doesn't mean small errors in absolute terms.</li>
+        </ul>
+      </div>
+    </div>
+    <table style="font-size:.82em;width:60%;margin:0 auto;border-collapse:collapse;">
+      <tr style="border-bottom:1px solid #e2e8f0;"><th style="padding:.25em .5em;">Advertising TV</th><th style="padding:.25em .5em;">RSE</th><th style="padding:.25em .5em;">R²</th></tr>
+      <tr><td style="padding:.25em .5em;">TV → Sales</td><td style="padding:.25em .5em;">3.26</td><td style="padding:.25em .5em;">0.612</td></tr>
     </table>
   </section>
 
@@ -1633,13 +1803,15 @@ print(f"\nbest_deg = {best_deg}")
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/math/math.js"></script>
 <script src="../../../../shared/slides-template/interactive.js"></script>
 <script>
   Reveal.initialize({
     hash: true, slideNumber: 'c/t', transition: 'slide',
     transitionSpeed: 'fast', backgroundTransition: 'fade',
-    width: 1280, height: 760, margin: 0.06,
-    plugins: [ RevealNotes, RevealHighlight ],
+    width: 1280, height: 760, margin: 0.06, center: false,
+    math: { mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js' },
+    plugins: [ RevealNotes, RevealHighlight, RevealMath.MathJax3 ],
   });
 </script>
 </body>
