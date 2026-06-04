@@ -336,6 +336,18 @@
     <aside class="notes">The bias-variance decomposition is the theoretical foundation for the U-shaped test MSE curve. The minimum of the U is where bias and variance balance. This formula explains why it exists.</aside>
   </section>
 
+  <section>
+    <h2>Complexity drives the trade-off</h2>
+<img src="img/ch2_bv_complexity_curve.svg" style="width:100%;max-height:48vh;object-fit:contain;"><p class="muted" style="font-size:0.8em;margin-top:0.3em;">Training error always decreases as complexity grows. Test error forms a U-shape: the left arm is <strong>underfitting</strong> (high bias, low variance); the right arm is <strong>overfitting</strong> (low bias, high variance). The sweet spot is the minimum of the U.</p>
+    <aside class="notes">This is the conceptual picture behind every model-selection decision. Bias is the error from wrong assumptions; variance is the error from sensitivity to training data. Neither extreme is good — we want the model at the bottom of the U.</aside>
+  </section>
+
+  <section>
+    <h2>Bias-variance as a target diagram</h2>
+<img src="img/ch2_bv_targets.svg" style="width:100%;max-height:50vh;object-fit:contain;"><p class="muted" style="font-size:0.78em;margin-top:0.2em;">Each bullseye = repeated experiments. <strong>× marks</strong> show predictions. <em>Low Bias + Low Variance</em> (bottom-left) = consistently on target. <em>High Variance</em> = scattered. <em>High Bias</em> = systematically off-center. Overfitting lives top-left; underfitting bottom-right.</p>
+    <aside class="notes">The target analogy makes bias and variance intuitive. Bias is about where your average prediction lands (is it centred on truth?). Variance is about how spread out your predictions are across different training samples. A high-complexity model that memorises the training data is scattered around the truth (top-left); a too-simple model is consistently wrong in the same direction (bottom-right).</aside>
+  </section>
+
 </section>
 <section>
   <section class="title-slide">

@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 400" font-family="sans-serif">
+  <!-- Background -->
+  <rect width="700" height="400" fill="#fff"/>
+
+  <!-- Axes -->
+  <line x1="80" y1="340" x2="640" y2="340" stroke="#333" stroke-width="2"/>
+  <line x1="80" y1="30" x2="80" y2="340" stroke="#333" stroke-width="2"/>
+  <!-- Arrow heads -->
+  <polygon points="640,340 628,334 628,346" fill="#333"/>
+  <polygon points="80,30 74,42 86,42" fill="#333"/>
+
+  <!-- Axis labels -->
+  <text x="360" y="385" text-anchor="middle" font-size="16" fill="#333" font-weight="bold">Model Complexity</text>
+  <text x="18" y="190" text-anchor="middle" font-size="16" fill="#333" font-weight="bold" transform="rotate(-90,18,190)">Error Rate</text>
+
+  <!-- Training error curve (green, decreasing) -->
+  <path d="M 100,290 C 160,270 220,230 280,195 C 340,160 400,135 460,118 C 520,105 570,98 620,94"
+        fill="none" stroke="#2a9d2a" stroke-width="3"/>
+
+  <!-- Test error curve (red, U-shape) -->
+  <path d="M 100,250 C 150,215 200,175 260,152 C 310,133 350,128 390,132 C 430,136 470,148 510,170 C 550,192 585,220 620,255"
+        fill="none" stroke="#cc2222" stroke-width="3"/>
+
+  <!-- Optimal point marker -->
+  <line x1="355" y1="60" x2="355" y2="340" stroke="#e07000" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <circle cx="355" cy="128" r="7" fill="none" stroke="#e07000" stroke-width="2.5"/>
+  <text x="358" y="78" font-size="12" fill="#e07000" font-weight="bold">Most Accurate Model</text>
+  <text x="358" y="92" font-size="11" fill="#e07000">(based on test set)</text>
+
+  <!-- Shaded underfitting region -->
+  <rect x="80" y="30" width="200" height="310" fill="#aad4ff" fill-opacity="0.18"/>
+  <!-- Shaded overfitting region -->
+  <rect x="440" y="30" width="200" height="310" fill="#ffcccc" fill-opacity="0.25"/>
+
+  <!-- Region labels -->
+  <text x="175" y="58" text-anchor="middle" font-size="13" fill="#1a5fa8" font-weight="bold">High Bias</text>
+  <text x="175" y="74" text-anchor="middle" font-size="13" fill="#1a5fa8">Low Variance</text>
+  <text x="175" y="95" text-anchor="middle" font-size="13" fill="#1a5fa8" font-style="italic">Underfitting</text>
+
+  <text x="560" y="58" text-anchor="middle" font-size="13" fill="#a82020" font-weight="bold">Low Bias</text>
+  <text x="560" y="74" text-anchor="middle" font-size="13" fill="#a82020">High Variance</text>
+  <text x="560" y="95" text-anchor="middle" font-size="13" fill="#a82020" font-style="italic">Overfitting</text>
+
+  <!-- Legend -->
+  <line x1="95" y1="370" x2="130" y2="370" stroke="#2a9d2a" stroke-width="3"/>
+  <text x="135" y="375" font-size="13" fill="#2a9d2a">Training Error</text>
+  <line x1="260" y1="370" x2="295" y2="370" stroke="#cc2222" stroke-width="3"/>
+  <text x="300" y="375" font-size="13" fill="#cc2222">Test Error</text>
+  <line x1="420" y1="370" x2="455" y2="370" stroke="#e07000" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <text x="460" y="375" font-size="13" fill="#e07000">Optimal Complexity</text>
+</svg>

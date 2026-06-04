@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 560" font-family="sans-serif">
+  <rect width="600" height="560" fill="#fff"/>
+
+  <!-- Column headers -->
+  <text x="160" y="30" text-anchor="middle" font-size="16" font-weight="bold" fill="#1a5fa8">Low Bias</text>
+  <text x="440" y="30" text-anchor="middle" font-size="16" font-weight="bold" fill="#a82020">High Bias</text>
+
+  <!-- Row labels -->
+  <text x="22" y="175" text-anchor="middle" font-size="14" font-weight="bold" fill="#333" transform="rotate(-90,22,175)">High Variance</text>
+  <text x="22" y="435" text-anchor="middle" font-size="14" font-weight="bold" fill="#333" transform="rotate(-90,22,435)">Low Variance</text>
+
+  <!-- Helper: target bullseye macro at cx,cy radius r -->
+  <!-- Top-left: Low Bias, High Variance (Overfitting) -->
+  <g transform="translate(160,175)">
+    <!-- rings -->
+    <circle cx="0" cy="0" r="80" fill="#7ec8e3" stroke="#5aabbf" stroke-width="1.5"/>
+    <circle cx="0" cy="0" r="57" fill="#fff" stroke="#5aabbf" stroke-width="1.5"/>
+    <circle cx="0" cy="0" r="35" fill="#7ec8e3" stroke="#5aabbf" stroke-width="1.5"/>
+    <circle cx="0" cy="0" r="16" fill="#fff" stroke="#5aabbf" stroke-width="1.5"/>
+    <circle cx="0" cy="0" r="5"  fill="#5aabbf"/>
+    <!-- scattered X marks around target -->
+    <text x="-62" y="-55" font-size="17" fill="#cc2222" font-weight="bold">×</text>
+    <text x="-15" y="-68" font-size="17" fill="#cc2222" font-weight="bold">×</text>
+    <text x="48"  y="-50" font-size="17" fill="#cc2222" font-weight="bold">×</text>
+    <text x="62"  y="10"  font-size="17" fill="#cc2222" font-weight="bold">×</text>
+    <text x="38"  y="60"  font-size="17" fill="#cc2222" font-weight="bold">×</text>
+    <text x="-10" y="68"  font-size="17" fill="#cc2222" font-weight="bold">×</text>
+    <text x="-55" y="45"  font-size="17" fill="#cc2222" font-weight="bold">×</text>
+    <text x="-70" y="-18" font-size="17" fill="#cc2222" font-weight="bold">×</text>
+    <text x="10"  y="30"  font-size="17" fill="#cc2222" font-weight="bold">×</text>
+    <!-- label -->
+    <text x="0" y="105" text-anchor="middle" font-size="13" fill="#555" font-style="italic">Overfitting</text>
+  </g>
+
+  <!-- Top-right: High Bias, High Variance -->
+  <g transform="translate(440,175)">
+    <circle cx="0" cy="0" r="80" fill="#7ec8e3" stroke="#5aabbf" stroke-width="1.5"/>
+    <circle cx="0" cy="0" r="57" fill="#fff" stroke="#5aabbf" stroke-width="1.5"/>
+    <circle cx="0" cy="0" r="35" fill="#7ec8e3" stroke="#5aabbf" stroke-width="1.5"/>
+    <circle cx="0" cy="0" r="16" fill="#fff" stroke="#5aabbf" stroke-width="1.5"/>
+    <circle cx="0" cy="0" r="5"  fill="#5aabbf"/>
+    <!-- Ground truth marker (center offset shows high bias) -->
+    <circle cx="0" cy="0" r="8" fill="none" stroke="#e07000" stroke-width="2.5" stroke-dasharray="3,2"/>
+    <text x="4" y="22" text-anchor="middle" font-size="10" fill="#e07000">Ground Truth</text>
+    <!-- scattered X marks far from center (high bias = off center; high variance = spread) -->
+    <text x="52"  y="-60" font-size="17" fill="#cc2222" font-weight="bold">×</text>
+    <text x="78"  y="-30" font-size="17" fill="#cc2222" font-weight="bold">×</text>
+    <text x="85"  y="20"  font-size="17" fill="#cc2222" font-weight="bold">×</text>
+    <text x="60"  y="65"  font-size="17" fill="#cc2222" font-weight="bold">×</text>
+    <text x="20"  y="90"  font-size="17" fill="#cc2222" font-weight="bold">×</text>
+    <text x="-20" y="85"  font-size="17" fill="#cc2222" font-weight="bold">×</text>
+    <text x="30"  y="-75" font-size="17" fill="#cc2222" font-weight="bold">×</text>
+    <text x="-5"  y="-88" font-size="17" fill="#cc2222" font-weight="bold">×</text>
+    <text x="68"  y="42"  font-size="17" fill="#cc2222" font-weight="bold">×</text>
+  </g>
+
+  <!-- Bottom-left: Low Bias, Low Variance (Optimum) -->
+  <g transform="translate(160,430)">
+    <circle cx="0" cy="0" r="80" fill="#7ec8e3" stroke="#5aabbf" stroke-width="1.5"/>
+    <circle cx="0" cy="0" r="57" fill="#fff" stroke="#5aabbf" stroke-width="1.5"/>
+    <circle cx="0" cy="0" r="35" fill="#7ec8e3" stroke="#5aabbf" stroke-width="1.5"/>
+    <circle cx="0" cy="0" r="16" fill="#fff" stroke="#5aabbf" stroke-width="1.5"/>
+    <circle cx="0" cy="0" r="5"  fill="#5aabbf"/>
+    <!-- tight cluster near center -->
+    <text x="-8"  y="-12" font-size="16" fill="#cc2222" font-weight="bold">×</text>
+    <text x="4"   y="-6"  font-size="16" fill="#cc2222" font-weight="bold">×</text>
+    <text x="-4"  y="6"   font-size="16" fill="#cc2222" font-weight="bold">×</text>
+    <text x="10"  y="10"  font-size="16" fill="#cc2222" font-weight="bold">×</text>
+    <text x="-12" y="4"   font-size="16" fill="#cc2222" font-weight="bold">×</text>
+    <text x="2"   y="18"  font-size="16" fill="#cc2222" font-weight="bold">×</text>
+    <text x="-6"  y="-22" font-size="16" fill="#cc2222" font-weight="bold">×</text>
+    <text x="14"  y="-14" font-size="16" fill="#cc2222" font-weight="bold">×</text>
+    <text x="-16" y="-6"  font-size="16" fill="#cc2222" font-weight="bold">×</text>
+    <text x="0" y="105" text-anchor="middle" font-size="13" fill="#2a9d2a" font-weight="bold">Optimum ✓</text>
+  </g>
+
+  <!-- Bottom-right: High Bias, Low Variance (Underfitting) -->
+  <g transform="translate(440,430)">
+    <circle cx="0" cy="0" r="80" fill="#7ec8e3" stroke="#5aabbf" stroke-width="1.5"/>
+    <circle cx="0" cy="0" r="57" fill="#fff" stroke="#5aabbf" stroke-width="1.5"/>
+    <circle cx="0" cy="0" r="35" fill="#7ec8e3" stroke="#5aabbf" stroke-width="1.5"/>
+    <circle cx="0" cy="0" r="16" fill="#fff" stroke="#5aabbf" stroke-width="1.5"/>
+    <circle cx="0" cy="0" r="5"  fill="#5aabbf"/>
+    <!-- tight cluster but off-center (high bias = wrong, low variance = consistent) -->
+    <text x="36"  y="36"  font-size="16" fill="#cc2222" font-weight="bold">×</text>
+    <text x="44"  y="46"  font-size="16" fill="#cc2222" font-weight="bold">×</text>
+    <text x="28"  y="50"  font-size="16" fill="#cc2222" font-weight="bold">×</text>
+    <text x="50"  y="30"  font-size="16" fill="#cc2222" font-weight="bold">×</text>
+    <text x="42"  y="20"  font-size="16" fill="#cc2222" font-weight="bold">×</text>
+    <text x="30"  y="24"  font-size="16" fill="#cc2222" font-weight="bold">×</text>
+    <text x="54"  y="44"  font-size="16" fill="#cc2222" font-weight="bold">×</text>
+    <text x="38"  y="58"  font-size="16" fill="#cc2222" font-weight="bold">×</text>
+    <text x="22"  y="38"  font-size="16" fill="#cc2222" font-weight="bold">×</text>
+    <text x="0" y="105" text-anchor="middle" font-size="13" fill="#555" font-style="italic">Underfitting</text>
+  </g>
+
+  <!-- Divider lines -->
+  <line x1="300" y1="45" x2="300" y2="530" stroke="#ccc" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <line x1="55"  y1="300" x2="570" y2="300" stroke="#ccc" stroke-width="1.5" stroke-dasharray="6,4"/>
+</svg>
