@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/interactive.css" />
 </head>
 <body>
 <div class="reveal"><div class="slides">
@@ -91,7 +92,8 @@
   <section class="example" data-packages="numpy,matplotlib,sklearn">
     <h2>Polynomial regression — live</h2>
     <div class="ex-prompt">Fit degree-1 and degree-4 polynomials on simulated wage data. Plot both fits side by side.</div>
-<textarea class="ex-code">import numpy as np
+<textarea class="ex-code">import numpy as np, matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import PolynomialFeatures
@@ -168,7 +170,8 @@ plt.show()
   <section class="example" data-packages="numpy,pandas,matplotlib,sklearn">
     <h2>Step function — live</h2>
     <div class="ex-prompt">Fit a piecewise-constant step function on simulated wage~age data using pd.cut() and LinearRegression.</div>
-<textarea class="ex-code">import numpy as np
+<textarea class="ex-code">import numpy as np, matplotlib
+matplotlib.use('Agg')
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
@@ -263,7 +266,8 @@ ax.legend(); plt.tight_layout(); plt.show()
   <section class="example" data-packages="numpy,matplotlib,sklearn,scipy">
     <h2>Cubic & smoothing splines — live</h2>
     <div class="ex-prompt">Build a truncated power basis cubic spline and compare to scipy's UnivariateSpline on the same data.</div>
-<textarea class="ex-code">import numpy as np
+<textarea class="ex-code">import numpy as np, matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 from scipy.interpolate import UnivariateSpline
@@ -352,7 +356,8 @@ plt.tight_layout(); plt.show()
   <section class="example" data-packages="numpy,matplotlib,scipy">
     <h2>Smoothing spline — live</h2>
     <div class="ex-prompt">Fit smoothing splines with different s values (λ proxy). See how the smoothing parameter controls wiggliness.</div>
-<textarea class="ex-code">import numpy as np
+<textarea class="ex-code">import numpy as np, matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from scipy.interpolate import UnivariateSpline
 
@@ -420,7 +425,8 @@ ax.legend(); plt.tight_layout(); plt.show()
   <section class="example" data-packages="numpy,matplotlib,statsmodels">
     <h2>LOESS — live</h2>
     <div class="ex-prompt">Fit local regression with three different span values using statsmodels.lowess. Compare smoothness.</div>
-<textarea class="ex-code">import numpy as np
+<textarea class="ex-code">import numpy as np, matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from statsmodels.nonparametric.smoothers_lowess import lowess
 
@@ -508,7 +514,8 @@ ax.legend(); plt.tight_layout(); plt.show()
   <section class="example" data-packages="numpy,pandas,matplotlib,sklearn,scipy">
     <h2>GAM — live</h2>
     <div class="ex-prompt">Build an additive model for wage using spline on age, linear year, and dummy education. Print R² and plot the age component.</div>
-<textarea class="ex-code">import numpy as np
+<textarea class="ex-code">import numpy as np, matplotlib
+matplotlib.use('Agg')
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
@@ -579,6 +586,7 @@ plt.tight_layout(); plt.show()
 
 </div></div>
 
+<script src="../../../../shared/slides-template/interactive.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
