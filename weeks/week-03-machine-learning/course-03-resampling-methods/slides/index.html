@@ -814,6 +814,26 @@ print(f'WRONG: {wrong_err*100:.1f}%  RIGHT: {right_err*100:.1f}%')
   </section>
 
   <section>
+    <h2>The idea: resample → compute → repeat</h2>
+    <img src="img/ch5_bootstrap_idea.svg" style="width:100%;max-height:70vh;object-fit:contain;">
+  </section>
+
+  <section>
+    <h2>Bootstrap: 4 steps</h2>
+    <img src="img/ch5_bootstrap_steps.svg" style="width:100%;max-height:70vh;object-fit:contain;">
+  </section>
+
+  <section>
+    <h2>Step 2 can be <em>any</em> statistic</h2>
+    <ul>
+      <li class="fragment fade-up">In Step 2, we calculated the <strong>mean</strong> — but that was just an example.</li>
+      <li class="fragment fade-up">We could equally calculate the <strong>standard deviation</strong>, median, correlation, regression coefficient, or any other statistic.</li>
+      <li class="fragment fade-up">The bootstrap procedure is the same regardless of what statistic you track in Step 2.</li>
+      <li class="fragment fade-up"><strong>Key insight:</strong> the distribution of those B estimates tells you about the sampling variability of your statistic — no analytical formula needed.</li>
+    </ul>
+  </section>
+
+  <section>
     <h2>The investment example</h2>
     <p>Invest α in X and 1−α in Y to minimise portfolio variance:</p>
     <p style="text-align:center;font-size:1.1em;">α* = (σ²<sub>Y</sub> − σ<sub>XY</sub>) / (σ²<sub>X</sub> + σ²<sub>Y</sub> − 2σ<sub>XY</sub>)</p>
