@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 400" font-family="sans-serif">
+  <rect width="720" height="400" fill="#fff"/>
+
+  <!-- ===== LASSO (left panel) ===== -->
+  <!-- Axes -->
+  <line x1="80" y1="340" x2="300" y2="340" stroke="#000" stroke-width="1.8"/>
+  <line x1="80" y1="340" x2="80" y2="60"  stroke="#000" stroke-width="1.8"/>
+  <polygon points="300,340 292,334 292,346" fill="#000"/>
+  <polygon points="80,60 74,72 86,72" fill="#000"/>
+  <text x="305" y="344" font-size="14" fill="#000" font-style="italic">β₁</text>
+  <text x="68"  y="55"  font-size="14" fill="#000" font-style="italic">β̂₂</text>
+
+  <!-- Diamond constraint (Lasso L1) -->
+  <polygon points="80,200 165,130 250,200 165,270" fill="#00e5ff" fill-opacity="0.45" stroke="#0097a7" stroke-width="2"/>
+
+  <!-- RSS ellipse contours (OLS minimum top-right) -->
+  <ellipse cx="245" cy="100" rx="105" ry="55" fill="none" stroke="#cc0000" stroke-width="1.8" transform="rotate(-30,245,100)"/>
+  <ellipse cx="245" cy="100" rx="75"  ry="38"  fill="none" stroke="#cc0000" stroke-width="1.8" transform="rotate(-30,245,100)"/>
+  <ellipse cx="245" cy="100" rx="48"  ry="24"  fill="none" stroke="#cc0000" stroke-width="1.8" transform="rotate(-30,245,100)"/>
+  <ellipse cx="245" cy="100" rx="24"  ry="12"  fill="none" stroke="#cc0000" stroke-width="1.8" transform="rotate(-30,245,100)"/>
+
+  <!-- OLS minimum dot -->
+  <circle cx="245" cy="100" r="6" fill="#000"/>
+  <text x="252" y="97" font-size="12" fill="#000">β̂</text>
+
+  <!-- Contact point (corner of diamond = exact zero) -->
+  <circle cx="80" cy="200" r="6" fill="#cc0000"/>
+
+  <!-- Arrow from contour to contact -->
+  <line x1="110" y1="185" x2="88" y2="200" stroke="#cc0000" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Labels -->
+  <text x="20" y="155" font-size="11" fill="#cc0000" font-weight="bold">The lasso</text>
+  <text x="20" y="168" font-size="11" fill="#cc0000" font-weight="bold">coefficients</text>
+  <line x1="66" y1="165" x2="82" y2="196" stroke="#cc0000" stroke-width="1.2" marker-end="url(#arr)"/>
+
+  <!-- RSS label -->
+  <text x="258" y="62"  font-size="11" fill="#cc0000">contours of RSS as</text>
+  <text x="258" y="75"  font-size="11" fill="#cc0000">it move away from</text>
+  <text x="258" y="88"  font-size="11" fill="#cc0000">the minimum</text>
+
+  <text x="258" y="103" font-size="11" fill="#000">RSS (Least Square)</text>
+  <text x="258" y="116" font-size="11" fill="#000">coefficients</text>
+
+  <!-- Penalty label -->
+  <text x="115" y="390" text-anchor="middle" font-size="11" fill="#555">The penalty term (budget)</text>
+  <text x="115" y="403" text-anchor="middle" font-size="11" fill="#555">shown as a constraint region</text>
+
+  <!-- Title -->
+  <text x="165" y="368" text-anchor="middle" font-size="16" font-weight="bold" fill="#cc0000">LASSO</text>
+
+  <!-- ===== RIDGE (right panel) ===== -->
+  <!-- Axes -->
+  <line x1="430" y1="340" x2="650" y2="340" stroke="#000" stroke-width="1.8"/>
+  <line x1="430" y1="340" x2="430" y2="60"  stroke="#000" stroke-width="1.8"/>
+  <polygon points="650,340 642,334 642,346" fill="#000"/>
+  <polygon points="430,60 424,72 436,72" fill="#000"/>
+  <text x="655" y="344" font-size="14" fill="#000" font-style="italic">β₁</text>
+  <text x="418" y="55"  font-size="14" fill="#000" font-style="italic">β̂₂</text>
+
+  <!-- Circle constraint (Ridge L2) -->
+  <circle cx="525" cy="255" r="85" fill="#00e5ff" fill-opacity="0.45" stroke="#0097a7" stroke-width="2"/>
+
+  <!-- RSS ellipse contours -->
+  <ellipse cx="600" cy="115" rx="105" ry="55" fill="none" stroke="#cc0000" stroke-width="1.8" transform="rotate(-25,600,115)"/>
+  <ellipse cx="600" cy="115" rx="75"  ry="38"  fill="none" stroke="#cc0000" stroke-width="1.8" transform="rotate(-25,600,115)"/>
+  <ellipse cx="600" cy="115" rx="48"  ry="24"  fill="none" stroke="#cc0000" stroke-width="1.8" transform="rotate(-25,600,115)"/>
+  <ellipse cx="600" cy="115" rx="24"  ry="12"  fill="none" stroke="#cc0000" stroke-width="1.8" transform="rotate(-25,600,115)"/>
+
+  <!-- OLS minimum dot -->
+  <circle cx="600" cy="115" r="6" fill="#000"/>
+  <text x="608" y="112" font-size="12" fill="#000">β̂</text>
+
+  <!-- Contact point (smooth arc = non-zero) -->
+  <circle cx="454" cy="200" r="6" fill="#cc0000"/>
+
+  <!-- Labels -->
+  <text x="655" y="205" font-size="11" fill="#cc0000" font-weight="bold">The ridge regression</text>
+  <text x="655" y="218" font-size="11" fill="#cc0000" font-weight="bold">coefficients</text>
+  <line x1="652" y1="208" x2="462" y2="202" stroke="#cc0000" stroke-width="1.2" marker-end="url(#arr)"/>
+
+  <!-- Title -->
+  <text x="525" y="368" text-anchor="middle" font-size="16" font-weight="bold" fill="#cc0000">RIDGE REGRESSION</text>
+
+  <!-- Arrow marker definition -->
+  <defs>
+    <marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#cc0000"/>
+    </marker>
+  </defs>
+</svg>
