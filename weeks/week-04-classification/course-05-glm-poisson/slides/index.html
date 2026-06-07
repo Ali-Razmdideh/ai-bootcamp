@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generalized Linear Models — Poisson Regression</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- TITLE -->
+<section class="title-slide">
+  <span class="kicker">Week 4 · Course 5 · 1.5 hours</span>
+  <h1>Generalized Linear Models</h1>
+  <p class="muted" style="font-size:1.1em;">Poisson regression for counts — the log link that keeps predictions positive</p>
+</section>
+
+<!-- ROADMAP -->
+<section>
+  <span class="kicker">Roadmap</span>
+  <h2>Where we are heading</h2>
+  <div class="three-col">
+    <div class="card"><h4>0:00 · 0:30</h4><strong>The GLM framework</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Distribution, link function, linear predictor.</p></div>
+    <div class="card"><h4>0:30 · 1:00</h4><strong>Poisson regression</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Log link, coefficient interpretation, MLE.</p></div>
+    <div class="card"><h4>1:00 · 1:30</h4><strong>Bikeshare demo + overdispersion</strong>
+      <p class="muted" style="margin:0.3em 0 0;">statsmodels output, predictions, quasi-Poisson.</p></div>
+  </div>
+  <p class="callout" style="margin-top:1.2em;">GLMs unify linear regression, logistic regression, and Poisson regression under one framework. Once you understand one, you understand all of them.</p>
+</section>
+
+<!-- ====================================================
+     PART 1 — GLM FRAMEWORK
+     ==================================================== -->
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 1 · 0:00 – 0:30</span>
+    <h1>The GLM Framework</h1>
+    <p class="muted">three components that generalize linear regression</p>
+  </section>
+
+  <section>
+    <h2>Three components of a GLM</h2>
+    <ol>
+      <li class="fragment fade-up"><strong>Distribution</strong>: Y | X comes from the exponential family (Gaussian, Binomial, Poisson, …)</li>
+      <li class="fragment fade-up"><strong>Linear predictor</strong>: η = β₀ + β₁x₁ + … + βₚxₚ = Xβ</li>
+      <li class="fragment fade-up"><strong>Link function</strong>: g such that g(E[Y|X]) = η, i.e. E[Y|X] = g⁻¹(η)</li>
+    </ol>
+    <p class="callout fragment fade-up" style="margin-top:1em;">The link function maps the mean of Y to the linear predictor. It ensures E[Y|X] stays in the valid range for the distribution.</p>
+    <aside class="notes">The canonical link for each family is the function g such that the score equations take the simplest form. For Gaussian it's the identity; for Binomial it's the logit; for Poisson it's the log. These are the natural parameter links from exponential family theory.</aside>
+  </section>
+
+  <section>
+    <h2>The GLM family table</h2>
+    <table style="font-size:0.85em;width:100%;">
+      <tr><th>Distribution of Y</th><th>Link g</th><th>E[Y|X] = g⁻¹(η)</th><th>Method</th></tr>
+      <tr><td>Gaussian</td><td>Identity: g(μ) = μ</td><td>Xβ</td><td>Linear regression</td></tr>
+      <tr><td>Binomial</td><td>Logit: g(μ) = log(μ/(1−μ))</td><td>σ(Xβ)</td><td>Logistic regression</td></tr>
+      <tr><td>Poisson</td><td>Log: g(μ) = log(μ)</td><td>exp(Xβ)</td><td>Poisson regression</td></tr>
+      <tr><td>Negative Binomial</td><td>Log: g(μ) = log(μ)</td><td>exp(Xβ)</td><td>Neg. Binomial regression</td></tr>
+      <tr><td>Gamma</td><td>Log or inverse</td><td>exp(Xβ) or 1/Xβ</td><td>Gamma regression</td></tr>
+    </table>
+    <p class="callout fragment fade-up" style="margin-top:0.8em;">All of these are fitted by <strong>IRLS</strong> (Iteratively Reweighted Least Squares) — a unified algorithm.</p>
+    <aside class="notes">IRLS iteratively solves a weighted least squares problem where the weights and working response depend on the current parameter estimates. For Gaussian it converges in one step (ordinary OLS). For others it requires multiple iterations.</aside>
+  </section>
+
+  <section>
+    <h2>Mean-variance relationships</h2>
+    <table style="font-size:0.88em;width:100%;">
+      <tr><th>Distribution</th><th>Mean</th><th>Variance</th><th>Implication</th></tr>
+      <tr><td>Gaussian</td><td>μ</td><td>σ² (constant)</td><td>Homoscedastic — equal spread everywhere</td></tr>
+      <tr><td>Binomial</td><td>nπ</td><td>nπ(1−π)</td><td>Variance peaks at π=0.5</td></tr>
+      <tr><td>Poisson</td><td>μ</td><td>μ</td><td>Variance = mean — spread grows with level</td></tr>
+      <tr><td>Neg. Binomial</td><td>μ</td><td>μ + μ²/r</td><td>Overdispersed Poisson</td></tr>
+    </table>
+    <p class="callout fragment fade-up" style="margin-top:0.8em;">This mean-variance relationship is why Poisson regression naturally models count data: higher counts have more variability (heteroscedastic).</p>
+    <aside class="notes">Gaussian regression with OLS assumes constant variance — this is almost always wrong for count data. Using OLS on counts ignores the heteroscedasticity, leading to poor inference (too-narrow confidence intervals for large counts, too-wide for small counts).</aside>
+  </section>
+
+  <section>
+    <h2>Why linear regression fails for counts</h2>
+    <ul>
+      <li class="fragment fade-up"><strong>Negative predictions</strong>: OLS can predict negative counts — meaningless for data like bike rentals, accidents, or word frequencies.</li>
+      <li class="fragment fade-up"><strong>Wrong variance structure</strong>: OLS assumes constant variance; count data has variance ∝ mean.</li>
+      <li class="fragment fade-up"><strong>Inefficient</strong>: ignoring the Poisson structure wastes information and gives biased SEs.</li>
+    </ul>
+    <p class="callout fragment fade-up">Poisson regression solves all three: the log link guarantees positive predictions, and the Poisson log-likelihood correctly weights observations by their expected count.</p>
+  </section>
+</section>
+
+<!-- ====================================================
+     PART 2 — POISSON REGRESSION
+     ==================================================== -->
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 2 · 0:30 – 1:00</span>
+    <h1>Poisson Regression</h1>
+    <p class="muted">log link, multiplicative effects, MLE</p>
+  </section>
+
+  <section>
+    <h2>The Poisson regression model</h2>
+    <p style="text-align:center;font-size:1.2em;">
+      log(E[Y | X]) = β₀ + β₁x₁ + … + βₚxₚ
+    </p>
+    <p style="text-align:center;font-size:1.2em;">
+      E[Y | X] = exp(β₀ + β₁x₁ + … + βₚxₚ) = exp(Xβ)
+    </p>
+    <ul style="margin-top:0.8em;">
+      <li class="fragment fade-up">The log link ensures E[Y|X] &gt; 0 for any β — no negative predictions possible.</li>
+      <li class="fragment fade-up">The linear predictor is additive on the log-mean scale.</li>
+      <li class="fragment fade-up">Y | X ~ Poisson(exp(Xβ)) — the mean and variance are both exp(Xβ).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Interpreting coefficients</h2>
+    <p>A one-unit increase in x_j multiplies the expected count by <strong>e<sup>β_j</sup></strong>.</p>
+    <table style="font-size:0.85em;width:100%;margin-top:0.8em;">
+      <tr><th>β_j</th><th>e<sup>β_j</sup></th><th>Interpretation</th></tr>
+      <tr><td>0</td><td>1.00</td><td>No effect on count</td></tr>
+      <tr><td>0.10</td><td>1.11</td><td>+11% increase in expected count per unit</td></tr>
+      <tr><td>0.69</td><td>2.00</td><td>Count doubles per unit increase</td></tr>
+      <tr><td>−0.22</td><td>0.80</td><td>−20% decrease in expected count per unit</td></tr>
+    </table>
+    <p class="callout fragment fade-up" style="margin-top:0.8em;">Poisson regression has <strong>multiplicative</strong> (not additive) effects. This is appropriate: doubling counts when the mean is 100 is very different from when it is 2.</p>
+    <aside class="notes">Compare to linear regression where β_j is the additive change. In Poisson, β_j is the additive change in log(mean) — which means a multiplicative change in the mean itself. This is the natural scale for counts and rates.</aside>
+  </section>
+
+  <section>
+    <h2>Maximum likelihood for Poisson</h2>
+    <p>Log-likelihood (dropping constants):</p>
+    <p style="text-align:center;font-size:1.1em;margin:0.5em 0;">
+      ℓ(β) = Σᵢ [yᵢ (Xᵢβ) − exp(Xᵢβ)]
+    </p>
+    <ul>
+      <li class="fragment fade-up">This is <strong>concave</strong> in β — same good news as logistic regression.</li>
+      <li class="fragment fade-up">Score equations: Σᵢ xᵢ (yᵢ − exp(Xᵢβ)) = 0 — residuals (observed − predicted) are orthogonal to predictors.</li>
+      <li class="fragment fade-up">Solved by Newton–Raphson / IRLS in O(p²n) per iteration.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Goodness of fit: Deviance</h2>
+    <p>Deviance = 2 × (log-likelihood of saturated model − log-likelihood of fitted model)</p>
+    <ul>
+      <li class="fragment fade-up">Poisson deviance: D = 2 Σᵢ [yᵢ log(yᵢ/μ̂ᵢ) − (yᵢ − μ̂ᵢ)]</li>
+      <li class="fragment fade-up">Under the correct model: D ~ χ²(n − p − 1).</li>
+      <li class="fragment fade-up">Plays the role of RSS in linear regression. Smaller = better fit.</li>
+      <li class="fragment fade-up">Null deviance: deviance of intercept-only model. Explained deviance = null − residual.</li>
+    </ul>
+    <aside class="notes">The deviance ratio (explained/null) is analogous to R² in linear regression. AIC = deviance + 2p (penalizes model complexity), used for model selection.</aside>
+  </section>
+</section>
+
+<!-- ====================================================
+     PART 3 — BIKESHARE DEMO + OVERDISPERSION
+     ==================================================== -->
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 3 · 1:00 – 1:30</span>
+    <h1>Bikeshare Demo &amp; Overdispersion</h1>
+    <p class="muted">statsmodels, predicted counts, quasi-Poisson</p>
+  </section>
+
+  <section>
+    <h2>The Bikeshare dataset</h2>
+    <ul>
+      <li class="fragment fade-up">Hourly bike rental counts in Washington DC, 2011–2012.</li>
+      <li class="fragment fade-up">Target: <code>bikers</code> — number of rental bikes per hour (integer count, min=1, max=977).</li>
+      <li class="fragment fade-up">Features: <code>hr</code> (hour of day 0–23), <code>temp</code> (scaled °C), <code>weathersit</code> (1=clear, 4=heavy rain), <code>workingday</code>, <code>mnth</code> (month).</li>
+    </ul>
+    <p class="muted" style="margin-top:0.8em;">This is the canonical Poisson regression example from ISLR Section 4.6.</p>
+  </section>
+
+  <section>
+    <h2>Linear regression failure</h2>
+<pre><code class="language-python">import statsmodels.api as sm
+X = pd.get_dummies(bikes[['hr','mnth','weathersit','workingday']])
+ols = sm.OLS(bikes['bikers'], sm.add_constant(X)).fit()
+preds_ols = ols.predict(sm.add_constant(X))
+print(preds_ols[preds_ols < 0].shape)  # negative predictions at night!</code></pre>
+    <ul>
+      <li class="fragment fade-up">OLS predicts negative bike rentals at 3am. Physically impossible.</li>
+      <li class="fragment fade-up">OLS residuals are heteroscedastic: variance grows with the fitted mean.</li>
+      <li class="fragment fade-up">The Poisson model addresses both issues with the log link.</li>
+    </ul>
+    <aside class="notes">This is Figure 4.15 in ISLR 2nd edition. The left panel shows OLS predictions with negative values at night. The right panel shows Poisson predictions which are always positive.</aside>
+  </section>
+
+  <section>
+    <h2>Poisson regression fit — statsmodels output</h2>
+<pre><code class="language-python">pois = sm.GLM(bikes['bikers'], X_const,
+              family=sm.families.Poisson()).fit()
+print(pois.summary())</code></pre>
+    <table style="font-size:0.8em;width:100%;margin-top:0.5em;">
+      <tr><th>Predictor</th><th>β̂</th><th>exp(β̂)</th><th>p-value</th></tr>
+      <tr><td>Intercept</td><td>4.12</td><td>61.6</td><td>&lt;0.001</td></tr>
+      <tr><td>hr (hour)</td><td>varies by dummy</td><td>—</td><td>—</td></tr>
+      <tr><td>temp</td><td>0.785</td><td>2.19</td><td>&lt;0.001</td></tr>
+      <tr><td>weathersit=2</td><td>−0.075</td><td>0.928</td><td>0.002</td></tr>
+      <tr><td>weathersit=3</td><td>−0.575</td><td>0.563</td><td>&lt;0.001</td></tr>
+      <tr><td>workingday</td><td>0.014</td><td>1.014</td><td>0.23</td></tr>
+    </table>
+    <p class="fragment fade-up muted">e^(0.785) = 2.19 → a one-unit increase in temp more than doubles expected rentals.</p>
+    <aside class="notes">The actual numeric values shown here are illustrative. The key teaching point: interpret exp(β) as the multiplicative effect. The temp coefficient is very large — hot weather dramatically increases ridership.</aside>
+  </section>
+
+  <section>
+    <h2>Predicted counts by hour of day</h2>
+    <ul>
+      <li class="fragment fade-up">Poisson predictions: always positive; smooth rise and fall through the day.</li>
+      <li class="fragment fade-up">Bimodal pattern: morning rush (~8am) and evening rush (~5–6pm) captured by hour dummies.</li>
+      <li class="fragment fade-up">OLS predictions: go negative at night (3–5am), miss the count's variance structure.</li>
+    </ul>
+<pre><code class="language-python">bikes['fitted_poisson'] = pois.fittedvalues
+# Plot observed vs fitted by hour of day
+by_hour = bikes.groupby('hr')[['bikers','fitted_poisson']].mean()
+by_hour.plot()  # Poisson closely tracks the bimodal pattern</code></pre>
+  </section>
+
+  <section>
+    <h2>Overdispersion: when Var(Y) &gt;&gt; E[Y]</h2>
+    <ul>
+      <li class="fragment fade-up">Poisson assumption: Var(Y) = E[Y]. Real count data often has <strong>Var(Y) &gt;&gt; E[Y]</strong>.</li>
+      <li class="fragment fade-up"><strong>Causes</strong>: unobserved heterogeneity, clustering, zero-inflation.</li>
+      <li class="fragment fade-up"><strong>Consequence</strong>: Poisson SEs are too small → p-values too small → false discoveries.</li>
+    </ul>
+    <p class="callout fragment fade-up">Diagnosis: Pearson χ² / df ≫ 1 → overdispersed. Rule of thumb: ratio &gt; 2 is noteworthy.</p>
+    <aside class="notes">Overdispersion is extremely common in real data. The bikeshare data is actually overdispersed — the variance of bike counts is much larger than the mean at each hour. This is because of day-to-day variation in weather, events, and other factors not in the model.</aside>
+  </section>
+
+  <section>
+    <h2>Fixes for overdispersion</h2>
+    <table style="font-size:0.85em;width:100%;">
+      <tr><th>Method</th><th>How it works</th><th>Use when</th></tr>
+      <tr><td><strong>Quasi-Poisson</strong></td><td>Scale SEs by √(Pearson χ²/df)</td><td>Quick fix; same β̂, wider intervals</td></tr>
+      <tr><td><strong>Negative Binomial</strong></td><td>Add dispersion parameter r: Var = μ + μ²/r</td><td>True overdispersion; better fit</td></tr>
+      <tr><td><strong>Zero-Inflated Poisson</strong></td><td>Mix of Poisson + point mass at 0</td><td>Excess zeros (insurance claims, etc.)</td></tr>
+    </table>
+<pre><code class="language-python"># Quasi-Poisson (scaled SEs)
+qpois = sm.GLM(y, X, family=sm.families.Poisson(),
+               var_weights=np.ones(n)).fit(scale='X2')</code></pre>
+    <aside class="notes">For the bikeshare data, the overdispersion ratio is approximately 3–5. This means all Poisson standard errors should be multiplied by √3≈1.7 to account for the extra variance. Coefficients don't change, but significance does.</aside>
+  </section>
+</section>
+
+<!-- RECAP -->
+<section class="title-slide">
+  <span class="kicker">Recap</span>
+  <h2>Six ideas to leave with</h2>
+  <ol style="font-size:0.88em;line-height:1.8em;">
+    <li class="fragment fade-up"><strong>GLM = distribution + link + linear predictor.</strong> Unifies LR, logistic, Poisson.</li>
+    <li class="fragment fade-up"><strong>Log link guarantees positive predictions</strong> — no negative counts ever.</li>
+    <li class="fragment fade-up"><strong>e<sup>β_j</sup> is the multiplicative effect</strong> on mean count per unit increase of x_j.</li>
+    <li class="fragment fade-up"><strong>Poisson MLE is concave</strong> — same guarantee as logistic regression.</li>
+    <li class="fragment fade-up"><strong>Deviance</strong> plays the role of RSS — model comparison via AIC/deviance ratio.</li>
+    <li class="fragment fade-up"><strong>Check overdispersion</strong>: Pearson χ²/df ≫ 1 → use quasi-Poisson or negative binomial.</li>
+  </ol>
+  <p class="callout fragment fade-up">Next: comparing all classifiers — when to use which method.</p>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true, slideNumber: 'c/t', transition: 'slide',
+    transitionSpeed: 'fast', backgroundTransition: 'fade',
+    width: 1280, height: 760, margin: 0.06,
+    plugins: [ RevealNotes, RevealHighlight ],
+  });
+</script>
+</body>
+</html>
