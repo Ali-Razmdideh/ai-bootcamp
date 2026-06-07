@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 360" width="520" height="360" font-family="sans-serif">
+  <!-- Background -->
+  <rect width="520" height="360" fill="#fafafa"/>
+
+  <!-- Axes area: x=60..480 (Years 0..24), y=30..310 (Hits 0..240) -->
+  <!-- Region R1: Years < 4.5 (x < 60 + 480*4.5/24 = 60+90=150) -->
+  <rect x="60" y="30" width="90" height="280" fill="#fde8d8" opacity="0.7"/>
+  <!-- Region R2: Years >= 4.5, Hits < 118 (y > 30 + 280*(240-118)/240 = 30+142=172) -->
+  <rect x="150" y="172" width="330" height="138" fill="#ffc288" opacity="0.7"/>
+  <!-- Region R3: Years >= 4.5, Hits >= 118 -->
+  <rect x="150" y="30" width="330" height="142" fill="#e87722" opacity="0.5"/>
+
+  <!-- Axes -->
+  <line x1="60" y1="310" x2="480" y2="310" stroke="#333" stroke-width="1.5"/>
+  <line x1="60" y1="30"  x2="60"  y2="310" stroke="#333" stroke-width="1.5"/>
+
+  <!-- Split lines -->
+  <!-- Vertical: Years = 4.5 -->
+  <line x1="150" y1="30" x2="150" y2="310" stroke="#1a237e" stroke-width="2" stroke-dasharray="6,3"/>
+  <!-- Horizontal: Hits = 118 (right of Years split) -->
+  <line x1="150" y1="172" x2="480" y2="172" stroke="#1a237e" stroke-width="2" stroke-dasharray="6,3"/>
+
+  <!-- Region labels -->
+  <text x="105" y="175" text-anchor="middle" font-size="13" fill="#7b3f00">R₁</text>
+  <text x="105" y="192" text-anchor="middle" font-size="11" fill="#7b3f00">$166k</text>
+  <text x="315" y="115" text-anchor="middle" font-size="13" fill="#5d1a00">R₃</text>
+  <text x="315" y="132" text-anchor="middle" font-size="11" fill="#5d1a00">$846k</text>
+  <text x="315" y="252" text-anchor="middle" font-size="13" fill="#7b3f00">R₂</text>
+  <text x="315" y="269" text-anchor="middle" font-size="11" fill="#7b3f00">$403k</text>
+
+  <!-- Split annotations -->
+  <text x="152" y="325" text-anchor="middle" font-size="11" fill="#1a237e">Years=4.5</text>
+  <text x="490" y="175" text-anchor="start" font-size="11" fill="#1a237e">Hits=118</text>
+
+  <!-- X-axis ticks and labels -->
+  <text x="60"  y="325" text-anchor="middle" font-size="10" fill="#555">0</text>
+  <text x="150" y="325" text-anchor="middle" font-size="10" fill="#555">5</text>
+  <text x="240" y="325" text-anchor="middle" font-size="10" fill="#555">10</text>
+  <text x="330" y="325" text-anchor="middle" font-size="10" fill="#555">15</text>
+  <text x="420" y="325" text-anchor="middle" font-size="10" fill="#555">20</text>
+  <text x="270" y="345" text-anchor="middle" font-size="12" fill="#333">Years in major league</text>
+
+  <!-- Y-axis ticks and labels -->
+  <text x="55" y="310" text-anchor="end" font-size="10" fill="#555">0</text>
+  <text x="55" y="240" text-anchor="end" font-size="10" fill="#555">70</text>
+  <text x="55" y="172" text-anchor="end" font-size="10" fill="#555">118</text>
+  <text x="55" y="100" text-anchor="end" font-size="10" fill="#555">180</text>
+  <text x="55" y="30"  text-anchor="end" font-size="10" fill="#555">240</text>
+  <!-- Y label rotated -->
+  <text x="18" y="175" text-anchor="middle" font-size="12" fill="#333"
+        transform="rotate(-90,18,175)">Hits</text>
+
+  <!-- Title -->
+  <text x="270" y="20" text-anchor="middle" font-size="13" font-weight="bold" fill="#222">
+    Baseball: log(Salary) partition (depth-2 tree)
+  </text>
+</svg>

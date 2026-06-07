@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 280" width="560" height="280" font-family="sans-serif">
+  <rect width="560" height="280" fill="#fafafa"/>
+
+  <!-- ── Panel A: Linear boundary ────────────── -->
+  <!-- Background halves -->
+  <rect x="20" y="40" width="110" height="220" fill="#bbdefb" opacity="0.5"/>
+  <rect x="130" y="40" width="110" height="220" fill="#ffcdd2" opacity="0.5"/>
+  <!-- Diagonal boundary -->
+  <line x1="20" y1="260" x2="240" y2="40" stroke="#1565c0" stroke-width="2.5"/>
+
+  <!-- Scatter: Class 0 (blue, lower-left) -->
+  <circle cx="40"  cy="220" r="5" fill="#1565c0" opacity="0.7"/>
+  <circle cx="55"  cy="200" r="5" fill="#1565c0" opacity="0.7"/>
+  <circle cx="70"  cy="230" r="5" fill="#1565c0" opacity="0.7"/>
+  <circle cx="80"  cy="195" r="5" fill="#1565c0" opacity="0.7"/>
+  <circle cx="90"  cy="215" r="5" fill="#1565c0" opacity="0.7"/>
+  <circle cx="60"  cy="240" r="5" fill="#1565c0" opacity="0.7"/>
+  <circle cx="100" cy="240" r="5" fill="#1565c0" opacity="0.7"/>
+  <!-- Class 1 (red, upper-right) -->
+  <circle cx="160" cy="80"  r="5" fill="#c62828" opacity="0.7"/>
+  <circle cx="185" cy="65"  r="5" fill="#c62828" opacity="0.7"/>
+  <circle cx="200" cy="90"  r="5" fill="#c62828" opacity="0.7"/>
+  <circle cx="170" cy="110" r="5" fill="#c62828" opacity="0.7"/>
+  <circle cx="220" cy="75"  r="5" fill="#c62828" opacity="0.7"/>
+  <circle cx="195" cy="120" r="5" fill="#c62828" opacity="0.7"/>
+  <circle cx="210" cy="55"  r="5" fill="#c62828" opacity="0.7"/>
+
+  <!-- Tree staircase boundary (worse) -->
+  <polyline points="100,40 100,140 140,140 140,200 240,200"
+            fill="none" stroke="#c62828" stroke-width="1.5" stroke-dasharray="5,3" opacity="0.6"/>
+
+  <!-- Labels -->
+  <text x="130" y="30" text-anchor="middle" font-size="13" font-weight="bold" fill="#333">A: Linear boundary</text>
+  <text x="40"  y="275" text-anchor="middle" font-size="10" fill="#1565c0">Linear wins ✓</text>
+  <text x="175" y="275" text-anchor="middle" font-size="10" fill="#c62828">Tree staggers ✗</text>
+  <text x="140" y="155" font-size="9" fill="#c62828" opacity="0.8">tree boundary</text>
+  <text x="130" y="185" font-size="9" fill="#1565c0">(dashed)</text>
+
+  <!-- Divider -->
+  <line x1="280" y1="20" x2="280" y2="275" stroke="#ccc" stroke-width="1"/>
+
+  <!-- ── Panel B: Non-linear boundary ──────────── -->
+  <!-- Checkerboard: 4 regions -->
+  <rect x="300" y="40"  width="110" height="110" fill="#bbdefb" opacity="0.5"/>
+  <rect x="410" y="40"  width="110" height="110" fill="#ffcdd2" opacity="0.5"/>
+  <rect x="300" y="150" width="110" height="110" fill="#ffcdd2" opacity="0.5"/>
+  <rect x="410" y="150" width="110" height="110" fill="#bbdefb" opacity="0.5"/>
+
+  <!-- Tree boundary lines (perfect) -->
+  <line x1="300" y1="150" x2="520" y2="150" stroke="#1565c0" stroke-width="2.5"/>
+  <line x1="410" y1="40"  x2="410" y2="260" stroke="#1565c0" stroke-width="2.5"/>
+
+  <!-- Scatter: Class 0 (blue, top-left + bottom-right) -->
+  <circle cx="330" cy="80"  r="5" fill="#1565c0" opacity="0.7"/>
+  <circle cx="355" cy="65"  r="5" fill="#1565c0" opacity="0.7"/>
+  <circle cx="370" cy="95"  r="5" fill="#1565c0" opacity="0.7"/>
+  <circle cx="340" cy="120" r="5" fill="#1565c0" opacity="0.7"/>
+  <circle cx="435" cy="185" r="5" fill="#1565c0" opacity="0.7"/>
+  <circle cx="460" cy="210" r="5" fill="#1565c0" opacity="0.7"/>
+  <circle cx="490" cy="195" r="5" fill="#1565c0" opacity="0.7"/>
+  <circle cx="450" cy="240" r="5" fill="#1565c0" opacity="0.7"/>
+  <!-- Class 1 (red, top-right + bottom-left) -->
+  <circle cx="440" cy="80"  r="5" fill="#c62828" opacity="0.7"/>
+  <circle cx="465" cy="65"  r="5" fill="#c62828" opacity="0.7"/>
+  <circle cx="490" cy="95"  r="5" fill="#c62828" opacity="0.7"/>
+  <circle cx="475" cy="120" r="5" fill="#c62828" opacity="0.7"/>
+  <circle cx="320" cy="185" r="5" fill="#c62828" opacity="0.7"/>
+  <circle cx="345" cy="210" r="5" fill="#c62828" opacity="0.7"/>
+  <circle cx="375" cy="195" r="5" fill="#c62828" opacity="0.7"/>
+  <circle cx="360" cy="240" r="5" fill="#c62828" opacity="0.7"/>
+
+  <!-- Labels -->
+  <text x="410" y="30" text-anchor="middle" font-size="13" font-weight="bold" fill="#333">B: Non-linear (checkerboard)</text>
+  <text x="355" y="275" text-anchor="middle" font-size="10" fill="#1565c0">Tree wins ✓</text>
+  <text x="465" y="275" text-anchor="middle" font-size="10" fill="#c62828">(Linear fails ✗)</text>
+</svg>

@@ -12,119 +12,381 @@
 </head>
 <body>
 <div class="reveal"><div class="slides">
+
+<!-- ─── Title ─────────────────────────────────────────────────────────── -->
 <section class="title-slide">
-  <span class="kicker">Week 4 · Course 4 · 1.5 hours</span>
+  <span class="kicker">Week 4 · Course 7 · 1.5 hours</span>
   <h1>Decision Trees</h1>
-  <p class="muted" style="font-size:1.1em;">The interpretable non-linear classifier</p>
+  <p class="muted" style="font-size:1.1em;">The most interpretable non-linear model</p>
 </section>
+
+<!-- ─── Roadmap ───────────────────────────────────────────────────────── -->
 <section>
   <span class="kicker">Roadmap</span>
   <h2>Where we are heading</h2>
   <div class="three-col">
-    <div class="card"><h4>0:00 · 0:30</h4><strong>Classification trees</strong>
-      <p class="muted" style="margin:0.3em 0 0;">Gini, splits, plot_tree.</p></div>
-    <div class="card"><h4>0:30 · 1:00</h4><strong>Regression trees</strong>
-      <p class="muted" style="margin:0.3em 0 0;">cost-complexity pruning.</p></div>
-    <div class="card"><h4>1:00 · 1:30</h4><strong>Strengths & weaknesses</strong>
-      <p class="muted" style="margin:0.3em 0 0;">variance → ensembles.</p></div>
+    <div class="card"><h4>0:00 · 0:25</h4><strong>Regression Trees</strong>
+      <p class="muted" style="margin:0.3em 0 0;">RSS splits, leaf means, baseball salary.</p></div>
+    <div class="card"><h4>0:25 · 0:50</h4><strong>Classification Trees</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Gini, entropy, Heart + Carseats.</p></div>
+    <div class="card"><h4>0:50 · 1:10</h4><strong>Pruning</strong>
+      <p class="muted" style="margin:0.3em 0 0;">α penalty · K-fold CV.</p></div>
   </div>
-  <p class="callout" style="margin-top:1.2em;">A single tree is the most interpretable model you'll meet. Every prediction is a flowchart. The weakness — variance — sets up next course's payoff.</p>
+  <div class="three-col" style="margin-top:0.6em;">
+    <div class="card"><h4>1:10 · 1:20</h4><strong>Trees vs Linear</strong>
+      <p class="muted" style="margin:0.3em 0 0;">when each wins.</p></div>
+    <div class="card"><h4>1:20 · 1:30</h4><strong>Pros &amp; Cons</strong>
+      <p class="muted" style="margin:0.3em 0 0;">variance → bridge to ensembles.</p></div>
+    <div class="card"></div>
+  </div>
+  <p class="callout" style="margin-top:1em;">A single tree is the most interpretable model you'll meet. Every prediction is a flowchart. The weakness — variance — sets up Course 8's payoff.</p>
 </section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     PART 1 — REGRESSION TREES
+     ═══════════════════════════════════════════════════════════════════════ -->
 <section>
   <section class="title-slide">
-    <span class="kicker">Part 1 · 0:00 – 0:30</span>
-    <h1>Classification trees</h1>
-    <p class="muted">greedy recursive splitting</p>
+    <span class="kicker">Part 1 · 0:00 – 0:25</span>
+    <h1>Regression Trees</h1>
+    <p class="muted">recursive binary splitting · leaf means · RSS</p>
   </section>
+
   <section>
     <h2>The algorithm</h2>
-<ul>
-  <li>At each node, scan every feature and every threshold.</li>
-  <li>Pick the (feature, threshold) that most reduces Gini impurity.</li>
-  <li>Recurse on the two children. Stop at depth limit or pure leaf.</li>
-</ul>
+    <ol>
+      <li class="fragment fade-up">Scan every feature <em>j</em> and every cutpoint <em>s</em>.</li>
+      <li class="fragment fade-up">Pick the (j, s) that minimises total within-region RSS.</li>
+      <li class="fragment fade-up">Recurse on the two children independently.</li>
+      <li class="fragment fade-up">Stop when a node has fewer than <code>min_samples_split</code> rows (default 2).</li>
+    </ol>
+    <p class="callout fragment fade-up" style="margin-top:1em;">Prediction = <strong>mean</strong> of training responses in the leaf.</p>
   </section>
 
   <section>
-    <h2>Gini impurity</h2>
-<p style="text-align:center;font-size:1.2em;">Gini = 1 − Σ<sub>k</sub> p<sub>k</sub>²</p><ul>
-  <li class="fragment fade-up">p=0.5 (worst): Gini = 0.5.</li>
-  <li class="fragment fade-up">p=0 or 1 (pure): Gini = 0.</li>
-  <li class="fragment fade-up">Entropy is an alternative; in practice they pick almost the same splits.</li>
-</ul>
+    <h2>Split criterion: RSS</h2>
+    <p style="text-align:center; font-size:1.1em;">
+      At each node, minimise:
+    </p>
+    <p style="text-align:center; font-size:1.25em; margin:0.5em 0;">
+      <em>RSS<sub>L</sub>(s) + RSS<sub>R</sub>(s)</em>
+    </p>
+    <p style="text-align:center; font-size:0.95em; color:#555;">
+      RSS<sub>L</sub> = Σ<sub>i: x<sub>j</sub> &lt; s</sub> (y<sub>i</sub> − ȳ<sub>L</sub>)²
+      &nbsp;&nbsp;|&nbsp;&nbsp;
+      RSS<sub>R</sub> = Σ<sub>i: x<sub>j</sub> ≥ s</sub> (y<sub>i</sub> − ȳ<sub>R</sub>)²
+    </p>
+    <ul style="margin-top:0.8em;">
+      <li class="fragment fade-up">Search is <strong>greedy</strong> — pick the best local split, no lookahead.</li>
+      <li class="fragment fade-up">Scan all features × all thresholds at every node: O(n p log n) per level.</li>
+      <li class="fragment fade-up">Result is a partition into <em>rectangular</em> regions in feature space.</li>
+    </ul>
   </section>
 
   <section>
-    <h2>Reading a tree</h2>
-<p>Each node prints: split criterion, samples, class distribution, prediction.</p><p>Trace a row from root to leaf — that is the model's reasoning, in human language.</p>
+    <h2>Baseball salary example</h2>
+    <p>Predict <strong>log(Salary)</strong> from <em>Years</em> in the majors and <em>Hits</em> last year.</p>
+    <img src="img/tree-baseball-partition.svg" style="width:72%; margin:0 auto; display:block;"
+         alt="partition plot Years vs Hits with 3 regions" />
+    <p class="muted" style="font-size:0.85em; text-align:center;">
+      R₁: Years &lt; 4.5 → mean log-salary ≈ 5.11 ($166k) &nbsp;|&nbsp;
+      R₂: Years ≥ 4.5, Hits &lt; 118 → 6.00 ($403k) &nbsp;|&nbsp;
+      R₃: Years ≥ 4.5, Hits ≥ 118 → 6.74 ($846k)
+    </p>
   </section>
 
+  <section>
+    <h2>Reading the tree output</h2>
+    <ul>
+      <li>Each internal node: split variable, threshold, # samples, MSE.</li>
+      <li>Each leaf: predicted value = mean of targets reaching that leaf.</li>
+      <li>Trace a row from root to leaf → model reasoning in plain English.</li>
+    </ul>
+    <p class="callout fragment fade-up" style="margin-top:1em;">
+      <strong>Depth-2 tree → 3 regions.</strong> Each additional depth doubles the maximum number of regions.
+    </p>
+  </section>
 </section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     PART 2 — CLASSIFICATION TREES
+     ═══════════════════════════════════════════════════════════════════════ -->
 <section>
   <section class="title-slide">
-    <span class="kicker">Part 2 · 0:30 – 1:00</span>
-    <h1>Regression trees & pruning</h1>
-    <p class="muted">ccp_alpha</p>
-  </section>
-  <section>
-    <h2>Same algorithm, different criterion</h2>
-<p>Regression trees split to minimize MSE within each child node. Final prediction = mean of training targets in the leaf.</p>
+    <span class="kicker">Part 2 · 0:25 – 0:50</span>
+    <h1>Classification Trees</h1>
+    <p class="muted">Gini · cross-entropy · classification error</p>
   </section>
 
   <section>
-    <h2>Cost-complexity pruning</h2>
-<p style="text-align:center;font-size:1.2em;">cost(T) = Σ<sub>leaves</sub> MSE(leaf) + α · |T|</p><ul>
-  <li class="fragment fade-up">α = 0 → fully grown, overfit.</li>
-  <li class="fragment fade-up">α → ∞ → root-only stump.</li>
-  <li class="fragment fade-up">Pick α with 5-fold CV.</li>
-</ul>
+    <h2>Why not use error rate for splitting?</h2>
+    <p>Node with 99 Yes / 1 No and node with 51 Yes / 49 No both have the same dominant class — but the second is much less pure.</p>
+    <p class="fragment fade-up">Error rate = <strong>1 − max(p̂<sub>k</sub>)</strong> is insensitive to this.</p>
+    <p class="callout fragment fade-up" style="margin-top:0.8em;">
+      Gini and entropy measure the <em>distribution</em>, not just the winner. They reward splits that produce purer children.
+    </p>
   </section>
 
+  <section>
+    <h2>Three impurity measures</h2>
+    <table style="font-size:0.92em; width:100%;">
+      <thead><tr><th>Measure</th><th>Formula (binary)</th><th>Max at p=0.5</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Classification error</strong></td><td>1 − max(p, 1−p)</td><td>0.500</td></tr>
+        <tr><td><strong>Gini index</strong></td><td>2p(1−p)</td><td>0.500</td></tr>
+        <tr><td><strong>Cross-entropy</strong></td><td>−p log p − (1−p)log(1−p)</td><td>0.693</td></tr>
+      </tbody>
+    </table>
+    <ul style="margin-top:0.8em;">
+      <li class="fragment fade-up">All three are 0 for pure nodes, maximum at 50/50.</li>
+      <li class="fragment fade-up">Gini and entropy are <em>differentiable</em> → better gradients for growing.</li>
+      <li class="fragment fade-up">Error rate is used for <em>pruning</em> (we care about the final misclassification rate, not impurity).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Gini index</h2>
+    <p style="text-align:center; font-size:1.3em;">
+      G = 1 − Σ<sub>k</sub> p̂<sub>mk</sub>²
+    </p>
+    <ul>
+      <li class="fragment fade-up"><strong>Interpretation:</strong> probability that a randomly chosen element is mis-classified if labelled by the class distribution.</li>
+      <li class="fragment fade-up">Binary: G = 2p(1−p) — symmetric, peaks at p = 0.5.</li>
+      <li class="fragment fade-up">sklearn default for <code>DecisionTreeClassifier</code>.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Cross-entropy (deviance)</h2>
+    <p style="text-align:center; font-size:1.3em;">
+      D = −Σ<sub>k</sub> p̂<sub>mk</sub> log p̂<sub>mk</sub>
+    </p>
+    <ul>
+      <li class="fragment fade-up">Information-theoretic measure: bits needed to encode the label distribution.</li>
+      <li class="fragment fade-up">Also called <em>deviance</em> in the tree literature.</li>
+      <li class="fragment fade-up">Numerically very similar to Gini — in practice they select almost identical splits.</li>
+      <li class="fragment fade-up">Use <code>criterion='entropy'</code> or <code>criterion='log_loss'</code> in sklearn.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Heart disease example</h2>
+    <ul>
+      <li>303 patients · 13 predictors (age, sex, chest pain type, …)</li>
+      <li>Target: <code>AHD</code> — diagnosed heart disease (Yes/No)</li>
+    </ul>
+    <p class="fragment fade-up" style="margin-top:0.6em;">Full unpruned tree achieves ~100% train accuracy but often poor test performance → needs pruning (Part 3).</p>
+    <p class="callout fragment fade-up" style="margin-top:0.6em;">Test error vs depth curve shows the classic <em>U-shape</em>: too shallow underfits, too deep overfits.</p>
+  </section>
+
+  <section>
+    <h2>Carseats — predict High sales</h2>
+    <ul>
+      <li>400 stores · 10 predictors (ShelveLoc, Price, CompPrice, …)</li>
+      <li>Target: <code>High = (Sales &gt; 8)</code></li>
+    </ul>
+    <p class="fragment fade-up" style="margin-top:0.6em;">
+      <strong>Root split:</strong> <code>ShelveLoc_Good</code> — shelf location dominates all else.
+    </p>
+    <p class="fragment fade-up">Depth-3 tree is already competitive (~77% accuracy) and fully interpretable.</p>
+  </section>
 </section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     PART 3 — COST-COMPLEXITY PRUNING
+     ═══════════════════════════════════════════════════════════════════════ -->
 <section>
   <section class="title-slide">
-    <span class="kicker">Part 3 · 1:00 – 1:30</span>
-    <h1>Strengths & weaknesses</h1>
-    <p class="muted">and the road to ensembles</p>
-  </section>
-  <section>
-    <h2>Strengths</h2>
-<ul>
-  <li class="fragment fade-up">Interpretable end-to-end.</li>
-  <li class="fragment fade-up">Handles mixed dtypes without preprocessing.</li>
-  <li class="fragment fade-up">No scaling required.</li>
-  <li class="fragment fade-up">Captures interactions and non-linearities natively.</li>
-</ul>
+    <span class="kicker">Part 3 · 0:50 – 1:10</span>
+    <h1>Cost-Complexity Pruning</h1>
+    <p class="muted">grow full · penalise size · CV to pick α</p>
   </section>
 
   <section>
-    <h2>Weakness — variance</h2>
-<p>Refit the same tree on a bootstrap sample. Different root split. Different tree. <em>Massively different</em> predictions on borderline points.</p><p class="callout">Solution: fit many trees and vote. Next course.</p>
+    <h2>The problem: full trees overfit</h2>
+    <ul>
+      <li class="fragment fade-up">A fully grown tree has one leaf per (nearly) unique training observation.</li>
+      <li class="fragment fade-up">Train error → 0, but test error is terrible.</li>
+      <li class="fragment fade-up">Naïve fix: set <code>max_depth</code> by hand — but how do you choose?</li>
+    </ul>
+    <p class="callout fragment fade-up" style="margin-top:1em;">
+      Better: grow full, then <strong>prune</strong> by penalising tree complexity.
+    </p>
   </section>
 
+  <section>
+    <h2>Penalised cost criterion</h2>
+    <p style="text-align:center; font-size:1.2em;">
+      C<sub>α</sub>(T) = Σ<sub>leaves</sub> MSE(leaf) + α · |T|
+    </p>
+    <ul style="margin-top:0.8em;">
+      <li class="fragment fade-up"><strong>α = 0:</strong> no penalty → full tree T₀.</li>
+      <li class="fragment fade-up"><strong>α → ∞:</strong> every split is too costly → root-only stump.</li>
+      <li class="fragment fade-up"><strong>Weakest-link pruning</strong> finds the nested sequence T₀ ⊃ T₁ ⊃ … each minimising C<sub>α</sub> for a range of α.</li>
+    </ul>
+    <p class="fragment fade-up" style="margin-top:0.8em;">
+      sklearn: <code>cost_complexity_pruning_path()</code> returns all candidate α values.
+    </p>
+  </section>
+
+  <section>
+    <h2>Selecting α with cross-validation</h2>
+    <img src="img/tree-pruning-path.svg" style="width:65%; display:block; margin:0 auto;"
+         alt="CV MSE vs alpha pruning path" />
+    <ol style="margin-top:0.8em;">
+      <li class="fragment fade-up">Compute the pruning path: all candidate α values.</li>
+      <li class="fragment fade-up">For each α, evaluate K-fold CV error.</li>
+      <li class="fragment fade-up">Pick the α that minimises CV error (or 1-SE rule for parsimony).</li>
+      <li class="fragment fade-up">Refit the full training set with the selected α.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Effect of α on tree structure</h2>
+    <div class="three-col">
+      <div class="card">
+        <h4>α = 0</h4>
+        <p>Full tree · 100% train acc · overfits</p>
+      </div>
+      <div class="card" style="background:#e8f4fd;">
+        <h4>α = CV-optimal</h4>
+        <p>Pruned tree · balances bias/variance</p>
+      </div>
+      <div class="card">
+        <h4>α → ∞</h4>
+        <p>Root stump · predicts majority class everywhere</p>
+      </div>
+    </div>
+    <p class="callout fragment fade-up" style="margin-top:1em;">
+      The pruned tree is usually much more interpretable than the full tree — and generalises better.
+    </p>
+  </section>
 </section>
-<section class="title-slide">
-  <span class="kicker">Recap</span>
-  <h2>Three things to leave with</h2>
-  <ol>
-<li class="fragment fade-up"><strong>Greedy splits on Gini (classification) or MSE (regression).</strong></li>
-<li class="fragment fade-up"><strong>Prune with ccp_alpha to fight overfit.</strong></li>
-<li class="fragment fade-up"><strong>Single trees are interpretable but high-variance.</strong> Ensembles fix that.</li>
-  </ol>
-  <p class="callout fragment fade-up">Next: bagging, random forests, and gradient boosting.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     PART 4 — TREES VS LINEAR MODELS
+     ═══════════════════════════════════════════════════════════════════════ -->
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 4 · 1:10 – 1:20</span>
+    <h1>Trees vs Linear Models</h1>
+    <p class="muted">it depends on the true boundary</p>
+  </section>
+
+  <section>
+    <h2>Two scenarios (ISLR Figure 8.7)</h2>
+    <img src="img/tree-vs-linear.svg" style="width:80%; display:block; margin:0 auto;"
+         alt="two panel comparison: linear boundary and non-linear boundary" />
+  </section>
+
+  <section>
+    <h2>When each wins</h2>
+    <table style="font-size:0.9em; width:100%;">
+      <thead><tr><th>Scenario</th><th>Linear model</th><th>Decision tree</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Truly linear boundary</td>
+          <td>✅ exact fit, low variance</td>
+          <td>❌ many splits to approximate a line</td>
+        </tr>
+        <tr>
+          <td>Non-linear, axis-aligned</td>
+          <td>❌ can't capture the pattern</td>
+          <td>✅ few splits → exact partition</td>
+        </tr>
+        <tr>
+          <td>Interactions</td>
+          <td>❌ need to specify them manually</td>
+          <td>✅ nested splits automatically capture interactions</td>
+        </tr>
+        <tr>
+          <td>Interpretability</td>
+          <td>β-coefficients</td>
+          <td>flowchart — often more natural</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="callout fragment fade-up" style="margin-top:0.8em;">
+      In practice: if the data is "close to linear," use linear models. Otherwise, try trees — or better yet, ensembles.
+    </p>
+  </section>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     PART 5 — PROS, CONS & BRIDGE TO ENSEMBLES
+     ═══════════════════════════════════════════════════════════════════════ -->
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 5 · 1:20 – 1:30</span>
+    <h1>Pros, Cons &amp; What's Next</h1>
+    <p class="muted">the variance problem → ensembles</p>
+  </section>
+
+  <section>
+    <h2>Strengths of trees</h2>
+    <ul>
+      <li class="fragment fade-up"><strong>Interpretable:</strong> every prediction is a set of if–then rules.</li>
+      <li class="fragment fade-up"><strong>No feature scaling:</strong> splits depend only on ordering.</li>
+      <li class="fragment fade-up"><strong>Mixed types:</strong> numeric and categorical in one model.</li>
+      <li class="fragment fade-up"><strong>Interactions:</strong> nested splits capture X₁·X₂ interactions automatically.</li>
+      <li class="fragment fade-up"><strong>Missing values:</strong> surrogate splits handle them gracefully.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>The variance problem</h2>
+    <p>Fit the same depth-3 tree on <strong>four different bootstrap samples</strong> of the same training data:</p>
+    <ul>
+      <li class="fragment fade-up">Root split changes from <code>ShelveLoc_Good</code> to <code>Price</code> to …</li>
+      <li class="fragment fade-up">Tree structure changes completely.</li>
+      <li class="fragment fade-up">Each individual tree is unbiased but has huge variance.</li>
+    </ul>
+    <p class="callout fragment fade-up" style="margin-top:1em;">
+      High variance is the single biggest weakness. Ensembles fix it.
+    </p>
+  </section>
+
+  <section>
+    <h2>The bridge to Course 8</h2>
+    <div class="three-col">
+      <div class="card">
+        <h4>Bagging</h4>
+        <p>Average B independent trees on bootstrap samples → lower variance</p>
+      </div>
+      <div class="card">
+        <h4>Random Forests</h4>
+        <p>Bagging + random feature subsets → decorrelated trees → even lower variance</p>
+      </div>
+      <div class="card">
+        <h4>Boosting</h4>
+        <p>Sequential trees each fitting the residuals → reduce bias</p>
+      </div>
+    </div>
+    <p class="callout" style="margin-top:1.2em;">Single tree: interpretable but variable. Ensemble: accurate but a black box. Course 8 teaches you to navigate that trade-off.</p>
+  </section>
+
+  <section>
+    <h2>Recap</h2>
+    <ul>
+      <li class="fragment fade-up">Trees split recursively to minimise RSS (regression) or Gini/entropy (classification).</li>
+      <li class="fragment fade-up">Always grow full, then prune with <code>ccp_alpha</code> chosen by K-fold CV.</li>
+      <li class="fragment fade-up">Use Gini/entropy for growing; classification error is fine for pruning.</li>
+      <li class="fragment fade-up">Trees beat linear models on non-linear, axis-aligned boundaries; lose on smooth linear ones.</li>
+      <li class="fragment fade-up">Variance is the Achilles' heel → ensembles to the rescue in Course 8.</li>
+    </ul>
+  </section>
 </section>
 
 </div></div>
-
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script>
   Reveal.initialize({
-    hash: true, slideNumber: 'c/t', transition: 'slide',
-    transitionSpeed: 'fast', backgroundTransition: 'fade',
-    width: 1280, height: 760, margin: 0.06,
-    plugins: [ RevealNotes, RevealHighlight ],
+    hash: true,
+    slideNumber: 'c/t',
+    transition: 'slide',
+    plugins: [RevealHighlight, RevealNotes]
   });
 </script>
 </body>

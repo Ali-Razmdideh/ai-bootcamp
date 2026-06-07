@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ensembles — Bagging, Random Forest, Boosting</title>
+  <title>Ensembles — Bagging, Random Forests, Boosting, BART</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
@@ -12,129 +12,371 @@
 </head>
 <body>
 <div class="reveal"><div class="slides">
+
+<!-- ─── Title ─────────────────────────────────────────────────────────── -->
 <section class="title-slide">
-  <span class="kicker">Week 4 · Course 5 · 1.5 hours</span>
-  <h1>Ensembles — Bagging, Random Forest, Boosting</h1>
-  <p class="muted" style="font-size:1.1em;">Many weak trees beat one fancy tree</p>
+  <span class="kicker">Week 4 · Course 8 · 1.5 hours</span>
+  <h1>Ensembles</h1>
+  <p class="muted" style="font-size:1.1em;">Bagging · Random Forests · Boosting · BART</p>
 </section>
+
+<!-- ─── Roadmap ───────────────────────────────────────────────────────── -->
 <section>
   <span class="kicker">Roadmap</span>
   <h2>Where we are heading</h2>
   <div class="three-col">
-    <div class="card"><h4>0:00 · 0:30</h4><strong>Random Forests</strong>
-      <p class="muted" style="margin:0.3em 0 0;">bagging + feature subsets.</p></div>
-    <div class="card"><h4>0:30 · 1:00</h4><strong>Interpretation</strong>
-      <p class="muted" style="margin:0.3em 0 0;">importance, partial dependence.</p></div>
-    <div class="card"><h4>1:00 · 1:30</h4><strong>Gradient Boosting</strong>
-      <p class="muted" style="margin:0.3em 0 0;">the production default.</p></div>
+    <div class="card"><h4>0:00 · 0:25</h4><strong>Bagging</strong>
+      <p class="muted" style="margin:0.3em 0 0;">bootstrap avg · OOB error.</p></div>
+    <div class="card"><h4>0:25 · 0:50</h4><strong>Random Forests</strong>
+      <p class="muted" style="margin:0.3em 0 0;">decorrelation · importance.</p></div>
+    <div class="card"><h4>0:50 · 1:15</h4><strong>Boosting</strong>
+      <p class="muted" style="margin:0.3em 0 0;">residuals · shrinkage · 3 knobs.</p></div>
   </div>
-  <p class="callout" style="margin-top:1.2em;">Random forest and gradient boosting are the two algorithms that win Kaggle and ship in production. Master these and you have an industrial-grade tabular toolkit.</p>
+  <div class="three-col" style="margin-top:0.6em;">
+    <div class="card"><h4>1:15 · 1:25</h4><strong>BART</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Bayesian sum of trees.</p></div>
+    <div class="card"><h4>1:25 · 1:30</h4><strong>Summary</strong>
+      <p class="muted" style="margin:0.3em 0 0;">when to use which.</p></div>
+    <div class="card"></div>
+  </div>
+  <p class="callout" style="margin-top:1em;">Random forests and gradient boosting are the two algorithms that win Kaggle and ship in production. Master these and you have an industrial-grade tabular toolkit.</p>
 </section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     PART 1 — BAGGING
+     ═══════════════════════════════════════════════════════════════════════ -->
 <section>
   <section class="title-slide">
-    <span class="kicker">Part 1 · 0:00 – 0:30</span>
+    <span class="kicker">Part 1 · 0:00 – 0:25</span>
+    <h1>Bagging</h1>
+    <p class="muted">bootstrap aggregating · variance reduction</p>
+  </section>
+
+  <section>
+    <h2>The variance problem (recap)</h2>
+    <ul>
+      <li class="fragment fade-up">A single deep tree has <strong>low bias</strong> but <strong>high variance</strong>.</li>
+      <li class="fragment fade-up">Refit on a bootstrap sample → completely different tree (we saw this in Course 7).</li>
+      <li class="fragment fade-up"><strong>Idea:</strong> if we could fit the model on many training sets and average, variance drops to zero while bias stays the same.</li>
+      <li class="fragment fade-up"><strong>Bagging:</strong> simulate "many training sets" via bootstrap sampling.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Bagging algorithm</h2>
+    <ol>
+      <li class="fragment fade-up">Draw <strong>B</strong> bootstrap samples (sample n rows with replacement).</li>
+      <li class="fragment fade-up">Fit a <strong>deep, unpruned</strong> tree to each sample.</li>
+      <li class="fragment fade-up">Average predictions (regression) or majority vote (classification).</li>
+    </ol>
+    <p class="callout fragment fade-up" style="margin-top:1em;">
+      B = 100–500 is usually enough. Error stabilises quickly; more trees never hurt (just costs time).
+    </p>
+  </section>
+
+  <section>
+    <h2>Why averaging reduces variance</h2>
+    <p>If B independent trees each have variance σ²,</p>
+    <p style="text-align:center; font-size:1.2em;">Var(mean) = σ²/B → 0 as B → ∞</p>
+    <p class="fragment fade-up" style="margin-top:0.6em;">The trees aren't independent — they share training data, so they're <em>correlated</em> with pairwise correlation ρ. The limit is:</p>
+    <p class="fragment fade-up" style="text-align:center; font-size:1.1em;">Var(mean) → ρσ²</p>
+    <p class="callout fragment fade-up" style="margin-top:0.6em;">
+      Even if ρ = 0.8, averaging 300 trees reduces variance by a factor of ~5. Random forests will reduce ρ further.
+    </p>
+  </section>
+
+  <section>
+    <h2>OOB error — a free cross-validation</h2>
+    <img src="img/bagging-variance-reduction.svg" style="width:65%; display:block; margin:0 auto;"
+         alt="OOB error diagram" />
+    <ul>
+      <li class="fragment fade-up">Each bootstrap sample uses ≈63% of training rows.</li>
+      <li class="fragment fade-up">The remaining ≈37% are <strong>out-of-bag (OOB)</strong> — never seen by that tree.</li>
+      <li class="fragment fade-up">For each observation i, average predictions from all trees that did NOT see i.</li>
+      <li class="fragment fade-up">OOB MSE closely tracks test MSE — no separate validation set needed.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Bagging results on Boston</h2>
+    <ul>
+      <li>Single tree test MSE ≈ 25</li>
+      <li>Bagging 300 trees ≈ 12–14 (≈ 2× improvement)</li>
+    </ul>
+    <p class="callout fragment fade-up" style="margin-top:0.8em;">
+      But bagging doesn't decorrelate the trees — if one feature dominates, every tree uses it. Random forests fix this.
+    </p>
+  </section>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     PART 2 — RANDOM FORESTS
+     ═══════════════════════════════════════════════════════════════════════ -->
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 2 · 0:25 – 0:50</span>
     <h1>Random Forests</h1>
-    <p class="muted">bagging + feature subsets</p>
-  </section>
-  <section>
-    <h2>Bagging = bootstrap aggregating</h2>
-<ul>
-  <li class="fragment fade-up">Draw B bootstrap samples from the training set.</li>
-  <li class="fragment fade-up">Fit a deep tree to each.</li>
-  <li class="fragment fade-up">Average their predictions (regression) or vote (classification).</li>
-  <li class="fragment fade-up">The average has lower variance than any single tree.</li>
-</ul>
+    <p class="muted">decorrelation via random feature subsets</p>
   </section>
 
   <section>
-    <h2>Random forest adds feature subsetting</h2>
-<p>At <em>every</em> split, sample √p features uniformly. Why?</p><p>If one strong predictor dominates, every bagged tree picks it as the root split. The trees end up correlated → averaging gains little. Subsampling decorrelates them.</p>
+    <h2>The decorrelation trick</h2>
+    <p>At <em>every split</em>, sample only m out of p features uniformly at random. Only those m are eligible for this split.</p>
+    <ul style="margin-top:0.8em;">
+      <li class="fragment fade-up">If one strong predictor dominates, it's <strong>excluded</strong> from many splits.</li>
+      <li class="fragment fade-up">Other predictors get a chance → trees become more different from each other.</li>
+      <li class="fragment fade-up">Lower correlation ρ between trees → larger variance reduction when averaging.</li>
+    </ul>
+    <p class="callout fragment fade-up" style="margin-top:0.8em;">
+      Bagging with m=p is just bagging. RF with m &lt; p decorrelates the trees.
+    </p>
   </section>
 
   <section>
-    <h2>OOB error — a free CV</h2>
-<ul>
-  <li class="fragment fade-up">Each bootstrap sample uses ~63% of rows.</li>
-  <li class="fragment fade-up">The other 37% are out-of-bag — never seen by that tree.</li>
-  <li class="fragment fade-up">Score each row on the trees that did not see it. <code>oob_score=True</code>.</li>
-</ul>
+    <h2>Choosing m</h2>
+    <div class="three-col">
+      <div class="card">
+        <h4>Classification</h4>
+        <p>m = ⌊√p⌋<br/>sklearn default: <code>max_features='sqrt'</code></p>
+      </div>
+      <div class="card">
+        <h4>Regression</h4>
+        <p>m = ⌊p/3⌋<br/>sklearn default: <code>max_features=1.0</code> (= p) — try 'sqrt' or p//3</p>
+      </div>
+      <div class="card">
+        <h4>Tuning</h4>
+        <p>Vary m from 1 to p, plot test error. Usually U-shaped: too small = high bias, too large = correlated trees.</p>
+      </div>
+    </div>
   </section>
 
+  <section>
+    <h2>Variable importance</h2>
+    <p>Two ways to measure importance of feature j:</p>
+    <ol>
+      <li class="fragment fade-up"><strong>Gini importance:</strong> total impurity decrease attributable to j, averaged across all trees. Fast, built-in. Biased toward high-cardinality features.</li>
+      <li class="fragment fade-up"><strong>Permutation importance:</strong> randomly shuffle column j in the test set; measure how much performance drops. Slower but more reliable.</li>
+    </ol>
+    <p class="callout fragment fade-up" style="margin-top:0.8em;">
+      Use permutation importance for final reporting; gini importance for quick screening.
+    </p>
+  </section>
+
+  <section>
+    <h2>Gene expression: Khan dataset</h2>
+    <ul>
+      <li>4 tumour types · 2,308 genes · 63 training observations</li>
+      <li>p &gt;&gt; n — random forests handle this naturally by subsampling features</li>
+      <li class="fragment fade-up">RF test accuracy ≈ 95%+ despite the extreme dimensionality</li>
+      <li class="fragment fade-up">Variable importance reveals the handful of discriminative genes</li>
+    </ul>
+    <p class="callout fragment fade-up" style="margin-top:0.8em;">
+      Random forests are one of the best out-of-the-box methods for high-dimensional gene expression problems.
+    </p>
+  </section>
 </section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     PART 3 — BOOSTING
+     ═══════════════════════════════════════════════════════════════════════ -->
 <section>
   <section class="title-slide">
-    <span class="kicker">Part 2 · 0:30 – 1:00</span>
-    <h1>Interpretation</h1>
-    <p class="muted">back to explainability</p>
-  </section>
-  <section>
-    <h2>Feature importance</h2>
-<p>Average impurity decrease attributable to each feature across all trees and all splits. Sort, plot, ship.</p><p class="muted">Caveat: biased toward high-cardinality features. <code>sklearn.inspection.permutation_importance</code> is the modern alternative.</p>
+    <span class="kicker">Part 3 · 0:50 – 1:15</span>
+    <h1>Boosting</h1>
+    <p class="muted">sequential residual fitting · shrinkage</p>
   </section>
 
   <section>
-    <h2>Partial dependence</h2>
-<p>For feature j: vary j across its range, hold the others fixed, plot mean prediction.</p><p>Tells you the <em>shape</em> of the model's relationship with each predictor, even though the model is a forest of 500 trees.</p>
+    <h2>Bagging vs Boosting</h2>
+    <table style="font-size:0.9em; width:100%;">
+      <thead><tr><th></th><th>Bagging / RF</th><th>Boosting</th></tr></thead>
+      <tbody>
+        <tr><td>Tree training</td><td>Independent (parallel)</td><td>Sequential</td></tr>
+        <tr><td>What each tree fits</td><td>Full y</td><td>Current residuals</td></tr>
+        <tr><td>Goal</td><td>Reduce variance</td><td>Reduce bias (+ variance)</td></tr>
+        <tr><td>Overfitting</td><td>Rare (more trees never hurt much)</td><td>Possible if B too large or λ too large</td></tr>
+      </tbody>
+    </table>
   </section>
 
+  <section>
+    <h2>The boosting algorithm</h2>
+    <img src="img/boosting-residuals.svg" style="width:70%; display:block; margin:0 auto;"
+         alt="sequential residual fitting diagram" />
+    <ol style="font-size:0.9em; margin-top:0.8em;">
+      <li class="fragment fade-up">Start: f̂(x) = 0, residuals rᵢ = yᵢ.</li>
+      <li class="fragment fade-up">For b=1..B: fit tree T̂ᵇ to (xᵢ, rᵢ); update f̂ += λT̂ᵇ; update rᵢ -= λT̂ᵇ(xᵢ).</li>
+      <li class="fragment fade-up">Final prediction: f̂(x) = Σ λT̂ᵇ(x).</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Three tuning parameters</h2>
+    <div class="three-col">
+      <div class="card">
+        <h4>B — # trees</h4>
+        <code>n_estimators</code>
+        <p class="muted">More trees → lower bias. But overfitting possible with large λ.</p>
+      </div>
+      <div class="card" style="background:#e8f4fd;">
+        <h4>λ — shrinkage</h4>
+        <code>learning_rate</code>
+        <p class="muted">Smaller λ: slower but usually better. Typical: 0.01–0.1.</p>
+      </div>
+      <div class="card">
+        <h4>d — depth</h4>
+        <code>max_depth</code>
+        <p class="muted">d=1: stump (no interactions). d=2: one interaction. Often d=1..4 works.</p>
+      </div>
+    </div>
+    <p class="callout fragment fade-up" style="margin-top:1em;">
+      Small λ + large B almost always beats large λ + small B. Shrinkage prevents over-correction.
+    </p>
+  </section>
+
+  <section>
+    <h2>Shrinkage: the analogy</h2>
+    <p>Think of boosting as walking toward the target:</p>
+    <ul>
+      <li class="fragment fade-up"><strong>Large λ (e.g. 1.0):</strong> huge steps → overshoot, oscillate, never converge.</li>
+      <li class="fragment fade-up"><strong>Small λ (e.g. 0.01):</strong> tiny steps → slow but steady, converges to the right place.</li>
+      <li class="fragment fade-up">Each step adds a little bit of signal while spreading the error-correction across many trees.</li>
+    </ul>
+    <p class="callout fragment fade-up" style="margin-top:0.8em;">
+      The practical rule: set λ = 0.01–0.05 and let B be determined by early stopping on a validation set.
+    </p>
+  </section>
+
+  <section>
+    <h2>Results on Hitters salary</h2>
+    <ul>
+      <li>Single pruned tree test MSE ≈ 0.50</li>
+      <li>Random forest (300, m=√p) ≈ 0.32</li>
+      <li>Gradient boosting (500, λ=0.01, d=4) ≈ 0.23</li>
+    </ul>
+    <p class="callout fragment fade-up" style="margin-top:0.8em;">
+      Boosting with careful tuning consistently outperforms bagging/RF on structured tabular data.
+    </p>
+  </section>
 </section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     PART 4 — BART
+     ═══════════════════════════════════════════════════════════════════════ -->
 <section>
   <section class="title-slide">
-    <span class="kicker">Part 3 · 1:00 – 1:30</span>
-    <h1>Gradient Boosting</h1>
-    <p class="muted">fit residuals sequentially</p>
-  </section>
-  <section>
-    <h2>The algorithm</h2>
-<ul>
-  <li>Start with a constant prediction (mean / log-odds).</li>
-  <li>Fit a small tree to the gradient of the loss (the 'residuals').</li>
-  <li>Add learning_rate · tree to the ensemble.</li>
-  <li>Repeat n_estimators times.</li>
-</ul>
+    <span class="kicker">Part 4 · 1:15 – 1:25</span>
+    <h1>BART</h1>
+    <p class="muted">Bayesian Additive Regression Trees</p>
   </section>
 
   <section>
-    <h2>Learning rate × n_estimators</h2>
-<ul>
-  <li class="fragment fade-up">Small lr + many trees → smooth, accurate, slow to train.</li>
-  <li class="fragment fade-up">Large lr + few trees → fast, can overshoot the optimum.</li>
-  <li class="fragment fade-up">Sweet spot: lr ≈ 0.05, n_estimators chosen by early stopping.</li>
-</ul>
+    <h2>The BART model</h2>
+    <p style="text-align:center; font-size:1.2em;">
+      Y = T₁(X) + T₂(X) + ⋯ + T<sub>K</sub>(X) + ε
+    </p>
+    <ul style="margin-top:0.8em;">
+      <li class="fragment fade-up">Sum of K small trees (typically K=200, depth 1–2).</li>
+      <li class="fragment fade-up">Priors on tree structure and leaf values → regularisation.</li>
+      <li class="fragment fade-up">Inference via MCMC → full <strong>posterior distribution</strong> over predictions.</li>
+      <li class="fragment fade-up">This gives you uncertainty estimates — not just a point estimate.</li>
+    </ul>
   </section>
 
   <section>
-    <h2>Production-grade defaults</h2>
-<ul>
-  <li class="fragment fade-up"><code>HistGradientBoostingClassifier</code> — sklearn's histogram-based GBM.</li>
-  <li class="fragment fade-up">XGBoost / LightGBM / CatBoost — the third-party giants.</li>
-  <li class="fragment fade-up">All four implement the same core idea with different speed/quality tweaks.</li>
-</ul>
+    <h2>The partial residual update</h2>
+    <img src="img/bart-partial-residuals.svg" style="width:65%; display:block; margin:0 auto;"
+         alt="BART partial residual update" />
+    <p class="muted" style="text-align:center; font-size:0.9em; margin-top:0.5em;">
+      At each iteration, update tree j by fitting it to y minus all other trees' predictions.
+    </p>
   </section>
 
+  <section>
+    <h2>Burn-in and posterior mean</h2>
+    <ul>
+      <li class="fragment fade-up">MCMC takes many iterations to converge: the first L iterations are <strong>burn-in</strong> and discarded.</li>
+      <li class="fragment fade-up">After burn-in: collect M posterior draws of the tree ensemble.</li>
+      <li class="fragment fade-up">Final prediction = mean over those M draws.</li>
+      <li class="fragment fade-up">Uncertainty = standard deviation or credible interval over the M draws.</li>
+    </ul>
+    <p class="callout fragment fade-up" style="margin-top:0.8em;">
+      BART is unique in providing calibrated uncertainty estimates while using an ensemble of trees.
+    </p>
+  </section>
+
+  <section>
+    <h2>BART vs Boosting</h2>
+    <table style="font-size:0.9em; width:100%;">
+      <thead><tr><th></th><th>Boosting</th><th>BART</th></tr></thead>
+      <tbody>
+        <tr><td>Training</td><td>Greedy forward</td><td>MCMC (joint posterior)</td></tr>
+        <tr><td>Uncertainty</td><td>None</td><td>Full posterior distribution</td></tr>
+        <tr><td>Regularisation</td><td>Tuning B, λ, d</td><td>Priors on tree structure/leaves</td></tr>
+        <tr><td>Speed</td><td>Fast (seconds)</td><td>Slow (minutes–hours)</td></tr>
+        <tr><td>When to use</td><td>Production, prediction</td><td>Inference, uncertainty quantification</td></tr>
+      </tbody>
+    </table>
+  </section>
 </section>
-<section class="title-slide">
-  <span class="kicker">Recap</span>
-  <h2>Three things to leave with</h2>
-  <ol>
-<li class="fragment fade-up"><strong>Random forest = bagging + feature subsets.</strong> OOB error is free.</li>
-<li class="fragment fade-up"><strong>Feature importance and PDPs restore interpretability.</strong></li>
-<li class="fragment fade-up"><strong>Gradient boosting fits residuals sequentially.</strong> Small lr × many trees wins.</li>
-  </ol>
-  <p class="callout fragment fade-up">Last course: SVMs — non-linear via kernels, dominant in p ≫ n.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     PART 5 — SUMMARY
+     ═══════════════════════════════════════════════════════════════════════ -->
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 5 · 1:25 – 1:30</span>
+    <h1>Summary</h1>
+    <p class="muted">when to use which</p>
+  </section>
+
+  <section>
+    <h2>Decision matrix</h2>
+    <table style="font-size:0.82em; width:100%;">
+      <thead><tr><th>Method</th><th>Interpretable</th><th>Accuracy</th><th>Speed</th><th>Best for</th></tr></thead>
+      <tbody>
+        <tr><td>Single tree</td><td>✅ High</td><td>Low</td><td>Very fast</td><td>Explanation, prototype</td></tr>
+        <tr><td>Bagging</td><td>❌</td><td>Medium</td><td>Fast</td><td>Baseline ensemble</td></tr>
+        <tr><td>Random Forest</td><td>❌</td><td>High</td><td>Fast</td><td>Robust general tabular</td></tr>
+        <tr><td>Gradient Boosting</td><td>❌</td><td>Very high</td><td>Slow</td><td>Competition, production</td></tr>
+        <tr><td>HistGBM / XGBoost</td><td>❌</td><td>Very high</td><td>Fast</td><td>Large data, production</td></tr>
+        <tr><td>BART</td><td>❌</td><td>High</td><td>Very slow</td><td>Uncertainty quantification</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Practical starting point</h2>
+    <ol>
+      <li class="fragment fade-up"><strong>Quick baseline:</strong> <code>RandomForestClassifier(n_estimators=300)</code> — no tuning needed.</li>
+      <li class="fragment fade-up"><strong>Best accuracy:</strong> <code>HistGradientBoostingClassifier</code> or XGBoost — tune <code>learning_rate</code> and <code>n_estimators</code>.</li>
+      <li class="fragment fade-up"><strong>Explanation:</strong> fit a single depth-3 tree on the same problem and present to stakeholders.</li>
+      <li class="fragment fade-up"><strong>Uncertainty:</strong> BART, or calibrate a GBM with <code>CalibratedClassifierCV</code>.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Recap</h2>
+    <ul>
+      <li class="fragment fade-up"><strong>Bagging</strong> = average B deep trees on bootstrap samples → lower variance.</li>
+      <li class="fragment fade-up"><strong>Random forests</strong> = bagging + m random features per split → decorrelated, lower variance.</li>
+      <li class="fragment fade-up"><strong>Boosting</strong> = sequential trees fitting residuals + shrinkage λ → lower bias &amp; variance.</li>
+      <li class="fragment fade-up"><strong>BART</strong> = Bayesian sum of trees via MCMC → uncertainty estimates.</li>
+      <li class="fragment fade-up">For production tabular tasks: start with HistGBM or XGBoost. Use a single tree to explain.</li>
+    </ul>
+  </section>
 </section>
 
 </div></div>
-
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script>
   Reveal.initialize({
-    hash: true, slideNumber: 'c/t', transition: 'slide',
-    transitionSpeed: 'fast', backgroundTransition: 'fade',
-    width: 1280, height: 760, margin: 0.06,
-    plugins: [ RevealNotes, RevealHighlight ],
+    hash: true,
+    slideNumber: 'c/t',
+    transition: 'slide',
+    plugins: [RevealHighlight, RevealNotes]
   });
 </script>
 </body>

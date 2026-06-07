@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 320" width="540" height="320" font-family="sans-serif">
+  <rect width="540" height="320" fill="#fafafa"/>
+  <text x="270" y="22" text-anchor="middle" font-size="13" font-weight="bold" fill="#222">
+    BART: partial residual update (one MCMC iteration, tree j)
+  </text>
+
+  <defs>
+    <marker id="arw" markerWidth="7" markerHeight="7" refX="3" refY="3.5" orient="auto">
+      <polygon points="0,0 7,3.5 0,7" fill="#555"/>
+    </marker>
+  </defs>
+
+  <!-- Full prediction -->
+  <rect x="20" y="45" width="160" height="55" rx="6" fill="#e3f2fd" stroke="#90caf9" stroke-width="1.5"/>
+  <text x="100" y="65" text-anchor="middle" font-size="11" font-weight="bold" fill="#1565c0">Current ensemble</text>
+  <text x="100" y="82" text-anchor="middle" font-size="10" fill="#1565c0">f̂ = T₁ + T₂ + ⋯ + T_K</text>
+  <text x="100" y="97" text-anchor="middle" font-size="10" fill="#888">(K=200 small trees)</text>
+
+  <!-- Arrow down -->
+  <line x1="100" y1="100" x2="100" y2="130" stroke="#555" stroke-width="1.5" marker-end="url(#arw)"/>
+
+  <!-- Remove Tj -->
+  <rect x="20" y="130" width="160" height="55" rx="6" fill="#fce4ec" stroke="#ef9a9a" stroke-width="1.5"/>
+  <text x="100" y="150" text-anchor="middle" font-size="11" font-weight="bold" fill="#c62828">Remove tree j</text>
+  <text x="100" y="167" text-anchor="middle" font-size="10" fill="#c62828">f̂₋ⱼ = Σₖ≠ⱼ Tₖ(x)</text>
+  <text x="100" y="182" text-anchor="middle" font-size="10" fill="#c62828">(all trees except j)</text>
+
+  <!-- Arrow down -->
+  <line x1="100" y1="185" x2="100" y2="215" stroke="#555" stroke-width="1.5" marker-end="url(#arw)"/>
+
+  <!-- Partial residual -->
+  <rect x="20" y="215" width="160" height="50" rx="6" fill="#fff9c4" stroke="#f9a825" stroke-width="1.5"/>
+  <text x="100" y="235" text-anchor="middle" font-size="11" font-weight="bold" fill="#e65100">Partial residual</text>
+  <text x="100" y="252" text-anchor="middle" font-size="10" fill="#e65100">rᵢ = yᵢ − f̂₋ⱼ(xᵢ)</text>
+
+  <!-- Arrow right to perturb -->
+  <line x1="180" y1="240" x2="215" y2="240" stroke="#555" stroke-width="1.5" marker-end="url(#arw)"/>
+
+  <!-- Perturb Tj -->
+  <rect x="215" y="215" width="150" height="90" rx="6" fill="#e8f5e9" stroke="#66bb6a" stroke-width="1.5"/>
+  <text x="290" y="238" text-anchor="middle" font-size="11" font-weight="bold" fill="#2e7d32">Perturb tree j</text>
+  <text x="290" y="256" text-anchor="middle" font-size="10" fill="#2e7d32">Propose: grow/prune/change</text>
+  <text x="290" y="272" text-anchor="middle" font-size="10" fill="#2e7d32">Accept if better fit to rᵢ</text>
+  <text x="290" y="288" text-anchor="middle" font-size="10" fill="#888">(Metropolis-Hastings)</text>
+  <text x="290" y="302" text-anchor="middle" font-size="9"  fill="#888">repeat for j = 1..K</text>
+
+  <!-- Arrow right to collect -->
+  <line x1="365" y1="260" x2="395" y2="260" stroke="#555" stroke-width="1.5" marker-end="url(#arw)"/>
+
+  <!-- Collect draws -->
+  <rect x="395" y="215" width="130" height="90" rx="6" fill="#f3e5f5" stroke="#ba68c8" stroke-width="1.5"/>
+  <text x="460" y="238" text-anchor="middle" font-size="11" font-weight="bold" fill="#6a1b9a">After burn-in</text>
+  <text x="460" y="255" text-anchor="middle" font-size="10" fill="#6a1b9a">Collect M draws</text>
+  <text x="460" y="272" text-anchor="middle" font-size="10" fill="#6a1b9a">ŷ = mean(draws)</text>
+  <text x="460" y="289" text-anchor="middle" font-size="10" fill="#6a1b9a">CI = quantiles</text>
+
+  <!-- Iterations label on right -->
+  <rect x="395" y="45" width="130" height="130" rx="6" fill="#ede7f6" stroke="#9575cd" stroke-width="1.5"/>
+  <text x="460" y="68"  text-anchor="middle" font-size="11" font-weight="bold" fill="#4527a0">MCMC iterations</text>
+  <text x="460" y="88"  text-anchor="middle" font-size="10" fill="#4527a0">iter 1 (burn-in)</text>
+  <text x="460" y="104" text-anchor="middle" font-size="10" fill="#4527a0">iter 2 (burn-in)</text>
+  <text x="460" y="120" text-anchor="middle" font-size="10" fill="#888">⋮  (discard L)</text>
+  <text x="460" y="140" text-anchor="middle" font-size="10" fill="#4527a0">iter L+1 ✓</text>
+  <text x="460" y="156" text-anchor="middle" font-size="10" fill="#4527a0">iter L+2 ✓</text>
+  <text x="460" y="172" text-anchor="middle" font-size="10" fill="#888">⋮  (keep M)</text>
+
+  <!-- Arrow from iterations to collect -->
+  <line x1="460" y1="175" x2="460" y2="215" stroke="#9575cd" stroke-width="1.5" marker-end="url(#arw)"/>
+</svg>
