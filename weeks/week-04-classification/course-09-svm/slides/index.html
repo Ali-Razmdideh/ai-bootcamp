@@ -9,115 +9,574 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/interactive.css" />
+  <style>.reveal { font-size: 28px; }</style>
 </head>
 <body>
 <div class="reveal"><div class="slides">
+
+<!-- ══════════════════════════════════ TITLE ══════════════════════════════════ -->
 <section class="title-slide">
-  <span class="kicker">Week 4 · Course 6 · 1.5 hours</span>
+  <span class="kicker">Week 4 · Course 9 · 2 hours</span>
   <h1>Support Vector Machines</h1>
-  <p class="muted" style="font-size:1.1em;">Maximum margin, kernels, and p ≫ n</p>
+  <p class="muted" style="font-size:1.1em;">Hyperplanes, the kernel trick, multi-class SVMs, and when to choose SVM over logistic regression</p>
 </section>
+
 <section>
   <span class="kicker">Roadmap</span>
   <h2>Where we are heading</h2>
   <div class="three-col">
-    <div class="card"><h4>0:00 · 0:30</h4><strong>Maximum margin</strong>
-      <p class="muted" style="margin:0.3em 0 0;">support vectors and geometry.</p></div>
-    <div class="card"><h4>0:30 · 1:00</h4><strong>Kernels</strong>
-      <p class="muted" style="margin:0.3em 0 0;">linear, polynomial, RBF.</p></div>
-    <div class="card"><h4>1:00 · 1:30</h4><strong>p ≫ n</strong>
-      <p class="muted" style="margin:0.3em 0 0;">the Khan gene-expression lab.</p></div>
+    <div class="card"><h4>Part 1 · 0:00–0:25</h4><strong>Hyperplanes &amp; MMC</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Geometry, separating planes, maximal-margin classifier.</p></div>
+    <div class="card"><h4>Part 2 · 0:25–0:50</h4><strong>Soft margin</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Noisy data, slack variables, the C parameter.</p></div>
+    <div class="card"><h4>Part 3 · 0:50–1:20</h4><strong>Kernels</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Feature expansion, polynomial &amp; RBF kernels.</p></div>
+    <div class="card"><h4>Part 4 · 1:20–1:40</h4><strong>Multi-class &amp; p ≫ n</strong>
+      <p class="muted" style="margin:0.3em 0 0;">OVA, OVO, ROC curves, Khan gene-expression lab.</p></div>
+    <div class="card"><h4>Part 5 · 1:40–2:00</h4><strong>SVM vs Logistic Regression</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Hinge loss, when to use which.</p></div>
   </div>
-  <p class="callout" style="margin-top:1.2em;">SVMs produce non-linear boundaries without ever computing the non-linear features. They also dominate when p ≫ n — text and genomics.</p>
+  <p class="callout" style="margin-top:1.2em;">SVMs find the widest street between two classes and, via the kernel trick, draw non-linear boundaries without ever computing the expanded features. They also dominate when p ≫ n — genomics, text classification, and more.</p>
 </section>
+
+<!-- ═══════════════════════════════════ PART 1 ════════════════════════════════ -->
 <section>
   <section class="title-slide">
-    <span class="kicker">Part 1 · 0:00 – 0:30</span>
-    <h1>Maximum margin</h1>
-    <p class="muted">geometry and support vectors</p>
-  </section>
-  <section>
-    <h2>The unique optimum</h2>
-<p>Infinitely many lines separate two linearly separable clouds. The maximum-margin line is the <em>unique</em> one furthest from both classes.</p><p>The points exactly on the margin are the <strong>support vectors</strong>. Move any other point and the boundary does not change.</p>
+    <span class="kicker">Part 1 · 0:00 – 0:25</span>
+    <h1>Hyperplanes &amp; the Maximum-Margin Classifier</h1>
+    <p class="muted">geometry, unique optima, and support vectors</p>
   </section>
 
   <section>
-    <h2>The optimization</h2>
-<p style="text-align:center;font-size:1.2em;">minimize ½‖w‖² &nbsp; s.t. y<sub>i</sub>(w·x<sub>i</sub> + b) ≥ 1</p><p>Equivalent to maximizing 2 / ‖w‖, the margin width. Convex quadratic program — unique solution.</p>
+    <h2>What is a hyperplane?</h2>
+    <ul>
+      <li class="fragment fade-up">In <em>p</em> dimensions a hyperplane is a flat affine subspace of dimension <em>p − 1</em>.</li>
+      <li class="fragment fade-up">Equation: <strong>β₀ + β₁X₁ + β₂X₂ + … + βₚXₚ = 0</strong></li>
+      <li class="fragment fade-up">In 2-D this is a line. In 3-D it is a plane.</li>
+      <li class="fragment fade-up">β = (β₁,…,βₚ) is the <strong>normal vector</strong> — perpendicular to the hyperplane surface.</li>
+      <li class="fragment fade-up">Points with f(X) &gt; 0 lie on one side; f(X) &lt; 0 on the other. The signed distance from a point to the hyperplane is proportional to |f(X)|.</li>
+    </ul>
+    <aside class="notes">The signed value f(x) tells us how far a point is from the hyperplane and on which side. This is the key quantity SVM uses for classification.</aside>
   </section>
 
   <section>
-    <h2>Soft margin — the C parameter</h2>
-<ul>
-  <li class="fragment fade-up">Real data overlaps. We allow some violations of the margin.</li>
-  <li class="fragment fade-up">Small C → wide margin, many support vectors, more bias.</li>
-  <li class="fragment fade-up">Large C → narrow margin, few support vectors, more variance.</li>
-  <li class="fragment fade-up">Tune C with CV.</li>
-</ul>
+    <h2>Separating hyperplanes</h2>
+    <div class="two-col">
+      <div>
+        <ul>
+          <li class="fragment fade-up">Code classes as Y = +1 and Y = −1.</li>
+          <li class="fragment fade-up">A separating hyperplane satisfies <strong>yᵢ · f(xᵢ) &gt; 0</strong> for all i.</li>
+          <li class="fragment fade-up">When a separating hyperplane exists, there are <em>infinitely many</em> of them (left panel).</li>
+          <li class="fragment fade-up">The <strong>maximal-margin</strong> hyperplane is the unique one with the widest gap (right panel, dashed boundary lines).</li>
+        </ul>
+      </div>
+      <div>
+        <p class="muted" style="font-size:0.82em;">Any hyperplane satisfying yᵢf(xᵢ) &gt; 0 is valid. We want the <em>best</em> one — furthest from both classes simultaneously.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The Maximal Margin Classifier</h2>
+    <div class="two-col">
+      <div>
+        <ul>
+          <li class="fragment fade-up">The margin M is the perpendicular distance from the boundary to the nearest point of each class.</li>
+          <li class="fragment fade-up">MMC solves:</li>
+        </ul>
+        <div class="fragment fade-up" style="background:#f5f5f5;border-radius:8px;padding:0.7em 1em;margin-top:0.5em;font-size:0.85em;">
+          maximize M &nbsp; subject to:<br>
+          &nbsp;&nbsp;‖β‖ = 1<br>
+          &nbsp;&nbsp;yᵢ(β₀ + β·xᵢ) ≥ M &nbsp; for all i
+        </div>
+      </div>
+      <div>
+        <ul>
+          <li class="fragment fade-up">Equivalent to: <strong>minimize ½‖β‖²</strong> subject to yᵢ(β₀ + β·xᵢ) ≥ 1.</li>
+          <li class="fragment fade-up">This is a <em>convex quadratic program</em> — one unique global solution.</li>
+          <li class="fragment fade-up">The <strong>support vectors</strong> are the points that lie exactly on the margin; they define the boundary. All other points can move without changing the solution.</li>
+        </ul>
+      </div>
+    </div>
+    <aside class="notes">The constraint ‖β‖=1 pins the scale so that f(xᵢ) equals the signed distance to the boundary. The margin is 2/‖β‖ so minimizing ‖β‖² maximizes the margin.</aside>
+  </section>
+
+  <!-- EXAMPLE: maximum-margin classifier -->
+  <section class="example" data-packages="numpy,matplotlib,scikit-learn">
+    <h2>Maximum-margin boundary in code</h2>
+    <div class="ex-prompt">Generate two separable blobs and fit a hard-margin SVC (large C). The dashed lines are the margin; circled points are the support vectors.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_blobs
+from sklearn.svm import SVC
+
+X, y = make_blobs(n_samples=60, centers=2, cluster_std=0.8, random_state=1)
+svc = SVC(kernel='linear', C=1e6).fit(X, y)   # large C = hard margin
+
+w = svc.coef_[0];  b = svc.intercept_[0]
+xx = np.linspace(X[:,0].min()-1, X[:,0].max()+1, 200)
+yy = -(w[0]*xx + b) / w[1]
+margin = 1 / np.linalg.norm(w)
+slope  = -w[0] / w[1]
+yy_up = yy + margin * np.sqrt(1 + slope**2)
+yy_dn = yy - margin * np.sqrt(1 + slope**2)
+
+fig, ax = plt.subplots(figsize=(7, 5))
+ax.scatter(X[y==0,0], X[y==0,1], s=40, label='class 0')
+ax.scatter(X[y==1,0], X[y==1,1], s=40, color='C3', label='class 1')
+ax.plot(xx, yy,    'k-',  lw=1.5, label='decision boundary')
+ax.plot(xx, yy_up, 'k--', alpha=0.5, label='margin')
+ax.plot(xx, yy_dn, 'k--', alpha=0.5)
+ax.scatter(*svc.support_vectors_.T, s=130, facecolors='none',
+           edgecolors='k', linewidths=1.5, label='support vectors')
+ax.legend(fontsize=9); ax.set_title('Maximum-Margin Classifier')
+plt.tight_layout(); plt.show()
+print(f'Margin width : {2*margin:.3f}')
+print(f'# SVs per class: {svc.n_support_}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
 </section>
+
+<!-- ═══════════════════════════════════ PART 2 ════════════════════════════════ -->
 <section>
   <section class="title-slide">
-    <span class="kicker">Part 2 · 0:30 – 1:00</span>
+    <span class="kicker">Part 2 · 0:25 – 0:50</span>
+    <h1>Soft Margin — The Support Vector Classifier</h1>
+    <p class="muted">allowing violations in exchange for robustness</p>
+  </section>
+
+  <section>
+    <h2>When the hard margin fails</h2>
+    <ul>
+      <li class="fragment fade-up">Real data is almost never perfectly separable — classes overlap.</li>
+      <li class="fragment fade-up">Even when separable, a noisy outlier forces the margin very narrow, producing high variance.</li>
+      <li class="fragment fade-up">The <strong>support vector classifier</strong> allows some points to violate the margin (or even the wrong side of the boundary) in exchange for a wider, more stable gap.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Soft margin: the optimization</h2>
+    <div class="two-col">
+      <div>
+        <div style="background:#f5f5f5;border-radius:8px;padding:0.7em 1em;font-size:0.82em;">
+          maximize M<br>
+          subject to: ‖β‖ = 1<br>
+          &nbsp;&nbsp;yᵢ(β₀ + β·xᵢ) ≥ M(1 − εᵢ)<br>
+          &nbsp;&nbsp;εᵢ ≥ 0, &nbsp; Σεᵢ ≤ C
+        </div>
+        <ul style="margin-top:0.7em;">
+          <li class="fragment fade-up"><strong>εᵢ</strong> (slack) measures how much observation i violates the margin.</li>
+          <li class="fragment fade-up">εᵢ = 0: on the correct side of the margin.</li>
+          <li class="fragment fade-up">0 &lt; εᵢ ≤ 1: inside the margin but on the correct side.</li>
+          <li class="fragment fade-up">εᵢ &gt; 1: on the wrong side of the boundary (misclassified).</li>
+        </ul>
+      </div>
+      <div>
+        <ul>
+          <li class="fragment fade-up"><strong>C</strong> is the total budget for slack violations. It is a <em>regularization parameter</em>.</li>
+          <li class="fragment fade-up"><strong>Small C</strong>: tight budget → narrow margin → few support vectors → high variance (overfits).</li>
+          <li class="fragment fade-up"><strong>Large C</strong>: loose budget → wide margin → many support vectors → more bias (underfits).</li>
+          <li class="fragment fade-up">Tune C with cross-validation.</li>
+        </ul>
+      </div>
+    </div>
+    <aside class="notes">sklearn's SVC uses the inverse of C from ISLR — sklearn's C is roughly 1/λ. So sklearn small C = more regularization = ISLR large C. This trips people up constantly.</aside>
+  </section>
+
+  <section>
+    <h2>C is a regularization parameter</h2>
+    <p>Four values of C on the same data: as C decreases the margin widens and more points are allowed to violate it.</p>
+    <p class="muted" style="font-size:0.85em;">Small C (top-left): very wide margin, many violations. Large C (bottom-right): tight margin, fewer violations but higher variance. Tune with CV.</p>
+  </section>
+
+  <!-- EXAMPLE: C parameter -->
+  <section class="example" data-packages="numpy,matplotlib,scikit-learn">
+    <h2>Effect of C on the margin</h2>
+    <div class="ex-prompt">Four values of C on overlapping 2-class data. Watch the margin width and number of support vectors change.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_blobs
+from sklearn.svm import SVC
+
+X, y = make_blobs(n_samples=80, centers=2, cluster_std=1.4, random_state=5)
+C_vals = [0.01, 0.1, 1.0, 10.0]
+
+fig, axes = plt.subplots(2, 2, figsize=(10, 8))
+for ax, C in zip(axes.flat, C_vals):
+    svc = SVC(kernel='linear', C=C).fit(X, y)
+    w = svc.coef_[0]; b = svc.intercept_[0]
+    xx = np.linspace(X[:,0].min()-1, X[:,0].max()+1, 200)
+    yy = -(w[0]*xx + b) / w[1]
+    margin = 1 / np.linalg.norm(w)
+    slope  = -w[0]/w[1]
+    ax.scatter(X[y==0,0], X[y==0,1], s=25)
+    ax.scatter(X[y==1,0], X[y==1,1], s=25, color='C3')
+    ax.plot(xx, yy, 'k-', lw=1.5)
+    ax.plot(xx, yy + margin*np.sqrt(1+slope**2), 'k--', alpha=0.4)
+    ax.plot(xx, yy - margin*np.sqrt(1+slope**2), 'k--', alpha=0.4)
+    ax.scatter(*svc.support_vectors_.T, s=100,
+               facecolors='none', edgecolors='k', lw=1.3)
+    ax.set_title(f'C={C}  |  margin≈{2*margin:.2f}  |  #SVs={len(svc.support_vectors_)}',
+                 fontsize=10)
+plt.suptitle('Effect of C on the soft margin', fontsize=13)
+plt.tight_layout(); plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+</section>
+
+<!-- ═══════════════════════════════════ PART 3 ════════════════════════════════ -->
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 3 · 0:50 – 1:20</span>
     <h1>Kernels</h1>
-    <p class="muted">non-linear, cheap</p>
+    <p class="muted">non-linear boundaries without explicit feature expansion</p>
   </section>
+
   <section>
-    <h2>The kernel trick</h2>
-<p>Map x → φ(x) into a higher-dimensional space where the classes become linearly separable. Compute only inner products φ(x<sub>i</sub>) · φ(x<sub>j</sub>) — never φ itself.</p><p>A <strong>kernel</strong> K(x, x') gives that inner product directly.</p>
+    <h2>When linear boundaries fail</h2>
+    <ul>
+      <li class="fragment fade-up">Sometimes no value of C makes a linear boundary work — the classes are not linearly separable in any rotation.</li>
+      <li class="fragment fade-up">Classic example: concentric circles (one class inside the other).</li>
+      <li class="fragment fade-up">Two remedies:</li>
+    </ul>
+    <ol style="margin-top:0.5em;">
+      <li class="fragment fade-up"><strong>Feature expansion</strong>: explicitly add X₁², X₂², X₁X₂, … to the predictor set.</li>
+      <li class="fragment fade-up"><strong>The kernel trick</strong>: implicitly compute the expanded inner products without ever constructing the features.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Feature expansion</h2>
+    <ul>
+      <li class="fragment fade-up">Go from p-dimensional feature space to M &gt; p dimensions by adding transformations.</li>
+      <li class="fragment fade-up">Example with p = 2 — add quadratic terms (X₁², X₂², X₁X₂):</li>
+    </ul>
+    <div class="fragment fade-up" style="background:#f5f5f5;border-radius:8px;padding:0.6em 1em;font-size:0.85em;margin-top:0.5em;">
+      β₀ + β₁X₁ + β₂X₂ + β₃X₁² + β₄X₂² + β₅X₁X₂ = 0
+    </div>
+    <ul style="margin-top:0.5em;">
+      <li class="fragment fade-up">A linear SVC in this 5-D space produces a <em>conic section</em> boundary (ellipse, parabola, …) in the original 2-D space.</li>
+      <li class="fragment fade-up">Problem: high-degree expansions blow up in dimensionality. Degree d with p predictors → C(p+d, d) basis functions.</li>
+      <li class="fragment fade-up">Kernel trick avoids building the expanded features explicitly.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>The kernel trick — inner products</h2>
+    <div class="two-col">
+      <div>
+        <ul>
+          <li class="fragment fade-up">The SVC solution can be written using only <strong>inner products</strong> between training points:</li>
+        </ul>
+        <div class="fragment fade-up" style="background:#f5f5f5;border-radius:8px;padding:0.6em 1em;font-size:0.85em;margin-top:0.4em;">
+          f(x) = β₀ + Σᵢ αᵢ ⟨x, xᵢ⟩
+        </div>
+        <ul style="margin-top:0.4em;">
+          <li class="fragment fade-up">Most α̂ᵢ = 0. Only <strong>support vectors</strong> (i ∈ S) have α̂ᵢ &gt; 0.</li>
+          <li class="fragment fade-up">So: f(x) = β₀ + Σᵢ∈S α̂ᵢ ⟨x, xᵢ⟩</li>
+        </ul>
+      </div>
+      <div>
+        <ul>
+          <li class="fragment fade-up">Replace the inner product ⟨xᵢ, xᵢ'⟩ with a <strong>kernel function</strong> K(xᵢ, xᵢ').</li>
+          <li class="fragment fade-up">The kernel computes the inner product in a (possibly huge) expanded space — without constructing that space.</li>
+          <li class="fragment fade-up">Solution: f(x) = β₀ + Σᵢ∈S α̂ᵢ K(x, xᵢ)</li>
+        </ul>
+      </div>
+    </div>
   </section>
 
   <section>
     <h2>Three kernels</h2>
-<ul>
-  <li class="fragment fade-up"><strong>Linear</strong>: K(x, x') = x · x'. Same as logistic regression boundary-wise.</li>
-  <li class="fragment fade-up"><strong>Polynomial</strong>: K(x, x') = (1 + x · x')<sup>d</sup>. Bends, but rigidly.</li>
-  <li class="fragment fade-up"><strong>RBF</strong>: K(x, x') = exp(−γ ‖x − x'‖²). Local bumps, very flexible. The default.</li>
-</ul>
+    <ul>
+      <li class="fragment fade-up">
+        <strong>Linear</strong>: K(xᵢ, xᵢ') = Σⱼ xᵢⱼ xᵢ'ⱼ — standard dot product; same as SVC without expansion.
+      </li>
+      <li class="fragment fade-up">
+        <strong>Polynomial</strong>: K(xᵢ, xᵢ') = (1 + Σⱼ xᵢⱼ xᵢ'ⱼ)^d — encodes all monomials up to degree d. C(p+d,d) implicit features. Rigid curves.
+      </li>
+      <li class="fragment fade-up">
+        <strong>Radial (RBF)</strong>: K(xᵢ, xᵢ') = exp(−γ Σⱼ (xᵢⱼ − xᵢ'ⱼ)²) — infinite-dimensional implicit space. Very flexible. The default choice.
+        <ul>
+          <li class="muted" style="font-size:0.85em;">Small γ: wide kernel, smooth boundary (more bias).</li>
+          <li class="muted" style="font-size:0.85em;">Large γ: narrow kernel, wiggly boundary (more variance).</li>
+        </ul>
+      </li>
+    </ul>
+    <aside class="notes">The RBF kernel is local — it gives high similarity only when two points are close together. Large γ makes "close" very strict, so the boundary hugs individual points.</aside>
   </section>
 
-  <section>
-    <h2>γ in the RBF kernel</h2>
-<ul>
-  <li class="fragment fade-up">Small γ — kernel is wide. Smooth boundary, more bias.</li>
-  <li class="fragment fade-up">Large γ — kernel is narrow. Boundary curls around individual points, more variance.</li>
-  <li class="fragment fade-up">Grid-search (C, γ) with CV. <code>gamma='scale'</code> is the modern default starting point.</li>
-</ul>
+  <!-- EXAMPLE: kernel comparison -->
+  <section class="example" data-packages="numpy,matplotlib,scikit-learn">
+    <h2>Kernel comparison on the moons dataset</h2>
+    <div class="ex-prompt">Three kernels on non-linearly separable data. RBF and poly achieve much better separation than linear.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_moons
+from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+
+X, y = make_moons(n_samples=200, noise=0.25, random_state=0)
+
+fig, axes = plt.subplots(1, 3, figsize=(13, 4), sharey=True)
+for ax, (kernel, kw) in zip(axes, [
+        ('linear', {}),
+        ('poly',   {'degree': 3}),
+        ('rbf',    {'gamma': 'scale'})]):
+    pipe = Pipeline([('sc', StandardScaler()),
+                     ('svc', SVC(kernel=kernel, C=1, **kw))]).fit(X, y)
+    xx, yy = np.meshgrid(np.linspace(X[:,0].min()-.5, X[:,0].max()+.5, 300),
+                          np.linspace(X[:,1].min()-.5, X[:,1].max()+.5, 300))
+    Z = pipe.predict(np.c_[xx.ravel(), yy.ravel()]).reshape(xx.shape)
+    ax.contourf(xx, yy, Z, alpha=0.2, cmap='bwr')
+    ax.scatter(X[y==0,0], X[y==0,1], s=15)
+    ax.scatter(X[y==1,0], X[y==1,1], s=15, color='C3')
+    ax.set_title(f'{kernel}  acc={pipe.score(X,y):.3f}', fontsize=11)
+plt.suptitle('Kernel comparison (C=1)', fontsize=12)
+plt.tight_layout(); plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+  <!-- EXAMPLE: gamma effect -->
+  <section class="example" data-packages="numpy,matplotlib,scikit-learn">
+    <h2>The γ parameter in the RBF kernel</h2>
+    <div class="ex-prompt">Four values of γ on the same data. Small γ → smooth boundary; large γ → boundary wraps around individual points (overfitting).</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_moons
+from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+
+X, y = make_moons(n_samples=200, noise=0.25, random_state=0)
+gammas = [0.05, 0.5, 5.0, 50.0]
+
+fig, axes = plt.subplots(2, 2, figsize=(11, 8))
+for ax, g in zip(axes.flat, gammas):
+    pipe = Pipeline([('sc', StandardScaler()),
+                     ('svc', SVC(kernel='rbf', C=1, gamma=g))]).fit(X, y)
+    xx, yy = np.meshgrid(np.linspace(X[:,0].min()-.5, X[:,0].max()+.5, 300),
+                          np.linspace(X[:,1].min()-.5, X[:,1].max()+.5, 300))
+    Z = pipe.predict(np.c_[xx.ravel(), yy.ravel()]).reshape(xx.shape)
+    ax.contourf(xx, yy, Z, alpha=0.2, cmap='bwr')
+    ax.scatter(X[y==0,0], X[y==0,1], s=15)
+    ax.scatter(X[y==1,0], X[y==1,1], s=15, color='C3')
+    ax.set_title(f'γ = {g}  |  train acc = {pipe.score(X,y):.3f}', fontsize=10)
+plt.suptitle('RBF kernel: effect of γ (C=1)', fontsize=12)
+plt.tight_layout(); plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
 </section>
+
+<!-- ═══════════════════════════════════ PART 4 ════════════════════════════════ -->
 <section>
   <section class="title-slide">
-    <span class="kicker">Part 3 · 1:00 – 1:30</span>
-    <h1>p ≫ n</h1>
-    <p class="muted">the Khan lab</p>
-  </section>
-  <section>
-    <h2>Khan — 63 cases, 2308 genes</h2>
-<ul>
-  <li class="fragment fade-up">Four cancer subtypes.</li>
-  <li class="fragment fade-up">Unregularized logistic regression diverges.</li>
-  <li class="fragment fade-up">Linear SVM thrives — the margin objective is itself a form of regularization.</li>
-</ul>
+    <span class="kicker">Part 4 · 1:20 – 1:40</span>
+    <h1>ROC Curves, Multi-class &amp; p ≫ n</h1>
+    <p class="muted">evaluating SVMs, extending beyond two classes, the Khan lab</p>
   </section>
 
   <section>
-    <h2>Use a linear kernel here</h2>
-<pre><code class="language-python">svc = SVC(kernel=&#x27;linear&#x27;, C=10).fit(xtr, ytr)
-GridSearchCV(svc, {&#x27;C&#x27;: [0.1, 1, 10, 100]}, cv=3)</code></pre><p class="muted">RBF is too slow at p = 2308 and not needed — the high dimension already gives enough flexibility.</p>
+    <h2>ROC curves</h2>
+    <ul>
+      <li class="fragment fade-up">The SVC predicts by the sign of f̂(x). By varying a threshold t in f̂(x) &gt; t we trade off <strong>true positive rate</strong> (sensitivity) and <strong>false positive rate</strong> (1 − specificity).</li>
+      <li class="fragment fade-up">Plotting TPR vs FPR as t varies gives the <strong>ROC curve</strong>. Area under it (AUC) summarises performance: AUC = 1 is perfect, AUC = 0.5 is random.</li>
+      <li class="fragment fade-up">SVM with larger γ fits the training ROC curve better but may overfit on test data.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>SVMs: more than two classes</h2>
+    <div class="two-col">
+      <div>
+        <h4>OVA — One vs All</h4>
+        <ul>
+          <li class="fragment fade-up">Fit K separate 2-class SVMs, each pitting class k against the remaining K−1.</li>
+          <li class="fragment fade-up">Classify x* to the class with the <em>largest</em> f̂ₖ(x*).</li>
+          <li class="fragment fade-up">K models, each trained on all n samples.</li>
+        </ul>
+      </div>
+      <div>
+        <h4>OVO — One vs One</h4>
+        <ul>
+          <li class="fragment fade-up">Fit C(K,2) = K(K−1)/2 binary classifiers, one for each pair of classes.</li>
+          <li class="fragment fade-up">Classify x* to the class that wins the most pairwise competitions.</li>
+          <li class="fragment fade-up">More classifiers, but each sees fewer samples.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="callout fragment fade-up" style="margin-top:0.8em;">When K is small, <strong>OVO</strong> is generally preferred — sklearn's SVC uses OVO by default.</p>
+  </section>
+
+  <section>
+    <h2>Khan — 63 cases, 2308 genes</h2>
+    <ul>
+      <li class="fragment fade-up">Four cancer subtypes. More features than samples (p ≫ n).</li>
+      <li class="fragment fade-up">Unregularised logistic regression <em>diverges</em> — infinitely many solutions.</li>
+      <li class="fragment fade-up">Linear SVM thrives: the margin objective acts as regularisation, picking the minimum-norm β out of all solutions.</li>
+      <li class="fragment fade-up">Use a <strong>linear kernel</strong> — the data is already very high-dimensional, so we do not need additional non-linearity.</li>
+      <li class="fragment fade-up">Tune C with 3-fold CV (n = 63 is too small for 5-fold).</li>
+    </ul>
+  </section>
+
+  <!-- EXAMPLE: Khan p>>n -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scikit-learn">
+    <h2>Khan gene-expression SVM</h2>
+    <div class="ex-prompt">Load the Khan training/test split, fit a linear SVC, and GridSearchCV for C. Notice the model perfectly separates 4 cancer subtypes with 2308 features and only 63 training samples.</div>
+<textarea class="ex-code">import sys, pathlib
+p = pathlib.Path.cwd()
+while not (p / 'pyproject.toml').exists() and p != p.parent:
+    p = p.parent
+if str(p) not in sys.path:
+    sys.path.insert(0, str(p))
+from shared.data_utils import load_dataset
+import numpy as np
+from sklearn.svm import SVC
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import confusion_matrix
+
+xtr = load_dataset('khan-xtrain').to_numpy()
+ytr = load_dataset('khan-ytrain')['x'].to_numpy()
+xte = load_dataset('khan-xtest').to_numpy()
+yte = load_dataset('khan-ytest')['x'].to_numpy()
+print(f'Train: {xtr.shape}   Test: {xte.shape}')
+print(f'Class counts (train): {np.bincount(ytr)[1:]}')
+
+svc = SVC(kernel='linear', C=10).fit(xtr, ytr)
+print(f'\nC=10  →  train acc={svc.score(xtr,ytr):.4f}   test acc={svc.score(xte,yte):.4f}')
+print('Confusion matrix (test):')
+print(confusion_matrix(yte, svc.predict(xte)))
+
+grid = GridSearchCV(SVC(kernel='linear'), {'C': [0.1,1,10,100]}, cv=3).fit(xtr, ytr)
+print(f'\nBest C={grid.best_params_["C"]}  CV acc={grid.best_score_:.4f}')
+print(f'Test acc with best C: {grid.best_estimator_.score(xte,yte):.4f}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
 </section>
+
+<!-- ═══════════════════════════════════ PART 5 ════════════════════════════════ -->
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 5 · 1:40 – 2:00</span>
+    <h1>SVM vs Logistic Regression</h1>
+    <p class="muted">hinge loss, connections, and when to choose which</p>
+  </section>
+
+  <section>
+    <h2>SVM as loss + penalty</h2>
+    <p>The SVC objective can be rewritten as:</p>
+    <div style="background:#f5f5f5;border-radius:8px;padding:0.7em 1em;font-size:0.88em;margin:0.5em 0;">
+      minimize &nbsp; Σᵢ max[0, 1 − yᵢf(xᵢ)] &nbsp;+&nbsp; λ‖β‖²
+    </div>
+    <ul>
+      <li class="fragment fade-up">The term max[0, 1 − yᵢf(xᵢ)] is the <strong>hinge loss</strong>. It is zero when yᵢf(xᵢ) ≥ 1 (correct and confident).</li>
+      <li class="fragment fade-up">Logistic regression uses <strong>log-loss</strong>: log(1 + e^{−yᵢf(xᵢ)}), which is always positive.</li>
+      <li class="fragment fade-up">Both add an L2 penalty λ‖β‖². The only difference is the loss function shape.</li>
+      <li class="fragment fade-up">Hinge loss is <em>exactly zero</em> for correctly classified, confident points — this produces <em>sparse</em> solutions (only SVs matter).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Which to use?</h2>
+    <ul>
+      <li class="fragment fade-up"><strong>Nearly separable classes?</strong> SVM and LDA outperform logistic regression.</li>
+      <li class="fragment fade-up"><strong>Classes overlap substantially?</strong> LR with ridge and SVM give very similar results.</li>
+      <li class="fragment fade-up"><strong>Need class probabilities?</strong> Use logistic regression — SVMs do not produce calibrated probabilities natively.</li>
+      <li class="fragment fade-up"><strong>Non-linear boundary?</strong> Kernel SVMs are a natural choice. Kernels work with LR too, but are computationally more expensive.</li>
+      <li class="fragment fade-up"><strong>p ≫ n (text, genomics)?</strong> Linear SVM is the standard tool.</li>
+    </ul>
+  </section>
+
+  <!-- EXAMPLE: hinge vs log loss -->
+  <section class="example" data-packages="numpy,matplotlib">
+    <h2>Hinge loss vs log-loss</h2>
+    <div class="ex-prompt">Plot both loss functions against the margin yf(x). Note that hinge loss is exactly 0 for confident correct predictions, while log-loss is always positive.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
+margin = np.linspace(-3, 3, 400)
+hinge  = np.maximum(0, 1 - margin)
+logloss = np.log1p(np.exp(-margin))   # log(1 + e^{-yf(x)})
+
+fig, ax = plt.subplots(figsize=(8, 5))
+ax.plot(margin, hinge,   label='Hinge loss (SVM)', lw=2)
+ax.plot(margin, logloss, label='Log-loss (Logistic)', lw=2, ls='--')
+ax.axvline(1, color='grey', ls=':', lw=1, label='margin boundary (yf=1)')
+ax.axvline(0, color='grey', ls='-', lw=0.8, alpha=0.4)
+ax.set(xlabel='yᵢ · f(xᵢ)  [margin]', ylabel='Loss',
+       title='Hinge loss vs Log-loss', ylim=(-0.2, 4))
+ax.legend(fontsize=10); ax.grid(alpha=0.3)
+plt.tight_layout(); plt.show()
+print('Hinge loss at margin=2 :', max(0, 1-2))
+print('Log-loss  at margin=2 :', round(float(np.log1p(np.exp(-2))), 4))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
+
+</section>
+
+<!-- ══════════════════════════════════ RECAP ══════════════════════════════════ -->
 <section class="title-slide">
   <span class="kicker">Recap</span>
-  <h2>Three things to leave with</h2>
+  <h2>Five things to leave with</h2>
   <ol>
-<li class="fragment fade-up"><strong>SVM finds the maximum-margin boundary.</strong> Support vectors define it.</li>
-<li class="fragment fade-up"><strong>The kernel trick gives non-linear boundaries cheaply.</strong> RBF is the default.</li>
-<li class="fragment fade-up"><strong>SVM is the tool for p ≫ n.</strong> Use linear kernel and tune C.</li>
+    <li class="fragment fade-up"><strong>Hyperplanes separate.</strong> The MMC finds the unique widest gap; support vectors define it.</li>
+    <li class="fragment fade-up"><strong>Soft margin adds robustness.</strong> C (sklearn) trades off margin width vs violations. Large C = tight margin = high variance.</li>
+    <li class="fragment fade-up"><strong>Kernels give non-linearity for free.</strong> Polynomial and RBF kernels implicitly work in huge feature spaces via inner products.</li>
+    <li class="fragment fade-up"><strong>Multi-class: use OVO.</strong> Fit K(K−1)/2 binary SVMs; classify by majority vote.</li>
+    <li class="fragment fade-up"><strong>SVM for p ≫ n.</strong> Linear SVM is the go-to when features massively outnumber samples. SVM ≈ LR when classes overlap.</li>
   </ol>
-  <p class="callout fragment fade-up">End of Week 4. From here: deep learning and neural networks.</p>
 </section>
 
 </div></div>
@@ -125,6 +584,7 @@ GridSearchCV(svc, {&#x27;C&#x27;: [0.1, 1, 10, 100]}, cv=3)</code></pre><p class
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="../../../../shared/slides-template/interactive.js"></script>
 <script>
   Reveal.initialize({
     hash: true, slideNumber: 'c/t', transition: 'slide',
