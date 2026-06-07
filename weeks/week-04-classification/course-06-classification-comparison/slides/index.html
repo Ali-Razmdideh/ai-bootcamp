@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Comparing Classifiers — When to Use What</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- TITLE -->
+<section class="title-slide">
+  <span class="kicker">Week 4 · Course 6 · 1 hour</span>
+  <h1>Comparing Classifiers</h1>
+  <p class="muted" style="font-size:1.1em;">When to use LR, LDA, QDA, Naive Bayes — and when none of them are enough</p>
+</section>
+
+<!-- ROADMAP -->
+<section>
+  <span class="kicker">Roadmap</span>
+  <h2>Where we are heading</h2>
+  <div class="three-col">
+    <div class="card"><h4>0:00 · 0:20</h4><strong>Methods & assumptions</strong>
+      <p class="muted" style="margin:0.3em 0 0;">What each method models and assumes.</p></div>
+    <div class="card"><h4>0:20 · 0:40</h4><strong>ISLR scenarios</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Four scenarios — which method wins and why.</p></div>
+    <div class="card"><h4>0:40 · 1:00</h4><strong>Benchmark + decision guide</strong>
+      <p class="muted" style="margin:0.3em 0 0;">AUC tables, decision flowchart, preview of Day 2.</p></div>
+  </div>
+  <p class="callout" style="margin-top:1.2em;">There is no universally best classifier. The right choice depends on data size, dimensionality, and the true shape of the boundary.</p>
+</section>
+
+<!-- ====================================================
+     PART 1 — METHODS & ASSUMPTIONS
+     ==================================================== -->
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 1 · 0:00 – 0:20</span>
+    <h1>The Landscape</h1>
+    <p class="muted">what each method models and assumes</p>
+  </section>
+
+  <section>
+    <h2>The four methods — side by side</h2>
+    <table style="font-size:0.82em;width:100%;">
+      <tr><th>Method</th><th>What is modelled</th><th>Boundary shape</th><th>Key assumption</th></tr>
+      <tr><td><strong>Logistic Regression</strong></td><td>P(Y=k|X) directly</td><td>Linear</td><td>None (discriminative)</td></tr>
+      <tr><td><strong>LDA</strong></td><td>f_k(x) = N(μ_k, Σ)</td><td>Linear</td><td>Gaussian, shared Σ</td></tr>
+      <tr><td><strong>QDA</strong></td><td>f_k(x) = N(μ_k, Σ_k)</td><td>Quadratic</td><td>Gaussian, per-class Σ</td></tr>
+      <tr><td><strong>Naive Bayes</strong></td><td>f_k(x) = ∏_j f_kj(x_j)</td><td>Depends on marginals</td><td>Conditional independence</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>Parameter efficiency</h2>
+    <table style="font-size:0.85em;width:100%;">
+      <tr><th>Method</th><th>Parameters (besides means)</th><th>Scales to large p?</th></tr>
+      <tr><td>LR</td><td>p coefficients</td><td>Yes (with L1/L2)</td></tr>
+      <tr><td>LDA</td><td>p(p+1)/2 for shared Σ</td><td>No when p > n</td></tr>
+      <tr><td>QDA</td><td>K·p(p+1)/2 for all Σ_k</td><td>No — needs n >> Kp²</td></tr>
+      <tr><td>NB (Gaussian)</td><td>p·K variances</td><td>Yes — O(p·K) always</td></tr>
+    </table>
+    <p class="callout fragment fade-up" style="margin-top:0.8em;">With p = 1000 features: LDA needs 500,500 covariance parameters. NB with K=2 needs just 2000.</p>
+    <aside class="notes">This is the core reason NB dominates in text classification — vocabulary sizes of 50,000–500,000 features are common. LDA is simply not estimable without huge sample sizes in this regime.</aside>
+  </section>
+
+  <section>
+    <h2>Robustness summary</h2>
+    <table style="font-size:0.82em;width:100%;">
+      <tr><th>Robustness to…</th><th>LR</th><th>LDA</th><th>QDA</th><th>NB</th></tr>
+      <tr><td>Non-Gaussian features</td><td>✓ High</td><td>✗ Low</td><td>✗ Low</td><td>⚬ Medium</td></tr>
+      <tr><td>Outliers</td><td>⚬ Medium</td><td>✗ Low</td><td>✗ Very low</td><td>✓ High</td></tr>
+      <tr><td>Well-separated classes</td><td>✗ Unstable β</td><td>✓ Stable</td><td>✓ Stable</td><td>✓ Stable</td></tr>
+      <tr><td>Feature correlation within class</td><td>✓ Handles</td><td>✓ Handles</td><td>✓ Handles</td><td>✗ Ignores</td></tr>
+      <tr><td>p >> n</td><td>✓ (L1/L2)</td><td>✗ Singular Σ</td><td>✗ Singular</td><td>✓ Always works</td></tr>
+    </table>
+  </section>
+</section>
+
+<!-- ====================================================
+     PART 2 — ISLR SCENARIOS
+     ==================================================== -->
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 2 · 0:20 – 0:40</span>
+    <h1>Four Scenarios (ISLR Section 4.5)</h1>
+    <p class="muted">which method wins and why</p>
+  </section>
+
+  <section>
+    <h2>Scenario 1: Gaussian classes, similar covariance</h2>
+    <ul>
+      <li class="fragment fade-up">True model: classes are Gaussian with the same Σ.</li>
+      <li class="fragment fade-up"><strong>LDA</strong> = Bayes optimal — it matches the true generating model exactly.</li>
+      <li class="fragment fade-up"><strong>LR</strong> works too but is less efficient (doesn't use the Gaussian structure).</li>
+      <li class="fragment fade-up"><strong>QDA</strong>: wastes parameters estimating differences in Σ that don't exist.</li>
+      <li class="fragment fade-up"><strong>NB</strong>: misses within-class feature correlations → worse boundary.</li>
+    </ul>
+    <p class="callout fragment fade-up">Winner: LDA. Runner-up: LR.</p>
+  </section>
+
+  <section>
+    <h2>Scenario 2: Gaussian classes, different covariance</h2>
+    <ul>
+      <li class="fragment fade-up">True model: classes have different Σ_k.</li>
+      <li class="fragment fade-up"><strong>QDA</strong> = Bayes optimal — separate Σ_k matches the true model.</li>
+      <li class="fragment fade-up"><strong>LDA</strong>: forces shared Σ → biased boundary. Gets worse as covariances diverge.</li>
+      <li class="fragment fade-up"><strong>LR</strong>: linear boundary misses the quadratic structure.</li>
+      <li class="fragment fade-up"><strong>Requirement</strong>: need enough n so Σ_k estimates are reliable (n > Kp).</li>
+    </ul>
+    <p class="callout fragment fade-up">Winner: QDA (when n is large). LDA wins if n is small.</p>
+  </section>
+
+  <section>
+    <h2>Scenario 3: Non-Gaussian features</h2>
+    <ul>
+      <li class="fragment fade-up">Features are skewed, bimodal, or heavy-tailed — not well-approximated by Gaussians.</li>
+      <li class="fragment fade-up"><strong>LR</strong>: makes no distributional assumptions. Robust and consistent.</li>
+      <li class="fragment fade-up"><strong>LDA/QDA</strong>: Gaussian assumption is violated → boundary is biased in an unpredictable way.</li>
+      <li class="fragment fade-up"><strong>NB with KDE</strong>: non-parametric marginals can handle any shape.</li>
+    </ul>
+    <p class="callout fragment fade-up">Winner: LR (or NB with KDE marginals).</p>
+    <aside class="notes">In practice, LDA is often surprisingly robust to non-Gaussian features — especially if the true boundary is near-linear. The key is whether the feature distribution is "bad enough" to warp the Gaussian-derived boundary substantially.</aside>
+  </section>
+
+  <section>
+    <h2>Scenario 4: High-dimensional, small n</h2>
+    <ul>
+      <li class="fragment fade-up">p features, n samples with p comparable to or larger than n.</li>
+      <li class="fragment fade-up"><strong>LDA</strong>: Σ is p×p — singular when p ≥ n. Cannot be inverted. Fails.</li>
+      <li class="fragment fade-up"><strong>QDA</strong>: even worse — K separate Σ_k matrices.</li>
+      <li class="fragment fade-up"><strong>LR with L1</strong>: works, selects important features automatically.</li>
+      <li class="fragment fade-up"><strong>NB</strong>: always works — only estimates p·K marginal parameters. Scales linearly in p.</li>
+    </ul>
+    <p class="callout fragment fade-up">Winner: NB or L1-regularized LR. Classic LDA/QDA fail.</p>
+  </section>
+
+  <section>
+    <h2>Summary table (ISLR Table 4.6 style)</h2>
+    <table style="font-size:0.82em;width:100%;">
+      <tr><th>Scenario</th><th>LR</th><th>LDA</th><th>QDA</th><th>NB</th></tr>
+      <tr><td>Gaussian, same Σ</td><td>Good</td><td><strong>Best</strong></td><td>OK (wasteful)</td><td>OK</td></tr>
+      <tr><td>Gaussian, diff Σ, large n</td><td>OK</td><td>OK</td><td><strong>Best</strong></td><td>OK</td></tr>
+      <tr><td>Non-Gaussian features</td><td><strong>Best</strong></td><td>Varies</td><td>Varies</td><td>OK (KDE)</td></tr>
+      <tr><td>p >> n</td><td>Good (L1)</td><td>Fails</td><td>Fails</td><td><strong>Best</strong></td></tr>
+      <tr><td>Strongly correlated features</td><td>Good</td><td>Good</td><td>Good</td><td>Poor</td></tr>
+    </table>
+  </section>
+</section>
+
+<!-- ====================================================
+     PART 3 — BENCHMARK + DECISION GUIDE
+     ==================================================== -->
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 3 · 0:40 – 1:00</span>
+    <h1>Benchmark &amp; Decision Guide</h1>
+    <p class="muted">AUC tables, decision flowchart, preview of Day 2</p>
+  </section>
+
+  <section>
+    <h2>Benchmark: Default dataset</h2>
+    <table style="font-size:0.85em;width:100%;">
+      <tr><th>Method</th><th>AUC (5-fold CV)</th><th>Notes</th></tr>
+      <tr><td>Logistic Regression</td><td>0.950</td><td>Baseline; robust</td></tr>
+      <tr><td>LDA</td><td>0.948</td><td>Very close; features ≈ Gaussian</td></tr>
+      <tr><td>QDA</td><td>0.947</td><td>Slight overfit; balanced, income not very different Σ</td></tr>
+      <tr><td>Naive Bayes</td><td>0.932</td><td>Slightly worse; balance–income correlation ignored</td></tr>
+    </table>
+    <p class="fragment fade-up muted">On Default, all four classifiers perform similarly because the features are approximately Gaussian and the boundary is approximately linear. This is the usual outcome in practice with well-behaved data.</p>
+    <aside class="notes">This is a key pedagogical point: on well-behaved data, method choice matters less than one might think. The big differences emerge in the scenarios from Part 2 — extreme dimensionality, strong covariance differences, or heavily non-Gaussian features.</aside>
+  </section>
+
+  <section>
+    <h2>Benchmark: Iris dataset (3 classes)</h2>
+    <table style="font-size:0.85em;width:100%;">
+      <tr><th>Method</th><th>Accuracy (5-fold CV)</th><th>Notes</th></tr>
+      <tr><td>Logistic Regression</td><td>0.973</td><td>Strong; linear boundaries sufficient</td></tr>
+      <tr><td>LDA</td><td>0.980</td><td>Best; Iris features ≈ Gaussian</td></tr>
+      <tr><td>QDA</td><td>0.980</td><td>Ties with LDA; slight class shape differences</td></tr>
+      <tr><td>Naive Bayes</td><td>0.960</td><td>Good; slight correlation ignored</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>Decision flowchart</h2>
+    <div style="font-size:0.85em;line-height:2em;">
+      <p>Is p >> n or p close to n?</p>
+      <p style="margin-left:2em;">→ <strong>YES</strong>: Use <strong>Naive Bayes</strong> or <strong>L1 Logistic Regression</strong></p>
+      <p style="margin-left:2em;">→ NO: Are features approximately Gaussian?</p>
+      <p style="margin-left:4em;">→ <strong>YES</strong>: Do classes have the same covariance structure?</p>
+      <p style="margin-left:6em;">→ <strong>YES</strong>: Use <strong>LDA</strong></p>
+      <p style="margin-left:6em;">→ <strong>NO, n is large</strong>: Use <strong>QDA</strong></p>
+      <p style="margin-left:6em;">→ <strong>NO, n is small</strong>: Use <strong>LDA</strong> (variance too high for QDA)</p>
+      <p style="margin-left:4em;">→ <strong>NO (non-Gaussian)</strong>: Use <strong>Logistic Regression</strong></p>
+      <p>Is the boundary non-linear?</p>
+      <p style="margin-left:2em;">→ <strong>YES</strong>: Decision Trees, SVM, Neural Nets (Courses 7–9)</p>
+    </div>
+    <aside class="notes">This flowchart is a guide, not a law. Always validate with cross-validation. The "winner" in a flow chart can underperform on specific datasets. The chart gives a starting point for model selection; CV gives the truth.</aside>
+  </section>
+
+  <section>
+    <h2>Preview: beyond these four</h2>
+    <ul>
+      <li class="fragment fade-up"><strong>Decision Trees</strong> (Course 7): axis-aligned boundaries; interpretable; high variance alone.</li>
+      <li class="fragment fade-up"><strong>Random Forests / Boosting</strong> (Course 8): ensemble of trees; flexible non-linear boundary; state of the art on tabular data.</li>
+      <li class="fragment fade-up"><strong>SVMs</strong> (Course 9): maximum-margin linear boundary; kernel trick for non-linear; works in high-dimensional settings.</li>
+    </ul>
+    <p class="callout fragment fade-up">LR, LDA, QDA, and NB form the linear/generative baseline. Everything in Courses 7–9 should be compared against these baselines first.</p>
+  </section>
+</section>
+
+<!-- RECAP -->
+<section class="title-slide">
+  <span class="kicker">Recap</span>
+  <h2>Week 4 Classification — Complete</h2>
+  <ol style="font-size:0.85em;line-height:1.7em;">
+    <li class="fragment fade-up"><strong>KNN</strong>: non-parametric, local, sensitive to k and scale.</li>
+    <li class="fragment fade-up"><strong>Logistic Regression</strong>: linear log-odds, MLE, robust, no distributional assumptions.</li>
+    <li class="fragment fade-up"><strong>LDA</strong>: generative Gaussian with shared Σ → linear boundary, Fisher projection.</li>
+    <li class="fragment fade-up"><strong>QDA</strong>: separate Σ_k → quadratic boundary; needs large n.</li>
+    <li class="fragment fade-up"><strong>Naive Bayes</strong>: conditional independence → O(pK) parameters; wins at high p.</li>
+    <li class="fragment fade-up"><strong>Poisson regression</strong>: count data; log link; multiplicative effects; check overdispersion.</li>
+    <li class="fragment fade-up"><strong>No free lunch</strong>: no method wins everywhere. Use CV and the decision guide.</li>
+  </ol>
+  <p class="callout fragment fade-up">Next week: Decision Trees, Random Forests, Boosting — the non-linear revolution.</p>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true, slideNumber: 'c/t', transition: 'slide',
+    transitionSpeed: 'fast', backgroundTransition: 'fade',
+    width: 1280, height: 760, margin: 0.06,
+    plugins: [ RevealNotes, RevealHighlight ],
+  });
+</script>
+</body>
+</html>
