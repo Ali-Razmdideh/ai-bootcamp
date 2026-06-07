@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 420" font-family="Georgia, serif">
+  <!-- Background -->
+  <rect width="620" height="420" fill="#fafafa" rx="8"/>
+
+  <!-- Title -->
+  <text x="310" y="28" text-anchor="middle" font-size="16" font-weight="bold" fill="#222">Local regression</text>
+  <text x="310" y="48" text-anchor="middle" font-size="12" fill="#444" font-style="italic">Idea: fit regression models in small localized regions using only nearby data</text>
+
+  <!-- Plot area -->
+  <!-- Axes -->
+  <line x1="90" y1="360" x2="560" y2="360" stroke="#333" stroke-width="1.5"/>
+  <line x1="90" y1="360" x2="90" y2="70" stroke="#333" stroke-width="1.5"/>
+
+  <!-- X axis ticks and labels -->
+  <g font-size="11" fill="#444" text-anchor="middle">
+    <line x1="90"  y1="360" x2="90"  y2="366" stroke="#333"/>
+    <line x1="184" y1="360" x2="184" y2="366" stroke="#333"/>
+    <line x1="278" y1="360" x2="278" y2="366" stroke="#333"/>
+    <line x1="372" y1="360" x2="372" y2="366" stroke="#333"/>
+    <line x1="466" y1="360" x2="466" y2="366" stroke="#333"/>
+    <line x1="560" y1="360" x2="560" y2="366" stroke="#333"/>
+    <text x="90"  y="378">0.0</text>
+    <text x="184" y="378">0.2</text>
+    <text x="278" y="378">0.4</text>
+    <text x="372" y="378">0.6</text>
+    <text x="466" y="378">0.8</text>
+    <text x="560" y="378">1.0</text>
+  </g>
+
+  <!-- Y axis ticks and labels -->
+  <g font-size="11" fill="#444" text-anchor="end">
+    <line x1="90" y1="360" x2="84" y2="360" stroke="#333"/>
+    <line x1="90" y1="302" x2="84" y2="302" stroke="#333"/>
+    <line x1="90" y1="244" x2="84" y2="244" stroke="#333"/>
+    <line x1="90" y1="186" x2="84" y2="186" stroke="#333"/>
+    <line x1="90" y1="128" x2="84" y2="128" stroke="#333"/>
+    <line x1="90" y1="70"  x2="84" y2="70"  stroke="#333"/>
+    <text x="82" y="364">−1.0</text>
+    <text x="82" y="306">−0.5</text>
+    <text x="82" y="248">0.0</text>
+    <text x="82" y="190">0.5</text>
+    <text x="82" y="132">1.0</text>
+    <text x="82" y="74">1.5</text>
+  </g>
+
+  <!-- Caption -->
+  <text x="310" y="405" text-anchor="middle" font-size="10" fill="#666" font-style="italic">Figure 7.9 (ISLR)</text>
+
+  <!-- Green shaded window region around x₀ ≈ 0.15 -->
+  <rect x="90" y="90" width="95" height="270" fill="#90ee90" fill-opacity="0.35" stroke="#5a9e5a" stroke-width="1" stroke-dasharray="4,2"/>
+
+  <!-- Query point x₀ marker (vertical orange line) -->
+  <line x1="137" y1="70" x2="137" y2="360" stroke="#cc6600" stroke-width="1.5" stroke-dasharray="5,3"/>
+
+  <!-- Scatter points — "contributing" (inside window, colored orange) -->
+  <g fill="none" stroke="#cc6600" stroke-width="1.5">
+    <circle cx="95"  cy="210" r="4"/>
+    <circle cx="103" cy="195" r="4"/>
+    <circle cx="110" cy="220" r="4"/>
+    <circle cx="118" cy="185" r="4"/>
+    <circle cx="125" cy="175" r="4"/>
+    <circle cx="130" cy="200" r="4"/>
+    <circle cx="138" cy="168" r="4"/>
+    <circle cx="145" cy="190" r="4"/>
+    <circle cx="152" cy="172" r="4"/>
+    <circle cx="160" cy="183" r="4"/>
+    <circle cx="168" cy="165" r="4"/>
+    <circle cx="175" cy="178" r="4"/>
+    <circle cx="183" cy="170" r="4"/>
+  </g>
+
+  <!-- Scatter points — "left out" (outside window, grey hollow) -->
+  <g fill="none" stroke="#aaa" stroke-width="1.2">
+    <circle cx="200" cy="162" r="4"/>
+    <circle cx="215" cy="148" r="4"/>
+    <circle cx="228" cy="155" r="4"/>
+    <circle cx="242" cy="140" r="4"/>
+    <circle cx="257" cy="145" r="4"/>
+    <circle cx="270" cy="132" r="4"/>
+    <circle cx="283" cy="140" r="4"/>
+    <circle cx="296" cy="128" r="4"/>
+    <circle cx="310" cy="138" r="4"/>
+    <circle cx="323" cy="148" r="4"/>
+    <circle cx="336" cy="155" r="4"/>
+    <circle cx="350" cy="162" r="4"/>
+    <circle cx="363" cy="172" r="4"/>
+    <circle cx="377" cy="180" r="4"/>
+    <circle cx="390" cy="195" r="4"/>
+    <circle cx="403" cy="210" r="4"/>
+    <circle cx="416" cy="225" r="4"/>
+    <circle cx="429" cy="240" r="4"/>
+    <circle cx="442" cy="258" r="4"/>
+    <circle cx="456" cy="275" r="4"/>
+    <circle cx="469" cy="293" r="4"/>
+    <circle cx="483" cy="310" r="4"/>
+    <circle cx="497" cy="328" r="4"/>
+    <circle cx="510" cy="342" r="4"/>
+    <circle cx="523" cy="350" r="4"/>
+    <circle cx="537" cy="348" r="4"/>
+    <circle cx="550" cy="345" r="4"/>
+  </g>
+
+  <!-- Global LOESS smooth curve (blue-grey) -->
+  <path d="M90,240 C120,215 155,185 200,162 C250,138 300,128 350,140 C400,155 440,215 480,280 C510,330 540,348 560,346"
+        fill="none" stroke="#5577aa" stroke-width="2.5"/>
+
+  <!-- Local line of best fit (orange, within window region) -->
+  <line x1="90" y1="218" x2="190" y2="158" stroke="#cc6600" stroke-width="2.5"/>
+
+  <!-- Annotations -->
+  <!-- "These points contribute to the fit" -->
+  <text x="10" y="130" font-size="11" fill="#cc6600" font-weight="bold">These points</text>
+  <text x="10" y="143" font-size="11" fill="#cc6600" font-weight="bold">contribute</text>
+  <text x="10" y="156" font-size="11" fill="#cc6600" font-weight="bold">to the fit.</text>
+  <line x1="68" y1="148" x2="110" y2="185" stroke="#cc6600" stroke-width="1" marker-end="url(#arrow-orange)"/>
+
+  <!-- "Local line of best fit" -->
+  <text x="5" y="188" font-size="11" fill="#cc6600" font-style="italic">Local line of</text>
+  <text x="5" y="201" font-size="11" fill="#cc6600" font-style="italic">best fit</text>
+  <line x1="68" y1="195" x2="115" y2="195" stroke="#cc6600" stroke-width="1" marker-end="url(#arrow-orange)"/>
+
+  <!-- "Weighting scheme" annotation (green) -->
+  <text x="92" y="340" font-size="10" fill="#3a7a3a" font-weight="bold">Weighting scheme for</text>
+  <text x="92" y="353" font-size="10" fill="#3a7a3a" font-weight="bold">weighted least squares</text>
+
+  <!-- "These points are left out" -->
+  <text x="390" y="105" font-size="11" fill="#888">These points</text>
+  <text x="390" y="118" font-size="11" fill="#888">are left out.</text>
+  <line x1="430" y1="120" x2="380" y2="148" stroke="#888" stroke-width="1" marker-end="url(#arrow-grey)"/>
+
+  <!-- Arrow markers -->
+  <defs>
+    <marker id="arrow-orange" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#cc6600"/>
+    </marker>
+    <marker id="arrow-grey" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#888"/>
+    </marker>
+  </defs>
+</svg>
