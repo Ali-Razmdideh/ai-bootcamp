@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Naive Bayes — Independence Within Classes</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- TITLE -->
+<section class="title-slide">
+  <span class="kicker">Week 4 · Course 4 · 1.5 hours</span>
+  <h1>Naive Bayes</h1>
+  <p class="muted" style="font-size:1.1em;">Independence within classes — a surprisingly powerful shortcut</p>
+</section>
+
+<!-- ROADMAP -->
+<section>
+  <span class="kicker">Roadmap</span>
+  <h2>Where we are heading</h2>
+  <div class="three-col">
+    <div class="card"><h4>0:00 · 0:30</h4><strong>The NB assumption</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Independence within class, three density choices.</p></div>
+    <div class="card"><h4>0:30 · 1:00</h4><strong>Toy example + connections</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Decision regions, GAM connection, LDA/QDA link.</p></div>
+    <div class="card"><h4>1:00 · 1:30</h4><strong>sklearn + when NB wins/loses</strong>
+      <p class="muted" style="margin:0.3em 0 0;">GaussianNB, MultinomialNB, benchmark.</p></div>
+  </div>
+  <p class="callout" style="margin-top:1.2em;">Naive Bayes is "naive" about correlations, but sophisticated about everything else. It scales to millions of features and often beats complex models when data is scarce.</p>
+</section>
+
+<!-- ====================================================
+     PART 1 — THE NB ASSUMPTION
+     ==================================================== -->
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 1 · 0:00 – 0:30</span>
+    <h1>The Naive Bayes Assumption</h1>
+    <p class="muted">conditional independence within each class</p>
+  </section>
+
+  <section>
+    <h2>From LDA to Naive Bayes</h2>
+    <ul>
+      <li class="fragment fade-up"><strong>LDA</strong>: f<sub>k</sub>(x) = N(μ<sub>k</sub>, Σ) — a joint p-variate Gaussian. Requires estimating p(p+1)/2 covariance parameters.</li>
+      <li class="fragment fade-up"><strong>Problem</strong>: when p is large, Σ has too many parameters to estimate reliably from small n.</li>
+      <li class="fragment fade-up"><strong>Naive Bayes fix</strong>: assume features are <strong>conditionally independent</strong> given the class:
+        <p style="text-align:center;margin:0.5em 0;font-size:1.1em;">f<sub>k</sub>(x) = f<sub>k1</sub>(x<sub>1</sub>) · f<sub>k2</sub>(x<sub>2</sub>) · … · f<sub>kp</sub>(x<sub>p</sub>) = ∏<sub>j</sub> f<sub>kj</sub>(x<sub>j</sub>)</p>
+      </li>
+      <li class="fragment fade-up">Now only p·K marginal densities to estimate — one per feature per class.</li>
+    </ul>
+    <aside class="notes">The name "naive" comes from this assumption being almost never literally true — features are rarely truly independent within a class. But the resulting classifier is often surprisingly good, because we're not trying to estimate the joint density exactly, just the decision boundary.</aside>
+  </section>
+
+  <section>
+    <h2>The posterior with Naive Bayes</h2>
+    <p style="text-align:center;font-size:1.2em;">Pr(Y=k | X=x) ∝ π<sub>k</sub> · ∏<sub>j=1</sub><sup>p</sup> f<sub>kj</sub>(x<sub>j</sub>)</p>
+    <p class="muted" style="text-align:center;">In log form: log Pr(Y=k|X=x) = log π<sub>k</sub> + Σ<sub>j</sub> log f<sub>kj</sub>(x<sub>j</sub>) + const</p>
+    <ul style="margin-top:0.8em;">
+      <li class="fragment fade-up">The decision becomes: which class has the highest sum of log-likelihoods?</li>
+      <li class="fragment fade-up">Each feature contributes <strong>independently and additively</strong> to the log-posterior.</li>
+      <li class="fragment fade-up">Parameter count: p·K marginal parameters vs p²K/2 for full covariance (LDA).</li>
+    </ul>
+    <aside class="notes">The additive log-posterior structure is what links Naive Bayes to GAMs — see the connection slide later.</aside>
+  </section>
+
+  <section>
+    <h2>Three choices for the marginal density f<sub>kj</sub></h2>
+    <table style="font-size:0.85em;width:100%;">
+      <tr><th>Feature type</th><th>Model for f<sub>kj</sub></th><th>Parameters</th></tr>
+      <tr><td><strong>Quantitative</strong></td><td>Gaussian: N(μ<sub>kj</sub>, σ²<sub>kj</sub>)</td><td>mean + variance per feature per class</td></tr>
+      <tr><td><strong>Quantitative, non-normal</strong></td><td>Kernel density estimate (KDE)</td><td>non-parametric; bandwidth h</td></tr>
+      <tr><td><strong>Qualitative / categorical</strong></td><td>Multinomial table: P(x<sub>j</sub> = l | Y=k)</td><td>count table, one proportion per level</td></tr>
+    </table>
+    <p class="callout fragment fade-up" style="margin-top:1em;">Mixed features? No problem — use Gaussian for numeric, multinomial for categorical. LDA can't handle this naturally.</p>
+    <aside class="notes">This is one of Naive Bayes' key practical advantages over LDA/QDA: it handles mixed feature types trivially. Each feature is modelled with the appropriate marginal.</aside>
+  </section>
+
+  <section>
+    <h2>Mixed features: Default dataset example</h2>
+    <table style="font-size:0.88em;width:100%;">
+      <tr><th>Feature</th><th>Type</th><th>NB density choice</th></tr>
+      <tr><td>balance</td><td>Continuous numeric</td><td>Gaussian: N(μ<sub>k,balance</sub>, σ²<sub>k,balance</sub>)</td></tr>
+      <tr><td>income</td><td>Continuous numeric</td><td>Gaussian: N(μ<sub>k,income</sub>, σ²<sub>k,income</sub>)</td></tr>
+      <tr><td>student</td><td>Binary categorical</td><td>Bernoulli: P(student=Yes | class k)</td></tr>
+    </table>
+    <p class="fragment fade-up" style="margin-top:0.8em;">Each feature is modelled separately. No need for a joint distribution across all features — the independence assumption handles the combination automatically.</p>
+  </section>
+</section>
+
+<!-- ====================================================
+     PART 2 — TOY EXAMPLE + CONNECTIONS
+     ==================================================== -->
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 2 · 0:30 – 1:00</span>
+    <h1>Toy Example &amp; Connections</h1>
+    <p class="muted">decision regions, GAM link, LDA/QDA relationship</p>
+  </section>
+
+  <section>
+    <h2>NB decision regions (Figure 4.14 style)</h2>
+    <p>2-class, 2-feature Gaussian NB: each class has independent Gaussians for x₁ and x₂.</p>
+    <ul>
+      <li class="fragment fade-up">NB decision regions: <strong>axis-aligned ellipses</strong> — covariance ellipses have no off-diagonal tilt.</li>
+      <li class="fragment fade-up">LDA decision regions: <strong>tilted ellipses</strong> — the shared Σ captures feature correlations.</li>
+      <li class="fragment fade-up">When features truly are independent within class, NB = optimal Bayes classifier.</li>
+    </ul>
+<pre><code class="language-python">from sklearn.naive_bayes import GaussianNB
+gnb = GaussianNB().fit(X_train, y_train)
+# Decision boundary plot: compare with LDA boundary</code></pre>
+    <aside class="notes">This is similar to Figure 4.14 in ISLR 2nd edition. The key visual: NB has axis-aligned decision contours; LDA contours can be rotated. When features are correlated within a class, LDA captures this; NB misses it and loses accuracy.</aside>
+  </section>
+
+  <section>
+    <h2>Connection to LDA</h2>
+    <ul>
+      <li class="fragment fade-up">If all f<sub>kj</sub> are Gaussian <strong>with the same variance σ²</strong> across classes:</li>
+      <li class="fragment fade-up">NB = LDA with a <strong>diagonal covariance</strong> Σ = diag(σ²₁, …, σ²ₚ).</li>
+      <li class="fragment fade-up">NB ignores within-class feature correlations (off-diagonal Σ terms).</li>
+      <li class="fragment fade-up">If features are truly uncorrelated within each class: NB ≈ LDA in performance.</li>
+    </ul>
+    <p class="callout fragment fade-up">Naive Bayes is a special case of QDA: QDA with diagonal Σ<sub>k</sub>.</p>
+  </section>
+
+  <section>
+    <h2>Connection to GAMs</h2>
+    <p>The log-posterior ratio between class k and class l:</p>
+    <p style="text-align:center;font-size:1.1em;margin:0.6em 0;">
+      log(Pr(k|x) / Pr(l|x)) = log(π<sub>k</sub>/π<sub>l</sub>) + Σ<sub>j</sub> log(f<sub>kj</sub>(x<sub>j</sub>) / f<sub>lj</sub>(x<sub>j</sub>))
+    </p>
+    <ul>
+      <li class="fragment fade-up">This is a <strong>sum of functions of individual features</strong> — exactly the structure of a Generalized Additive Model (GAM).</li>
+      <li class="fragment fade-up">Naive Bayes is a GAM where each g<sub>j</sub>(x<sub>j</sub>) = log(f<sub>kj</sub>(x<sub>j</sub>) / f<sub>lj</sub>(x<sub>j</sub>)).</li>
+      <li class="fragment fade-up">With Gaussian marginals: the g<sub>j</sub> become quadratic functions → NB gives a quadratic decision boundary.</li>
+    </ul>
+    <aside class="notes">This connection is noted in ISLR Section 4.4.4. The GAM structure is why NB is interpretable: each feature's contribution to the decision can be examined separately. This is analogous to why linear models are interpretable.</aside>
+  </section>
+
+  <section>
+    <h2>Why NB works despite wrong assumptions</h2>
+    <ul>
+      <li class="fragment fade-up"><strong>Bias-variance tradeoff</strong>: the independence assumption biases the decision boundary, but the variance is much lower (fewer parameters).</li>
+      <li class="fragment fade-up">When p is large and n is small, variance dominates — NB's low variance wins.</li>
+      <li class="fragment fade-up">Even when features ARE correlated, the Bayes-optimal <em>classification</em> regions may still be well-approximated by NB's regions.</li>
+      <li class="fragment fade-up">The key: NB needs the <em>ranking</em> of posteriors correct, not the exact probability values.</li>
+    </ul>
+    <p class="callout fragment fade-up">NB is one of the oldest and most practical classifiers. Text classification and spam detection are NB's home turf.</p>
+  </section>
+</section>
+
+<!-- ====================================================
+     PART 3 — SKLEARN + WIN/LOSS
+     ==================================================== -->
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 3 · 1:00 – 1:30</span>
+    <h1>sklearn + When NB Wins or Loses</h1>
+    <p class="muted">GaussianNB, MultinomialNB, CategoricalNB</p>
+  </section>
+
+  <section>
+    <h2>sklearn Naive Bayes variants</h2>
+    <table style="font-size:0.85em;width:100%;">
+      <tr><th>Class</th><th>Feature type</th><th>Use case</th></tr>
+      <tr><td><code>GaussianNB</code></td><td>Continuous numeric</td><td>Default, Iris, most tabular data</td></tr>
+      <tr><td><code>MultinomialNB</code></td><td>Non-negative integer counts</td><td>Text bag-of-words, word counts</td></tr>
+      <tr><td><code>ComplementNB</code></td><td>Count features (imbalanced)</td><td>Text classification, skewed classes</td></tr>
+      <tr><td><code>BernoulliNB</code></td><td>Binary 0/1 features</td><td>Presence/absence of words</td></tr>
+      <tr><td><code>CategoricalNB</code></td><td>Categorical (label-encoded)</td><td>All-categorical datasets</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>GaussianNB on Default</h2>
+<pre><code class="language-python">from sklearn.naive_bayes import GaussianNB
+gnb = GaussianNB()
+gnb.fit(X_train, y_train)
+print('AUC:', roc_auc_score(y_test, gnb.predict_proba(X_test)[:,1]))
+
+# Learned parameters per class:
+gnb.theta_          # class means (K × p)
+gnb.var_            # class variances (K × p)</code></pre>
+    <ul>
+      <li class="fragment fade-up">NB with Gaussian marginals fits μ<sub>kj</sub> and σ²<sub>kj</sub> independently per feature per class.</li>
+      <li class="fragment fade-up">No covariance between features is estimated — the independence assumption is baked in.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>MultinomialNB — the spam filter</h2>
+<pre><code class="language-python">from sklearn.naive_bayes import MultinomialNB
+from sklearn.feature_extraction.text import CountVectorizer
+
+vec  = CountVectorizer()
+X_counts = vec.fit_transform(text_data)   # sparse word-count matrix
+mnb = MultinomialNB(alpha=1.0)            # alpha = Laplace smoothing
+mnb.fit(X_counts, y_text)</code></pre>
+    <ul>
+      <li class="fragment fade-up">Each feature = word count. P(word w | class k) estimated from frequency tables.</li>
+      <li class="fragment fade-up"><strong>Laplace smoothing</strong> (alpha=1.0): add 1 to every count to avoid P(unseen word) = 0.</li>
+      <li class="fragment fade-up">Scales effortlessly to vocabulary size p = 100,000+. Training is one pass through the data.</li>
+    </ul>
+    <aside class="notes">Spam filtering was one of the first major ML success stories in production. NB was the dominant approach through the 2000s and is still competitive in text classification. The key advantage: training is a single pass over the data (counting word frequencies), and inference is O(p) per document.</aside>
+  </section>
+
+  <section>
+    <h2>When Naive Bayes wins</h2>
+    <ul>
+      <li class="fragment fade-up"><strong>Very high p, small n</strong> (text, genomics): LDA can't estimate Σ with p > n; NB always works.</li>
+      <li class="fragment fade-up"><strong>Text classification</strong>: words are approximately independent given topic/sentiment.</li>
+      <li class="fragment fade-up"><strong>Fast training</strong>: one pass over data, closed-form, O(p·K·n) — scales to billions of features.</li>
+      <li class="fragment fade-up"><strong>Mixed feature types</strong>: combine Gaussian + Bernoulli marginals naturally.</li>
+      <li class="fragment fade-up"><strong>Online learning</strong>: update parameters incrementally as new data arrives (<code>partial_fit</code>).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>When Naive Bayes loses</h2>
+    <ul>
+      <li class="fragment fade-up"><strong>Strong feature correlations within classes</strong>: the independence assumption is violated; boundary is biased.</li>
+      <li class="fragment fade-up"><strong>Well-calibrated probabilities needed</strong>: NB posteriors are often overconfident (push toward 0/1).</li>
+      <li class="fragment fade-up"><strong>Large n, moderate p</strong>: LDA, QDA, or LR can estimate correlations — and benefit from the signal.</li>
+    </ul>
+    <p class="callout fragment fade-up">AUC benchmark on Default (balance + income): LR ≈ LDA ≈ QDA ≈ 0.95; GaussianNB ≈ 0.93. NB is competitive but slightly worse due to the ignored balance–income correlation.</p>
+  </section>
+
+  <section>
+    <h2>Benchmark: all four classifiers</h2>
+<pre><code class="language-python">from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import GaussianNB
+
+models = [('LR', LogisticRegression(max_iter=2000)),
+          ('LDA', LinearDiscriminantAnalysis()),
+          ('QDA', QuadraticDiscriminantAnalysis()),
+          ('GNB', GaussianNB())]
+for name, m in models:
+    m.fit(X_train, y_train)
+    print(f'{name}: AUC = {roc_auc_score(y_test, m.predict_proba(X_test)[:,1]):.4f}')</code></pre>
+  </section>
+</section>
+
+<!-- RECAP -->
+<section class="title-slide">
+  <span class="kicker">Recap</span>
+  <h2>Six ideas to leave with</h2>
+  <ol style="font-size:0.88em;line-height:1.8em;">
+    <li class="fragment fade-up"><strong>Conditional independence: f_k(x) = ∏_j f_kj(x_j).</strong> One marginal per feature per class.</li>
+    <li class="fragment fade-up"><strong>Posterior: Pr(Y=k|X) ∝ π_k · ∏_j f_kj(x_j).</strong> Additive in log-space.</li>
+    <li class="fragment fade-up"><strong>Three density choices</strong>: Gaussian (numeric), KDE (non-normal), multinomial (categorical).</li>
+    <li class="fragment fade-up"><strong>NB ↔ GAMs</strong>: log-posterior ratio is additive in feature functions — same structure.</li>
+    <li class="fragment fade-up"><strong>NB = QDA with diagonal Σ_k</strong>; NB = LDA when additionally same σ² per feature.</li>
+    <li class="fragment fade-up"><strong>NB wins when p large, n small</strong>; loses when features are strongly correlated within classes.</li>
+  </ol>
+  <p class="callout fragment fade-up">Next: Generalized Linear Models — Poisson regression for count data.</p>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true, slideNumber: 'c/t', transition: 'slide',
+    transitionSpeed: 'fast', backgroundTransition: 'fade',
+    width: 1280, height: 760, margin: 0.06,
+    plugins: [ RevealNotes, RevealHighlight ],
+  });
+</script>
+</body>
+</html>
