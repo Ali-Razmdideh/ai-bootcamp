@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Logistic Regression I — Binary</title>
+  <title>Logistic Regression — Complete</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
@@ -12,109 +12,467 @@
 </head>
 <body>
 <div class="reveal"><div class="slides">
+
+<!-- TITLE -->
 <section class="title-slide">
-  <span class="kicker">Week 4 · Course 2 · 1.5 hours</span>
-  <h1>Logistic Regression I — Binary</h1>
-  <p class="muted" style="font-size:1.1em;">From log-odds to ROC curves</p>
+  <span class="kicker">Week 4 · Course 2 · 3 hours</span>
+  <h1>Logistic Regression — Complete</h1>
+  <p class="muted" style="font-size:1.1em;">From log-odds to multinomial softmax, ROC curves, regularization, and the limits of linearity</p>
 </section>
+
+<!-- ROADMAP -->
 <section>
   <span class="kicker">Roadmap</span>
-  <h2>Where we are heading</h2>
+  <h2>Eight parts in three hours</h2>
   <div class="three-col">
-    <div class="card"><h4>0:00 · 0:30</h4><strong>The sigmoid & log-odds</strong>
-      <p class="muted" style="margin:0.3em 0 0;">from LR to LR.</p></div>
-    <div class="card"><h4>0:30 · 1:00</h4><strong>Multiple binary LR</strong>
-      <p class="muted" style="margin:0.3em 0 0;">Smarket — markets are hard.</p></div>
-    <div class="card"><h4>1:00 · 1:30</h4><strong>ROC & threshold tuning</strong>
-      <p class="muted" style="margin:0.3em 0 0;">predict_proba in action.</p></div>
+    <div class="card"><h4>Part 1–2</h4><strong>Why not linear + Binary LR</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Sigmoid, log-odds, MLE, odds ratios, confounding.</p></div>
+    <div class="card"><h4>Part 3–5</h4><strong>Multiple LR, case-control, multinomial</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Smarket, intercept correction, softmax.</p></div>
+    <div class="card"><h4>Part 6–8</h4><strong>ROC, regularization, limits</strong>
+      <p class="muted" style="margin:0.3em 0 0;">AUC, threshold, C=1/λ, the moons wall.</p></div>
   </div>
-  <p class="callout" style="margin-top:1.2em;">Logistic regression is the single most important ML model in industry. The linear classifier you'll keep using even after you know all the rest.</p>
+  <p class="callout" style="margin-top:1.2em;">Logistic regression is the single most important model in industry. Master it here in full.</p>
 </section>
+
+<!-- ====================================================
+     PART 1 — WHY NOT LINEAR
+     ==================================================== -->
 <section>
   <section class="title-slide">
-    <span class="kicker">Part 1 · 0:00 – 0:30</span>
-    <h1>From log-odds to sigmoid</h1>
-    <p class="muted">the linear classifier</p>
-  </section>
-  <section>
-    <h2>The model</h2>
-<p style="text-align:center;font-size:1.2em;">P(y=1|x) = σ(β₀ + β₁ x), where σ(z) = 1 / (1 + e<sup>−z</sup>)</p><p style="text-align:center;font-size:1.2em;">log(p / (1−p)) = β₀ + β₁ x</p><p class="muted">Linear in the log-odds. S-shaped in probability.</p>
+    <span class="kicker">Part 1 · 0:00 – 0:20</span>
+    <h1>Why not linear regression for classification?</h1>
+    <p class="muted">the fundamental problem</p>
   </section>
 
   <section>
-    <h2>The loss</h2>
-<p style="text-align:center;font-size:1.2em;">ℓ(β) = Σᵢ [yᵢ log pᵢ + (1−yᵢ) log(1−pᵢ)]</p><p>Concave in β — any reasonable optimizer reaches the unique maximum.</p>
+    <h2>The naive approach — just fit a line</h2>
+    <p>Encode Y = 1 (default) / 0 (no default). Fit OLS: Ŷ = β₀ + β₁ × balance.</p>
+    <ul>
+      <li class="fragment fade-up">At balance = 0, prediction = −0.08 → <strong>negative probability</strong>.</li>
+      <li class="fragment fade-up">At balance = 2700, prediction = 1.05 → <strong>probability above 1</strong>.</li>
+      <li class="fragment fade-up">The 0/1 response forces OLS to fit a tilted line through a cloud of 0s and 1s.</li>
+    </ul>
+    <aside class="notes">Show Figure 4.1 from ISLR. The left panel shows the linear fit — clearly inadequate. The right panel shows the logistic fit. The key insight: probabilities must live in [0,1] by definition.</aside>
   </section>
 
   <section>
-    <h2>Interpreting coefficients</h2>
-<p>e<sup>β</sup> is the <strong>odds ratio</strong> per unit change of x.</p><p>For Default, β<sub>balance</sub> ≈ 0.0055 → e<sup>100·β</sup> ≈ 1.74 → +$100 balance ≈ +74% odds of default.</p>
+    <h2>The fix: the sigmoid function</h2>
+    <p style="text-align:center;font-size:1.3em;">P(y=1|x) = σ(z) = 1 / (1 + e<sup>−z</sup>), &nbsp; z = β₀ + β₁x</p>
+    <ul>
+      <li class="fragment fade-up">σ(z) → 0 as z → −∞, σ(z) → 1 as z → +∞.</li>
+      <li class="fragment fade-up">Always in (0, 1) — a valid probability everywhere.</li>
+      <li class="fragment fade-up">S-shaped: the model is most uncertain near p = 0.5, most confident far from 0.5.</li>
+    </ul>
+    <aside class="notes">The sigmoid is the inverse of the logit (log-odds) function. They are the same model viewed from two angles.</aside>
   </section>
 
+  <section>
+    <h2>Summary: linear vs logistic on Default</h2>
+    <table style="font-size:0.85em;width:100%;">
+      <tr><th>Method</th><th>Predictions at extremes</th><th>Interpretable?</th><th>Valid probabilities?</th></tr>
+      <tr><td>Linear regression</td><td>Negative / above 1</td><td>Yes (slopes)</td><td><strong>No</strong></td></tr>
+      <tr><td>Logistic regression</td><td>Always in (0, 1)</td><td>Yes (odds ratios)</td><td><strong>Yes</strong></td></tr>
+    </table>
+    <p class="callout fragment fade-up" style="margin-top:1em;">For a binary outcome, always use logistic regression. Linear regression can still be used for multi-class in some edge cases but logistic is the right default.</p>
+  </section>
 </section>
+
+<!-- ====================================================
+     PART 2 — BINARY LR
+     ==================================================== -->
 <section>
   <section class="title-slide">
-    <span class="kicker">Part 2 · 0:30 – 1:00</span>
-    <h1>Multiple binary LR</h1>
-    <p class="muted">Smarket lab</p>
+    <span class="kicker">Part 2 · 0:20 – 0:50</span>
+    <h1>Binary Logistic Regression</h1>
+    <p class="muted">model, MLE, coefficients, confounding</p>
   </section>
+
   <section>
-    <h2>Predict market direction from lag returns</h2>
-<pre><code class="language-python">X = smarket[[&#x27;Lag1&#x27;, &#x27;Lag2&#x27;, &#x27;Lag3&#x27;, &#x27;Lag4&#x27;, &#x27;Lag5&#x27;, &#x27;Volume&#x27;]]
-y = (smarket[&#x27;Direction&#x27;] == &#x27;Up&#x27;).astype(int)
-m = LogisticRegression(C=1e6).fit(X, y)</code></pre><p class="muted">DO NOT use <code>Today</code> as a predictor — it IS the direction.</p>
+    <h2>The model: log-odds formulation</h2>
+    <p style="text-align:center;font-size:1.15em;">
+      P(y=1|x) = e<sup>β₀ + β₁x</sup> / (1 + e<sup>β₀ + β₁x</sup>)
+    </p>
+    <p style="text-align:center;font-size:1.15em;">
+      log(p / (1−p)) = β₀ + β₁x &nbsp;&nbsp;&nbsp; <span class="muted">(log-odds = logit)</span>
+    </p>
+    <ul>
+      <li class="fragment fade-up">The <strong>logit</strong> is linear in x — same structure as linear regression, different scale.</li>
+      <li class="fragment fade-up">p / (1−p) = the <strong>odds</strong>: how much more likely is success than failure.</li>
+      <li class="fragment fade-up">Odds = 1 → p = 0.5. Odds = 4 → p = 0.8. Odds = 9 → p = 0.9.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Maximum likelihood estimation</h2>
+    <p style="text-align:center;font-size:1.1em;">
+      ℓ(β) = Σᵢ [yᵢ log p(xᵢ) + (1−yᵢ) log(1 − p(xᵢ))]
+    </p>
+    <ul>
+      <li class="fragment fade-up">The log-likelihood is <strong>concave</strong> in β — any gradient method finds the unique global maximum.</li>
+      <li class="fragment fade-up">No closed-form solution (unlike OLS), but Newton–Raphson / IRLS converges quickly.</li>
+      <li class="fragment fade-up">sklearn uses LBFGS by default; result is numerically the same as statsmodels GLM.</li>
+    </ul>
+    <aside class="notes">Concavity is a huge practical gift. It means we never have to worry about local minima. Contrast with neural nets.</aside>
+  </section>
+
+  <section>
+    <h2>Interpreting the coefficients: odds ratios</h2>
+    <p>e<sup>β₁</sup> is the <strong>multiplicative change in odds</strong> for a one-unit increase in x₁.</p>
+    <table style="font-size:0.82em;width:100%;margin-top:0.8em;">
+      <tr><th>Predictor</th><th>β̂</th><th>Std Error</th><th>z-stat</th><th>p-value</th></tr>
+      <tr><td>Intercept</td><td>−10.651</td><td>0.361</td><td>−29.49</td><td>&lt;0.001</td></tr>
+      <tr><td>balance</td><td>0.00550</td><td>0.000228</td><td>24.09</td><td>&lt;0.001</td></tr>
+    </table>
+    <ul style="margin-top:0.8em;">
+      <li class="fragment fade-up">e<sup>0.0055</sup> ≈ 1.0055 → each $1 increase in balance multiplies odds by 1.0055.</li>
+      <li class="fragment fade-up">e<sup>100 × 0.0055</sup> ≈ 1.73 → each $100 increase multiplies odds by <strong>1.73×</strong>.</li>
+      <li class="fragment fade-up">z-statistic = β̂ / SE. Large |z| → strong evidence against β = 0.</li>
+    </ul>
+    <aside class="notes">Table 4.1 from ISLR. The z-statistic plays the role of t-statistic in linear regression. Under H₀: β=0, z ~ N(0,1).</aside>
+  </section>
+
+  <section>
+    <h2>Multiple logistic regression: adding income + student</h2>
+    <table style="font-size:0.82em;width:100%;margin-top:0.4em;">
+      <tr><th>Predictor</th><th>β̂</th><th>z-stat</th><th>p-value</th></tr>
+      <tr><td>Intercept</td><td>−10.869</td><td>−22.4</td><td>&lt;0.001</td></tr>
+      <tr><td>balance</td><td>0.00574</td><td>24.74</td><td>&lt;0.001</td></tr>
+      <tr><td>income</td><td>0.00003</td><td>0.37</td><td>0.713</td></tr>
+      <tr><td>student[Yes]</td><td>−0.6468</td><td>−3.47</td><td>0.001</td></tr>
+    </table>
+    <p class="fragment fade-up" style="margin-top:0.6em;">Note: <strong>student coefficient is negative</strong> — controlling for balance, students are <em>less</em> likely to default.</p>
+    <aside class="notes">Table 4.2 from ISLR. This sets up the confounding discussion on the next slide.</aside>
+  </section>
+
+  <section>
+    <h2>Confounding: the student paradox</h2>
+    <div class="two-col" style="display:grid;grid-template-columns:1fr 1fr;gap:1em;margin-top:0.5em;">
+      <div>
+        <p><strong>Simple regression (student only)</strong></p>
+        <p>β_student = +0.405, p &lt; 0.001</p>
+        <p class="muted">Raw data: students default <em>more</em>.</p>
+      </div>
+      <div>
+        <p><strong>Multiple regression (+ balance)</strong></p>
+        <p>β_student = −0.647, p = 0.001</p>
+        <p class="muted">Controlling for balance: students default <em>less</em>.</p>
+      </div>
+    </div>
+    <p class="callout fragment fade-up" style="margin-top:1em;">Students carry higher balances on average. Balance drives defaults. Once balance is controlled, being a student is protective. <strong>Confounding reverses the sign.</strong></p>
+    <aside class="notes">Figure 4.3 from ISLR. This is one of the most important statistical lessons in the course. Marginal associations can be completely reversed by adding a third variable. This is Simpson's paradox in action.</aside>
+  </section>
+</section>
+
+<!-- ====================================================
+     PART 3 — MULTIPLE LR ON SMARKET
+     ==================================================== -->
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 3 · 0:50 – 1:10</span>
+    <h1>Multiple Binary LR — Smarket</h1>
+    <p class="muted">when there is no signal</p>
+  </section>
+
+  <section>
+    <h2>The Smarket dataset</h2>
+    <ul>
+      <li class="fragment fade-up">1,250 daily returns of the S&P 500 index, 2001–2005.</li>
+      <li class="fragment fade-up">Features: <code>Lag1, Lag2, Lag3, Lag4, Lag5</code> (previous days' returns), <code>Volume</code> (shares traded).</li>
+      <li class="fragment fade-up">Target: <code>Direction</code> (Up or Down today).</li>
+      <li class="fragment fade-up"><strong>Never use <code>Today</code></strong> as a predictor — it IS the direction we want to predict.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Fit and results</h2>
+<pre><code class="language-python">X = smarket[['Lag1','Lag2','Lag3','Lag4','Lag5','Volume']]
+y = (smarket['Direction'] == 'Up').astype(int)
+m = LogisticRegression(C=1e6).fit(X, y)
+print(pd.Series(m.coef_[0], index=X.columns).round(4))
+# training accuracy:
+m.score(X, y)  # 0.5216</code></pre>
+    <table style="font-size:0.82em;margin-top:0.6em;">
+      <tr><th>Predictor</th><th>β̂</th></tr>
+      <tr><td>Lag1</td><td>−0.0731</td></tr>
+      <tr><td>Lag2</td><td>−0.0423</td></tr>
+      <tr><td>Lag3</td><td>+0.0110</td></tr>
+      <tr><td>Lag4</td><td>+0.0094</td></tr>
+      <tr><td>Lag5</td><td>+0.0103</td></tr>
+      <tr><td>Volume</td><td>+0.1354</td></tr>
+    </table>
   </section>
 
   <section>
     <h2>The disappointment</h2>
-<ul>
-  <li class="fragment fade-up">Coefficients are tiny.</li>
-  <li class="fragment fade-up">Training accuracy barely above 50%.</li>
-  <li class="fragment fade-up">Held-out accuracy: also barely above 50%.</li>
-  <li class="fragment fade-up">Lesson: a clean lab dataset can still contain no signal. Markets are hard.</li>
-</ul>
+    <ul>
+      <li class="fragment fade-up">All coefficients tiny — no predictor is strongly associated with Direction.</li>
+      <li class="fragment fade-up">Training accuracy: <strong>52.2%</strong> — barely above chance.</li>
+      <li class="fragment fade-up">Held-out accuracy (train on 2001–2004, test on 2005): <strong>48.0%</strong> — worse than random.</li>
+    </ul>
+    <p class="callout fragment fade-up">Markets are hard. This is a good reminder that clean data + a valid model ≠ signal. Logistic regression correctly reports uncertainty when there is none to exploit.</p>
+    <aside class="notes">The ISLR analysis uses a time-based split (year &lt; 2005 → train). We use random stratified split; result is similar. This is a crucial pedagogical point: a model that can't predict on held-out data is telling you something about the data, not the method.</aside>
   </section>
-
 </section>
+
+<!-- ====================================================
+     PART 4 — CASE-CONTROL SAMPLING
+     ==================================================== -->
 <section>
   <section class="title-slide">
-    <span class="kicker">Part 3 · 1:00 – 1:30</span>
-    <h1>ROC & threshold tuning</h1>
-    <p class="muted">predict_proba</p>
-  </section>
-  <section>
-    <h2>predict_proba vs predict</h2>
-<p>Logistic regression naturally outputs a probability. <code>predict</code> just applies a 0.5 threshold — rarely the right answer on imbalanced data.</p>
+    <span class="kicker">Part 4 · 1:10 – 1:25</span>
+    <h1>Case-Control Sampling</h1>
+    <p class="muted">biased sampling and the intercept correction</p>
   </section>
 
   <section>
-    <h2>ROC curve in one picture</h2>
-<ul>
-  <li class="fragment fade-up">X axis: FPR. Y axis: TPR.</li>
-  <li class="fragment fade-up">Sweep the threshold from 1 → 0; trace the curve.</li>
-  <li class="fragment fade-up">AUC = area under this curve = P(score(pos) > score(neg)).</li>
-  <li class="fragment fade-up">Diagonal line = random guessing.</li>
-</ul>
+    <h2>What is case-control sampling?</h2>
+    <ul>
+      <li class="fragment fade-up">In medicine, disease events (cases) are rare. Collecting natural data takes years.</li>
+      <li class="fragment fade-up">Instead: <strong>deliberately oversample cases</strong> and undersample controls.</li>
+      <li class="fragment fade-up">Example: disease prevalence π = 1%; study samples π̃ = 50% cases. Intercept is now biased.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>The fix: intercept correction</h2>
+    <p style="text-align:center;font-size:1.15em;">β̂₀<sup>corrected</sup> = β̂₀ + log(π̃ / (1−π̃)) − log(π / (1−π))</p>
+    <ul style="margin-top:0.8em;">
+      <li class="fragment fade-up"><strong>Only the intercept changes.</strong> All other β̂ⱼ are unbiased — they are not affected by case-control sampling.</li>
+      <li class="fragment fade-up">π = true population prevalence (known from external sources).</li>
+      <li class="fragment fade-up">π̃ = sampling fraction of cases in the study.</li>
+    </ul>
+    <p class="callout fragment fade-up">This is one reason why logistic regression is the workhorse of epidemiology. It's robust to case-control designs.</p>
+    <aside class="notes">This result is exact for logistic regression — not an approximation. It follows directly from the form of the log-likelihood. No other common classifier has this property.</aside>
+  </section>
+</section>
+
+<!-- ====================================================
+     PART 5 — MULTINOMIAL LR
+     ==================================================== -->
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 5 · 1:25 – 1:50</span>
+    <h1>Multinomial Logistic Regression</h1>
+    <p class="muted">softmax for K &gt; 2 classes</p>
+  </section>
+
+  <section>
+    <h2>Softmax generalizes the sigmoid</h2>
+    <p style="text-align:center;font-size:1.15em;">P(y = k | x) = e<sup>β<sub>k</sub><sup>T</sup>x</sup> / Σ<sub>j=1</sub><sup>K</sup> e<sup>β<sub>j</sub><sup>T</sup>x</sup></p>
+    <ul>
+      <li class="fragment fade-up">K weight vectors β₁, …, β<sub>K</sub>. One per class.</li>
+      <li class="fragment fade-up">Outputs sum to 1 — a valid probability distribution over K classes.</li>
+      <li class="fragment fade-up">Only <strong>K−1</strong> are identifiable (one is the reference class). sklearn handles this automatically.</li>
+      <li class="fragment fade-up">For K = 2: softmax reduces exactly to the binary sigmoid.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>One-vs-rest (OvR) vs multinomial</h2>
+    <ul>
+      <li class="fragment fade-up"><strong>OvR</strong>: fit K separate binary classifiers (class k vs not-k). Simpler but probabilities don't sum to 1.</li>
+      <li class="fragment fade-up"><strong>Multinomial (softmax)</strong>: fit all K classes jointly. Probabilities sum to 1 by construction.</li>
+      <li class="fragment fade-up">Multinomial is almost always better — especially when classes overlap or are unbalanced.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Iris demo — 3-class decision regions</h2>
+<pre><code class="language-python">from sklearn.linear_model import LogisticRegression
+m = LogisticRegression(max_iter=2000).fit(X, y)
+print('coef shape:', m.coef_.shape)  # (3, 2): one row per class
+# training accuracy
+m.score(X, y)  # 0.9667</code></pre>
+    <p class="muted">Decision regions: contourf on petal_length × petal_width. Three linear boundaries meet at a point — the characteristic signature of softmax.</p>
+    <aside class="notes">The three classes in Iris are: setosa (easily separated), versicolor, virginica (overlap). Two features (petal dims) are enough for very high accuracy. With 4 features accuracy is ~97%.</aside>
+  </section>
+
+  <section>
+    <h2>Softmax decision boundary geometry</h2>
+    <ul>
+      <li class="fragment fade-up">Between any two classes k and l: boundary is where P(y=k|x) = P(y=l|x).</li>
+      <li class="fragment fade-up">This simplifies to: (β<sub>k</sub> − β<sub>l</sub>)ᵀx = 0 — a hyperplane.</li>
+      <li class="fragment fade-up">With K classes, you get <span style="text-decoration:underline;">K(K−1)/2</span> pairwise boundaries, all linear.</li>
+      <li class="fragment fade-up">The full decision space is always a <strong>Voronoi-like polytope</strong> — convex regions.</li>
+    </ul>
+  </section>
+</section>
+
+<!-- ====================================================
+     PART 6 — ROC, AUC, CONFUSION MATRIX
+     ==================================================== -->
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 6 · 1:50 – 2:15</span>
+    <h1>ROC Curves, AUC &amp; Threshold Tuning</h1>
+    <p class="muted">predict_proba, not just predict</p>
+  </section>
+
+  <section>
+    <h2>The confusion matrix</h2>
+    <table style="font-size:0.88em;width:90%;margin:0 auto;">
+      <tr><th></th><th>Predicted: No</th><th>Predicted: Yes</th></tr>
+      <tr><td><strong>Actual: No</strong></td><td>True Negative (TN)</td><td>False Positive (FP)</td></tr>
+      <tr><td><strong>Actual: Yes</strong></td><td>False Negative (FN)</td><td>True Positive (TP)</td></tr>
+    </table>
+    <ul style="margin-top:0.8em;">
+      <li class="fragment fade-up"><strong>FPR</strong> = FP / (FP + TN) — fraction of negatives incorrectly flagged. (Type I error)</li>
+      <li class="fragment fade-up"><strong>FNR</strong> = FN / (FN + TP) — fraction of positives missed. (Type II error)</li>
+      <li class="fragment fade-up"><strong>TPR = Recall</strong> = TP / (TP + FN) = 1 − FNR</li>
+    </ul>
+    <aside class="notes">For the Default dataset, false negatives (missed defaulters) are usually more costly than false positives (unnecessary interventions). The right threshold depends on this cost ratio — not blindly on accuracy.</aside>
+  </section>
+
+  <section>
+    <h2>predict_proba vs predict</h2>
+<pre><code class="language-python">proba = m.predict_proba(X_test)[:, 1]   # P(default=Yes)
+pred  = m.predict(X_test)               # threshold = 0.5</code></pre>
+    <ul style="margin-top:0.6em;">
+      <li class="fragment fade-up"><code>predict_proba</code> returns the continuous score. <code>predict</code> applies a hard 0.5 cutoff.</li>
+      <li class="fragment fade-up">On imbalanced data (few defaults), 0.5 is almost never the right threshold.</li>
+      <li class="fragment fade-up">Lower threshold → classify more as positive → higher recall, lower precision.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>ROC curve</h2>
+    <ul>
+      <li class="fragment fade-up">Sweep threshold from 1 → 0. At each threshold compute (FPR, TPR).</li>
+      <li class="fragment fade-up">Plot TPR vs FPR: the <strong>Receiver Operating Characteristic</strong> curve.</li>
+      <li class="fragment fade-up">Diagonal = random classifier (AUC = 0.5). Perfect = top-left corner (AUC = 1.0).</li>
+      <li class="fragment fade-up"><strong>AUC</strong> = area under the ROC curve = P(score(pos) &gt; score(neg)). Model-selection metric.</li>
+    </ul>
+<pre><code class="language-python">from sklearn.metrics import roc_curve, auc
+fpr, tpr, thr = roc_curve(y_test, proba)
+print(f'AUC = {auc(fpr, tpr):.4f}')     # ~0.95 on Default</code></pre>
   </section>
 
   <section>
     <h2>Threshold tuning for F1</h2>
-<pre><code class="language-python">ts = np.linspace(0.05, 0.6, 50)
-f1s = [f1_score(y, (proba &gt;= t)) for t in ts]
-best_t = ts[np.argmax(f1s)]</code></pre>
-    <aside class="notes">For Default at default 0.5, F1 is low because few are predicted 1. Lowering threshold to ~0.15 trades precision for recall, and F1 jumps.</aside>
+<pre><code class="language-python">ts  = np.linspace(0.02, 0.6, 50)
+f1s = [f1_score(y_test, (proba >= t).astype(int)) for t in ts]
+best_t = ts[np.argmax(f1s)]             # ~0.15 on Default</code></pre>
+    <p class="callout fragment fade-up">F1 = 2PR/(P+R) balances precision and recall. On Default, the optimal threshold is ≈0.15, not 0.5 — because defaults are rare and missing them is costly.</p>
+    <aside class="notes">The right threshold depends on the cost ratio. In fraud detection, you want very high recall at the cost of more false positives. In cancer screening, same. In spam filtering, you'd prefer high precision. Always calibrate to business costs.</aside>
   </section>
 
+  <section>
+    <h2>Default dataset: threshold sensitivity table</h2>
+    <table style="font-size:0.82em;width:100%;">
+      <tr><th>Threshold</th><th>FPR</th><th>FNR</th><th>Correctly classified</th></tr>
+      <tr><td>0.50</td><td>0.022</td><td>0.576</td><td>95.7%</td></tr>
+      <tr><td>0.20</td><td>0.091</td><td>0.330</td><td>92.4%</td></tr>
+      <tr><td>0.10</td><td>0.200</td><td>0.117</td><td>85.9%</td></tr>
+    </table>
+    <p class="fragment fade-up muted">Lower threshold catches more defaulters (FNR drops) at the cost of more false alarms (FPR rises). Overall accuracy drops — but the right metric depends on cost.</p>
+    <aside class="notes">This recreates Table 4.4 from ISLR. The "correctly classified" column maximizes at 0.5, but if missing a default costs 10× more than a false alarm, 0.20 or lower is better.</aside>
+  </section>
 </section>
+
+<!-- ====================================================
+     PART 7 — L1/L2 REGULARIZATION
+     ==================================================== -->
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 7 · 2:15 – 2:40</span>
+    <h1>L1 and L2 Regularization</h1>
+    <p class="muted">C = 1/λ — the Week 3 story revisited</p>
+  </section>
+
+  <section>
+    <h2>The regularized objective</h2>
+    <p style="text-align:center;font-size:1.1em;">maximize &nbsp; ℓ(β) − λ·penalty(β)</p>
+    <ul>
+      <li class="fragment fade-up"><strong>L2 (Ridge)</strong>: penalty = ½ Σⱼ β²ⱼ — shrinks all coefficients toward zero smoothly.</li>
+      <li class="fragment fade-up"><strong>L1 (Lasso)</strong>: penalty = Σⱼ |βⱼ| — zeros some coefficients exactly (sparse solution).</li>
+      <li class="fragment fade-up">sklearn uses <strong>C = 1/λ</strong>. Small C = large λ = strong regularization.</li>
+      <li class="fragment fade-up">Default in sklearn: <code>penalty='l2', C=1.0</code>.</li>
+    </ul>
+    <aside class="notes">The same geometry from Week 3 applies. L2 = Gaussian prior on β. L1 = Laplace prior on β. C = 1 is not "no regularization" — it's moderate regularization. Use C=1e6 to approximate unregularized LR.</aside>
+  </section>
+
+  <section>
+    <h2>Coefficient paths — L2 vs L1</h2>
+    <p>Vary log C (x-axis). Plot each βⱼ for class "setosa" (4 features).</p>
+    <ul>
+      <li class="fragment fade-up"><strong>L2 paths</strong>: all coefficients shrink smoothly toward zero as C → 0. None exactly zero.</li>
+      <li class="fragment fade-up"><strong>L1 paths</strong>: coefficients drop to exactly zero one at a time as C decreases. Sparse.</li>
+      <li class="fragment fade-up">Same Lasso geometry from Week 3 — the diamond constraint corner causes exact zeros.</li>
+    </ul>
+<pre><code class="language-python">LogisticRegression(C=C, penalty='l1', solver='saga', max_iter=3000)</code></pre>
+    <aside class="notes">Use 'saga' or 'liblinear' solver for L1. The default 'lbfgs' only supports L2. This is a common gotcha.</aside>
+  </section>
+
+  <section>
+    <h2>When to regularize and how to choose C</h2>
+    <ul>
+      <li class="fragment fade-up">Always standardize features before regularizing — otherwise large-scale features are penalized less.</li>
+      <li class="fragment fade-up">Use <strong>cross-validation</strong> to choose C: <code>LogisticRegressionCV</code> or <code>GridSearchCV</code>.</li>
+      <li class="fragment fade-up">L1 for feature selection (want sparse β). L2 for pure regularization. Elastic-net for both.</li>
+      <li class="fragment fade-up">L1 with Lasso: C = 0.05 on Iris reduces 4 features — some classes drop to 1–2 non-zero features.</li>
+    </ul>
+  </section>
+</section>
+
+<!-- ====================================================
+     PART 8 — WHEN LINEAR FAILS
+     ==================================================== -->
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 8 · 2:40 – 3:00</span>
+    <h1>When Linear Fails</h1>
+    <p class="muted">the wall that motivates what comes next</p>
+  </section>
+
+  <section>
+    <h2>The make_moons dataset</h2>
+<pre><code class="language-python">from sklearn.datasets import make_moons
+X, y = make_moons(n_samples=400, noise=0.25, random_state=0)
+m = LogisticRegression(max_iter=2000).fit(X, y)
+print(f'accuracy = {m.score(X, y):.4f}')  # ~0.85</code></pre>
+    <ul>
+      <li class="fragment fade-up">Two interleaved half-moons — no straight line can separate them.</li>
+      <li class="fragment fade-up">A linear decision boundary is geometrically limited: it cuts the space with a hyperplane.</li>
+      <li class="fragment fade-up">Accuracy caps at ~85% no matter how much data you have.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Three exits from the linear wall</h2>
+    <ul>
+      <li class="fragment fade-up"><strong>Non-linear features</strong>: add x₁², x₁x₂, polynomial terms → still LR, richer features. (Week 3: moving beyond linearity)</li>
+      <li class="fragment fade-up"><strong>Kernel trick</strong>: SVM with RBF kernel maps to infinite-dimensional feature space implicitly. (Course 9)</li>
+      <li class="fragment fade-up"><strong>Non-linear model</strong>: Decision trees, random forests, neural nets. (Courses 7–8)</li>
+    </ul>
+    <p class="callout fragment fade-up">Logistic regression is not the end — it is the baseline. Every non-linear model you meet next should be compared against it.</p>
+  </section>
+
+  <section>
+    <h2>LDA as a partial fix — and motivation</h2>
+    <ul>
+      <li class="fragment fade-up">LDA models the full class-conditional distribution — can naturally capture some curvature via Gaussian shapes.</li>
+      <li class="fragment fade-up">QDA: separate covariance per class → curved (quadratic) boundaries.</li>
+      <li class="fragment fade-up">This is exactly what Course 3 covers next.</li>
+    </ul>
+  </section>
+</section>
+
+<!-- RECAP -->
 <section class="title-slide">
   <span class="kicker">Recap</span>
-  <h2>Three things to leave with</h2>
-  <ol>
-<li class="fragment fade-up"><strong>Linear in log-odds, sigmoid in probability.</strong> The classic linear classifier.</li>
-<li class="fragment fade-up"><strong>e<sup>β</sup> is the odds ratio per unit of x.</strong> The interpretation an executive will ask about.</li>
-<li class="fragment fade-up"><strong>0.5 is rarely the right threshold.</strong> Tune it for F1 or any cost-sensitive metric.</li>
+  <h2>Eight ideas to leave with</h2>
+  <ol style="font-size:0.88em;line-height:1.8em;">
+    <li class="fragment fade-up"><strong>Linear regression can't model probabilities.</strong> Always use logistic for binary Y.</li>
+    <li class="fragment fade-up"><strong>Log-odds = β₀ + β₁x.</strong> e<sup>β</sup> is the odds ratio per unit of x.</li>
+    <li class="fragment fade-up"><strong>MLE is concave.</strong> Any optimizer finds the unique global optimum.</li>
+    <li class="fragment fade-up"><strong>Confounding reverses signs.</strong> Marginal and partial associations can disagree completely.</li>
+    <li class="fragment fade-up"><strong>Case-control? Fix the intercept</strong> — all other β̂ are unbiased.</li>
+    <li class="fragment fade-up"><strong>Softmax generalizes sigmoid</strong> to K classes. K−1 identifiable weight vectors.</li>
+    <li class="fragment fade-up"><strong>Tune the threshold.</strong> 0.5 is almost never right on imbalanced data. Use AUC to compare models.</li>
+    <li class="fragment fade-up"><strong>C = 1/λ.</strong> L1 zeroes coefficients. L2 shrinks them. Always standardize first.</li>
   </ol>
-  <p class="callout fragment fade-up">Next: more than two classes, and the regularization knob from Week 3 returns.</p>
+  <p class="callout fragment fade-up">Next: LDA and QDA — model the class distributions, not just the boundary.</p>
 </section>
 
 </div></div>
