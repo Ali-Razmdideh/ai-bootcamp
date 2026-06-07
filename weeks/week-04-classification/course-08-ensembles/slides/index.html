@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ensembles — Bagging, Random Forest, Boosting</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+</head>
+<body>
+<div class="reveal"><div class="slides">
+<section class="title-slide">
+  <span class="kicker">Week 4 · Course 5 · 1.5 hours</span>
+  <h1>Ensembles — Bagging, Random Forest, Boosting</h1>
+  <p class="muted" style="font-size:1.1em;">Many weak trees beat one fancy tree</p>
+</section>
+<section>
+  <span class="kicker">Roadmap</span>
+  <h2>Where we are heading</h2>
+  <div class="three-col">
+    <div class="card"><h4>0:00 · 0:30</h4><strong>Random Forests</strong>
+      <p class="muted" style="margin:0.3em 0 0;">bagging + feature subsets.</p></div>
+    <div class="card"><h4>0:30 · 1:00</h4><strong>Interpretation</strong>
+      <p class="muted" style="margin:0.3em 0 0;">importance, partial dependence.</p></div>
+    <div class="card"><h4>1:00 · 1:30</h4><strong>Gradient Boosting</strong>
+      <p class="muted" style="margin:0.3em 0 0;">the production default.</p></div>
+  </div>
+  <p class="callout" style="margin-top:1.2em;">Random forest and gradient boosting are the two algorithms that win Kaggle and ship in production. Master these and you have an industrial-grade tabular toolkit.</p>
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 1 · 0:00 – 0:30</span>
+    <h1>Random Forests</h1>
+    <p class="muted">bagging + feature subsets</p>
+  </section>
+  <section>
+    <h2>Bagging = bootstrap aggregating</h2>
+<ul>
+  <li class="fragment fade-up">Draw B bootstrap samples from the training set.</li>
+  <li class="fragment fade-up">Fit a deep tree to each.</li>
+  <li class="fragment fade-up">Average their predictions (regression) or vote (classification).</li>
+  <li class="fragment fade-up">The average has lower variance than any single tree.</li>
+</ul>
+  </section>
+
+  <section>
+    <h2>Random forest adds feature subsetting</h2>
+<p>At <em>every</em> split, sample √p features uniformly. Why?</p><p>If one strong predictor dominates, every bagged tree picks it as the root split. The trees end up correlated → averaging gains little. Subsampling decorrelates them.</p>
+  </section>
+
+  <section>
+    <h2>OOB error — a free CV</h2>
+<ul>
+  <li class="fragment fade-up">Each bootstrap sample uses ~63% of rows.</li>
+  <li class="fragment fade-up">The other 37% are out-of-bag — never seen by that tree.</li>
+  <li class="fragment fade-up">Score each row on the trees that did not see it. <code>oob_score=True</code>.</li>
+</ul>
+  </section>
+
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 2 · 0:30 – 1:00</span>
+    <h1>Interpretation</h1>
+    <p class="muted">back to explainability</p>
+  </section>
+  <section>
+    <h2>Feature importance</h2>
+<p>Average impurity decrease attributable to each feature across all trees and all splits. Sort, plot, ship.</p><p class="muted">Caveat: biased toward high-cardinality features. <code>sklearn.inspection.permutation_importance</code> is the modern alternative.</p>
+  </section>
+
+  <section>
+    <h2>Partial dependence</h2>
+<p>For feature j: vary j across its range, hold the others fixed, plot mean prediction.</p><p>Tells you the <em>shape</em> of the model's relationship with each predictor, even though the model is a forest of 500 trees.</p>
+  </section>
+
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 3 · 1:00 – 1:30</span>
+    <h1>Gradient Boosting</h1>
+    <p class="muted">fit residuals sequentially</p>
+  </section>
+  <section>
+    <h2>The algorithm</h2>
+<ul>
+  <li>Start with a constant prediction (mean / log-odds).</li>
+  <li>Fit a small tree to the gradient of the loss (the 'residuals').</li>
+  <li>Add learning_rate · tree to the ensemble.</li>
+  <li>Repeat n_estimators times.</li>
+</ul>
+  </section>
+
+  <section>
+    <h2>Learning rate × n_estimators</h2>
+<ul>
+  <li class="fragment fade-up">Small lr + many trees → smooth, accurate, slow to train.</li>
+  <li class="fragment fade-up">Large lr + few trees → fast, can overshoot the optimum.</li>
+  <li class="fragment fade-up">Sweet spot: lr ≈ 0.05, n_estimators chosen by early stopping.</li>
+</ul>
+  </section>
+
+  <section>
+    <h2>Production-grade defaults</h2>
+<ul>
+  <li class="fragment fade-up"><code>HistGradientBoostingClassifier</code> — sklearn's histogram-based GBM.</li>
+  <li class="fragment fade-up">XGBoost / LightGBM / CatBoost — the third-party giants.</li>
+  <li class="fragment fade-up">All four implement the same core idea with different speed/quality tweaks.</li>
+</ul>
+  </section>
+
+</section>
+<section class="title-slide">
+  <span class="kicker">Recap</span>
+  <h2>Three things to leave with</h2>
+  <ol>
+<li class="fragment fade-up"><strong>Random forest = bagging + feature subsets.</strong> OOB error is free.</li>
+<li class="fragment fade-up"><strong>Feature importance and PDPs restore interpretability.</strong></li>
+<li class="fragment fade-up"><strong>Gradient boosting fits residuals sequentially.</strong> Small lr × many trees wins.</li>
+  </ol>
+  <p class="callout fragment fade-up">Last course: SVMs — non-linear via kernels, dominant in p ≫ n.</p>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true, slideNumber: 'c/t', transition: 'slide',
+    transitionSpeed: 'fast', backgroundTransition: 'fade',
+    width: 1280, height: 760, margin: 0.06,
+    plugins: [ RevealNotes, RevealHighlight ],
+  });
+</script>
+</body>
+</html>

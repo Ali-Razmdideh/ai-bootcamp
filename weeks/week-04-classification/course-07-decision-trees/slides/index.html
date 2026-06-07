@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Decision Trees</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+</head>
+<body>
+<div class="reveal"><div class="slides">
+<section class="title-slide">
+  <span class="kicker">Week 4 · Course 4 · 1.5 hours</span>
+  <h1>Decision Trees</h1>
+  <p class="muted" style="font-size:1.1em;">The interpretable non-linear classifier</p>
+</section>
+<section>
+  <span class="kicker">Roadmap</span>
+  <h2>Where we are heading</h2>
+  <div class="three-col">
+    <div class="card"><h4>0:00 · 0:30</h4><strong>Classification trees</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Gini, splits, plot_tree.</p></div>
+    <div class="card"><h4>0:30 · 1:00</h4><strong>Regression trees</strong>
+      <p class="muted" style="margin:0.3em 0 0;">cost-complexity pruning.</p></div>
+    <div class="card"><h4>1:00 · 1:30</h4><strong>Strengths & weaknesses</strong>
+      <p class="muted" style="margin:0.3em 0 0;">variance → ensembles.</p></div>
+  </div>
+  <p class="callout" style="margin-top:1.2em;">A single tree is the most interpretable model you'll meet. Every prediction is a flowchart. The weakness — variance — sets up next course's payoff.</p>
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 1 · 0:00 – 0:30</span>
+    <h1>Classification trees</h1>
+    <p class="muted">greedy recursive splitting</p>
+  </section>
+  <section>
+    <h2>The algorithm</h2>
+<ul>
+  <li>At each node, scan every feature and every threshold.</li>
+  <li>Pick the (feature, threshold) that most reduces Gini impurity.</li>
+  <li>Recurse on the two children. Stop at depth limit or pure leaf.</li>
+</ul>
+  </section>
+
+  <section>
+    <h2>Gini impurity</h2>
+<p style="text-align:center;font-size:1.2em;">Gini = 1 − Σ<sub>k</sub> p<sub>k</sub>²</p><ul>
+  <li class="fragment fade-up">p=0.5 (worst): Gini = 0.5.</li>
+  <li class="fragment fade-up">p=0 or 1 (pure): Gini = 0.</li>
+  <li class="fragment fade-up">Entropy is an alternative; in practice they pick almost the same splits.</li>
+</ul>
+  </section>
+
+  <section>
+    <h2>Reading a tree</h2>
+<p>Each node prints: split criterion, samples, class distribution, prediction.</p><p>Trace a row from root to leaf — that is the model's reasoning, in human language.</p>
+  </section>
+
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 2 · 0:30 – 1:00</span>
+    <h1>Regression trees & pruning</h1>
+    <p class="muted">ccp_alpha</p>
+  </section>
+  <section>
+    <h2>Same algorithm, different criterion</h2>
+<p>Regression trees split to minimize MSE within each child node. Final prediction = mean of training targets in the leaf.</p>
+  </section>
+
+  <section>
+    <h2>Cost-complexity pruning</h2>
+<p style="text-align:center;font-size:1.2em;">cost(T) = Σ<sub>leaves</sub> MSE(leaf) + α · |T|</p><ul>
+  <li class="fragment fade-up">α = 0 → fully grown, overfit.</li>
+  <li class="fragment fade-up">α → ∞ → root-only stump.</li>
+  <li class="fragment fade-up">Pick α with 5-fold CV.</li>
+</ul>
+  </section>
+
+</section>
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 3 · 1:00 – 1:30</span>
+    <h1>Strengths & weaknesses</h1>
+    <p class="muted">and the road to ensembles</p>
+  </section>
+  <section>
+    <h2>Strengths</h2>
+<ul>
+  <li class="fragment fade-up">Interpretable end-to-end.</li>
+  <li class="fragment fade-up">Handles mixed dtypes without preprocessing.</li>
+  <li class="fragment fade-up">No scaling required.</li>
+  <li class="fragment fade-up">Captures interactions and non-linearities natively.</li>
+</ul>
+  </section>
+
+  <section>
+    <h2>Weakness — variance</h2>
+<p>Refit the same tree on a bootstrap sample. Different root split. Different tree. <em>Massively different</em> predictions on borderline points.</p><p class="callout">Solution: fit many trees and vote. Next course.</p>
+  </section>
+
+</section>
+<section class="title-slide">
+  <span class="kicker">Recap</span>
+  <h2>Three things to leave with</h2>
+  <ol>
+<li class="fragment fade-up"><strong>Greedy splits on Gini (classification) or MSE (regression).</strong></li>
+<li class="fragment fade-up"><strong>Prune with ccp_alpha to fight overfit.</strong></li>
+<li class="fragment fade-up"><strong>Single trees are interpretable but high-variance.</strong> Ensembles fix that.</li>
+  </ol>
+  <p class="callout fragment fade-up">Next: bagging, random forests, and gradient boosting.</p>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true, slideNumber: 'c/t', transition: 'slide',
+    transitionSpeed: 'fast', backgroundTransition: 'fade',
+    width: 1280, height: 760, margin: 0.06,
+    plugins: [ RevealNotes, RevealHighlight ],
+  });
+</script>
+</body>
+</html>
