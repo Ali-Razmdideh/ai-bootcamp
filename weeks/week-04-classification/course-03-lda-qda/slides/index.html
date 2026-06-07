@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LDA &amp; QDA — Linear and Quadratic Discriminant Analysis</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- TITLE -->
+<section class="title-slide">
+  <span class="kicker">Week 4 · Course 3 · 1.5 hours</span>
+  <h1>LDA &amp; QDA</h1>
+  <p class="muted" style="font-size:1.1em;">Linear and Quadratic Discriminant Analysis — from Bayes theorem to curved boundaries</p>
+</section>
+
+<!-- ROADMAP -->
+<section>
+  <span class="kicker">Roadmap</span>
+  <h2>Where we are heading</h2>
+  <div class="three-col">
+    <div class="card"><h4>0:00 · 0:30</h4><strong>Motivation + Gaussian LDA</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Bayes theorem, shared Σ, discriminant scores.</p></div>
+    <div class="card"><h4>0:30 · 1:00</h4><strong>Parameter estimation + demo</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Default dataset, confusion matrix, ROC, Fisher projection.</p></div>
+    <div class="card"><h4>1:00 · 1:30</h4><strong>QDA — curved boundaries</strong>
+      <p class="muted" style="margin:0.3em 0 0;">Separate Σ_k, quadratic score, bias-variance tradeoff.</p></div>
+  </div>
+  <p class="callout" style="margin-top:1.2em;">LDA models the class distributions, not just the boundary. When Gaussian assumptions hold, it can outperform logistic regression — especially with small n.</p>
+</section>
+
+<!-- ====================================================
+     PART 1 — MOTIVATION + BAYES
+     ==================================================== -->
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 1 · 0:00 – 0:30</span>
+    <h1>Why LDA?</h1>
+    <p class="muted">Bayes theorem for classification</p>
+  </section>
+
+  <section>
+    <h2>Two philosophies of classification</h2>
+    <table style="font-size:0.88em;width:100%;">
+      <tr><th>Approach</th><th>What is modelled</th><th>Method</th></tr>
+      <tr><td><strong>Discriminative</strong></td><td>P(Y=k | X=x) directly</td><td>Logistic regression</td></tr>
+      <tr><td><strong>Generative</strong></td><td>P(X=x | Y=k) + priors</td><td>LDA, QDA, Naive Bayes</td></tr>
+    </table>
+    <ul style="margin-top:0.8em;">
+      <li class="fragment fade-up">Generative models: <strong>model each class separately</strong>, then apply Bayes theorem.</li>
+      <li class="fragment fade-up">More assumptions → better performance when assumptions hold, worse when they don't.</li>
+      <li class="fragment fade-up">LDA wins over LR: well-separated classes (LR coefficients blow up), small n, Gaussian data.</li>
+    </ul>
+    <aside class="notes">The instability of logistic regression with perfect or near-perfect separation is a real practical problem. LDA handles this gracefully because it doesn't try to push coefficients to ±∞.</aside>
+  </section>
+
+  <section>
+    <h2>Bayes theorem for classification</h2>
+    <p style="text-align:center;font-size:1.2em;">Pr(Y=k | X=x) = π<sub>k</sub> · f<sub>k</sub>(x) / Σ<sub>l</sub> π<sub>l</sub> · f<sub>l</sub>(x)</p>
+    <ul style="margin-top:0.8em;">
+      <li class="fragment fade-up"><strong>π<sub>k</sub></strong> = prior probability of class k = P(Y=k). Estimated as n<sub>k</sub>/n.</li>
+      <li class="fragment fade-up"><strong>f<sub>k</sub>(x)</strong> = class-conditional density = P(X=x | Y=k). This is what LDA models.</li>
+      <li class="fragment fade-up"><strong>Denominator</strong> = total probability P(X=x). It doesn't depend on k — only needed for normalization.</li>
+    </ul>
+    <p class="callout fragment fade-up">The Bayes classifier is optimal when the distributions are known exactly. LDA approximates them with Gaussians.</p>
+    <aside class="notes">The Bayes error rate is the irreducible minimum — no classifier, however complex, can beat it if the features are fixed. LDA with correct Gaussian assumptions achieves it asymptotically.</aside>
+  </section>
+
+  <section>
+    <h2>Gaussian LDA: the assumption</h2>
+    <p style="text-align:center;font-size:1.15em;">f<sub>k</sub>(x) = N(μ<sub>k</sub>, Σ)</p>
+    <ul style="margin-top:0.8em;">
+      <li class="fragment fade-up">Each class has its own mean vector μ<sub>k</sub> (center of the Gaussian).</li>
+      <li class="fragment fade-up"><strong>Σ is shared</strong> across all K classes — same covariance matrix.</li>
+      <li class="fragment fade-up">This shared-Σ assumption is the key distinguishing feature of LDA vs QDA.</li>
+    </ul>
+    <aside class="notes">The shared Σ assumption is what makes the boundary linear (as we'll see in the next slide). QDA relaxes this assumption.</aside>
+  </section>
+
+  <section>
+    <h2>Discriminant score — deriving the linear boundary</h2>
+    <p>Taking log of the Bayes posterior (log-monotone transform preserves argmax):</p>
+    <p style="text-align:center;font-size:1.1em;margin:0.5em 0;">
+      log Pr(Y=k|X=x) = log π<sub>k</sub> + log f<sub>k</sub>(x) − const
+    </p>
+    <p style="text-align:center;font-size:1.1em;">
+      δ<sub>k</sub>(x) = x<sup>T</sup>Σ<sup>−1</sup>μ<sub>k</sub> − ½ μ<sub>k</sub><sup>T</sup>Σ<sup>−1</sup>μ<sub>k</sub> + log π<sub>k</sub>
+    </p>
+    <p class="callout fragment fade-up" style="margin-top:0.8em;">δ<sub>k</sub>(x) is <strong>linear in x</strong>. The quadratic term x<sup>T</sup>Σ<sup>−1</sup>x cancels because Σ is shared across all k.</p>
+    <aside class="notes">This cancellation is the entire algebra of LDA. Write out the full Gaussian log-density: -½log|Σ| - ½(x-μ)ᵀΣ⁻¹(x-μ) + log π. Expanding (x-μ)ᵀΣ⁻¹(x-μ) = xᵀΣ⁻¹x - 2μᵀΣ⁻¹x + μᵀΣ⁻¹μ. The xᵀΣ⁻¹x is the same for all k → it cancels in comparisons. Left with δ_k linear in x.</aside>
+  </section>
+
+  <section>
+    <h2>Why the boundary is linear</h2>
+    <p>Assign x to class k = argmax<sub>k</sub> δ<sub>k</sub>(x).</p>
+    <p>The decision boundary between class k and class l is where δ<sub>k</sub>(x) = δ<sub>l</sub>(x):</p>
+    <p style="text-align:center;font-size:1.1em;margin:0.6em 0;">
+      x<sup>T</sup>Σ<sup>−1</sup>(μ<sub>k</sub> − μ<sub>l</sub>) = ½(μ<sub>k</sub><sup>T</sup>Σ<sup>−1</sup>μ<sub>k</sub> − μ<sub>l</sub><sup>T</sup>Σ<sup>−1</sup>μ<sub>l</sub>) − log(π<sub>k</sub>/π<sub>l</sub>)
+    </p>
+    <ul>
+      <li class="fragment fade-up">Left side: <strong>linear in x</strong> → equation of a hyperplane.</li>
+      <li class="fragment fade-up">The boundary is a straight line (2D), plane (3D), or hyperplane (p-D).</li>
+      <li class="fragment fade-up">In p=1 dimensions: a single cut point on the real line.</li>
+    </ul>
+  </section>
+</section>
+
+<!-- ====================================================
+     PART 2 — PARAMETER ESTIMATION + DEMO
+     ==================================================== -->
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 2 · 0:30 – 1:00</span>
+    <h1>Parameter Estimation &amp; Demo</h1>
+    <p class="muted">Default dataset, confusion matrix, ROC, Fisher projection</p>
+  </section>
+
+  <section>
+    <h2>Estimating the parameters</h2>
+    <table style="font-size:0.88em;width:100%;">
+      <tr><th>Parameter</th><th>Estimator</th></tr>
+      <tr><td>Prior π̂<sub>k</sub></td><td>n<sub>k</sub> / n (fraction of class k in training data)</td></tr>
+      <tr><td>Mean μ̂<sub>k</sub></td><td>(1/n<sub>k</sub>) Σ<sub>i: y_i=k</sub> x<sub>i</sub> (class-k sample mean)</td></tr>
+      <tr><td>Covariance Σ̂</td><td>Pooled within-class covariance: Σ<sub>k</sub> Σ<sub>i: y_i=k</sub>(x<sub>i</sub>−μ̂<sub>k</sub>)(x<sub>i</sub>−μ̂<sub>k</sub>)<sup>T</sup> / (n−K)</td></tr>
+    </table>
+    <p class="fragment fade-up" style="margin-top:0.8em;">Plugging π̂, μ̂, Σ̂ into δ<sub>k</sub> gives the <strong>plug-in Bayes classifier</strong>. Asymptotically optimal when the Gaussian assumption holds.</p>
+  </section>
+
+  <section>
+    <h2>LDA on Default dataset — setup</h2>
+<pre><code class="language-python">from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+X = default[['balance', 'income']].to_numpy()
+y = (default['default'] == 'Yes').astype(int).to_numpy()
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, random_state=0, stratify=y)
+lda = LinearDiscriminantAnalysis().fit(X_train, y_train)</code></pre>
+    <p class="muted">sklearn's LDA estimates μ̂_k, Σ̂ from training data and applies plug-in discriminant scores automatically.</p>
+  </section>
+
+  <section>
+    <h2>Confusion matrix at threshold 0.5</h2>
+    <table style="font-size:0.88em;width:90%;margin:0 auto;">
+      <tr><th></th><th>Predicted: No Default</th><th>Predicted: Default</th></tr>
+      <tr><td><strong>Actual: No Default</strong></td><td>2875 (TN)</td><td>62 (FP)</td></tr>
+      <tr><td><strong>Actual: Default</strong></td><td>52 (FN)</td><td>11 (TP)</td></tr>
+    </table>
+    <ul style="margin-top:0.8em;">
+      <li class="fragment fade-up">FPR = 62 / (62+2875) = 2.1% — very few false alarms.</li>
+      <li class="fragment fade-up">FNR = 52 / (52+11) = 82.5% — <strong>most defaulters are missed!</strong></li>
+      <li class="fragment fade-up">Overall accuracy = 95.7% (misleading — driven by the large number of non-defaulters).</li>
+    </ul>
+    <p class="callout fragment fade-up">High accuracy on imbalanced data means nothing. The FNR is what matters for a bank: 82% of defaulters slip through!</p>
+    <aside class="notes">This is ISLR's key pedagogical point about the confusion matrix. The threshold of 0.5 is optimal for minimizing total error, but that ignores the cost asymmetry. A bank would much rather lower the threshold and accept more false positives.</aside>
+  </section>
+
+  <section>
+    <h2>Threshold sensitivity table (ISLR Table 4.4)</h2>
+    <table style="font-size:0.85em;width:100%;">
+      <tr><th>Threshold</th><th>FPR</th><th>FNR</th><th>Overall Error</th></tr>
+      <tr><td>0.50</td><td>2.1%</td><td>82.5%</td><td>4.3%</td></tr>
+      <tr><td>0.20</td><td>9.1%</td><td>33.3%</td><td>7.5%</td></tr>
+      <tr><td>0.10</td><td>20.0%</td><td>11.7%</td><td>14.1%</td></tr>
+      <tr><td>0.05</td><td>34.0%</td><td>5.0%</td><td>20.0%</td></tr>
+    </table>
+    <p class="fragment fade-up muted">Lowering the threshold dramatically reduces FNR at the cost of more false alarms. The right threshold depends on the relative costs — not accuracy.</p>
+    <aside class="notes">If catching a defaulter saves $10,000 and a false alarm costs $100, the optimal threshold is much lower than 0.5. This is the business-driven threshold selection problem.</aside>
+  </section>
+
+  <section>
+    <h2>ROC: LDA vs Logistic Regression</h2>
+    <p>Both models on Default (balance + income), plotted on the same axes:</p>
+    <ul>
+      <li class="fragment fade-up">LDA AUC ≈ 0.948, LR AUC ≈ 0.951 — nearly identical.</li>
+      <li class="fragment fade-up">When classes are not well-separated and features are approximately Gaussian, LDA ≈ LR.</li>
+      <li class="fragment fade-up">AUC compares the full ROC curve — model selection at all thresholds simultaneously.</li>
+    </ul>
+<pre><code class="language-python">from sklearn.metrics import roc_curve, auc
+fpr_lda, tpr_lda, _ = roc_curve(y_test, lda.predict_proba(X_test)[:,1])
+fpr_lr, tpr_lr, _   = roc_curve(y_test, lr.predict_proba(X_test)[:,1])
+# Plot both curves — they nearly overlap</code></pre>
+  </section>
+
+  <section>
+    <h2>Fisher's linear discriminant projection</h2>
+    <p>Find the direction w that maximizes:</p>
+    <p style="text-align:center;font-size:1.1em;margin:0.4em 0;">
+      J(w) = (w<sup>T</sup>S<sub>B</sub>w) / (w<sup>T</sup>S<sub>W</sub>w)
+    </p>
+    <p class="muted">S<sub>B</sub> = between-class scatter; S<sub>W</sub> = within-class scatter.</p>
+    <ul>
+      <li class="fragment fade-up">Solution: w = S<sub>W</sub><sup>−1</sup>(μ₁ − μ₂) — the same direction as LDA!</li>
+      <li class="fragment fade-up">Project all points onto w → 1D histogram; classes should separate well.</li>
+      <li class="fragment fade-up">With K classes, p features: min(K−1, p) discriminant axes.</li>
+    </ul>
+<pre><code class="language-python">lda4 = LinearDiscriminantAnalysis().fit(X_4feat, y)
+X_proj = lda4.transform(X_4feat)  # shape: (n, K-1)</code></pre>
+    <aside class="notes">Figure 4.6 in ISLR shows the 1D projection for LDA on the Default dataset. The two histograms (default vs no-default) have significant overlap, which is why LDA doesn't achieve perfect separation here.</aside>
+  </section>
+
+  <section>
+    <h2>Fisher projection on Iris (K=3, p=4)</h2>
+    <ul>
+      <li class="fragment fade-up">4 features → transform to 2 discriminant axes (K−1 = 2).</li>
+      <li class="fragment fade-up">LD1 explains most of between-class variance; LD2 captures the remaining.</li>
+      <li class="fragment fade-up">Scatter on (LD1, LD2): setosa separates perfectly; versicolor/virginica have some overlap.</li>
+    </ul>
+<pre><code class="language-python">X_lda = lda.transform(X_iris_4feat)  # (150, 2)
+plt.scatter(X_lda[:,0], X_lda[:,1], c=y_iris, s=20)
+plt.xlabel('LD1'); plt.ylabel('LD2')</code></pre>
+    <p class="muted">This is exactly Figure 4.6 style from ISLR — the most interpretable 2D view of 4D data.</p>
+  </section>
+</section>
+
+<!-- ====================================================
+     PART 3 — QDA
+     ==================================================== -->
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 3 · 1:00 – 1:30</span>
+    <h1>QDA — Quadratic Discriminant Analysis</h1>
+    <p class="muted">separate covariance matrices → curved boundaries</p>
+  </section>
+
+  <section>
+    <h2>Relaxing the shared-Σ assumption</h2>
+    <ul>
+      <li class="fragment fade-up"><strong>LDA</strong>: f<sub>k</sub>(x) = N(μ<sub>k</sub>, <span style="text-decoration:underline">Σ</span>) — shared covariance. Linear boundary.</li>
+      <li class="fragment fade-up"><strong>QDA</strong>: f<sub>k</sub>(x) = N(μ<sub>k</sub>, <span style="text-decoration:underline">Σ<sub>k</sub></span>) — separate covariance per class. Quadratic boundary.</li>
+    </ul>
+    <p style="text-align:center;font-size:1.1em;margin:0.8em 0;">
+      δ<sub>k</sub>(x) = −½ log|Σ<sub>k</sub>| − ½(x−μ<sub>k</sub>)<sup>T</sup>Σ<sub>k</sub><sup>−1</sup>(x−μ<sub>k</sub>) + log π<sub>k</sub>
+    </p>
+    <p class="callout fragment fade-up">The term x<sup>T</sup>Σ<sub>k</sub><sup>−1</sup>x no longer cancels (Σ<sub>k</sub> differs by class). The discriminant score is <strong>quadratic in x</strong> → curved decision boundary.</p>
+  </section>
+
+  <section>
+    <h2>Parameter count: LDA vs QDA</h2>
+    <table style="font-size:0.88em;width:100%;">
+      <tr><th>Method</th><th>Parameters for Σ</th><th>When to prefer</th></tr>
+      <tr><td><strong>LDA</strong></td><td>p(p+1)/2 shared</td><td>Small n, linear boundary, similar class shapes</td></tr>
+      <tr><td><strong>QDA</strong></td><td>K · p(p+1)/2 total</td><td>Large n, curved boundary, different class shapes</td></tr>
+    </table>
+    <ul style="margin-top:0.8em;">
+      <li class="fragment fade-up">With p=4 features, K=3 classes: LDA has 10 Σ params; QDA has 30.</li>
+      <li class="fragment fade-up">QDA is more flexible (lower bias) but needs more data to estimate reliably (higher variance).</li>
+      <li class="fragment fade-up">Classic bias-variance tradeoff: more complex model needs more data to pay off.</li>
+    </ul>
+    <aside class="notes">When n is large, QDA consistently outperforms LDA if the true boundaries are curved. When n is small, the extra variance of QDA's estimate hurts more than the bias of LDA's wrong assumption.</aside>
+  </section>
+
+  <section>
+    <h2>QDA on Iris — curved decision regions</h2>
+<pre><code class="language-python">from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+qda = QuadraticDiscriminantAnalysis().fit(X_2feat, y_iris)
+# Decision boundary plot with contourf — notice the curves!</code></pre>
+    <ul>
+      <li class="fragment fade-up">LDA on Iris: three straight-line boundaries meeting at a point.</li>
+      <li class="fragment fade-up">QDA on Iris: elliptical, curved boundaries — each class has its own shape.</li>
+      <li class="fragment fade-up">For Iris, QDA fits the data slightly better (classes really do have different shapes).</li>
+    </ul>
+    <aside class="notes">This is Figure 4.10 from ISLR (adapted). The left panel shows LDA boundaries, right shows QDA boundaries. QDA is better here because virginica and versicolor have different covariance structures — versicolor's petal dimensions are more spread out.</aside>
+  </section>
+
+  <section>
+    <h2>LDA vs QDA — when each wins</h2>
+    <table style="font-size:0.85em;width:100%;">
+      <tr><th>Scenario</th><th>Winner</th><th>Reason</th></tr>
+      <tr><td>n small, p moderate</td><td>LDA</td><td>QDA overfits when few data per class</td></tr>
+      <tr><td>n large, curved boundary</td><td>QDA</td><td>Enough data to estimate Σ_k well</td></tr>
+      <tr><td>Classes truly have same Σ</td><td>LDA</td><td>QDA wastes capacity on a true null</td></tr>
+      <tr><td>Classes have very different shapes</td><td>QDA</td><td>The extra Σ_k params are load-bearing</td></tr>
+    </table>
+    <p class="callout fragment fade-up" style="margin-top:0.8em;">Rule of thumb: if n / (K·p) is small (&lt;5), prefer LDA. If large (&gt;50), try QDA.</p>
+  </section>
+
+  <section>
+    <h2>Quick reference: LDA vs QDA vs LR</h2>
+    <table style="font-size:0.82em;width:100%;">
+      <tr><th></th><th>LDA</th><th>QDA</th><th>Logistic Regression</th></tr>
+      <tr><td>Boundary shape</td><td>Linear</td><td>Quadratic</td><td>Linear</td></tr>
+      <tr><td>Assumptions</td><td>Gaussian, shared Σ</td><td>Gaussian, per-class Σ</td><td>None (discriminative)</td></tr>
+      <tr><td>Robustness to outliers</td><td>Moderate</td><td>Lower</td><td>High</td></tr>
+      <tr><td>Works with small n</td><td>Yes</td><td>No</td><td>Yes</td></tr>
+      <tr><td>sklearn class</td><td>LinearDiscriminantAnalysis</td><td>QuadraticDiscriminantAnalysis</td><td>LogisticRegression</td></tr>
+    </table>
+  </section>
+</section>
+
+<!-- RECAP -->
+<section class="title-slide">
+  <span class="kicker">Recap</span>
+  <h2>Six ideas to leave with</h2>
+  <ol style="font-size:0.88em;line-height:1.8em;">
+    <li class="fragment fade-up"><strong>Generative vs discriminative.</strong> LDA models distributions; LR models the boundary directly.</li>
+    <li class="fragment fade-up"><strong>Bayes theorem: posterior ∝ prior × likelihood.</strong> πₖ · fₖ(x).</li>
+    <li class="fragment fade-up"><strong>Shared Σ cancels the quadratic term → linear boundary (LDA).</strong></li>
+    <li class="fragment fade-up"><strong>δₖ(x) = xᵀΣ⁻¹μₖ − ½μₖᵀΣ⁻¹μₖ + log πₖ.</strong> This is what LDA computes.</li>
+    <li class="fragment fade-up"><strong>Fisher projection: project to K−1 discriminant axes</strong> for visualization and dimensionality reduction.</li>
+    <li class="fragment fade-up"><strong>QDA: separate Σₖ → quadratic boundary.</strong> More flexible, needs more data.</li>
+  </ol>
+  <p class="callout fragment fade-up">Next: Naive Bayes — what if we assume features are independent within each class?</p>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true, slideNumber: 'c/t', transition: 'slide',
+    transitionSpeed: 'fast', backgroundTransition: 'fade',
+    width: 1280, height: 760, margin: 0.06,
+    plugins: [ RevealNotes, RevealHighlight ],
+  });
+</script>
+</body>
+</html>
