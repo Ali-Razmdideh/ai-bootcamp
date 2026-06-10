@@ -82,24 +82,22 @@
 
   <!-- Concrete confusion matrix example -->
   <section>
-    <h2>Reading a confusion matrix</h2>
-    <p style="font-size:0.9em;">Threshold classifier on Default dataset: "predict default if balance > 1700"</p>
-    <div class="two-col-50">
-      <div>
-        <table class="cm">
-          <tr><th></th><th>Pred No</th><th>Pred Yes</th></tr>
-          <tr><td><strong>True No</strong></td><td class="tn">9 625</td><td class="fp">42</td></tr>
-          <tr><td><strong>True Yes</strong></td><td class="fn">252</td><td class="tp">81</td></tr>
-        </table>
-      </div>
-      <div style="font-size:0.88em;">
-        <p>✓ <strong>9 625 TN</strong> — correctly called safe</p>
-        <p>✗ <strong>42 FP</strong> — flagged safe customers as risky</p>
-        <p>✗ <strong>252 FN</strong> — missed defaulters ← costly!</p>
-        <p>✓ <strong>81 TP</strong> — caught defaulters</p>
-        <p class="callout" style="font-size:0.9em; margin-top:0.6em;">Accuracy = (9625+81)/10000 = <strong>97%</strong> — looks great. But recall = 81/333 = <strong>24%</strong> — we miss 76% of defaulters.</p>
+    <h2 style="font-size:1.3em;">Reading a confusion matrix</h2>
+    <p style="font-size:0.8em; margin:0.2em 0 0.5em;">Threshold classifier on Default: "predict default if balance &gt; 1700"</p>
+    <div style="display:grid; grid-template-columns:auto 1fr; gap:1.5em; align-items:center;">
+      <table class="cm" style="font-size:0.88em;">
+        <tr><th></th><th>Pred No</th><th>Pred Yes</th></tr>
+        <tr><td><strong>True No</strong></td><td class="tn">9 625</td><td class="fp">42</td></tr>
+        <tr><td><strong>True Yes</strong></td><td class="fn">252</td><td class="tp">81</td></tr>
+      </table>
+      <div style="font-size:0.82em; line-height:1.6;">
+        <span style="color:#2ecc71;">✓</span> <strong>9 625 TN</strong> — correctly called safe<br>
+        <span style="color:#e74c3c;">✗</span> <strong>42 FP</strong> — flagged safe customers as risky<br>
+        <span style="color:#e74c3c;">✗</span> <strong>252 FN</strong> — missed defaulters ← costly!<br>
+        <span style="color:#2ecc71;">✓</span> <strong>81 TP</strong> — caught defaulters
       </div>
     </div>
+    <p class="callout" style="font-size:0.8em; margin-top:0.7em;">Accuracy = (9625+81)/10000 = <strong>97%</strong> — looks great. But recall = 81/333 = <strong>24%</strong> — we miss 76% of defaulters.</p>
   </section>
 
   <!-- ── ACCURACY ─────────────────────────────────────────────────────── -->
