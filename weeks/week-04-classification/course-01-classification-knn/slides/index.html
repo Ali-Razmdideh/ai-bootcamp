@@ -9,14 +9,31 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+  <style>
+    .metric-formula { background:#f0f4ff; border-left:4px solid #3b6ef5; padding:0.6em 1em; border-radius:4px; font-size:1.05em; margin:0.6em 0; }
+    .metric-use { background:#f0fff4; border-left:4px solid #2ecc71; padding:0.4em 0.8em; border-radius:4px; font-size:0.9em; }
+    .metric-avoid { background:#fff5f5; border-left:4px solid #e74c3c; padding:0.4em 0.8em; border-radius:4px; font-size:0.9em; }
+    table.cm { border-collapse:collapse; margin:0 auto; font-size:0.95em; }
+    table.cm td, table.cm th { border:1px solid #ccc; padding:0.4em 0.9em; text-align:center; }
+    table.cm .tn { background:#d4edda; }
+    table.cm .fp { background:#f8d7da; }
+    table.cm .fn { background:#f8d7da; }
+    table.cm .tp { background:#d4edda; }
+    .two-col-50 { display:grid; grid-template-columns:1fr 1fr; gap:1.2em; align-items:start; }
+    .highlight-cell { outline: 3px solid #e74c3c; }
+  </style>
 </head>
 <body>
 <div class="reveal"><div class="slides">
+
+<!-- ─── TITLE ─────────────────────────────────────────────────────────── -->
 <section class="title-slide">
   <span class="kicker">Week 4 · Course 1 · 1.5 hours</span>
   <h1>Classification + KNN</h1>
   <p class="muted" style="font-size:1.1em;">Decision boundaries, confusion matrices, ROC</p>
 </section>
+
+<!-- ─── ROADMAP ───────────────────────────────────────────────────────── -->
 <section>
   <span class="kicker">Roadmap</span>
   <h2>Where we are heading</h2>
@@ -30,98 +47,402 @@
   </div>
   <p class="callout" style="margin-top:1.2em;">Before any specific classifier, internalize the interface: predict a label, plot a decision boundary, read a confusion matrix, pick the right metric.</p>
 </section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     PART 1 — WHAT A CLASSIFIER OUTPUTS
+     ═══════════════════════════════════════════════════════════════════════ -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 1 · 0:00 – 0:30</span>
     <h1>What a classifier outputs</h1>
     <p class="muted">label, probability, boundary</p>
   </section>
+
+  <!-- From regression to classification -->
   <section>
     <h2>From regression to classification</h2>
-<ul>
-  <li class="fragment fade-up"><strong>Regression</strong>: ŷ is a number; minimize squared error.</li>
-  <li class="fragment fade-up"><strong>Classification</strong>: ŷ is a label; minimize misclassification (or maximize log-likelihood).</li>
-  <li class="fragment fade-up">Same X, different y. Same toolbox: pipelines, CV, regularization.</li>
-</ul>
+    <ul>
+      <li class="fragment fade-up"><strong>Regression</strong>: ŷ is a number; minimize squared error.</li>
+      <li class="fragment fade-up"><strong>Classification</strong>: ŷ is a label; minimize misclassification (or maximize log-likelihood).</li>
+      <li class="fragment fade-up">Same X, different y. Same toolbox: pipelines, CV, regularization.</li>
+    </ul>
   </section>
 
+  <!-- Confusion matrix -->
   <section>
-    <h2>Confusion matrix</h2>
-<p>For binary classification:</p><table style="font-size:0.95em;margin:0 auto;"><tr><td></td><td><strong>pred 0</strong></td><td><strong>pred 1</strong></td></tr><tr><td><strong>true 0</strong></td><td>TN</td><td>FP</td></tr><tr><td><strong>true 1</strong></td><td>FN</td><td>TP</td></tr></table><p class="muted" style="margin-top:1em;">All metrics — accuracy, precision, recall, F1 — are functions of these four cells.</p>
+    <h2>The confusion matrix</h2>
+    <p>For binary classification every prediction falls into one of four cells:</p>
+    <table class="cm" style="margin:0.8em auto;">
+      <tr><th></th><th>Predicted 0</th><th>Predicted 1</th></tr>
+      <tr><td><strong>Actual 0</strong></td><td class="tn"><strong>TN</strong><br><small>True Negative</small></td><td class="fp"><strong>FP</strong><br><small>Type I error</small></td></tr>
+      <tr><td><strong>Actual 1</strong></td><td class="fn"><strong>FN</strong><br><small>Type II error</small></td><td class="tp"><strong>TP</strong><br><small>True Positive</small></td></tr>
+    </table>
+    <p class="muted" style="margin-top:0.8em; font-size:0.85em;">Every metric — accuracy, precision, recall, F1, MCC — is a function of these four numbers.</p>
   </section>
 
+  <!-- Concrete confusion matrix example -->
+  <section>
+    <h2>Reading a confusion matrix</h2>
+    <p style="font-size:0.9em;">Threshold classifier on Default dataset: "predict default if balance > 1700"</p>
+    <div class="two-col-50">
+      <div>
+        <table class="cm">
+          <tr><th></th><th>Pred No</th><th>Pred Yes</th></tr>
+          <tr><td><strong>True No</strong></td><td class="tn">9 625</td><td class="fp">42</td></tr>
+          <tr><td><strong>True Yes</strong></td><td class="fn">252</td><td class="tp">81</td></tr>
+        </table>
+      </div>
+      <div style="font-size:0.88em;">
+        <p>✓ <strong>9 625 TN</strong> — correctly called safe</p>
+        <p>✗ <strong>42 FP</strong> — flagged safe customers as risky</p>
+        <p>✗ <strong>252 FN</strong> — missed defaulters ← costly!</p>
+        <p>✓ <strong>81 TP</strong> — caught defaulters</p>
+        <p class="callout" style="font-size:0.9em; margin-top:0.6em;">Accuracy = (9625+81)/10000 = <strong>97%</strong> — looks great. But recall = 81/333 = <strong>24%</strong> — we miss 76% of defaulters.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── ACCURACY ─────────────────────────────────────────────────────── -->
+  <section>
+    <h2>Accuracy</h2>
+    <div class="metric-formula">
+      Accuracy = (TP + TN) / (TP + TN + FP + FN)
+    </div>
+    <p style="font-size:0.9em; margin-top:0.6em;"><strong>Intuition:</strong> fraction of all predictions that are correct.</p>
+    <div class="metric-use">✓ Use when classes are <strong>roughly balanced</strong> and all errors cost the same.</div>
+    <div class="metric-avoid" style="margin-top:0.5em;">✗ Misleading on <strong>imbalanced data</strong>: a model that always predicts the majority class scores 97% on Default while catching zero defaulters.</div>
+    <p class="fragment fade-up" style="font-size:0.9em; margin-top:0.6em;"><strong>Example:</strong> classifying handwritten digits 0–9 (MNIST) with ~equal class sizes — accuracy is fine.</p>
+  </section>
+
+  <!-- ── PRECISION ────────────────────────────────────────────────────── -->
+  <section>
+    <h2>Precision</h2>
+    <div class="metric-formula">
+      Precision = TP / (TP + FP)
+    </div>
+    <p style="font-size:0.9em; margin-top:0.6em;"><strong>Intuition:</strong> of every positive prediction, what fraction is actually positive?<br>
+    <em>"When I ring the alarm, how often am I right?"</em></p>
+    <div class="metric-use">✓ Use when <strong>false positives are costly</strong>.</div>
+    <ul style="font-size:0.88em; margin-top:0.6em;">
+      <li class="fragment fade-up"><strong>Spam filter:</strong> a legitimate email landing in spam is worse than spam reaching the inbox.</li>
+      <li class="fragment fade-up"><strong>Recommendation engine:</strong> irrelevant results erode user trust.</li>
+      <li class="fragment fade-up"><strong>Drug approval:</strong> approving an ineffective drug harms patients.</li>
+    </ul>
+    <p class="fragment fade-up callout" style="font-size:0.85em; margin-top:0.6em;">Precision can be gamed: predict only the most certain positives and ignore borderline cases.</p>
+  </section>
+
+  <!-- ── RECALL ───────────────────────────────────────────────────────── -->
+  <section>
+    <h2>Recall (Sensitivity / TPR)</h2>
+    <div class="metric-formula">
+      Recall = TP / (TP + FN)
+    </div>
+    <p style="font-size:0.9em; margin-top:0.6em;"><strong>Intuition:</strong> of every actual positive, what fraction did we catch?<br>
+    <em>"How many real alarms did I not miss?"</em></p>
+    <div class="metric-use">✓ Use when <strong>false negatives are costly</strong>.</div>
+    <ul style="font-size:0.88em; margin-top:0.6em;">
+      <li class="fragment fade-up"><strong>Cancer screening:</strong> missing a tumour is worse than a false alarm.</li>
+      <li class="fragment fade-up"><strong>Fraud detection:</strong> every fraudulent transaction you miss costs money.</li>
+      <li class="fragment fade-up"><strong>Safety systems:</strong> failing to detect a fault can be catastrophic.</li>
+    </ul>
+    <p class="fragment fade-up callout" style="font-size:0.85em; margin-top:0.6em;">Recall can be gamed: predict everything as positive — then TP = all positives and FN = 0, giving recall = 1.</p>
+  </section>
+
+  <!-- ── PRECISION–RECALL TRADEOFF ───────────────────────────────────── -->
+  <section>
+    <h2>The precision–recall tradeoff</h2>
+    <p style="font-size:0.9em;">Moving the decision threshold changes the balance:</p>
+    <table style="font-size:0.85em; margin:0.6em auto; border-collapse:collapse;">
+      <tr style="background:#f5f5f5;"><th style="padding:0.4em 1em;">Threshold ↓</th><th>Predictions flagged</th><th>Precision</th><th>Recall</th></tr>
+      <tr><td style="text-align:center;">0.9</td><td>Very few (only very confident)</td><td style="color:#2ecc71;">High ↑</td><td style="color:#e74c3c;">Low ↓</td></tr>
+      <tr><td style="text-align:center;">0.5</td><td>Moderate</td><td>Medium</td><td>Medium</td></tr>
+      <tr><td style="text-align:center;">0.1</td><td>Almost everything</td><td style="color:#e74c3c;">Low ↓</td><td style="color:#2ecc71;">High ↑</td></tr>
+    </table>
+    <p class="fragment fade-up callout" style="font-size:0.9em; margin-top:0.6em;">You can't maximise both simultaneously. The right threshold depends on the relative cost of FP vs FN in your problem.</p>
+  </section>
+
+  <!-- ── F1 ───────────────────────────────────────────────────────────── -->
+  <section>
+    <h2>F1 Score</h2>
+    <div class="metric-formula">
+      F1 = 2 · Precision · Recall / (Precision + Recall)
+    </div>
+    <p style="font-size:0.9em; margin-top:0.6em;"><strong>Intuition:</strong> harmonic mean of precision and recall. The harmonic mean penalises extreme imbalance — a model that achieves P=1 and R=0.01 gets F1 = 0.02, not 0.5.</p>
+    <div class="metric-use">✓ Use when <strong>both FP and FN have similar costs</strong>.</div>
+    <div class="two-col-50" style="margin-top:0.6em; font-size:0.88em;">
+      <div>
+        <p><strong>Example — spam filter</strong><br>P = 0.90, R = 0.80<br>F1 = 2·0.90·0.80/(0.90+0.80) = <strong>0.847</strong></p>
+      </div>
+      <div>
+        <p><strong>Pathological case</strong><br>P = 1.0, R = 0.01<br>F1 = 2·1·0.01/(1+0.01) ≈ <strong>0.020</strong><br><em>Correctly punished.</em></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Fβ ───────────────────────────────────────────────────────────── -->
+  <section>
+    <h2>Fβ Score — tuning the balance</h2>
+    <div class="metric-formula">
+      Fβ = (1 + β²) · Precision · Recall / (β² · Precision + Recall)
+    </div>
+    <p style="font-size:0.88em; margin-top:0.5em;"><strong>β is the answer to:</strong> <em>"How many times more important is recall than precision?"</em></p>
+    <table style="font-size:0.85em; margin:0.5em auto; border-collapse:collapse;">
+      <tr style="background:#f5f5f5;"><th style="padding:0.4em 0.8em;">β</th><th>Weight on recall</th><th>Use case</th></tr>
+      <tr><td style="text-align:center;"><strong>0.5</strong></td><td>Less (precision matters more)</td><td>Spam filter — avoid good mail in spam</td></tr>
+      <tr><td style="text-align:center;"><strong>1.0</strong></td><td>Equal (= F1)</td><td>General purpose</td></tr>
+      <tr><td style="text-align:center;"><strong>2.0</strong></td><td>More (recall matters more)</td><td>Cancer screening — missing a case is worse</td></tr>
+    </table>
+    <p class="fragment fade-up" style="font-size:0.85em; margin-top:0.5em;">
+      F0.5: Precision counts 4× more than Recall in the denominator.<br>
+      F2: Recall counts 4× more than Precision in the denominator.
+    </p>
+  </section>
+
+  <!-- ── MULTI-CLASS AVERAGING ────────────────────────────────────────── -->
+  <section>
+    <h2>Multi-class averaging</h2>
+    <p style="font-size:0.9em;">With K > 2 classes, how do you aggregate per-class scores into one number?</p>
+    <table style="font-size:0.82em; margin:0.5em auto; border-collapse:collapse;">
+      <tr style="background:#f5f5f5;"><th style="padding:0.4em 0.8em;">Strategy</th><th>Formula</th><th>When to use</th></tr>
+      <tr><td><strong>Macro</strong></td><td>Simple mean over K classes</td><td>All classes equally important (rare disease)</td></tr>
+      <tr><td><strong>Weighted</strong></td><td>Mean weighted by class size nₖ/n</td><td>Class frequencies reflect real-world distribution</td></tr>
+      <tr><td><strong>Micro</strong></td><td>Pool all TP/FP/FN, then compute once</td><td>Large classes dominate; ≈ accuracy for single-label</td></tr>
+      <tr><td><strong>Samples</strong></td><td>Per-sample average</td><td>Multi-label classification only</td></tr>
+    </table>
+    <p class="fragment fade-up callout" style="font-size:0.85em; margin-top:0.6em;">
+      <strong>Macro vs Weighted:</strong> if your rare class (1% of data) matters as much as the common class (99%), use macro. If class frequency reflects importance, use weighted.
+    </p>
+  </section>
+
+  <!-- ── MULTI-CLASS EXAMPLE ──────────────────────────────────────────── -->
+  <section>
+    <h2>Multi-class averaging — example</h2>
+    <p style="font-size:0.88em;">Three-class problem: Cat / Dog / Bird. Bird is rare (5 samples).</p>
+    <table style="font-size:0.82em; margin:0.5em auto; border-collapse:collapse;">
+      <tr style="background:#f5f5f5;"><th style="padding:0.3em 0.8em;">Class</th><th>Precision</th><th>Recall</th><th>F1</th><th>Support</th></tr>
+      <tr><td>Cat</td><td>0.90</td><td>0.88</td><td>0.89</td><td>100</td></tr>
+      <tr><td>Dog</td><td>0.85</td><td>0.87</td><td>0.86</td><td>95</td></tr>
+      <tr><td style="color:#e74c3c;"><strong>Bird</strong></td><td style="color:#e74c3c;"><strong>0.40</strong></td><td style="color:#e74c3c;"><strong>0.60</strong></td><td style="color:#e74c3c;"><strong>0.48</strong></td><td>5</td></tr>
+    </table>
+    <div class="two-col-50" style="font-size:0.85em; margin-top:0.7em;">
+      <div>
+        <p><strong>Macro F1</strong> = (0.89 + 0.86 + 0.48) / 3 = <strong>0.74</strong><br>Bird pulls it down — this is what we want if Bird matters.</p>
+      </div>
+      <div>
+        <p><strong>Weighted F1</strong> = (0.89·100 + 0.86·95 + 0.48·5) / 200 ≈ <strong>0.88</strong><br>Bird barely affects it — hides poor rare-class performance.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── AUC-ROC ──────────────────────────────────────────────────────── -->
+  <section>
+    <h2>ROC curve and AUC</h2>
+    <p style="font-size:0.88em;"><strong>ROC</strong> (Receiver Operating Characteristic) plots <strong>TPR vs FPR</strong> as the decision threshold sweeps from 1 → 0.</p>
+    <div class="metric-formula">
+      AUC = P(score(positive) &gt; score(negative))
+    </div>
+    <p style="font-size:0.88em; margin-top:0.5em;">The probability that a randomly chosen positive gets a <em>higher predicted score</em> than a randomly chosen negative.</p>
+    <table style="font-size:0.82em; margin:0.6em auto; border-collapse:collapse;">
+      <tr style="background:#f5f5f5;"><th style="padding:0.3em 0.8em;">AUC</th><th>Meaning</th></tr>
+      <tr><td style="text-align:center;">0.50</td><td>Random guessing — no signal</td></tr>
+      <tr><td style="text-align:center;">0.70</td><td>Acceptable</td></tr>
+      <tr><td style="text-align:center;">0.85</td><td>Good</td></tr>
+      <tr><td style="text-align:center;">1.00</td><td>Perfect separation</td></tr>
+    </table>
+    <div class="metric-use" style="font-size:0.85em;">✓ Threshold-free. Works well on <strong>moderately imbalanced</strong> data. Default go-to when you don't know the operating threshold yet.</div>
+  </section>
+
+  <!-- ── AUC-PR ────────────────────────────────────────────────────────── -->
+  <section>
+    <h2>Precision–Recall curve and AUC-PR</h2>
+    <p style="font-size:0.88em;">Plots <strong>Precision vs Recall</strong> as threshold sweeps. The area under it is AP (average precision).</p>
+    <div class="two-col-50" style="font-size:0.85em; margin-top:0.5em;">
+      <div>
+        <p><strong>AUC-ROC</strong><br>
+        FPR denominator = TN + FP (all negatives).<br>
+        With many negatives (imbalanced data) FPR stays small even with many FP — ROC looks optimistic.</p>
+      </div>
+      <div>
+        <p><strong>AUC-PR</strong><br>
+        Precision denominator = TP + FP (only predicted positives).<br>
+        Directly measures quality of positive predictions — doesn't get inflated by abundant negatives.</p>
+      </div>
+    </div>
+    <div class="metric-use" style="margin-top:0.8em; font-size:0.85em;">✓ Use AUC-PR when the positive class is <strong>very rare (&lt; 5%)</strong>, e.g. fraud detection, medical screening.</div>
+  </section>
+
+  <!-- ── WHICH METRIC SUMMARY ─────────────────────────────────────────── -->
   <section>
     <h2>Which metric for which job?</h2>
-<ul>
-  <li class="fragment fade-up"><strong>Accuracy</strong> — only on balanced classes. Lies on imbalanced data.</li>
-  <li class="fragment fade-up"><strong>Precision</strong> — when false positives are costly (spam filter).</li>
-  <li class="fragment fade-up"><strong>Recall</strong> — when false negatives are costly (cancer screening).</li>
-  <li class="fragment fade-up"><strong>F1</strong> — when both matter equally.</li>
-  <li class="fragment fade-up"><strong>AUC</strong> — robust to threshold choice; ranks positives above negatives.</li>
-</ul>
+    <table style="font-size:0.82em; border-collapse:collapse; margin:0 auto;">
+      <tr style="background:#f5f5f5;"><th style="padding:0.4em 0.8em;">Metric</th><th>Best when</th><th>Watch out for</th></tr>
+      <tr><td><strong>Accuracy</strong></td><td>Balanced classes, equal error costs</td><td>Imbalanced data — majority-class trap</td></tr>
+      <tr><td><strong>Precision</strong></td><td>FP cost high (spam, drug approval)</td><td>Can be gamed by predicting few positives</td></tr>
+      <tr><td><strong>Recall</strong></td><td>FN cost high (cancer, fraud)</td><td>Can be gamed by predicting everything positive</td></tr>
+      <tr><td><strong>F1</strong></td><td>FP ≈ FN cost</td><td>Doesn't account for TN</td></tr>
+      <tr><td><strong>Fβ (β&gt;1)</strong></td><td>Recall more important than precision</td><td>β must be chosen deliberately</td></tr>
+      <tr><td><strong>AUC-ROC</strong></td><td>Unknown/variable threshold, moderate imbalance</td><td>Optimistic on extreme imbalance</td></tr>
+      <tr><td><strong>AUC-PR</strong></td><td>Very rare positives (&lt;5%)</td><td>Harder to interpret than AUC-ROC</td></tr>
+      <tr><td><strong>MCC</strong></td><td>Extreme imbalance, all four cells matter</td><td>Less intuitive to explain</td></tr>
+    </table>
   </section>
 
 </section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     PART 2 — KNN
+     ═══════════════════════════════════════════════════════════════════════ -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 2 · 0:30 – 1:00</span>
     <h1>KNN</h1>
     <p class="muted">the no-training baseline</p>
   </section>
+
   <section>
     <h2>KNN in one slide</h2>
-<ul>
-  <li class="fragment fade-up">To predict a new point, find its k nearest training points.</li>
-  <li class="fragment fade-up">Take a majority vote (classification) or average (regression).</li>
-  <li class="fragment fade-up"><em>No model fit</em> — the training data <em>is</em> the model.</li>
-</ul>
+    <ul>
+      <li class="fragment fade-up">To predict a new point, find its k nearest training points.</li>
+      <li class="fragment fade-up">Take a majority vote (classification) or average (regression).</li>
+      <li class="fragment fade-up"><em>No model fit</em> — the training data <em>is</em> the model.</li>
+    </ul>
   </section>
 
   <section>
     <h2>k controls the bias-variance dial</h2>
-<ul>
-  <li class="fragment fade-up"><strong>k = 1</strong> — perfectly fits training, jagged boundary, high variance.</li>
-  <li class="fragment fade-up"><strong>k = 25</strong> — smooth boundary, more bias, less variance.</li>
-  <li class="fragment fade-up">Pick k with cross-validation.</li>
-</ul>
+    <ul>
+      <li class="fragment fade-up"><strong>k = 1</strong> — perfectly fits training, jagged boundary, high variance.</li>
+      <li class="fragment fade-up"><strong>k = 25</strong> — smooth boundary, more bias, less variance.</li>
+      <li class="fragment fade-up">Pick k with cross-validation.</li>
+    </ul>
   </section>
 
   <section>
     <h2>Always scale before KNN</h2>
-<p>Income (0 to 70 000) versus balance (0 to 2700) — without scaling, KNN distance is dominated by income alone. Wrap in a Pipeline:</p><pre><code class="language-python">Pipeline([
-    (&#x27;scale&#x27;, StandardScaler()),
-    (&#x27;knn&#x27;, KNeighborsClassifier(k=5)),
+    <p>Income (0 to 70 000) versus balance (0 to 2700) — without scaling, KNN distance is dominated by income alone. Wrap in a Pipeline:</p>
+    <pre><code class="language-python">Pipeline([
+    ('scale', StandardScaler()),
+    ('knn', KNeighborsClassifier(k=5)),
 ])</code></pre>
   </section>
-
 </section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     PART 3 — CLASS IMBALANCE
+     ═══════════════════════════════════════════════════════════════════════ -->
 <section>
   <section class="title-slide">
     <span class="kicker">Part 3 · 1:00 – 1:30</span>
     <h1>Class imbalance</h1>
-    <p class="muted">the trap</p>
-  </section>
-  <section>
-    <h2>'Always say No' scores 97%</h2>
-<p>Default rate ≈ 3%. The constant classifier 0 has 97% accuracy and 0% recall on defaulters.</p><p class="callout">Accuracy is useless when classes are imbalanced. Look at recall and AUC instead.</p>
+    <p class="muted">the trap and the fixes</p>
   </section>
 
+  <!-- Why imbalance hurts -->
   <section>
-    <h2>Two fixes that always help</h2>
-<ul>
-  <li class="fragment fade-up"><code>train_test_split(stratify=y)</code> — keeps class proportions in both halves.</li>
-  <li class="fragment fade-up"><code>class_weight='balanced'</code> — weights the loss inversely to class frequency.</li>
-</ul>
+    <h2>'Always say No' scores 97%</h2>
+    <p style="font-size:0.9em;">Default rate ≈ 3.3%. Constant classifier "predict No" achieves:</p>
+    <table style="font-size:0.9em; border-collapse:collapse; margin:0.6em auto;">
+      <tr style="background:#f5f5f5;"><th style="padding:0.4em 1em;">Metric</th><th>Value</th><th>Verdict</th></tr>
+      <tr><td>Accuracy</td><td>96.7%</td><td style="color:#e74c3c;">Lies! We catch nothing.</td></tr>
+      <tr><td>Recall</td><td>0%</td><td style="color:#e74c3c;">Useless for the real goal.</td></tr>
+      <tr><td>Precision</td><td>undefined (0/0)</td><td style="color:#e74c3c;">No positive predictions.</td></tr>
+      <tr><td>F1</td><td>0</td><td style="color:#2ecc71;">Correctly punishes this model.</td></tr>
+      <tr><td>AUC</td><td>0.5</td><td style="color:#2ecc71;">Random guessing — exposed.</td></tr>
+    </table>
+    <p class="callout" style="font-size:0.85em; margin-top:0.6em;">Always pair accuracy with recall and AUC on imbalanced problems.</p>
+  </section>
+
+  <!-- Why it happens -->
+  <section>
+    <h2>Why imbalance hurts training</h2>
+    <ul>
+      <li class="fragment fade-up">The model sees far more negatives → biased toward predicting negative.</li>
+      <li class="fragment fade-up">Standard loss treats every sample equally → minority class contributes little to the gradient.</li>
+      <li class="fragment fade-up">Cross-validation folds may have no positives if splits aren't stratified.</li>
+      <li class="fragment fade-up">Decision threshold at 0.5 is often wrong — the right threshold may be 0.1 or lower.</li>
+    </ul>
+  </section>
+
+  <!-- Fix 1 — stratify + class_weight -->
+  <section>
+    <h2>Fix 1 — Stratified splits + class_weight</h2>
+    <div class="two-col-50">
+      <div>
+        <p style="font-size:0.9em;"><strong>Stratified splits</strong></p>
+        <pre><code class="language-python">train_test_split(X, y,
+    stratify=y,   # ← key
+    test_size=0.3,
+    random_state=0)</code></pre>
+        <p style="font-size:0.82em;">Ensures both halves have the same class ratio as the full dataset.</p>
+      </div>
+      <div>
+        <p style="font-size:0.9em;"><strong>class_weight</strong></p>
+        <pre><code class="language-python">LogisticRegression(
+    class_weight='balanced'
+)
+# weight = n / (K * n_k)
+# minority gets a higher weight</code></pre>
+        <p style="font-size:0.82em;">Upweights the minority loss without changing the data.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Fix 2 — threshold tuning -->
+  <section>
+    <h2>Fix 2 — Threshold tuning</h2>
+    <p style="font-size:0.9em;">The default threshold of 0.5 assumes equal misclassification costs. Lower it to increase recall:</p>
+    <pre><code class="language-python">proba = model.predict_proba(X_test)[:, 1]
+y_hat = (proba > 0.1).astype(int)   # threshold = 0.1
+print(classification_report(y_test, y_hat))</code></pre>
+    <p class="fragment fade-up callout" style="font-size:0.85em; margin-top:0.7em;">
+      Use the <strong>precision-recall curve</strong> or the <strong>ROC curve</strong> to find the threshold that meets your business constraint (e.g. FPR &lt; 5%).
+    </p>
+  </section>
+
+  <!-- Fix 3 — resampling -->
+  <section>
+    <h2>Fix 3 — Resampling</h2>
+    <div class="two-col-50" style="font-size:0.88em;">
+      <div>
+        <p><strong>Oversampling — SMOTE</strong></p>
+        <pre><code class="language-python">from imblearn.over_sampling import SMOTE
+X_res, y_res = SMOTE(random_state=0).fit_resample(X_train, y_train)</code></pre>
+        <p>Synthesises new minority samples by interpolating between existing ones. Use on very rare classes (&lt;5%).</p>
+      </div>
+      <div>
+        <p><strong>Undersampling</strong></p>
+        <pre><code class="language-python">from imblearn.under_sampling import RandomUnderSampler
+X_res, y_res = RandomUnderSampler(random_state=0).fit_resample(X_train, y_train)</code></pre>
+        <p>Randomly drops majority samples. Fast but wastes data. Useful when n is very large.</p>
+      </div>
+    </div>
+    <p class="fragment fade-up callout" style="font-size:0.82em; margin-top:0.6em;">Always resample <em>inside</em> the cross-validation loop — resampling before splitting leaks information.</p>
+  </section>
+
+  <!-- Which metric on imbalanced data -->
+  <section>
+    <h2>Metrics for imbalanced data</h2>
+    <table style="font-size:0.82em; border-collapse:collapse; margin:0 auto;">
+      <tr style="background:#f5f5f5;"><th style="padding:0.3em 0.8em;">Metric</th><th>Why it helps</th><th>Typical positive rate</th></tr>
+      <tr><td>Recall + Precision separately</td><td>Focus on minority class directly</td><td>Any</td></tr>
+      <tr><td>F1 / Fβ</td><td>Harmonic mean — zero positives → F1 = 0</td><td>Any</td></tr>
+      <tr><td>AUC-ROC</td><td>Threshold-free, unaffected by class ratio</td><td>&gt; 5%</td></tr>
+      <tr><td>AUC-PR (Average Precision)</td><td>Not inflated by abundant negatives</td><td>&lt; 5%</td></tr>
+      <tr><td>MCC</td><td>Balanced; accounts for all four CM cells</td><td>&lt; 1%</td></tr>
+    </table>
+    <p class="fragment fade-up callout" style="font-size:0.85em; margin-top:0.7em;">Never use accuracy alone on imbalanced data. Report at least recall + AUC.</p>
   </section>
 
 </section>
+
+<!-- ─── RECAP ──────────────────────────────────────────────────────────── -->
 <section class="title-slide">
   <span class="kicker">Recap</span>
   <h2>Three things to leave with</h2>
   <ol>
-<li class="fragment fade-up"><strong>A classifier outputs a label (often via a probability).</strong> Read the confusion matrix every time.</li>
-<li class="fragment fade-up"><strong>KNN: no training, no fancy math, but it does need scaling.</strong></li>
-<li class="fragment fade-up"><strong>Accuracy lies on imbalanced data.</strong> Reach for recall/AUC and class_weight.</li>
+    <li class="fragment fade-up"><strong>A classifier outputs a label (often via a probability).</strong> Read the confusion matrix every time.</li>
+    <li class="fragment fade-up"><strong>KNN: no training, no fancy math, but it does need scaling.</strong></li>
+    <li class="fragment fade-up"><strong>Accuracy lies on imbalanced data.</strong> Reach for recall/F1/AUC and class_weight.</li>
   </ol>
   <p class="callout fragment fade-up">Next: the linear classifier — logistic regression.</p>
 </section>
