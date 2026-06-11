@@ -96,6 +96,46 @@
     </p>
   </section>
 
+  <!-- EXAMPLE: Regression tree on synthetic salary data -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Regression tree on synthetic salary data</h2>
+    <div class="ex-prompt">Fit a regression tree on synthetic salary data (Years + Hits → log salary). Print the tree structure as text and see how it partitions the feature space.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.tree import DecisionTreeRegressor, export_text
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+
+rng = np.random.default_rng(42)
+n = 300
+years = rng.uniform(1, 20, n)
+hits  = rng.uniform(10, 200, n)
+# True relationship: log(salary) depends non-linearly on years and hits
+log_salary = (4.5
+              + 0.6 * (years > 4.5)
+              + 0.5 * (hits > 117) * (years > 4.5)
+              + rng.normal(0, 0.3, n))
+X = np.column_stack([years, hits])
+y = log_salary
+
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, random_state=0)
+tree = DecisionTreeRegressor(max_depth=3, random_state=0).fit(X_tr, y_tr)
+
+print(export_text(tree, feature_names=["Years","Hits"]))
+print()
+train_mse = mean_squared_error(y_tr, tree.predict(X_tr))
+test_mse  = mean_squared_error(y_te, tree.predict(X_te))
+print(f"Train MSE: {train_mse:.4f}")
+print(f"Test  MSE: {test_mse:.4f}")
+print(f"Leaves   : {tree.get_n_leaves()}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">Each internal node shows: split variable, threshold, MSE at that node, and sample count. Trace any row from root to leaf to get a plain-English prediction rule. With max_depth=3 the tree has at most 8 leaves.</script>
+  </section>
   <section>
     <h2>Reading the tree output</h2>
     <ul>
@@ -145,6 +185,37 @@
     </ul>
   </section>
 
+  <!-- EXAMPLE: Gini vs entropy vs error rate — impurity comparison -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Gini vs entropy vs error rate — impurity comparison</h2>
+    <div class="ex-prompt">Plot all three impurity measures as a function of p (fraction of class 1). See that Gini and entropy are smooth and peak at p=0.5 while error rate has a kink.</div>
+<textarea class="ex-code">import numpy as np
+
+p = np.linspace(0.001, 0.999, 200)
+
+gini    = 2 * p * (1 - p)
+entropy = -(p * np.log2(p) + (1-p) * np.log2(1-p))
+error   = 1 - np.maximum(p, 1-p)
+
+print(f"{'p':>6}  {'Gini':>8}  {'Entropy/2':>10}  {'Error':>8}")
+print("-" * 40)
+for pi in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]:
+    i = np.argmin(np.abs(p - pi))
+    print(f"{pi:>6.1f}  {gini[i]:>8.4f}  {entropy[i]/2:>10.4f}  {error[i]:>8.4f}")
+
+print()
+print("All three are 0 at p=0 (pure) and maximum at p=0.5 (worst case).")
+print("Gini and entropy are differentiable everywhere — better for tree growing.")
+print("Error rate has a kink at p=0.5 — less sensitive to small probability changes.")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">All three measures are zero for a pure node (p=0 or p=1) and maximal at p=0.5. Gini (2p(1-p)) and entropy are differentiable and reward splits that push probabilities away from 0.5. Error rate only cares about the majority class — too coarse for growing.</script>
+  </section>
   <section>
     <h2>Gini index</h2>
     <p style="text-align:center; font-size:1.3em;">
@@ -170,6 +241,49 @@
     </ul>
   </section>
 
+  <!-- EXAMPLE: Classification tree on heart disease data -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Classification tree on heart disease data</h2>
+    <div class="ex-prompt">Fit a classification tree on synthetic heart-disease-like data. Print the text tree and test accuracy. Then overfit with no max_depth and see the gap.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.tree import DecisionTreeClassifier, export_text
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, classification_report
+
+rng = np.random.default_rng(0)
+n = 303
+age   = rng.normal(55, 9, n)
+chol  = rng.normal(245, 50, n)
+bp    = rng.normal(130, 20, n)
+thal  = rng.choice([0,1,2], n, p=[0.5, 0.3, 0.2])
+# AHD = 1 if high age+cholesterol+thal
+p_ahd = 1/(1+np.exp(-(age*0.04 + chol*0.01 + bp*0.02 + thal*0.5 - 12)))
+y = rng.binomial(1, p_ahd)
+X = np.column_stack([age, chol, bp, thal])
+feat_names = ["Age","Chol","BP","Thal"]
+
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, stratify=y, random_state=0)
+
+# Pruned tree (depth 3)
+t3 = DecisionTreeClassifier(max_depth=3, random_state=0).fit(X_tr, y_tr)
+print("=== Depth-3 tree ===")
+print(export_text(t3, feature_names=feat_names))
+print(f"Train acc: {t3.score(X_tr,y_tr):.3f}  Test acc: {t3.score(X_te,y_te):.3f}")
+
+# Full tree (no depth limit — overfits)
+tf = DecisionTreeClassifier(random_state=0).fit(X_tr, y_tr)
+print(f"
+=== Full tree (depth={tf.get_depth()}, leaves={tf.get_n_leaves()}) ===")
+print(f"Train acc: {tf.score(X_tr,y_tr):.3f}  Test acc: {tf.score(X_te,y_te):.3f}  ← overfits!")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">The depth-3 tree is interpretable (a 7-node flowchart) and generalises well. The full tree memorises every training point (100% train accuracy) but performs worse on the test set — classic overfitting that pruning fixes.</script>
+  </section>
   <section>
     <h2>Heart disease example</h2>
     <ul>
@@ -230,6 +344,51 @@
     </p>
   </section>
 
+  <!-- EXAMPLE: Cost-complexity pruning — choose α with cross-validation -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Cost-complexity pruning — choose α with cross-validation</h2>
+    <div class="ex-prompt">Grow a full tree then use sklearn's cost_complexity_pruning_path to find candidate α values. Use 5-fold CV to select the best one.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.datasets import make_classification
+
+X, y = make_classification(n_samples=500, n_features=10, n_informative=5,
+                            n_redundant=2, random_state=42)
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, random_state=0)
+
+# Get candidate alpha values
+full_tree = DecisionTreeClassifier(random_state=0)
+path = full_tree.cost_complexity_pruning_path(X_tr, y_tr)
+alphas = path.ccp_alphas[::3]  # subsample for speed
+
+print(f"Number of candidate alphas: {len(alphas)}")
+print()
+print(f"{'alpha':>10}  {'CV acc':>8}  {'Leaves':>7}")
+print("-" * 32)
+best_acc, best_alpha = 0, 0
+for alpha in alphas:
+    tree = DecisionTreeClassifier(ccp_alpha=alpha, random_state=0)
+    cv_acc = cross_val_score(tree, X_tr, y_tr, cv=5, scoring="accuracy").mean()
+    tree.fit(X_tr, y_tr)
+    leaves = tree.get_n_leaves()
+    marker = " ← best" if cv_acc > best_acc else ""
+    print(f"{alpha:>10.5f}  {cv_acc:>8.4f}  {leaves:>7}{marker}")
+    if cv_acc > best_acc:
+        best_acc, best_alpha = cv_acc, alpha
+
+final = DecisionTreeClassifier(ccp_alpha=best_alpha, random_state=0).fit(X_tr, y_tr)
+print(f"
+Best alpha={best_alpha:.5f}: test acc = {final.score(X_te,y_te):.4f}, leaves={final.get_n_leaves()}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">As alpha increases, the tree is pruned more aggressively (fewer leaves). CV accuracy forms an inverted-U: too small alpha=overfits, too large alpha=underfits. The 1-SE rule: pick the simplest tree within 1 SE of the best CV score for even more parsimony.</script>
+  </section>
   <section>
     <h2>Selecting α with cross-validation</h2>
     <img src="img/tree-pruning-path.svg" style="width:65%; display:block; margin:0 auto;"
@@ -280,6 +439,51 @@
          alt="two panel comparison: linear boundary and non-linear boundary" />
   </section>
 
+  <!-- EXAMPLE: Trees vs linear models — boundary type matters -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Trees vs linear models — boundary type matters</h2>
+    <div class="ex-prompt">Fit a decision tree and logistic regression on two datasets: one with a linear boundary, one with a non-linear axis-aligned boundary. See when each wins.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
+from sklearn.datasets import make_classification, make_checkerboard
+import warnings; warnings.filterwarnings("ignore")
+
+rng = np.random.default_rng(7)
+
+# Scenario A: Linear boundary
+X_lin, y_lin = make_classification(n_samples=400, n_features=2, n_informative=2,
+                                    n_redundant=0, random_state=0)
+
+# Scenario B: Non-linear axis-aligned boundary (checkerboard)
+n = 400
+x1, x2 = rng.uniform(0,4,n), rng.uniform(0,4,n)
+y_nl = ((x1//2 + x2//2) % 2).astype(int)  # 2x2 checkerboard
+X_nl = np.column_stack([x1, x2])
+
+tree = DecisionTreeClassifier(max_depth=5, random_state=0)
+lr   = LogisticRegression(max_iter=500)
+
+for label, Xs, ys in [("Linear boundary   ", X_lin, y_lin),
+                       ("Axis-aligned (NL) ", X_nl,  y_nl)]:
+    tree_acc = cross_val_score(tree, Xs, ys, cv=5).mean()
+    lr_acc   = cross_val_score(lr,   Xs, ys, cv=5).mean()
+    winner = "Tree" if tree_acc > lr_acc else "LR  "
+    print(f"{label}  Tree={tree_acc:.3f}  LR={lr_acc:.3f}  → {winner} wins")
+
+print()
+print("Tree wins on axis-aligned non-linear patterns (splits ARE axis-aligned).")
+print("LR wins on smooth linear patterns (fewer parameters, less variance).")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">Decision trees split along axis-aligned boundaries — they excel at piecewise constant patterns like the checkerboard. Logistic regression fits a single hyperplane — it wins when the true boundary is approximately linear and needs fewer splits.</script>
+  </section>
   <section>
     <h2>When each wins</h2>
     <table style="font-size:0.9em; width:100%;">
@@ -334,6 +538,41 @@
     </ul>
   </section>
 
+  <!-- EXAMPLE: Feature importance from a decision tree -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Feature importance from a decision tree</h2>
+    <div class="ex-prompt">Fit a tree on data with known informative and noise features. Print Gini-based feature importance. Verify informative features rank highest.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.datasets import make_classification
+
+X, y = make_classification(n_samples=1000, n_features=10,
+                            n_informative=3, n_redundant=2,
+                            feature_names_out=None, random_state=42)
+feat_names = [f"feature_{i}" for i in range(10)]
+
+tree = DecisionTreeClassifier(max_depth=5, random_state=0).fit(X, y)
+importances = tree.feature_importances_
+order = np.argsort(importances)[::-1]
+
+print("Feature importances (Gini-based):")
+print(f"{'Rank':>5}  {'Feature':>12}  {'Importance':>11}  {'Bar'}")
+print("-" * 50)
+for rank, i in enumerate(order):
+    bar = "█" * int(importances[i] * 80)
+    print(f"{rank+1:>5}  {feat_names[i]:>12}  {importances[i]:>11.4f}  {bar}")
+
+print()
+print(f"Sum of all importances: {importances.sum():.4f}  (always = 1.0)")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">Gini importance = total impurity reduction attributable to each feature, normalised to sum to 1. The truly informative features (feature_0, feature_1, feature_2) should dominate. Redundant and noise features get near-zero importance.</script>
+  </section>
   <section>
     <h2>The variance problem</h2>
     <p>Fit the same depth-3 tree on <strong>four different bootstrap samples</strong> of the same training data:</p>

@@ -95,6 +95,49 @@
   </section>
 </section>
 
+  <!-- EXAMPLE: Why linear regression fails for counts -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn,statsmodels">
+    <h2>Why linear regression fails for counts</h2>
+    <div class="ex-prompt">Generate count data (bike rentals). Fit OLS and see it predict negative counts. Fit Poisson GLM and see it stays positive everywhere.</div>
+<textarea class="ex-code">import numpy as np
+import statsmodels.api as sm
+
+rng = np.random.default_rng(42)
+n = 500
+temp = rng.uniform(-1, 1, n)  # standardised temperature
+# True log-mean: 3.5 + 1.2*temp
+log_mu = 3.5 + 1.2 * temp
+counts = rng.poisson(np.exp(log_mu))
+
+X = sm.add_constant(temp)
+
+# OLS on raw counts
+ols  = sm.OLS(counts, X).fit()
+# Poisson GLM
+pois = sm.GLM(counts, X, family=sm.families.Poisson()).fit()
+
+# Predict at cold temperatures
+test_temps = np.array([-3, -2, -1, 0, 1])
+X_test = sm.add_constant(test_temps)
+
+print(f"{'Temp':>6}  {'OLS pred':>10}  {'Poisson pred':>13}  {'OLS valid?':>10}")
+print("-" * 46)
+for t, o, p in zip(test_temps, ols.predict(X_test), pois.predict(X_test)):
+    valid = "YES" if o >= 0 else "NO  ← NEGATIVE!"
+    print(f"{t:>6.1f}  {o:>10.1f}  {p:>13.1f}  {valid}")
+print()
+print(f"OLS  R²: {ols.rsquared:.4f}")
+print(f"Poisson pseudo-R² (1 - deviance/null_deviance): {1 - pois.deviance/pois.null_deviance:.4f}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">OLS extrapolates to negative counts at low temperatures — physically impossible. Poisson's log link guarantees exp(η) > 0 for any linear predictor η.</script>
+  </section>
+
 <!-- ====================================================
      PART 2 — POISSON REGRESSION
      ==================================================== -->
@@ -147,6 +190,47 @@
     </ul>
   </section>
 
+  <!-- EXAMPLE: Poisson regression — coefficient interpretation -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn,statsmodels">
+    <h2>Poisson regression — coefficient interpretation</h2>
+    <div class="ex-prompt">Fit Poisson regression on synthetic bike-rental data. Print the coefficients and their exp() values. Interpret each as a multiplicative effect on count.</div>
+<textarea class="ex-code">import numpy as np
+import statsmodels.api as sm
+
+rng = np.random.default_rng(0)
+n = 1000
+temp     = rng.normal(0, 1, n)
+workday  = rng.binomial(1, 0.7, n)
+rain     = rng.binomial(1, 0.2, n)
+
+# True model: log(E[count]) = 4.0 + 0.8*temp + 0.3*workday - 0.9*rain
+log_mu = 4.0 + 0.8*temp + 0.3*workday - 0.9*rain
+y = rng.poisson(np.exp(log_mu))
+
+X = sm.add_constant(np.column_stack([temp, workday, rain]))
+m = sm.GLM(y, X, family=sm.families.Poisson()).fit()
+
+print("Poisson regression results:")
+print(f"{'Variable':<12}  {'beta':>8}  {'e^beta':>8}  {'True beta':>10}")
+print("-" * 48)
+names = ["intercept","temp","workday","rain"]
+true_b = [4.0, 0.8, 0.3, -0.9]
+for name, b, tb in zip(names, m.params, true_b):
+    print(f"  {name:<12}  {b:>8.4f}  {np.exp(b):>8.4f}  {tb:>10.2f}")
+print()
+print("Interpretation of e^beta:")
+print(f"  temp    : +1 std temp → count × {np.exp(m.params[1]):.2f}  (×{np.exp(m.params[1]):.0%})")
+print(f"  workday : working day → count × {np.exp(m.params[2]):.2f}  (+{(np.exp(m.params[2])-1):.0%})")
+print(f"  rain    : rainy day   → count × {np.exp(m.params[3]):.2f}  ({(np.exp(m.params[3])-1):.0%})")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">Poisson coefficients are multiplicative: e^β_temp ≈ 2.23 means each +1 standard deviation of temperature more than doubles the expected count. Negative coefficients (rain) shrink the count. This is the natural scale for count data.</script>
+  </section>
   <section>
     <h2>Goodness of fit: Deviance</h2>
     <p>Deviance = 2 × (log-likelihood of saturated model − log-likelihood of fitted model)</p>
@@ -159,6 +243,48 @@
     <aside class="notes">The deviance ratio (explained/null) is analogous to R² in linear regression. AIC = deviance + 2p (penalizes model complexity), used for model selection.</aside>
   </section>
 </section>
+
+  <!-- EXAMPLE: Bikeshare by hour — Poisson captures the bimodal pattern -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn,statsmodels">
+    <h2>Bikeshare by hour — Poisson captures the bimodal pattern</h2>
+    <div class="ex-prompt">Generate synthetic hourly bike data with realistic morning and evening peaks. Fit Poisson GLM with hour dummies. Print fitted vs observed counts by hour.</div>
+<textarea class="ex-code">import numpy as np
+import pandas as pd
+import statsmodels.api as sm
+
+rng = np.random.default_rng(1)
+hours = np.tile(np.arange(24), 365)
+# Bimodal pattern: peaks at 8am and 5pm
+base = (np.sin((hours - 8) * np.pi / 6) * 1.2 +
+        np.sin((hours - 17) * np.pi / 5) * 0.8)
+log_mu = 4.5 + 0.8 * base + rng.normal(0, 0.1, len(hours))
+counts = rng.poisson(np.exp(log_mu))
+
+df = pd.DataFrame({"hour": hours, "count": counts})
+for h in range(24):
+    df[f"hr_{h}"] = (hours == h).astype(int)
+
+X = sm.add_constant(df[[f"hr_{h}" for h in range(1,24)]])
+m = sm.GLM(df["count"], X, family=sm.families.Poisson()).fit()
+
+fitted = m.fittedvalues
+by_hour = df.groupby("hour")["count"].mean()
+fit_hr  = pd.Series(fitted).groupby(df["hour"]).mean()
+
+print(f"{'Hour':>5}  {'Observed':>9}  {'Fitted':>7}")
+print("-" * 28)
+for h in range(24):
+    bar = "▇" * int(fit_hr[h] / 15)
+    print(f"  {h:>3}h  {by_hour[h]:>9.1f}  {fit_hr[h]:>7.1f}  {bar}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">The Poisson GLM with hour dummies perfectly captures the bimodal commuter pattern. Each hour dummy shifts log(E[count]) additively — a multiplicative effect on the count itself. Notice the model fits the peaks at ~8am and ~5pm.</script>
+  </section>
 
 <!-- ====================================================
      PART 3 — BIKESHARE DEMO + OVERDISPERSION
@@ -182,11 +308,7 @@
 
   <section>
     <h2>Linear regression failure</h2>
-<pre><code class="language-python">import statsmodels.api as sm
-X = pd.get_dummies(bikes[['hr','mnth','weathersit','workingday']])
-ols = sm.OLS(bikes['bikers'], sm.add_constant(X)).fit()
-preds_ols = ols.predict(sm.add_constant(X))
-print(preds_ols[preds_ols < 0].shape)  # negative predictions at night!</code></pre>
+
     <ul>
       <li class="fragment fade-up">OLS predicts negative bike rentals at 3am. Physically impossible.</li>
       <li class="fragment fade-up">OLS residuals are heteroscedastic: variance grows with the fitted mean.</li>
@@ -197,9 +319,7 @@ print(preds_ols[preds_ols < 0].shape)  # negative predictions at night!</code></
 
   <section>
     <h2>Poisson regression fit — statsmodels output</h2>
-<pre><code class="language-python">pois = sm.GLM(bikes['bikers'], X_const,
-              family=sm.families.Poisson()).fit()
-print(pois.summary())</code></pre>
+
     <table style="font-size:0.8em;width:100%;margin-top:0.5em;">
       <tr><th>Predictor</th><th>β̂</th><th>exp(β̂)</th><th>p-value</th></tr>
       <tr><td>Intercept</td><td>4.12</td><td>61.6</td><td>&lt;0.001</td></tr>
@@ -220,10 +340,7 @@ print(pois.summary())</code></pre>
       <li class="fragment fade-up">Bimodal pattern: morning rush (~8am) and evening rush (~5–6pm) captured by hour dummies.</li>
       <li class="fragment fade-up">OLS predictions: go negative at night (3–5am), miss the count's variance structure.</li>
     </ul>
-<pre><code class="language-python">bikes['fitted_poisson'] = pois.fittedvalues
-# Plot observed vs fitted by hour of day
-by_hour = bikes.groupby('hr')[['bikers','fitted_poisson']].mean()
-by_hour.plot()  # Poisson closely tracks the bimodal pattern</code></pre>
+
   </section>
 
   <section>
@@ -237,6 +354,51 @@ by_hour.plot()  # Poisson closely tracks the bimodal pattern</code></pre>
     <aside class="notes">Overdispersion is extremely common in real data. The bikeshare data is actually overdispersed — the variance of bike counts is much larger than the mean at each hour. This is because of day-to-day variation in weather, events, and other factors not in the model.</aside>
   </section>
 
+  <!-- EXAMPLE: Detecting and fixing overdispersion -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn,statsmodels">
+    <h2>Detecting and fixing overdispersion</h2>
+    <div class="ex-prompt">Generate count data with Var(Y) >> E[Y] (negative binomial, overdispersed). Fit Poisson and see SEs are too small. Fix with quasi-Poisson.</div>
+<textarea class="ex-code">import numpy as np
+import statsmodels.api as sm
+from scipy.stats import nbinom
+
+rng = np.random.default_rng(5)
+n = 1000
+x = rng.normal(0, 1, n)
+mu = np.exp(2.0 + 0.6 * x)   # E[Y] = exp(2 + 0.6x)
+# Overdispersed: generate from Negative Binomial (r=2 → heavy overdispersion)
+r = 2.0
+p_nb = r / (r + mu)
+y = rng.negative_binomial(r, p_nb)
+
+print(f"Data summary: mean={y.mean():.1f}, var={y.var():.1f}")
+print(f"Overdispersion ratio (var/mean) = {y.var()/y.mean():.2f}  (Poisson expects 1.0)")
+print()
+
+X = sm.add_constant(x)
+pois  = sm.GLM(y, X, family=sm.families.Poisson()).fit()
+pearson_chi2 = pois.pearson_chi2
+df_resid = pois.df_resid
+dispersion = pearson_chi2 / df_resid
+print(f"Pearson chi²/df = {dispersion:.2f}  (> 2 → overdispersed, SEs underestimated)")
+print()
+
+# Compare Poisson vs Quasi-Poisson SEs
+qpois = sm.GLM(y, X, family=sm.families.Poisson()).fit(scale=dispersion)
+print(f"{'':15}  {'Poisson SE':>12}  {'Quasi-P SE':>12}  {'Ratio':>7}")
+for name, p_se, q_se in zip(["intercept","x"], pois.bse, qpois.bse):
+    print(f"  {name:<15}  {p_se:>12.4f}  {q_se:>12.4f}  {q_se/p_se:>7.2f}x")
+print()
+print("Quasi-Poisson inflates SEs by sqrt(dispersion) — widening CIs appropriately.")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">Overdispersion (Var > Mean) inflates test statistics and gives false precision. Quasi-Poisson scales the SEs by sqrt(Pearson_chi2/df) ≈ sqrt(dispersion) — same coefficients, honest uncertainty. Negative binomial models the overdispersion explicitly.</script>
+  </section>
   <section>
     <h2>Fixes for overdispersion</h2>
     <table style="font-size:0.85em;width:100%;">
@@ -245,12 +407,103 @@ by_hour.plot()  # Poisson closely tracks the bimodal pattern</code></pre>
       <tr><td><strong>Negative Binomial</strong></td><td>Add dispersion parameter r: Var = μ + μ²/r</td><td>True overdispersion; better fit</td></tr>
       <tr><td><strong>Zero-Inflated Poisson</strong></td><td>Mix of Poisson + point mass at 0</td><td>Excess zeros (insurance claims, etc.)</td></tr>
     </table>
-<pre><code class="language-python"># Quasi-Poisson (scaled SEs)
-qpois = sm.GLM(y, X, family=sm.families.Poisson(),
-               var_weights=np.ones(n)).fit(scale='X2')</code></pre>
+
     <aside class="notes">For the bikeshare data, the overdispersion ratio is approximately 3–5. This means all Poisson standard errors should be multiplied by √3≈1.7 to account for the extra variance. Coefficients don't change, but significance does.</aside>
   </section>
 </section>
+
+  <!-- EXAMPLE: GLM deviance and model comparison -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn,statsmodels">
+    <h2>GLM deviance and model comparison</h2>
+    <div class="ex-prompt">Fit intercept-only vs full Poisson model. Compare null deviance vs residual deviance. Compute a Poisson pseudo-R² and AIC.</div>
+<textarea class="ex-code">import numpy as np
+import statsmodels.api as sm
+
+rng = np.random.default_rng(3)
+n = 800
+temp    = rng.normal(0, 1, n)
+workday = rng.binomial(1, 0.7, n)
+log_mu  = 3.8 + 0.9*temp + 0.4*workday
+y = rng.poisson(np.exp(log_mu))
+
+X_full = sm.add_constant(np.column_stack([temp, workday]))
+X_null = np.ones((n,1))  # intercept only
+
+m_null = sm.GLM(y, X_null, family=sm.families.Poisson()).fit()
+m_full = sm.GLM(y, X_full, family=sm.families.Poisson()).fit()
+
+print(f"Null deviance     : {m_null.deviance:.2f}  (df={m_null.df_resid})")
+print(f"Residual deviance : {m_full.deviance:.2f}  (df={m_full.df_resid})")
+print(f"Explained deviance: {m_null.deviance - m_full.deviance:.2f}")
+print()
+pseudo_r2 = 1 - m_full.deviance / m_null.deviance
+print(f"Pseudo-R² (McFadden) = {pseudo_r2:.4f}")
+print()
+print(f"AIC (null) : {m_null.aic:.2f}")
+print(f"AIC (full) : {m_full.aic:.2f}")
+print(f"ΔAIC       : {m_null.aic - m_full.aic:.2f}  (lower=better, full wins)")
+print()
+print("Poisson log-likelihood ratio test:")
+from scipy.stats import chi2
+lr_stat = m_null.deviance - m_full.deviance
+p_val   = chi2.sf(lr_stat, df=2)
+print(f"  LR statistic = {lr_stat:.2f} (df=2), p = {p_val:.2e}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">Poisson deviance plays the role of RSS in OLS. The pseudo-R² = 1 - residual/null deviance measures how much variance the model explains on the log-likelihood scale. AIC penalizes complexity: full model wins when the improvement exceeds 2×(extra params).</script>
+  </section>
+
+  <!-- EXAMPLE: Poisson vs OLS residual patterns -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn,statsmodels">
+    <h2>Poisson vs OLS residual patterns</h2>
+    <div class="ex-prompt">Compare residuals of OLS vs Poisson on count data. OLS shows heteroscedasticity (variance grows with fitted value). Poisson residuals are well-behaved.</div>
+<textarea class="ex-code">import numpy as np
+import statsmodels.api as sm
+
+rng = np.random.default_rng(9)
+n = 600
+x = rng.uniform(0, 3, n)
+log_mu = 1.5 + 0.8*x
+y = rng.poisson(np.exp(log_mu))
+
+X = sm.add_constant(x)
+ols  = sm.OLS(y, X).fit()
+pois = sm.GLM(y, X, family=sm.families.Poisson()).fit()
+
+# Pearson residuals for Poisson: (y - mu) / sqrt(mu)
+pois_resid = pois.resid_pearson
+
+# Check variance of OLS residuals in 3 bands of fitted values
+fitted_ols = ols.fittedvalues
+resid_ols  = ols.resid
+low  = resid_ols[fitted_ols < 10]
+mid  = resid_ols[(fitted_ols >= 10) & (fitted_ols < 20)]
+high = resid_ols[fitted_ols >= 20]
+
+print("OLS residual variance by fitted-value band (should be ~constant if homoscedastic):")
+print(f"  fitted < 10  : var(resid) = {low.var():.2f}")
+print(f"  10 ≤ fitted < 20: var(resid) = {mid.var():.2f}")
+print(f"  fitted ≥ 20  : var(resid) = {high.var():.2f}")
+print("  → Variance GROWS with fitted value = heteroscedasticity")
+print()
+print(f"Poisson Pearson residuals: mean={pois_resid.mean():.3f}, var={pois_resid.var():.3f}")
+print("  → Pearson residuals should be ~N(0,1) if model is correct")
+print()
+print(f"Overdispersion check: Pearson chi²/df = {pois.pearson_chi2/pois.df_resid:.3f}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">OLS on counts violates the constant-variance assumption: residual variance grows with the fitted mean (heteroscedasticity). Poisson automatically accounts for this because Var=Mean is built into the likelihood. Pearson residuals near 1.0 confirm the model is well-specified.</script>
+  </section>
 
 <!-- RECAP -->
 <section class="title-slide">

@@ -77,15 +77,92 @@
 
   <section>
     <h2>Why averaging reduces variance</h2>
-    <p>If B independent trees each have variance σ²,</p>
-    <p style="text-align:center; font-size:1.2em;">Var(mean) = σ²/B → 0 as B → ∞</p>
-    <p class="fragment fade-up" style="margin-top:0.6em;">The trees aren't independent — they share training data, so they're <em>correlated</em> with pairwise correlation ρ. The limit is:</p>
-    <p class="fragment fade-up" style="text-align:center; font-size:1.1em;">Var(mean) → ρσ²</p>
-    <p class="callout fragment fade-up" style="margin-top:0.6em;">
+    <img src="img/variance-formula.svg" style="width:72%; display:block; margin:0 auto;"
+         alt="Variance vs number of trees: independent vs correlated" />
+    <p class="callout fragment fade-up" style="margin-top:0.5em;">
       Even if ρ = 0.8, averaging 300 trees reduces variance by a factor of ~5. Random forests will reduce ρ further.
     </p>
   </section>
 
+  <!-- EXAMPLE: Bagging reduces variance — see it directly -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Bagging reduces variance — see it directly</h2>
+    <div class="ex-prompt">Show that averaging multiple noisy trees produces a stable, lower-variance predictor. Compare single tree vs bagging as B increases.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+X, y = make_classification(n_samples=600, n_features=10, n_informative=5,
+                            random_state=42)
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, random_state=0)
+
+rng = np.random.default_rng(0)
+single_accs = []
+for _ in range(20):
+    idx = rng.integers(0, len(X_tr), len(X_tr))
+    t = DecisionTreeClassifier(random_state=int(rng.integers(1000))).fit(X_tr[idx], y_tr[idx])
+    single_accs.append(accuracy_score(y_te, t.predict(X_te)))
+
+Bs = list(range(1, 151))
+bagged_accs = []
+votes = np.zeros((len(X_te), 2))
+rng2 = np.random.default_rng(0)
+for b in Bs:
+    idx = rng2.integers(0, len(X_tr), len(X_tr))
+    t = DecisionTreeClassifier(random_state=b).fit(X_tr[idx], y_tr[idx])
+    for i, p in enumerate(t.predict(X_te)):
+        votes[i, int(p)] += 1
+    bagged_accs.append(accuracy_score(y_te, votes.argmax(axis=1)))
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 3.8))
+
+# Left: single tree variance
+ax = axes[0]
+ax.scatter(range(1, 21), single_accs, color='#e53935', zorder=3, s=50)
+ax.axhline(np.mean(single_accs), color='#e53935', linestyle='--', linewidth=1.5,
+           label=f'mean={np.mean(single_accs):.3f}')
+ax.fill_between(range(1, 21),
+                np.mean(single_accs) - np.std(single_accs),
+                np.mean(single_accs) + np.std(single_accs),
+                alpha=0.15, color='#e53935')
+ax.set_title('Single tree: high variance', fontsize=11, fontweight='bold')
+ax.set_xlabel('Bootstrap run')
+ax.set_ylabel('Test accuracy')
+ax.set_ylim(0.70, 0.95)
+ax.legend(fontsize=9)
+ax.text(10, np.mean(single_accs) - np.std(single_accs) - 0.025,
+        f'std = {np.std(single_accs):.3f}', ha='center', fontsize=9, color='#e53935')
+
+# Right: bagged accuracy vs B
+ax = axes[1]
+ax.plot(Bs, bagged_accs, color='#1e88e5', linewidth=2)
+ax.axhline(bagged_accs[-1], color='#1e88e5', linestyle=':', linewidth=1, alpha=0.7)
+ax.set_title('Bagging: variance shrinks with B', fontsize=11, fontweight='bold')
+ax.set_xlabel('Number of trees B')
+ax.set_ylabel('Test accuracy')
+ax.set_ylim(0.70, 0.95)
+for b in [1, 10, 50, 150]:
+    ax.scatter([b], [bagged_accs[b-1]], color='#1e88e5', s=60, zorder=3)
+    ax.annotate(f'{bagged_accs[b-1]:.3f}', (b, bagged_accs[b-1]),
+                textcoords='offset points', xytext=(5, 5), fontsize=8)
+
+plt.tight_layout()
+plt.show()
+
+print(f"Single tree variance (std): {np.std(single_accs):.4f}")
+print(f"Bagged B=1:  {bagged_accs[0]:.4f}  →  B=150: {bagged_accs[-1]:.4f}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">With B=1 tree the accuracy fluctuates wildly across bootstrap samples (high variance). As B increases, the averaged prediction stabilises. The improvement plateaus around B=100-200 — more trees never hurt, they just stop helping much.</script>
+  </section>
   <section>
     <h2>OOB error — a free cross-validation</h2>
     <img src="img/bagging-variance-reduction.svg" style="width:65%; display:block; margin:0 auto;"
@@ -98,6 +175,74 @@
     </ul>
   </section>
 
+  <!-- EXAMPLE: OOB error — free cross-validation -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>OOB error — free cross-validation</h2>
+    <div class="ex-prompt">Use sklearn's BaggingClassifier with oob_score=True. Compare OOB error to held-out test error — they should be very close.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.ensemble import BaggingClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+X, y = make_classification(n_samples=1000, n_features=15, n_informative=8,
+                            random_state=0)
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, random_state=0)
+
+# Track OOB and test accuracy as B grows
+Bs = [10, 25, 50, 75, 100, 150, 200]
+oob_accs, test_accs = [], []
+for B in Bs:
+    bag = BaggingClassifier(estimator=DecisionTreeClassifier(),
+                             n_estimators=B, oob_score=True, random_state=0).fit(X_tr, y_tr)
+    oob_accs.append(bag.oob_score_)
+    test_accs.append(accuracy_score(y_te, bag.predict(X_te)))
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 3.8))
+
+# Left: OOB vs test as B grows
+ax = axes[0]
+ax.plot(Bs, oob_accs,  'o--', color='#e65100', linewidth=2, label='OOB accuracy')
+ax.plot(Bs, test_accs, 's-',  color='#1565c0', linewidth=2, label='Test accuracy')
+ax.set_title('OOB tracks test accuracy as B grows', fontsize=11, fontweight='bold')
+ax.set_xlabel('Number of trees B')
+ax.set_ylabel('Accuracy')
+ax.legend()
+ax.set_ylim(0.82, 0.94)
+
+# Right: final comparison bar chart with gap annotation
+ax = axes[1]
+final_oob  = oob_accs[-1]
+final_test = test_accs[-1]
+bars = ax.bar(['OOB accuracy', 'Test accuracy'], [final_oob, final_test],
+               color=['#e65100', '#1565c0'], width=0.4, alpha=0.85)
+ax.set_ylim(0.80, 0.96)
+ax.set_title(f'B=200  ·  gap = {abs(final_oob - final_test):.4f}', fontsize=11, fontweight='bold')
+ax.set_ylabel('Accuracy')
+for bar, val in zip(bars, [final_oob, final_test]):
+    ax.text(bar.get_x() + bar.get_width()/2, val + 0.003,
+            f'{val:.4f}', ha='center', fontsize=10, fontweight='bold')
+ax.annotate('', xy=(1, final_test + 0.005), xytext=(0, final_oob + 0.005),
+            arrowprops=dict(arrowstyle='<->', color='#555', lw=1.5))
+ax.text(0.5, max(final_oob, final_test) + 0.012,
+        f'Δ={abs(final_oob-final_test):.4f}', ha='center', fontsize=9, color='#555')
+
+plt.tight_layout()
+plt.show()
+
+print(f"B=200  OOB={final_oob:.4f}  Test={final_test:.4f}  gap={abs(final_oob-final_test):.4f}")
+print("OOB closely tracks test error — no separate validation set needed.")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">Each bootstrap sample omits ~37% of training data. Averaging predictions from trees that never saw a point gives an honest error estimate — similar to leave-one-out CV but essentially free. This is why we rarely need a separate validation set with bagging.</script>
+  </section>
   <section>
     <h2>Bagging results on Boston</h2>
     <ul>
@@ -122,14 +267,10 @@
 
   <section>
     <h2>The decorrelation trick</h2>
-    <p>At <em>every split</em>, sample only m out of p features uniformly at random. Only those m are eligible for this split.</p>
-    <ul style="margin-top:0.8em;">
-      <li class="fragment fade-up">If one strong predictor dominates, it's <strong>excluded</strong> from many splits.</li>
-      <li class="fragment fade-up">Other predictors get a chance → trees become more different from each other.</li>
-      <li class="fragment fade-up">Lower correlation ρ between trees → larger variance reduction when averaging.</li>
-    </ul>
-    <p class="callout fragment fade-up" style="margin-top:0.8em;">
-      Bagging with m=p is just bagging. RF with m &lt; p decorrelates the trees.
+    <img src="img/rf-decorrelation.svg" style="width:88%; display:block; margin:0 auto;"
+         alt="Bagging vs Random Forest: decorrelation via feature subsampling" />
+    <p class="callout fragment fade-up" style="margin-top:0.4em;">
+      Bagging with m=p is just bagging. RF with m &lt; p decorrelates the trees and shrinks the variance floor.
     </p>
   </section>
 
@@ -151,6 +292,60 @@
     </div>
   </section>
 
+  <!-- EXAMPLE: Random Forest — effect of max_features on accuracy -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Random Forest — effect of max_features on accuracy</h2>
+    <div class="ex-prompt">Vary max_features from 1 to all p features. See the U-shaped accuracy curve: too few features → high bias; too many → correlated trees → high variance.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+from sklearn.datasets import make_classification
+
+X, y = make_classification(n_samples=800, n_features=20, n_informative=10,
+                            n_redundant=4, random_state=0)
+p = X.shape[1]
+
+ms = [1, 2, 3, 4, 5, 7, 10, 15, 20]
+accs = []
+for m in ms:
+    rf = RandomForestClassifier(n_estimators=100, max_features=m, random_state=0)
+    accs.append(cross_val_score(rf, X, y, cv=5).mean())
+
+sqrt_p = int(p**0.5)
+fig, ax = plt.subplots(figsize=(7, 4))
+colors = ['#e53935' if m == sqrt_p else '#1e88e5' for m in ms]
+bars = ax.bar([str(m) for m in ms], accs, color=colors, alpha=0.85)
+ax.set_xlabel('max_features (m)', fontsize=11)
+ax.set_ylabel('5-fold CV accuracy', fontsize=11)
+ax.set_title(f'U-shaped curve: m=√p={sqrt_p} is optimal  (p={p} features)', fontsize=11, fontweight='bold')
+ax.set_ylim(min(accs) - 0.02, max(accs) + 0.025)
+for bar, acc in zip(bars, accs):
+    ax.text(bar.get_x() + bar.get_width()/2, acc + 0.003,
+            f'{acc:.3f}', ha='center', fontsize=8)
+
+# Annotations
+sqrt_idx = ms.index(sqrt_p)
+ax.annotate('sqrt(p)\ndefault', xy=(sqrt_idx, accs[sqrt_idx]),
+            xytext=(sqrt_idx - 1.5, accs[sqrt_idx] + 0.015),
+            arrowprops=dict(arrowstyle='->', color='#e53935', lw=1.5),
+            fontsize=9, color='#e53935', fontweight='bold')
+ax.annotate('← high bias\n(few features)', xy=(0, accs[0]),
+            xytext=(0.2, accs[0] - 0.015), fontsize=8, color='#555')
+ax.annotate('← correlated trees\n(= bagging)', xy=(len(ms)-1, accs[-1]),
+            xytext=(len(ms)-2.8, accs[-1] - 0.015), fontsize=8, color='#555')
+
+plt.tight_layout()
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">With m=1 only one random feature per split → trees are nearly independent but each tree has high bias (misses the best split). With m=p it's just bagging (correlated trees). The optimal m ≈ sqrt(p) balances decorrelation vs split quality — sklearn's default for classification.</script>
+  </section>
   <section>
     <h2>Variable importance</h2>
     <p>Two ways to measure importance of feature j:</p>
@@ -163,6 +358,67 @@
     </p>
   </section>
 
+  <!-- EXAMPLE: Random Forest feature importance -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Random Forest feature importance</h2>
+    <div class="ex-prompt">Fit a Random Forest and compare feature importances. With 200 trees, the importance estimates are more stable and reliable than from a single tree.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.datasets import make_classification
+from sklearn.inspection import permutation_importance
+from sklearn.model_selection import train_test_split
+
+X, y = make_classification(n_samples=1000, n_features=12,
+                            n_informative=4, n_redundant=2,
+                            random_state=7)
+feat_names = [f"X{i}" for i in range(12)]
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, random_state=0)
+
+rf = RandomForestClassifier(n_estimators=200, random_state=0).fit(X_tr, y_tr)
+
+gini_imp = rf.feature_importances_
+perm = permutation_importance(rf, X_te, y_te, n_repeats=10, random_state=0)
+
+gini_order = np.argsort(gini_imp)
+perm_order = np.argsort(perm.importances_mean)
+
+fig, axes = plt.subplots(1, 2, figsize=(11, 4))
+
+# Gini importance
+ax = axes[0]
+colors_g = ['#e53935' if gini_imp[i] == max(gini_imp) else '#1e88e5' for i in gini_order]
+ax.barh([feat_names[i] for i in gini_order], gini_imp[gini_order],
+        color=colors_g, alpha=0.85)
+ax.set_title('Gini (impurity) importance', fontsize=11, fontweight='bold')
+ax.set_xlabel('Mean impurity decrease')
+ax.axvline(0, color='#ccc', linewidth=0.8)
+
+# Permutation importance with error bars
+ax = axes[1]
+means = perm.importances_mean[perm_order]
+stds  = perm.importances_std[perm_order]
+colors_p = ['#e53935' if means[-1] == max(means) else '#2e7d32' for _ in perm_order]
+colors_p = ['#e53935' if m == max(means) else '#2e7d32' for m in means]
+ax.barh([feat_names[i] for i in perm_order], means,
+        xerr=stds, color=colors_p, alpha=0.85, capsize=3)
+ax.set_title('Permutation importance (test set)', fontsize=11, fontweight='bold')
+ax.set_xlabel('Accuracy drop when feature shuffled')
+ax.axvline(0, color='#ccc', linewidth=0.8)
+
+plt.suptitle('Features with high importance: X0–X3 are the 4 informative ones',
+             fontsize=10, color='#555', style='italic')
+plt.tight_layout()
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">Gini importance is fast but biased toward high-cardinality features. Permutation importance shuffles each column on the test set and measures accuracy drop — more honest but slower. Use permutation importance for final reports, Gini for quick screening.</script>
+  </section>
   <section>
     <h2>Gene expression: Khan dataset</h2>
     <ul>
@@ -235,19 +491,166 @@
     </p>
   </section>
 
+  <!-- EXAMPLE: Gradient Boosting — three tuning knobs -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Gradient Boosting — three tuning knobs</h2>
+    <div class="ex-prompt">Fit GradientBoostingClassifier while varying learning_rate, n_estimators, and max_depth. See how each affects train vs test accuracy.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.datasets import make_classification
+
+X, y = make_classification(n_samples=1000, n_features=15, n_informative=8, random_state=0)
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, random_state=0)
+
+lrs = [0.5, 0.2, 0.1, 0.05, 0.01]
+lr_train, lr_test = [], []
+for lr in lrs:
+    gb = GradientBoostingClassifier(learning_rate=lr, n_estimators=100,
+                                     max_depth=3, random_state=0).fit(X_tr, y_tr)
+    lr_train.append(gb.score(X_tr, y_tr))
+    lr_test.append(gb.score(X_te, y_te))
+
+Bs = [10, 25, 50, 100, 200, 400]
+B_train, B_test = [], []
+for B in Bs:
+    gb = GradientBoostingClassifier(learning_rate=0.05, n_estimators=B,
+                                     max_depth=3, random_state=0).fit(X_tr, y_tr)
+    B_train.append(gb.score(X_tr, y_tr))
+    B_test.append(gb.score(X_te, y_te))
+
+fig, axes = plt.subplots(1, 2, figsize=(11, 4))
+
+# Left: learning rate effect
+ax = axes[0]
+x = range(len(lrs))
+ax.plot(x, lr_train, 'o--', color='#e53935', linewidth=2, label='Train')
+ax.plot(x, lr_test,  's-',  color='#1e88e5', linewidth=2, label='Test')
+ax.set_xticks(x)
+ax.set_xticklabels([str(lr) for lr in lrs])
+ax.set_xlabel('learning_rate (λ)', fontsize=11)
+ax.set_ylabel('Accuracy', fontsize=11)
+ax.set_title('Effect of learning_rate\n(n_estimators=100, depth=3)', fontsize=10, fontweight='bold')
+ax.legend()
+ax.set_ylim(0.82, 1.01)
+# Mark best test
+best_lr_idx = np.argmax(lr_test)
+ax.scatter([best_lr_idx], [lr_test[best_lr_idx]], s=120, zorder=5,
+           facecolors='none', edgecolors='#1e88e5', linewidths=2)
+ax.annotate('best test', (best_lr_idx, lr_test[best_lr_idx]),
+            textcoords='offset points', xytext=(8, -12), fontsize=8, color='#1e88e5')
+
+# Right: n_estimators effect
+ax = axes[1]
+ax.plot(Bs, B_train, 'o--', color='#e53935', linewidth=2, label='Train')
+ax.plot(Bs, B_test,  's-',  color='#1e88e5', linewidth=2, label='Test')
+ax.set_xlabel('n_estimators (B)', fontsize=11)
+ax.set_ylabel('Accuracy', fontsize=11)
+ax.set_title('Effect of n_estimators\n(lr=0.05, depth=3)', fontsize=10, fontweight='bold')
+ax.legend()
+ax.set_ylim(0.82, 1.01)
+best_B_idx = np.argmax(B_test)
+ax.scatter([Bs[best_B_idx]], [B_test[best_B_idx]], s=120, zorder=5,
+           facecolors='none', edgecolors='#1e88e5', linewidths=2)
+ax.annotate('plateaus here', (Bs[best_B_idx], B_test[best_B_idx]),
+            textcoords='offset points', xytext=(5, -14), fontsize=8, color='#1e88e5')
+
+plt.tight_layout()
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">Small learning_rate needs more trees but almost always generalises better. Large lr overshoots and can overfit. n_estimators should be determined by early stopping: keep adding trees until test error stops improving. max_depth=1 (stumps) uses pure additive effects; depth=2 captures one-level interactions.</script>
+  </section>
   <section>
     <h2>Shrinkage: the analogy</h2>
-    <p>Think of boosting as walking toward the target:</p>
-    <ul>
-      <li class="fragment fade-up"><strong>Large λ (e.g. 1.0):</strong> huge steps → overshoot, oscillate, never converge.</li>
-      <li class="fragment fade-up"><strong>Small λ (e.g. 0.01):</strong> tiny steps → slow but steady, converges to the right place.</li>
-      <li class="fragment fade-up">Each step adds a little bit of signal while spreading the error-correction across many trees.</li>
-    </ul>
-    <p class="callout fragment fade-up" style="margin-top:0.8em;">
+    <img src="img/shrinkage-analogy.svg" style="width:88%; display:block; margin:0 auto;"
+         alt="Large vs small learning rate: overshooting vs steady convergence" />
+    <p class="callout fragment fade-up" style="margin-top:0.4em;">
       The practical rule: set λ = 0.01–0.05 and let B be determined by early stopping on a validation set.
     </p>
   </section>
 
+  <!-- EXAMPLE: Ensemble comparison: single tree vs bagging vs RF vs GBM -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Ensemble comparison: single tree vs bagging vs RF vs GBM</h2>
+    <div class="ex-prompt">Run all four methods on the same dataset. Compare test accuracy and training time. See the progression from high-variance trees to tuned boosting.</div>
+<textarea class="ex-code">import numpy as np
+import time
+import matplotlib.pyplot as plt
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import BaggingClassifier, RandomForestClassifier, GradientBoostingClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.datasets import make_classification
+
+X, y = make_classification(n_samples=2000, n_features=20, n_informative=10,
+                            n_redundant=4, random_state=42)
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, random_state=0)
+
+specs = [
+    ("Single Tree",   DecisionTreeClassifier(max_depth=5, random_state=0)),
+    ("Bagging",       BaggingClassifier(n_estimators=100, random_state=0)),
+    ("Random Forest", RandomForestClassifier(n_estimators=100, random_state=0)),
+    ("Grad Boosting", GradientBoostingClassifier(learning_rate=0.05, n_estimators=200,
+                                                  max_depth=3, random_state=0)),
+]
+
+names, train_accs, test_accs, times_ms = [], [], [], []
+for name, m in specs:
+    t0 = time.time()
+    m.fit(X_tr, y_tr)
+    times_ms.append((time.time() - t0) * 1000)
+    names.append(name)
+    train_accs.append(m.score(X_tr, y_tr))
+    test_accs.append(m.score(X_te, y_te))
+
+fig, axes = plt.subplots(1, 2, figsize=(11, 4))
+y_pos = np.arange(len(names))
+colors = ['#90a4ae', '#ffb74d', '#42a5f5', '#ef5350']
+
+# Left: train vs test accuracy
+ax = axes[0]
+h = 0.35
+ax.barh(y_pos + h/2, train_accs, h, color=[c + 'aa' for c in ['#90a4ae','#ffb74d','#42a5f5','#ef5350']],
+        label='Train', alpha=0.75)
+ax.barh(y_pos - h/2, test_accs,  h, color=colors, label='Test', alpha=0.95)
+ax.set_yticks(y_pos)
+ax.set_yticklabels(names)
+ax.set_xlabel('Accuracy')
+ax.set_title('Train vs Test accuracy', fontsize=11, fontweight='bold')
+ax.axvline(max(test_accs), color='#555', linestyle=':', linewidth=1)
+ax.legend(loc='lower right')
+ax.set_xlim(0.82, 1.01)
+for i, (tr, te) in enumerate(zip(train_accs, test_accs)):
+    ax.text(te + 0.002, i - h/2, f'{te:.3f}', va='center', fontsize=8, fontweight='bold')
+
+# Right: training time
+ax = axes[1]
+bars = ax.barh(y_pos, times_ms, color=colors, alpha=0.85)
+ax.set_yticks(y_pos)
+ax.set_yticklabels(names)
+ax.set_xlabel('Training time (ms)')
+ax.set_title('Training time', fontsize=11, fontweight='bold')
+for bar, ms in zip(bars, times_ms):
+    ax.text(bar.get_width() + max(times_ms)*0.01, bar.get_y() + bar.get_height()/2,
+            f'{ms:.0f} ms', va='center', fontsize=9)
+
+plt.tight_layout()
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">Single tree has high variance (overfits). Bagging reduces variance by averaging. Random Forest decorrelates trees further. GBM reduces both bias and variance sequentially. GBM usually wins on structured tabular data but costs more training time.</script>
+  </section>
   <section>
     <h2>Results on Hitters salary</h2>
     <ul>

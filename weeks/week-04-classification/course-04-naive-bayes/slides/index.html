@@ -95,6 +95,93 @@
   </section>
 </section>
 
+  <!-- EXAMPLE: Naive Bayes by hand — verify the formula -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Naive Bayes by hand — verify the formula</h2>
+    <div class="ex-prompt">Build Gaussian NB from scratch. Compute log-posterior per class for each test point and compare to sklearn GaussianNB. They should match exactly.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.naive_bayes import GaussianNB
+
+rng = np.random.default_rng(42)
+# 2-class data with 2 independent features
+X0 = rng.multivariate_normal([0, 0], np.eye(2), 200)
+X1 = rng.multivariate_normal([3, 2], np.eye(2), 200)
+X  = np.vstack([X0, X1])
+y  = np.hstack([np.zeros(200), np.ones(200)])
+
+# Fit sklearn GNB
+gnb = GaussianNB().fit(X, y)
+
+# Manual NB: estimate params
+pi   = np.array([(y==k).mean() for k in [0,1]])
+mu   = np.array([X[y==k].mean(0) for k in [0,1]])
+var  = np.array([X[y==k].var(0)  for k in [0,1]])
+
+def log_posterior(x):
+    scores = []
+    for k in [0,1]:
+        ll = -0.5 * np.sum(np.log(2*np.pi*var[k]) + (x - mu[k])**2 / var[k])
+        scores.append(np.log(pi[k]) + ll)
+    return scores
+
+test_pts = np.array([[1,1],[2,1],[0,3],[-1,-1]])
+print(f"{'Point':<12}  {'Manual class':>13}  {'sklearn class':>13}")
+for pt in test_pts:
+    scores = log_posterior(pt)
+    manual  = int(scores[1] > scores[0])
+    sklearn = gnb.predict(pt.reshape(1,-1))[0]
+    print(f"  {str(pt):<12}  {manual:>13}  {int(sklearn):>13}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">The manual log-posterior exactly matches sklearn. Each feature contributes independently and additively to the log-score — that's the 'naive' conditional independence assumption.</script>
+  </section>
+
+  <!-- EXAMPLE: GaussianNB: inspect the learned parameters -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>GaussianNB: inspect the learned parameters</h2>
+    <div class="ex-prompt">Fit GaussianNB on synthetic Default data. Inspect the per-class means (theta_) and variances (var_) that were learned. Print them in a readable table.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.naive_bayes import GaussianNB
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_auc_score
+
+rng = np.random.default_rng(0)
+n = 5000
+balance = rng.normal(1500, 600, n)
+income  = rng.normal(35000, 15000, n)
+p = 1 / (1 + np.exp(-(balance*0.005 - 8.5)))
+y = rng.binomial(1, p)
+X = np.column_stack([balance, income])
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, stratify=y, random_state=0)
+
+gnb = GaussianNB().fit(X_tr, y_tr)
+
+print("Class priors:", gnb.class_prior_.round(4))
+print()
+print(f"{'Feature':<10}  {'No-Default mean':>16}  {'Default mean':>13}")
+for j, name in enumerate(["balance", "income"]):
+    print(f"  {name:<10}  {gnb.theta_[0,j]:>16.1f}  {gnb.theta_[1,j]:>13.1f}")
+print()
+print(f"{'Feature':<10}  {'No-Default var':>15}  {'Default var':>12}")
+for j, name in enumerate(["balance", "income"]):
+    print(f"  {name:<10}  {gnb.var_[0,j]:>15.1f}  {gnb.var_[1,j]:>12.1f}")
+print()
+print(f"Test AUC: {roc_auc_score(y_te, gnb.predict_proba(X_te)[:,1]):.4f}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">The default class has a much higher mean balance (that's the signal). Income has similar means across classes (little signal). Each feature's distribution is modelled independently — the off-diagonal correlation between balance and income is completely ignored.</script>
+  </section>
+
 <!-- ====================================================
      PART 2 — TOY EXAMPLE + CONNECTIONS
      ==================================================== -->
@@ -113,9 +200,7 @@
       <li class="fragment fade-up">LDA decision regions: <strong>tilted ellipses</strong> — the shared Σ captures feature correlations.</li>
       <li class="fragment fade-up">When features truly are independent within class, NB = optimal Bayes classifier.</li>
     </ul>
-<pre><code class="language-python">from sklearn.naive_bayes import GaussianNB
-gnb = GaussianNB().fit(X_train, y_train)
-# Decision boundary plot: compare with LDA boundary</code></pre>
+
     <aside class="notes">This is similar to Figure 4.14 in ISLR 2nd edition. The key visual: NB has axis-aligned decision contours; LDA contours can be rotated. When features are correlated within a class, LDA captures this; NB misses it and loses accuracy.</aside>
   </section>
 
@@ -156,6 +241,52 @@ gnb = GaussianNB().fit(X_train, y_train)
   </section>
 </section>
 
+  <!-- EXAMPLE: NB ignores within-class correlations — when it hurts -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>NB ignores within-class correlations — when it hurts</h2>
+    <div class="ex-prompt">Generate 2-class data with strongly correlated features within each class. Compare GaussianNB vs LDA. LDA captures the correlation; NB ignores it and loses.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.naive_bayes import GaussianNB
+from sklearn.model_selection import cross_val_score
+
+rng = np.random.default_rng(7)
+n = 600
+# Strong within-class correlation: rho = 0.9
+Sigma = np.array([[1, 0.9],[0.9, 1]])
+X0 = rng.multivariate_normal([0,0], Sigma, n//2)
+X1 = rng.multivariate_normal([2,2], Sigma, n//2)
+X  = np.vstack([X0, X1])
+y  = np.hstack([np.zeros(n//2), np.ones(n//2)])
+
+lda_auc = cross_val_score(LinearDiscriminantAnalysis(), X, y, cv=5, scoring="roc_auc").mean()
+gnb_auc = cross_val_score(GaussianNB(),                 X, y, cv=5, scoring="roc_auc").mean()
+
+print(f"Within-class feature correlation: rho = 0.9")
+print()
+print(f"  LDA AUC = {lda_auc:.4f}  (models the correlation)")
+print(f"  NB  AUC = {gnb_auc:.4f}  (ignores the correlation)")
+print()
+print(f"  LDA advantage: {lda_auc - gnb_auc:+.4f}")
+print()
+print("With uncorrelated features (rho=0):")
+Sigma_uncorr = np.eye(2)
+X0u = rng.multivariate_normal([0,0], Sigma_uncorr, n//2)
+X1u = rng.multivariate_normal([2,2], Sigma_uncorr, n//2)
+Xu = np.vstack([X0u, X1u])
+lda2 = cross_val_score(LinearDiscriminantAnalysis(), Xu, y, cv=5, scoring="roc_auc").mean()
+gnb2 = cross_val_score(GaussianNB(),                 Xu, y, cv=5, scoring="roc_auc").mean()
+print(f"  LDA AUC = {lda2:.4f}  |  NB AUC = {gnb2:.4f}  (rho=0, both equal)")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">When features are strongly correlated within each class (rho=0.9), LDA wins because it models the full covariance matrix. When features are independent (rho=0), LDA and NB perform identically — NB's assumption holds perfectly.</script>
+  </section>
+
 <!-- ====================================================
      PART 3 — SKLEARN + WIN/LOSS
      ==================================================== -->
@@ -180,14 +311,7 @@ gnb = GaussianNB().fit(X_train, y_train)
 
   <section>
     <h2>GaussianNB on Default</h2>
-<pre><code class="language-python">from sklearn.naive_bayes import GaussianNB
-gnb = GaussianNB()
-gnb.fit(X_train, y_train)
-print('AUC:', roc_auc_score(y_test, gnb.predict_proba(X_test)[:,1]))
 
-# Learned parameters per class:
-gnb.theta_          # class means (K × p)
-gnb.var_            # class variances (K × p)</code></pre>
     <ul>
       <li class="fragment fade-up">NB with Gaussian marginals fits μ<sub>kj</sub> and σ²<sub>kj</sub> independently per feature per class.</li>
       <li class="fragment fade-up">No covariance between features is estimated — the independence assumption is baked in.</li>
@@ -196,13 +320,7 @@ gnb.var_            # class variances (K × p)</code></pre>
 
   <section>
     <h2>MultinomialNB — the spam filter</h2>
-<pre><code class="language-python">from sklearn.naive_bayes import MultinomialNB
-from sklearn.feature_extraction.text import CountVectorizer
 
-vec  = CountVectorizer()
-X_counts = vec.fit_transform(text_data)   # sparse word-count matrix
-mnb = MultinomialNB(alpha=1.0)            # alpha = Laplace smoothing
-mnb.fit(X_counts, y_text)</code></pre>
     <ul>
       <li class="fragment fade-up">Each feature = word count. P(word w | class k) estimated from frequency tables.</li>
       <li class="fragment fade-up"><strong>Laplace smoothing</strong> (alpha=1.0): add 1 to every count to avoid P(unseen word) = 0.</li>
@@ -211,6 +329,55 @@ mnb.fit(X_counts, y_text)</code></pre>
     <aside class="notes">Spam filtering was one of the first major ML success stories in production. NB was the dominant approach through the 2000s and is still competitive in text classification. The key advantage: training is a single pass over the data (counting word frequencies), and inference is O(p) per document.</aside>
   </section>
 
+  <!-- EXAMPLE: MultinomialNB — spam classifier simulation -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>MultinomialNB — spam classifier simulation</h2>
+    <div class="ex-prompt">Generate a synthetic word-count matrix (spam vs ham). Fit MultinomialNB with Laplace smoothing. Classify new 'emails' and print confidence scores.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import classification_report
+
+rng = np.random.default_rng(42)
+# Vocabulary: [offer, free, win, click, meeting, report, schedule, deadline]
+#              0      1     2    3      4         5       6          7
+n_each = 400
+
+# Spam: high counts for words 0-3, low for 4-7
+spam = rng.poisson([8,7,6,5,0.5,0.5,0.5,0.5], (n_each, 8))
+# Ham: low for 0-3, high for 4-7
+ham  = rng.poisson([0.5,0.5,0.5,0.5,6,5,5,4], (n_each, 8))
+
+X = np.vstack([spam, ham])
+y = np.hstack([np.ones(n_each), np.zeros(n_each)])  # 1=spam, 0=ham
+
+# Train/test split
+from sklearn.model_selection import train_test_split
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, stratify=y, random_state=0)
+
+mnb = MultinomialNB(alpha=1.0).fit(X_tr, y_tr)
+print(classification_report(y_te, mnb.predict(X_te), target_names=["ham","spam"]))
+
+# Classify new emails
+vocab = ["offer","free","win","click","meeting","report","schedule","deadline"]
+emails = {
+    "Spammy": [10, 8, 7, 5, 0, 0, 0, 0],
+    "Legit" : [0,  0, 0, 0, 5, 4, 3, 2],
+    "Mixed" : [3,  2, 0, 1, 3, 2, 0, 1],
+}
+print("New email classification:")
+for name, counts in emails.items():
+    proba = mnb.predict_proba([counts])[0]
+    label = "SPAM" if mnb.predict([counts])[0] == 1 else "HAM"
+    print(f"  {name:<8}: {label}  (P(spam)={proba[1]:.3f})")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">MultinomialNB counts word frequencies per class. With alpha=1 (Laplace smoothing), even words never seen in a class get a small non-zero probability — preventing P(word)=0 from zeroing out the entire posterior.</script>
+  </section>
   <section>
     <h2>When Naive Bayes wins</h2>
     <ul>
@@ -222,6 +389,49 @@ mnb.fit(X_counts, y_text)</code></pre>
     </ul>
   </section>
 
+  <!-- EXAMPLE: NB wins: high-dimensional small-n -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>NB wins: high-dimensional small-n</h2>
+    <div class="ex-prompt">Compare GaussianNB vs LogisticRegression at n=200, p=500. LDA fails entirely (singular matrix). NB and L1-LR work. See NB's efficiency advantage.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.naive_bayes import GaussianNB
+from sklearn.linear_model import LogisticRegression
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.model_selection import cross_val_score
+import warnings; warnings.filterwarnings("ignore")
+
+rng = np.random.default_rng(0)
+n, p = 200, 500
+# First 10 features are informative, rest are noise
+X_info = rng.normal(0, 1, (n, 10))
+y = (X_info[:, 0] + X_info[:, 1] > 0).astype(int)
+X = np.hstack([X_info, rng.normal(0, 1, (n, p-10))])
+
+print(f"Dataset: n={n}, p={p}  (p >> n — the high-dimensional regime)")
+print()
+
+for name, model in [
+    ("GaussianNB     ", GaussianNB()),
+    ("LR (L2, C=1)  ", LogisticRegression(max_iter=500)),
+    ("LR (L1, C=0.1)", LogisticRegression(penalty="l1", C=0.1, solver="saga", max_iter=1000)),
+]:
+    acc = cross_val_score(model, X, y, cv=5, scoring="accuracy").mean()
+    print(f"  {name}: accuracy = {acc:.4f}")
+
+try:
+    acc_lda = cross_val_score(LinearDiscriminantAnalysis(), X, y, cv=5, scoring="accuracy").mean()
+    print(f"  LDA           : accuracy = {acc_lda:.4f}")
+except Exception as e:
+    print(f"  LDA           : FAILS — {type(e).__name__} (singular covariance matrix)")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">With p=500 and n=200, LDA must estimate a 500×500 covariance matrix from only 200 samples — it's singular. NB only estimates 500×2 marginal variances and always works. L1-LR adds sparsity to handle the redundancy.</script>
+  </section>
   <section>
     <h2>When Naive Bayes loses</h2>
     <ul>
@@ -234,20 +444,50 @@ mnb.fit(X_counts, y_text)</code></pre>
 
   <section>
     <h2>Benchmark: all four classifiers</h2>
-<pre><code class="language-python">from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
-from sklearn.linear_model import LogisticRegression
-from sklearn.naive_bayes import GaussianNB
 
-models = [('LR', LogisticRegression(max_iter=2000)),
-          ('LDA', LinearDiscriminantAnalysis()),
-          ('QDA', QuadraticDiscriminantAnalysis()),
-          ('GNB', GaussianNB())]
-for name, m in models:
-    m.fit(X_train, y_train)
-    print(f'{name}: AUC = {roc_auc_score(y_test, m.predict_proba(X_test)[:,1]):.4f}')</code></pre>
   </section>
 </section>
+
+  <!-- EXAMPLE: NB partial_fit — online learning -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>NB partial_fit — online learning</h2>
+    <div class="ex-prompt">GaussianNB supports incremental learning with partial_fit(). Process data in batches and verify the final model matches a model trained on all data at once.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.naive_bayes import GaussianNB
+from sklearn.datasets import make_classification
+from sklearn.metrics import accuracy_score
+
+X, y = make_classification(n_samples=2000, n_features=10, random_state=42)
+X_train, X_test = X[:1600], X[1600:]
+y_train, y_test = y[:1600], y[1600:]
+
+# Batch model (trained on all data at once)
+gnb_batch = GaussianNB().fit(X_train, y_train)
+
+# Online model (trained in 8 mini-batches of 200)
+gnb_online = GaussianNB()
+batch_size = 200
+for i in range(0, 1600, batch_size):
+    gnb_online.partial_fit(X_train[i:i+batch_size], y_train[i:i+batch_size], classes=[0,1])
+
+batch_acc  = accuracy_score(y_test, gnb_batch.predict(X_test))
+online_acc = accuracy_score(y_test, gnb_online.predict(X_test))
+
+print(f"Batch training accuracy  : {batch_acc:.4f}")
+print(f"Online (partial_fit) acc : {online_acc:.4f}")
+print(f"Difference               : {abs(batch_acc-online_acc):.4f}")
+print()
+print("Online = batch because GNB's sufficient statistics (mean, var)")
+print("can be updated incrementally without re-reading old data.")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">NB's sufficient statistics (class counts, means, variances) can be updated incrementally. This makes it one of the only classifiers that supports true online learning — ideal for streaming data or data too large to fit in memory.</script>
+  </section>
 
 <!-- RECAP -->
 <section class="title-slide">

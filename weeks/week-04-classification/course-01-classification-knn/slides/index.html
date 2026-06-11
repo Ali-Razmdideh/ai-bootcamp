@@ -746,6 +746,136 @@ print("\nNote: undersampling discards majority data — use when n is large enou
     <pre class="ex-output"></pre>
   </section>
 
+  <!-- EXAMPLE: Fix 1 — stratified splits + class_weight -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Fix 1 — stratified splits + class_weight</h2>
+    <div class="ex-prompt">Compare default split vs stratified split on imbalanced data. Then compare KNN with and without class_weight='balanced' on a logistic classifier.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report
+
+X, y = make_classification(n_samples=3000, n_features=5, weights=[0.97, 0.03],
+                            n_informative=3, random_state=0)
+
+# Non-stratified split
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, random_state=42)
+print(f"Non-stratified: train pos rate = {y_tr.mean():.3f}, test pos rate = {y_te.mean():.3f}")
+
+# Stratified split
+X_tr2, X_te2, y_tr2, y_te2 = train_test_split(X, y, test_size=0.3,
+                                                stratify=y, random_state=42)
+print(f"Stratified    : train pos rate = {y_tr2.mean():.3f}, test pos rate = {y_te2.mean():.3f}")
+
+print()
+# class_weight effect
+m_default  = LogisticRegression(max_iter=500).fit(X_tr2, y_tr2)
+m_balanced = LogisticRegression(max_iter=500, class_weight="balanced").fit(X_tr2, y_tr2)
+
+print("=== Default class weight ===")
+print(classification_report(y_te2, m_default.predict(X_te2)))
+print("=== class_weight=balanced ===")
+print(classification_report(y_te2, m_balanced.predict(X_te2)))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">Stratified splitting preserves the class ratio in both halves — critical when the minority class is small. class_weight='balanced' upweights minority-class errors during training by n/(K*n_k), pushing the model to catch more true positives at the cost of more false alarms.</script>
+  </section>
+
+  <!-- EXAMPLE: Fix 2 — threshold tuning -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Fix 2 — threshold tuning</h2>
+    <div class="ex-prompt">Lower the decision threshold below 0.5 to trade precision for recall. Find the threshold that maximises F1 on the validation set.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import f1_score, classification_report, precision_recall_curve
+
+X, y = make_classification(n_samples=3000, n_features=5, weights=[0.97, 0.03],
+                            n_informative=3, random_state=0)
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, stratify=y, random_state=0)
+
+m = LogisticRegression(max_iter=500, class_weight="balanced").fit(X_tr, y_tr)
+proba = m.predict_proba(X_te)[:, 1]
+
+thresholds = np.linspace(0.05, 0.70, 30)
+print(f"{'Threshold':>10}  {'Precision':>10}  {'Recall':>7}  {'F1':>6}")
+print("-" * 40)
+best_f1, best_t = 0, 0.5
+for t in thresholds:
+    yhat = (proba >= t).astype(int)
+    f1 = f1_score(y_te, yhat, zero_division=0)
+    if f1 > best_f1: best_f1, best_t = f1, t
+    from sklearn.metrics import precision_score, recall_score
+    p = precision_score(y_te, yhat, zero_division=0)
+    r = recall_score(y_te, yhat, zero_division=0)
+    marker = " ← best F1" if abs(t - best_t) < 0.01 else ""
+    print(f"{t:>10.2f}  {p:>10.3f}  {r:>7.3f}  {f1:>6.3f}{marker}")
+print()
+print(f"Optimal threshold = {best_t:.2f}")
+print(classification_report(y_te, (proba >= best_t).astype(int)))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">The default threshold of 0.5 is optimal for accuracy, not for imbalanced classes. Lowering it to ~0.1–0.2 greatly increases recall (catching more minority cases) at the cost of more false positives. Choose based on the business cost ratio of FN vs FP.</script>
+  </section>
+
+  <!-- EXAMPLE: Fix 3 — manual oversampling (SMOTE concept) -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Fix 3 — manual oversampling (SMOTE concept)</h2>
+    <div class="ex-prompt">Manually oversample the minority class by duplication (a simplified SMOTE). Compare a model trained on the original vs oversampled data.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import classification_report
+
+X, y = make_classification(n_samples=2000, n_features=4, weights=[0.97, 0.03],
+                            n_informative=3, random_state=42)
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, stratify=y, random_state=0)
+
+# Manual oversampling: duplicate minority class until 50/50
+rng = np.random.default_rng(0)
+idx_min = np.where(y_tr == 1)[0]
+n_needed = (y_tr == 0).sum() - (y_tr == 1).sum()
+oversample_idx = rng.choice(idx_min, n_needed, replace=True)
+X_bal = np.vstack([X_tr, X_tr[oversample_idx]])
+y_bal = np.hstack([y_tr, y_tr[oversample_idx]])
+print(f"Original: {(y_tr==0).sum()} neg, {(y_tr==1).sum()} pos")
+print(f"Balanced: {(y_bal==0).sum()} neg, {(y_bal==1).sum()} pos")
+print()
+
+pipe = Pipeline([("sc", StandardScaler()), ("knn", KNeighborsClassifier(n_neighbors=7))])
+
+pipe.fit(X_tr, y_tr)
+print("=== Original data (imbalanced) ===")
+print(classification_report(y_te, pipe.predict(X_te)))
+
+pipe.fit(X_bal, y_bal)
+print("=== Oversampled data (balanced) ===")
+print(classification_report(y_te, pipe.predict(X_te)))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">Oversampling gives the minority class more weight in training by duplicating its samples (or interpolating — that's SMOTE). The model sees more minority examples and learns a better boundary. Always resample INSIDE CV folds to avoid data leakage.</script>
+  </section>
+
   <!-- Which metric on imbalanced data -->
   <section>
     <h2>Metrics for imbalanced data</h2>

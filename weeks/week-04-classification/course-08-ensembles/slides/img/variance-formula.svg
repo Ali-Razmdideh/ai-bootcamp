@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 270" width="560" height="270" font-family="sans-serif">
+  <rect width="560" height="270" fill="#fafafa"/>
+
+  <!-- Title -->
+  <text x="280" y="22" text-anchor="middle" font-size="13" font-weight="bold" fill="#222">
+    How averaging B trees reduces variance
+  </text>
+
+  <!-- Y axis -->
+  <line x1="65" y1="35" x2="65" y2="210" stroke="#888" stroke-width="1.5"/>
+  <!-- X axis -->
+  <line x1="65" y1="210" x2="520" y2="210" stroke="#888" stroke-width="1.5"/>
+
+  <!-- Axis labels -->
+  <text x="290" y="235" text-anchor="middle" font-size="11" fill="#444">Number of trees  B</text>
+  <text x="18" y="125" text-anchor="middle" font-size="11" fill="#444" transform="rotate(-90,18,125)">Var( f̂ )</text>
+
+  <!-- Tick marks X -->
+  <g font-size="10" fill="#666" text-anchor="middle">
+    <text x="65"  y="222">1</text>
+    <text x="155" y="222">5</text>
+    <text x="245" y="222">10</text>
+    <text x="335" y="222">25</text>
+    <text x="425" y="222">50</text>
+    <text x="515" y="222">100</text>
+  </g>
+
+  <!-- Reference lines -->
+  <!-- σ²/B curve (independent) -->
+  <!-- Points: B=1→170, 5→100, 10→75, 25→53, 50→43, 100→38 -->
+  <polyline
+    points="65,55 155,100 245,117 335,137 425,147 515,152"
+    fill="none" stroke="#1565c0" stroke-width="2" stroke-dasharray="6,3"/>
+
+  <!-- Correlated curve ρσ²/B + (1-1/B)ρσ² → ρσ² -->
+  <!-- floor at ~165 (ρ=0.8 * σ²), curve: 1→55, 5→120, 10→138, 25→153, 50→160, 100→163 -->
+  <polyline
+    points="65,55 155,120 245,138 335,153 425,160 515,163"
+    fill="none" stroke="#e53935" stroke-width="2.5"/>
+
+  <!-- Floor line ρσ² -->
+  <line x1="65" y1="165" x2="515" y2="165" stroke="#e53935" stroke-width="1" stroke-dasharray="4,4" opacity="0.6"/>
+  <text x="520" y="168" font-size="9" fill="#e53935" text-anchor="start">ρσ²</text>
+
+  <!-- Zero line -->
+  <line x1="65" y1="38" x2="65" y2="38"/>
+  <text x="55" y="41" font-size="9" fill="#888" text-anchor="end">σ²</text>
+  <line x1="60" y1="55" x2="65" y2="55" stroke="#888" stroke-width="1"/>
+
+  <!-- σ²/B → 0 annotation -->
+  <text x="520" y="155" font-size="9" fill="#1565c0" text-anchor="start">→ 0</text>
+
+  <!-- Legend -->
+  <line x1="80" y1="248" x2="110" y2="248" stroke="#1565c0" stroke-width="2" stroke-dasharray="6,3"/>
+  <text x="115" y="252" font-size="11" fill="#1565c0">Independent trees:  Var = σ²/B → 0</text>
+
+  <line x1="80" y1="263" x2="110" y2="263" stroke="#e53935" stroke-width="2.5"/>
+  <text x="115" y="267" font-size="11" fill="#e53935">Correlated trees (ρ=0.8):  Var → ρσ²  (floor!)</text>
+
+  <!-- Callout arrow pointing to floor -->
+  <text x="210" y="155" font-size="10" fill="#e53935" font-weight="bold">floor = ρσ²</text>
+  <line x1="200" y1="158" x2="185" y2="165" stroke="#e53935" stroke-width="1" marker-end="url(#ae)"/>
+  <defs>
+    <marker id="ae" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+      <polygon points="0,0 6,3 0,6" fill="#e53935"/>
+    </marker>
+  </defs>
+
+  <!-- More trees label -->
+  <text x="292" y="198" text-anchor="middle" font-size="10" fill="#555" font-style="italic">
+    Adding trees always helps, but can't beat the floor ρσ²
+  </text>
+</svg>
