@@ -280,7 +280,7 @@ print("Error rate has a kink at p=0.5 — less sensitive to small probability ch
   <section>
     <h2>Gini index</h2>
     <p style="text-align:center; font-size:1.3em;">
-      G = 1 − Σ<sub>k</sub> p̂<sub>mk</sub>²
+      G = 1 − Σ<sub>k</sub> p<sub>mk</sub>²
     </p>
     <ul>
       <li class="fragment fade-up"><strong>Interpretation:</strong> probability that a randomly chosen element is mis-classified if labelled by the class distribution.</li>
@@ -292,7 +292,7 @@ print("Error rate has a kink at p=0.5 — less sensitive to small probability ch
   <section>
     <h2>Cross-entropy (deviance)</h2>
     <p style="text-align:center; font-size:1.3em;">
-      D = −Σ<sub>k</sub> p̂<sub>mk</sub> log p̂<sub>mk</sub>
+      D = −Σ<sub>k</sub> p<sub>mk</sub> log p<sub>mk</sub>
     </p>
     <ul>
       <li class="fragment fade-up">Information-theoretic measure: bits needed to encode the label distribution.</li>
