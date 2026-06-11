@@ -730,12 +730,12 @@ print(f"Sum of all importances: {importances.sum():.4f}  (always = 1.0)")
       Cost(j, s) = <em>RSS<sub>L</sub></em> + <em>RSS<sub>R</sub></em> = Σ<sub>i∈R<sub>L</sub></sub>(y<sub>i</sub> − ȳ<sub>L</sub>)² + Σ<sub>i∈R<sub>R</sub></sub>(y<sub>i</sub> − ȳ<sub>R</sub>)²
     </p>
     <p class="fragment fade-up" style="margin-bottom:0.4em;"><strong>Worked example</strong> — 6 points, one feature, three candidate thresholds:</p>
-    <table class="fragment fade-up" style="font-size:0.88em; width:90%; margin:0 auto;">
-      <thead><tr><th>s</th><th>Left n</th><th>RSS<sub>L</sub></th><th>Right n</th><th>RSS<sub>R</sub></th><th>Total</th></tr></thead>
+    <table style="font-size:0.88em; width:90%; margin:0 auto;">
+      <thead><tr class="fragment fade-up"><th>s</th><th>Left n</th><th>RSS<sub>L</sub></th><th>Right n</th><th>RSS<sub>R</sub></th><th>Total</th></tr></thead>
       <tbody>
-        <tr><td>2.0</td><td>1</td><td>0.00</td><td>5</td><td>4.80</td><td>4.80</td></tr>
-        <tr style="background:#e8f4fd;"><td><strong>4.0</strong></td><td><strong>3</strong></td><td><strong>0.67</strong></td><td><strong>3</strong></td><td><strong>0.67</strong></td><td><strong>1.33 ✓</strong></td></tr>
-        <tr><td>6.0</td><td>5</td><td>4.80</td><td>1</td><td>0.00</td><td>4.80</td></tr>
+        <tr class="fragment fade-up"><td>2.0</td><td>1</td><td>0.00</td><td>5</td><td>4.80</td><td>4.80</td></tr>
+        <tr class="fragment fade-up" style="background:#e8f4fd;"><td><strong>4.0</strong></td><td><strong>3</strong></td><td><strong>0.67</strong></td><td><strong>3</strong></td><td><strong>0.67</strong></td><td><strong>1.33 ✓</strong></td></tr>
+        <tr class="fragment fade-up"><td>6.0</td><td>5</td><td>4.80</td><td>1</td><td>0.00</td><td>4.80</td></tr>
       </tbody>
     </table>
     <p class="callout fragment fade-up" style="margin-top:0.8em;">Choose s = 4.0 — it produces the most equal, tight groups. Pick the (j, s) with the <strong>smallest total RSS across all features</strong>.</p>
@@ -782,11 +782,11 @@ print(f"Sum of all importances: {importances.sum():.4f}  (always = 1.0)")
     </p>
     <p class="muted" style="text-align:center; font-size:0.9em; margin-bottom:0.7em;">where G = Gini index (or entropy — same structure)</p>
     <p class="fragment fade-up" style="margin-bottom:0.4em;"><strong>Worked example</strong> — 10 binary-labelled points, two candidate thresholds (Gini):</p>
-    <table class="fragment fade-up" style="font-size:0.86em; width:96%; margin:0 auto;">
-      <thead><tr><th>s</th><th>Left (n, +, −)</th><th>G<sub>L</sub></th><th>Right (n, +, −)</th><th>G<sub>R</sub></th><th>ΔG</th></tr></thead>
+    <table style="font-size:0.86em; width:96%; margin:0 auto;">
+      <thead><tr class="fragment fade-up"><th>s</th><th>Left (n, +, −)</th><th>G<sub>L</sub></th><th>Right (n, +, −)</th><th>G<sub>R</sub></th><th>ΔG</th></tr></thead>
       <tbody>
-        <tr><td>s = 3</td><td>4 · 3+, 1−</td><td>0.375</td><td>6 · 2+, 4−</td><td>0.444</td><td>0.083</td></tr>
-        <tr style="background:#e8f4fd;"><td><strong>s = 7</strong></td><td><strong>7 · 6+, 1−</strong></td><td><strong>0.245</strong></td><td><strong>3 · 0+, 3−</strong></td><td><strong>0.000</strong></td><td><strong>0.253 ✓</strong></td></tr>
+        <tr class="fragment fade-up"><td>s = 3</td><td>4 · 3+, 1−</td><td>0.375</td><td>6 · 2+, 4−</td><td>0.444</td><td>0.083</td></tr>
+        <tr class="fragment fade-up" style="background:#e8f4fd;"><td><strong>s = 7</strong></td><td><strong>7 · 6+, 1−</strong></td><td><strong>0.245</strong></td><td><strong>3 · 0+, 3−</strong></td><td><strong>0.000</strong></td><td><strong>0.253 ✓</strong></td></tr>
       </tbody>
     </table>
     <p class="callout fragment fade-up" style="margin-top:0.8em;">
