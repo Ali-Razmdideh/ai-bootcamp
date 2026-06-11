@@ -9,6 +9,13 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/interactive.css" />
+  <style>
+    .viz-caption { font-size:0.72em; color:#666; text-align:center; margin-top:0.3em; }
+    .two-col-viz { display:flex; gap:1.6em; align-items:flex-start; }
+    .two-col-viz > div { flex:1; }
+    svg text { font-family: inherit; }
+  </style>
 </head>
 <body>
 <div class="reveal"><div class="slides">
@@ -72,6 +79,124 @@
     <aside class="notes">The Bayes error rate is the irreducible minimum — no classifier, however complex, can beat it if the features are fixed. LDA with correct Gaussian assumptions achieves it asymptotically.</aside>
   </section>
 
+  <!-- NEW: prior effect on decision boundary -->
+  <section>
+    <h2>Prior shifts the decision boundary</h2>
+    <p style="font-size:0.88em;">Equal priors (π₁=π₂=0.5) → boundary at midpoint. Unequal priors → boundary shifts toward the rarer class.</p>
+    <div class="two-col-viz">
+      <div>
+        <!-- Equal priors SVG -->
+        <svg viewBox="0 0 320 180" width="100%" style="background:#fafafa;border-radius:6px;border:1px solid #ddd;">
+          <!-- class 1 Gaussian (blue) centered at 90 -->
+          <path d="M10,155 Q30,155 50,130 Q65,110 90,55 Q115,110 130,130 Q150,145 170,153 Q190,155 200,155" fill="rgba(59,130,246,0.18)" stroke="#3b82f6" stroke-width="1.5"/>
+          <!-- class 2 Gaussian (orange) centered at 230 -->
+          <path d="M120,155 Q140,155 160,145 Q175,135 200,100 Q215,80 230,55 Q245,80 260,100 Q280,130 295,148 Q308,154 315,155" fill="rgba(249,115,22,0.18)" stroke="#f97316" stroke-width="1.5"/>
+          <!-- midpoint boundary -->
+          <line x1="160" y1="20" x2="160" y2="160" stroke="#1d4ed8" stroke-width="2" stroke-dasharray="5,3"/>
+          <!-- labels -->
+          <text x="70" y="40" font-size="13" fill="#3b82f6" text-anchor="middle">Class 1</text>
+          <text x="245" y="40" font-size="13" fill="#f97316" text-anchor="middle">Class 2</text>
+          <text x="160" y="175" font-size="11" fill="#1d4ed8" text-anchor="middle">boundary</text>
+          <text x="10" y="175" font-size="11" fill="#555">π₁=π₂=0.5</text>
+        </svg>
+        <p class="viz-caption">Equal priors → midpoint boundary</p>
+      </div>
+      <div>
+        <!-- Unequal priors SVG: class 2 rarer → boundary shifts right -->
+        <svg viewBox="0 0 320 180" width="100%" style="background:#fafafa;border-radius:6px;border:1px solid #ddd;">
+          <!-- class 1 (tall, common) -->
+          <path d="M10,155 Q30,155 50,130 Q65,110 90,55 Q115,110 130,130 Q150,145 170,153 Q190,155 200,155" fill="rgba(59,130,246,0.18)" stroke="#3b82f6" stroke-width="1.5"/>
+          <!-- class 2 (short, rare) — same shape but scaled down vertically -->
+          <path d="M120,155 Q140,155 160,148 Q175,142 200,120 Q215,108 230,98 Q245,108 260,120 Q280,138 295,150 Q308,154 315,155" fill="rgba(249,115,22,0.18)" stroke="#f97316" stroke-width="1.5"/>
+          <!-- shifted boundary (right of midpoint) -->
+          <line x1="195" y1="20" x2="195" y2="160" stroke="#dc2626" stroke-width="2" stroke-dasharray="5,3"/>
+          <!-- midpoint reference (faint) -->
+          <line x1="160" y1="20" x2="160" y2="160" stroke="#999" stroke-width="1" stroke-dasharray="3,4"/>
+          <text x="70" y="40" font-size="13" fill="#3b82f6" text-anchor="middle">Class 1</text>
+          <text x="245" y="40" font-size="13" fill="#f97316" text-anchor="middle">Class 2</text>
+          <text x="195" y="175" font-size="11" fill="#dc2626" text-anchor="middle">boundary →</text>
+          <text x="10" y="175" font-size="11" fill="#555">π₁=0.9, π₂=0.1</text>
+        </svg>
+        <p class="viz-caption">Unequal priors: boundary shifts toward rare class</p>
+      </div>
+    </div>
+    <p class="callout fragment fade-up" style="margin-top:0.6em;">Rare class prior (small π<sub>k</sub>) penalises that class — boundary moves toward it so you predict it only when very confident.</p>
+    <aside class="notes">This is ISLR Figure 4.4. The log(π_k/π_l) term in the LDA decision boundary equation is exactly what causes this shift. If class 2 is 10× rarer, you need to be 10× more confident before predicting it.</aside>
+  </section>
+
+  <!-- NEW: 1D LDA visualisation -->
+  <section>
+    <h2>1D LDA — two overlapping Gaussians</h2>
+    <p style="font-size:0.88em;">p=1: one feature, two classes. The cut point is where the two density curves cross (adjusted for priors).</p>
+    <svg viewBox="0 0 640 220" width="92%" style="display:block;margin:0 auto;background:#fafafa;border-radius:8px;border:1px solid #ddd;">
+      <!-- x-axis -->
+      <line x1="20" y1="185" x2="620" y2="185" stroke="#888" stroke-width="1.5"/>
+      <!-- Gaussian 1: μ=220, σ=80 (class 1, blue) -->
+      <path d="M20,183 Q60,183 100,175 Q140,160 180,130 Q200,112 220,90 Q240,112 260,130 Q300,160 340,175 Q380,180 420,183 Q500,184 620,184"
+            fill="rgba(59,130,246,0.2)" stroke="#3b82f6" stroke-width="2"/>
+      <!-- Gaussian 2: μ=400, σ=80 (class 2, orange) -->
+      <path d="M120,183 Q160,183 200,180 Q240,175 280,160 Q320,140 360,115 Q380,103 400,90 Q420,103 440,115 Q480,140 520,160 Q560,175 600,181 Q615,183 625,183"
+            fill="rgba(249,115,22,0.2)" stroke="#f97316" stroke-width="2"/>
+      <!-- cut point -->
+      <line x1="310" y1="40" x2="310" y2="185" stroke="#1d4ed8" stroke-width="2" stroke-dasharray="6,3"/>
+      <!-- means -->
+      <line x1="220" y1="88" x2="220" y2="185" stroke="#3b82f6" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="400" y1="88" x2="400" y2="185" stroke="#f97316" stroke-width="1" stroke-dasharray="3,3"/>
+      <!-- shaded overlap region -->
+      <path d="M230,183 Q260,175 280,160 Q300,142 310,130 Q320,142 340,160 Q360,175 380,182 Z" fill="rgba(168,85,247,0.18)" stroke="none"/>
+      <!-- labels -->
+      <text x="180" y="75" font-size="13" fill="#3b82f6" text-anchor="middle">f₁(x)</text>
+      <text x="440" y="75" font-size="13" fill="#f97316" text-anchor="middle">f₂(x)</text>
+      <text x="220" y="200" font-size="12" fill="#3b82f6" text-anchor="middle">μ₁</text>
+      <text x="400" y="200" font-size="12" fill="#f97316" text-anchor="middle">μ₂</text>
+      <text x="310" y="32" font-size="12" fill="#1d4ed8" text-anchor="middle">cut point</text>
+      <text x="310" y="215" font-size="11" fill="#7c3aed" text-anchor="middle">overlap = Bayes error</text>
+      <!-- stacked histogram bars (schematic) -->
+      <rect x="140" y="165" width="10" height="18" fill="#3b82f6" opacity="0.5"/>
+      <rect x="155" y="158" width="10" height="25" fill="#3b82f6" opacity="0.5"/>
+      <rect x="170" y="148" width="10" height="35" fill="#3b82f6" opacity="0.5"/>
+      <rect x="185" y="135" width="10" height="48" fill="#3b82f6" opacity="0.5"/>
+      <rect x="200" y="125" width="10" height="58" fill="#3b82f6" opacity="0.5"/>
+      <rect x="215" y="118" width="10" height="65" fill="#3b82f6" opacity="0.5"/>
+      <rect x="230" y="122" width="10" height="61" fill="#3b82f6" opacity="0.5"/>
+      <rect x="245" y="130" width="10" height="53" fill="#3b82f6" opacity="0.5"/>
+      <rect x="260" y="142" width="10" height="41" fill="#3b82f6" opacity="0.4"/>
+      <rect x="275" y="152" width="10" height="31" fill="#3b82f6" opacity="0.3"/>
+      <rect x="290" y="160" width="10" height="23" fill="#3b82f6" opacity="0.2"/>
+      <rect x="305" y="165" width="10" height="18" fill="#3b82f6" opacity="0.15"/>
+      <!-- orange class histogram -->
+      <rect x="305" y="162" width="10" height="21" fill="#f97316" opacity="0.15"/>
+      <rect x="320" y="155" width="10" height="28" fill="#f97316" opacity="0.2"/>
+      <rect x="335" y="148" width="10" height="35" fill="#f97316" opacity="0.3"/>
+      <rect x="350" y="140" width="10" height="43" fill="#f97316" opacity="0.4"/>
+      <rect x="365" y="130" width="10" height="53" fill="#f97316" opacity="0.5"/>
+      <rect x="380" y="118" width="10" height="65" fill="#f97316" opacity="0.5"/>
+      <rect x="395" y="112" width="10" height="71" fill="#f97316" opacity="0.5"/>
+      <rect x="410" y="118" width="10" height="65" fill="#f97316" opacity="0.5"/>
+      <rect x="425" y="128" width="10" height="55" fill="#f97316" opacity="0.5"/>
+      <rect x="440" y="140" width="10" height="43" fill="#f97316" opacity="0.5"/>
+      <rect x="455" y="152" width="10" height="31" fill="#f97316" opacity="0.5"/>
+      <rect x="470" y="162" width="10" height="21" fill="#f97316" opacity="0.5"/>
+    </svg>
+    <p class="viz-caption">Histogram of training data (bars) and true density curves. Purple overlap = irreducible Bayes error.</p>
+    <p class="callout fragment fade-up" style="margin-top:0.5em;">In p=1 the optimal cut point is (μ₁+μ₂)/2 when π₁=π₂ and σ₁=σ₂. Otherwise it shifts — exactly the log(π₁/π₂) / (μ₂−μ₁)·σ² correction.</p>
+    <aside class="notes">ISLR Figure 4.4 (left panel). The overlap is the minimum achievable error — even the Bayes classifier is wrong for observations that fall in this region.</aside>
+  </section>
+
+  <section>
+    <h2>Multivariate Gaussian density</h2>
+    <p style="text-align:center;font-size:1.05em;margin:0.4em 0;">
+      f<sub>k</sub>(x) = (2π)<sup>−p/2</sup> |Σ|<sup>−½</sup> exp(−½ (x−μ<sub>k</sub>)<sup>T</sup>Σ<sup>−1</sup>(x−μ<sub>k</sub>))
+    </p>
+    <ul style="margin-top:0.8em;">
+      <li class="fragment fade-up"><strong>p</strong> = number of features (dimension of x).</li>
+      <li class="fragment fade-up"><strong>|Σ|</strong> = determinant of covariance — normalisation constant.</li>
+      <li class="fragment fade-up"><strong>(x−μ)<sup>T</sup>Σ<sup>−1</sup>(x−μ)</strong> = Mahalanobis distance — measures how far x is from μ, corrected for correlations.</li>
+    </ul>
+    <p class="callout fragment fade-up" style="margin-top:0.6em;">When we take the log and compare across classes, the (2π)<sup>−p/2</sup>|Σ|<sup>−½</sup> factor is constant under shared Σ and disappears. Only the Mahalanobis term and log π<sub>k</sub> remain.</p>
+    <aside class="notes">The Mahalanobis distance is the key concept here. It generalises Euclidean distance to account for the shape and orientation of the Gaussian cloud. If Σ=I then it reduces to Euclidean distance.</aside>
+  </section>
+
   <section>
     <h2>Gaussian LDA: the assumption</h2>
     <p style="text-align:center;font-size:1.15em;">f<sub>k</sub>(x) = N(μ<sub>k</sub>, Σ)</p>
@@ -86,10 +211,10 @@
   <section>
     <h2>Discriminant score — deriving the linear boundary</h2>
     <p>Taking log of the Bayes posterior (log-monotone transform preserves argmax):</p>
-    <p style="text-align:center;font-size:1.1em;margin:0.5em 0;">
+    <p style="text-align:center;font-size:1.05em;margin:0.5em 0;">
       log Pr(Y=k|X=x) = log π<sub>k</sub> + log f<sub>k</sub>(x) − const
     </p>
-    <p style="text-align:center;font-size:1.1em;">
+    <p style="text-align:center;font-size:1.05em;">
       δ<sub>k</sub>(x) = x<sup>T</sup>Σ<sup>−1</sup>μ<sub>k</sub> − ½ μ<sub>k</sub><sup>T</sup>Σ<sup>−1</sup>μ<sub>k</sub> + log π<sub>k</sub>
     </p>
     <p class="callout fragment fade-up" style="margin-top:0.8em;">δ<sub>k</sub>(x) is <strong>linear in x</strong>. The quadratic term x<sup>T</sup>Σ<sup>−1</sup>x cancels because Σ is shared across all k.</p>
@@ -100,7 +225,7 @@
     <h2>Why the boundary is linear</h2>
     <p>Assign x to class k = argmax<sub>k</sub> δ<sub>k</sub>(x).</p>
     <p>The decision boundary between class k and class l is where δ<sub>k</sub>(x) = δ<sub>l</sub>(x):</p>
-    <p style="text-align:center;font-size:1.1em;margin:0.6em 0;">
+    <p style="text-align:center;font-size:1.05em;margin:0.6em 0;">
       x<sup>T</sup>Σ<sup>−1</sup>(μ<sub>k</sub> − μ<sub>l</sub>) = ½(μ<sub>k</sub><sup>T</sup>Σ<sup>−1</sup>μ<sub>k</sub> − μ<sub>l</sub><sup>T</sup>Σ<sup>−1</sup>μ<sub>l</sub>) − log(π<sub>k</sub>/π<sub>l</sub>)
     </p>
     <ul>
@@ -109,7 +234,120 @@
       <li class="fragment fade-up">In p=1 dimensions: a single cut point on the real line.</li>
     </ul>
   </section>
+
+  <!-- NEW: p=2, K=3 illustration -->
+  <section>
+    <h2>p=2, K=3 — Bayes vs LDA boundaries</h2>
+    <div class="two-col-viz">
+      <div>
+        <svg viewBox="0 0 280 260" width="100%" style="background:#f8fafc;border-radius:8px;border:1px solid #ddd;">
+          <!-- three class ellipses (filled) -->
+          <ellipse cx="100" cy="80" rx="55" ry="40" fill="rgba(59,130,246,0.15)" stroke="#3b82f6" stroke-width="1.5"/>
+          <ellipse cx="180" cy="185" rx="50" ry="38" fill="rgba(249,115,22,0.15)" stroke="#f97316" stroke-width="1.5"/>
+          <ellipse cx="60" cy="190" rx="48" ry="35" fill="rgba(34,197,94,0.15)" stroke="#22c55e" stroke-width="1.5"/>
+          <!-- data points (schematic) -->
+          <circle cx="88" cy="72" r="3" fill="#3b82f6" opacity="0.7"/>
+          <circle cx="110" cy="65" r="3" fill="#3b82f6" opacity="0.7"/>
+          <circle cx="95" cy="90" r="3" fill="#3b82f6" opacity="0.7"/>
+          <circle cx="120" cy="78" r="3" fill="#3b82f6" opacity="0.7"/>
+          <circle cx="78" cy="85" r="3" fill="#3b82f6" opacity="0.7"/>
+          <circle cx="175" cy="178" r="3" fill="#f97316" opacity="0.7"/>
+          <circle cx="195" cy="188" r="3" fill="#f97316" opacity="0.7"/>
+          <circle cx="165" cy="195" r="3" fill="#f97316" opacity="0.7"/>
+          <circle cx="188" cy="170" r="3" fill="#f97316" opacity="0.7"/>
+          <circle cx="205" cy="195" r="3" fill="#f97316" opacity="0.7"/>
+          <circle cx="55" cy="185" r="3" fill="#22c55e" opacity="0.7"/>
+          <circle cx="72" cy="195" r="3" fill="#22c55e" opacity="0.7"/>
+          <circle cx="48" cy="200" r="3" fill="#22c55e" opacity="0.7"/>
+          <circle cx="65" cy="210" r="3" fill="#22c55e" opacity="0.7"/>
+          <circle cx="40" cy="185" r="3" fill="#22c55e" opacity="0.7"/>
+          <!-- Bayes (dashed) decision boundaries -->
+          <path d="M130,20 Q140,100 150,155 Q155,170 160,185" stroke="#555" stroke-width="1.5" stroke-dasharray="5,3" fill="none"/>
+          <path d="M20,145 Q60,148 100,145 Q120,143 135,155" stroke="#555" stroke-width="1.5" stroke-dasharray="5,3" fill="none"/>
+          <!-- LDA (solid) boundaries -->
+          <path d="M128,20 Q138,100 148,155 Q153,170 158,185" stroke="#dc2626" stroke-width="2" fill="none"/>
+          <path d="M20,142 Q60,145 100,142 Q120,140 132,152" stroke="#dc2626" stroke-width="2" fill="none"/>
+          <!-- labels -->
+          <text x="100" y="55" font-size="12" fill="#3b82f6" text-anchor="middle">k=1</text>
+          <text x="185" y="165" font-size="12" fill="#f97316" text-anchor="middle">k=2</text>
+          <text x="55" y="168" font-size="12" fill="#22c55e" text-anchor="middle">k=3</text>
+          <text x="230" y="50" font-size="10" fill="#555">- - Bayes</text>
+          <text x="230" y="65" font-size="10" fill="#dc2626">—— LDA</text>
+        </svg>
+        <p class="viz-caption">Schematic: K=3 classes, shared Σ (similar ellipses)</p>
+      </div>
+      <div style="font-size:0.84em;">
+        <p><strong>Bayes boundaries</strong> (dashed): optimal, known only if true distribution known.</p>
+        <p style="margin-top:0.6em;"><strong>LDA boundaries</strong> (solid): estimated from data using plug-in μ̂<sub>k</sub>, Σ̂. Converge to Bayes as n→∞.</p>
+        <ul style="margin-top:0.8em;">
+          <li class="fragment fade-up">With K=3 there are 3 pairwise boundaries meeting at a triple point.</li>
+          <li class="fragment fade-up">The shared Σ assumption means all three ellipses have the same shape — the boundaries are straight.</li>
+          <li class="fragment fade-up">With finite n, LDA boundaries deviate from Bayes — this is estimation error.</li>
+        </ul>
+      </div>
+    </div>
+    <aside class="notes">This is Figure 4.6 from ISLR. The dashed lines are the true Bayes boundaries computed from the known generating distributions. The solid lines are what LDA estimates from the data. With more data, the solid lines converge to the dashed ones.</aside>
+  </section>
+
+  <!-- NEW: from discriminant scores to probabilities -->
+  <section>
+    <h2>From δ<sub>k</sub>(x) to posterior probabilities</h2>
+    <p>The posterior is a softmax over the discriminant scores:</p>
+    <p style="text-align:center;font-size:1.1em;margin:0.6em 0;">
+      Pr(Y=k | X=x) = exp(δ<sub>k</sub>(x)) / Σ<sub>l=1</sub><sup>K</sup> exp(δ<sub>l</sub>(x))
+    </p>
+    <ul style="margin-top:0.6em;">
+      <li class="fragment fade-up">This is exactly the <strong>softmax function</strong> — the same one used in neural network output layers.</li>
+      <li class="fragment fade-up">For K=2 it reduces to the logistic sigmoid: Pr(Y=1|x) = 1/(1 + exp(δ₁(x)−δ₂(x))).</li>
+      <li class="fragment fade-up">Probabilities sum to 1 across all classes by construction.</li>
+    </ul>
+    <p class="callout fragment fade-up" style="margin-top:0.8em;">LDA and logistic regression both produce linear boundaries and use the softmax form. The difference is <em>how</em> the coefficients are found: generative fit (LDA) vs maximum likelihood on the boundary directly (LR).</p>
+    <aside class="notes">This connection to softmax is underemphasised in most textbooks. It shows that LDA is, in a sense, a special case of linear multi-class classification — just with a specific closed-form way of estimating the weights.</aside>
+  </section>
 </section>
+
+  <!-- EXAMPLE: Bayes classifier by hand (1D) -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Bayes classifier by hand (1D)</h2>
+    <div class="ex-prompt">Generate 1D Gaussian data for 2 classes. Compute posterior P(Y=k|X=x) by hand using Bayes theorem. Find the decision boundary analytically and verify it equals (μ₀+μ₁)/2 when priors are equal.</div>
+<textarea class="ex-code">import numpy as np
+
+# True model parameters
+mu0, mu1, sigma = 0.0, 3.0, 1.0
+pi0, pi1 = 0.5, 0.5
+
+# Grid of x values
+x = np.linspace(-3, 6, 100)
+
+# Class-conditional densities (Gaussian)
+f0 = (1/(sigma*np.sqrt(2*np.pi))) * np.exp(-0.5*((x-mu0)/sigma)**2)
+f1 = (1/(sigma*np.sqrt(2*np.pi))) * np.exp(-0.5*((x-mu1)/sigma)**2)
+
+# Posterior via Bayes
+p_y1_given_x = (pi1 * f1) / (pi0*f0 + pi1*f1)
+
+# Decision boundary: where P(Y=1|x) = 0.5
+boundary_analytic = (mu0 + mu1) / 2  # shared sigma, equal priors
+# Find numerically
+idx = np.argmin(np.abs(p_y1_given_x - 0.5))
+boundary_numeric = x[idx]
+
+print(f"Analytic boundary (mu0+mu1)/2 = {boundary_analytic:.4f}")
+print(f"Numeric boundary              = {boundary_numeric:.4f}")
+print()
+print("P(Y=1|X=x) at selected points:")
+for xi in [-2, 0, 1.5, 3, 5]:
+    idx_i = np.argmin(np.abs(x - xi))
+    print(f"  x={xi:>5.1f}  P(Y=1|x) = {p_y1_given_x[idx_i]:.4f}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">With equal priors and shared sigma, the Bayes boundary is exactly (μ₀+μ₁)/2 = 1.5. Anything to the right of 1.5 is classified as class 1. LDA approximates this after estimating μ₀, μ₁, σ from data.</script>
+  </section>
 
 <!-- ====================================================
      PART 2 — PARAMETER ESTIMATION + DEMO
@@ -127,22 +365,110 @@
       <tr><th>Parameter</th><th>Estimator</th></tr>
       <tr><td>Prior π̂<sub>k</sub></td><td>n<sub>k</sub> / n (fraction of class k in training data)</td></tr>
       <tr><td>Mean μ̂<sub>k</sub></td><td>(1/n<sub>k</sub>) Σ<sub>i: y_i=k</sub> x<sub>i</sub> (class-k sample mean)</td></tr>
-      <tr><td>Covariance Σ̂</td><td>Pooled within-class covariance: Σ<sub>k</sub> Σ<sub>i: y_i=k</sub>(x<sub>i</sub>−μ̂<sub>k</sub>)(x<sub>i</sub>−μ̂<sub>k</sub>)<sup>T</sup> / (n−K)</td></tr>
+      <tr><td>Covariance Σ̂</td><td>Pooled within-class covariance (see below)</td></tr>
     </table>
-    <p class="fragment fade-up" style="margin-top:0.8em;">Plugging π̂, μ̂, Σ̂ into δ<sub>k</sub> gives the <strong>plug-in Bayes classifier</strong>. Asymptotically optimal when the Gaussian assumption holds.</p>
+    <p style="text-align:center;font-size:1.0em;margin:0.7em 0;">
+      Σ̂ = <span style="font-size:0.9em;">1/(n−K)</span> · Σ<sub>k=1</sub><sup>K</sup> Σ<sub>i: y<sub>i</sub>=k</sub> (x<sub>i</sub> − μ̂<sub>k</sub>)(x<sub>i</sub> − μ̂<sub>k</sub>)<sup>T</sup>
+    </p>
+    <ul>
+      <li class="fragment fade-up">Denominator n−K: unbiased, like s² = Σ(xᵢ−x̄)²/(n−1) in the univariate case.</li>
+      <li class="fragment fade-up">We <em>pool</em> the scatter matrices across all K classes (shared Σ assumption).</li>
+    </ul>
+    <p class="fragment fade-up callout">Plug π̂, μ̂, Σ̂ into δ<sub>k</sub> to get the <strong>plug-in Bayes classifier</strong>. Asymptotically optimal when Gaussian assumptions hold.</p>
   </section>
 
   <section>
     <h2>LDA on Default dataset — setup</h2>
-<pre><code class="language-python">from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-X = default[['balance', 'income']].to_numpy()
-y = (default['default'] == 'Yes').astype(int).to_numpy()
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.3, random_state=0, stratify=y)
-lda = LinearDiscriminantAnalysis().fit(X_train, y_train)</code></pre>
+
+
+  <!-- : LDA from scratch — verify against sklearn -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>LDA from scratch — verify against sklearn</h2>
+    <div class="ex-prompt">Generate 2-class 2D Gaussian data with shared covariance. Manually compute discriminant scores δₖ(x). Compare with sklearn's LinearDiscriminantAnalysis to verify they match.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+
+rng = np.random.default_rng(42)
+Sigma = np.array([[2, 0.8],[0.8, 1]])
+mu0 = np.array([0, 0]); mu1 = np.array([3, 2])
+n = 300
+
+X0 = rng.multivariate_normal(mu0, Sigma, n//2)
+X1 = rng.multivariate_normal(mu1, Sigma, n//2)
+X  = np.vstack([X0, X1])
+y  = np.hstack([np.zeros(n//2), np.ones(n//2)])
+
+# Manual LDA
+pi0_hat = (y==0).mean(); pi1_hat = (y==1).mean()
+mu0_hat = X[y==0].mean(axis=0)
+mu1_hat = X[y==1].mean(axis=0)
+# Pooled within-class covariance
+Sw = ((X[y==0]-mu0_hat).T @ (X[y==0]-mu0_hat) +
+      (X[y==1]-mu1_hat).T @ (X[y==1]-mu1_hat)) / (n - 2)
+Sw_inv = np.linalg.inv(Sw)
+
+def delta(x, mu, pi):
+    return x @ Sw_inv @ mu - 0.5 * mu @ Sw_inv @ mu + np.log(pi)
+
+# Classify test point
+test_pts = np.array([[1, 1], [2, 2], [4, 3]])
+print("Manual LDA vs sklearn LDA:")
+lda = LinearDiscriminantAnalysis().fit(X, y)
+for pt in test_pts:
+    d0, d1 = delta(pt, mu0_hat, pi0_hat), delta(pt, mu1_hat, pi1_hat)
+    manual  = int(d1 > d0)
+    sklearn = lda.predict(pt.reshape(1,-1))[0]
+    print(f"  x={pt}  δ0={d0:.3f}  δ1={d1:.3f}  manual={manual}  sklearn={int(sklearn)}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">The manual discriminant scores match sklearn's predictions exactly. This confirms that sklearn's LDA implements exactly the formula δₖ(x) = xᵀΣ⁻¹μₖ − ½μₖᵀΣ⁻¹μₖ + log πₖ.</script>
+  </section>
     <p class="muted">sklearn's LDA estimates μ̂_k, Σ̂ from training data and applies plug-in discriminant scores automatically.</p>
   </section>
 
+  <!-- EXAMPLE: LDA on synthetic Default data — confusion matrix + AUC -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>LDA on synthetic Default data — confusion matrix + AUC</h2>
+    <div class="ex-prompt">Generate Default-like data (balance and income, ~3% default rate). Fit LDA. Read the confusion matrix and see how 0.5 threshold misses most defaulters.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix, classification_report, roc_auc_score
+
+rng = np.random.default_rng(0)
+n = 10000
+balance = rng.normal(1500, 600, n)
+income  = rng.normal(35000, 15000, n)
+p = 1 / (1 + np.exp(-(balance*0.005 - 8.5)))
+y = rng.binomial(1, p)
+X = np.column_stack([balance, income])
+
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, stratify=y, random_state=0)
+lda = LinearDiscriminantAnalysis().fit(X_tr, y_tr)
+
+print(f"Test AUC: {roc_auc_score(y_te, lda.predict_proba(X_te)[:,1]):.4f}")
+print()
+print("Confusion matrix (threshold = 0.5):")
+cm = confusion_matrix(y_te, lda.predict(X_te))
+print(f"  TN={cm[0,0]:4d}  FP={cm[0,1]:4d}")
+print(f"  FN={cm[1,0]:4d}  TP={cm[1,1]:4d}")
+print(f"  FNR (missed defaulters) = {cm[1,0]/(cm[1,0]+cm[1,1]):.1%}")
+print()
+print(classification_report(y_te, lda.predict(X_te)))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">Even with AUC ~0.95, the default threshold of 0.5 misses most defaulters (high FNR). On imbalanced data, always lower the threshold or use class_weight='balanced'.</script>
+  </section>
   <section>
     <h2>Confusion matrix at threshold 0.5</h2>
     <table style="font-size:0.88em;width:90%;margin:0 auto;">
@@ -172,50 +498,228 @@ lda = LinearDiscriminantAnalysis().fit(X_train, y_train)</code></pre>
     <aside class="notes">If catching a defaulter saves $10,000 and a false alarm costs $100, the optimal threshold is much lower than 0.5. This is the business-driven threshold selection problem.</aside>
   </section>
 
+  <!-- NEW: threshold error rate plot -->
   <section>
-    <h2>ROC: LDA vs Logistic Regression</h2>
-    <p>Both models on Default (balance + income), plotted on the same axes:</p>
-    <ul>
-      <li class="fragment fade-up">LDA AUC ≈ 0.948, LR AUC ≈ 0.951 — nearly identical.</li>
-      <li class="fragment fade-up">When classes are not well-separated and features are approximately Gaussian, LDA ≈ LR.</li>
-      <li class="fragment fade-up">AUC compares the full ROC curve — model selection at all thresholds simultaneously.</li>
-    </ul>
-<pre><code class="language-python">from sklearn.metrics import roc_curve, auc
-fpr_lda, tpr_lda, _ = roc_curve(y_test, lda.predict_proba(X_test)[:,1])
-fpr_lr, tpr_lr, _   = roc_curve(y_test, lr.predict_proba(X_test)[:,1])
-# Plot both curves — they nearly overlap</code></pre>
+    <h2>Threshold vs error rate (visual)</h2>
+    <svg viewBox="0 0 620 260" width="88%" style="display:block;margin:0 auto;background:#fafafa;border-radius:8px;border:1px solid #ddd;">
+      <!-- axes -->
+      <line x1="60" y1="220" x2="580" y2="220" stroke="#888" stroke-width="1.5"/>
+      <line x1="60" y1="20"  x2="60"  y2="220" stroke="#888" stroke-width="1.5"/>
+      <!-- x-axis ticks and labels -->
+      <line x1="60" y1="220" x2="60" y2="225" stroke="#888" stroke-width="1"/>
+      <line x1="166" y1="220" x2="166" y2="225" stroke="#888" stroke-width="1"/>
+      <line x1="272" y1="220" x2="272" y2="225" stroke="#888" stroke-width="1"/>
+      <line x1="378" y1="220" x2="378" y2="225" stroke="#888" stroke-width="1"/>
+      <line x1="484" y1="220" x2="484" y2="225" stroke="#888" stroke-width="1"/>
+      <line x1="580" y1="220" x2="580" y2="225" stroke="#888" stroke-width="1"/>
+      <text x="60"  y="235" font-size="11" fill="#555" text-anchor="middle">0.0</text>
+      <text x="166" y="235" font-size="11" fill="#555" text-anchor="middle">0.2</text>
+      <text x="272" y="235" font-size="11" fill="#555" text-anchor="middle">0.4</text>
+      <text x="378" y="235" font-size="11" fill="#555" text-anchor="middle">0.6</text>
+      <text x="484" y="235" font-size="11" fill="#555" text-anchor="middle">0.8</text>
+      <text x="580" y="235" font-size="11" fill="#555" text-anchor="middle">1.0</text>
+      <text x="320" y="252" font-size="12" fill="#555" text-anchor="middle">Threshold</text>
+      <!-- y-axis labels -->
+      <text x="52" y="224" font-size="11" fill="#555" text-anchor="end">0%</text>
+      <text x="52" y="170" font-size="11" fill="#555" text-anchor="end">25%</text>
+      <text x="52" y="120" font-size="11" fill="#555" text-anchor="end">50%</text>
+      <text x="52" y="70"  font-size="11" fill="#555" text-anchor="end">75%</text>
+      <text x="52" y="24"  font-size="11" fill="#555" text-anchor="end">100%</text>
+      <!-- grid lines -->
+      <line x1="60" y1="170" x2="580" y2="170" stroke="#e5e7eb" stroke-width="1"/>
+      <line x1="60" y1="120" x2="580" y2="120" stroke="#e5e7eb" stroke-width="1"/>
+      <line x1="60" y1="70"  x2="580" y2="70"  stroke="#e5e7eb" stroke-width="1"/>
+      <!-- FNR curve: high at right (high threshold), low at left -->
+      <!-- at threshold 0: FNR=0; at threshold 0.5: FNR=82.5%; at threshold 1: FNR=100% -->
+      <path d="M60,220 Q120,215 166,205 Q220,190 272,170 Q330,140 378,93 Q430,65 484,40 Q530,25 580,22"
+            stroke="#3b82f6" stroke-width="2.5" fill="none"/>
+      <!-- FPR curve: high at left (low threshold), low at right -->
+      <!-- at threshold 0: FPR=100%; at threshold 0.5: FPR=2.1%; at threshold 1: FPR=0% -->
+      <path d="M60,22 Q100,28 166,50 Q220,75 272,100 Q330,135 378,162 Q430,185 484,205 Q530,215 580,220"
+            stroke="#f97316" stroke-width="2.5" fill="none"/>
+      <!-- Overall error: roughly U-shaped, minimum around 0.5 -->
+      <path d="M60,22 Q100,45 166,55 Q220,58 272,62 Q330,60 378,68 Q430,85 484,130 Q530,175 580,220"
+            stroke="#22c55e" stroke-width="2.5" fill="none"/>
+      <!-- threshold=0.5 vertical marker -->
+      <line x1="378" y1="20" x2="378" y2="220" stroke="#888" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="380" y="35" font-size="11" fill="#888">0.5</text>
+      <!-- legend -->
+      <rect x="420" y="25" width="14" height="3" fill="#3b82f6"/>
+      <text x="438" y="32" font-size="11" fill="#3b82f6">FNR</text>
+      <rect x="420" y="42" width="14" height="3" fill="#f97316"/>
+      <text x="438" y="49" font-size="11" fill="#f97316">FPR</text>
+      <rect x="420" y="59" width="14" height="3" fill="#22c55e"/>
+      <text x="438" y="66" font-size="11" fill="#22c55e">Overall Error</text>
+    </svg>
+    <p class="viz-caption">Schematic of ISLR Figure 4.7. Overall error is minimized near threshold=0.5, but FNR is catastrophic there.</p>
+    <p class="callout fragment fade-up" style="margin-top:0.5em;">The right threshold trades one type of error for another. Domain knowledge — not data — dictates which is costlier.</p>
+  </section>
+
+  <!-- NEW: ROC curve visual -->
+  <section>
+    <h2>ROC curve — visualising the threshold trade-off</h2>
+    <div class="two-col-viz">
+      <div>
+        <svg viewBox="0 0 280 270" width="100%" style="background:#fafafa;border-radius:8px;border:1px solid #ddd;">
+          <!-- axes -->
+          <line x1="40" y1="240" x2="260" y2="240" stroke="#888" stroke-width="1.5"/>
+          <line x1="40" y1="20"  x2="40"  y2="240" stroke="#888" stroke-width="1.5"/>
+          <!-- diagonal (random) -->
+          <line x1="40" y1="240" x2="260" y2="20" stroke="#ccc" stroke-width="1.5" stroke-dasharray="5,4"/>
+          <!-- LDA ROC curve -->
+          <path d="M40,240 Q50,220 65,200 Q80,175 100,145 Q120,115 145,88 Q165,68 185,52 Q210,38 240,26 Q255,22 260,20"
+                stroke="#3b82f6" stroke-width="2.5" fill="rgba(59,130,246,0.06)"/>
+          <!-- LR ROC curve (slightly higher) -->
+          <path d="M40,240 Q52,218 68,196 Q84,170 106,140 Q128,110 152,84 Q172,63 194,46 Q218,33 245,23 Q257,20 260,20"
+                stroke="#f97316" stroke-width="2" stroke-dasharray="7,3" fill="none"/>
+          <!-- AUC label -->
+          <text x="155" y="160" font-size="12" fill="#3b82f6">LDA</text>
+          <text x="165" y="175" font-size="11" fill="#3b82f6">AUC≈0.948</text>
+          <text x="165" y="195" font-size="12" fill="#f97316">LR</text>
+          <text x="165" y="210" font-size="11" fill="#f97316">AUC≈0.951</text>
+          <!-- axes labels -->
+          <text x="150" y="258" font-size="11" fill="#555" text-anchor="middle">FPR (1 − Specificity)</text>
+          <text x="15" y="135" font-size="11" fill="#555" text-anchor="middle" transform="rotate(-90,15,135)">TPR (Sensitivity)</text>
+          <!-- tick labels -->
+          <text x="40"  y="255" font-size="10" fill="#888" text-anchor="middle">0</text>
+          <text x="150" y="255" font-size="10" fill="#888" text-anchor="middle">0.5</text>
+          <text x="260" y="255" font-size="10" fill="#888" text-anchor="middle">1</text>
+          <text x="35" y="243" font-size="10" fill="#888" text-anchor="end">0</text>
+          <text x="35" y="133" font-size="10" fill="#888" text-anchor="end">0.5</text>
+          <text x="35" y="23"  font-size="10" fill="#888" text-anchor="end">1</text>
+          <!-- random line label -->
+          <text x="215" y="85" font-size="10" fill="#aaa" transform="rotate(-45,215,85)">random</text>
+        </svg>
+        <p class="viz-caption">LDA ≈ LR on Default (balanced features, near-Gaussian)</p>
+      </div>
+      <div style="font-size:0.84em;">
+        <p><strong>ROC</strong> = Receiver Operating Characteristic. Each point is a threshold.</p>
+        <ul style="margin-top:0.6em;">
+          <li class="fragment fade-up">Top-left corner = perfect classifier (TPR=1, FPR=0).</li>
+          <li class="fragment fade-up">Diagonal = random guessing (AUC=0.5).</li>
+          <li class="fragment fade-up"><strong>AUC</strong> = Area Under Curve = probability that model ranks a random positive above a random negative.</li>
+          <li class="fragment fade-up">AUC is threshold-free — compare models across all operating points simultaneously.</li>
+        </ul>
+        <p class="callout fragment fade-up" style="margin-top:0.8em;">AUC 0.948 vs 0.951 — practically identical. When Gaussian assumption holds, LDA ≈ LR.</p>
+      </div>
+    </div>
+    <aside class="notes">ISLR Figure 4.8. The ROC curve was developed in WWII for radar signal detection — hence "receiver operating characteristic." The AUC has a probabilistic interpretation: it equals the probability that the model assigns a higher score to a randomly chosen positive than a randomly chosen negative.</aside>
   </section>
 
   <section>
     <h2>Fisher's linear discriminant projection</h2>
-    <p>Find the direction w that maximizes:</p>
+    <p>Find the direction w that maximises the Fisher criterion:</p>
     <p style="text-align:center;font-size:1.1em;margin:0.4em 0;">
       J(w) = (w<sup>T</sup>S<sub>B</sub>w) / (w<sup>T</sup>S<sub>W</sub>w)
     </p>
-    <p class="muted">S<sub>B</sub> = between-class scatter; S<sub>W</sub> = within-class scatter.</p>
+    <p class="muted">S<sub>B</sub> = between-class scatter matrix; S<sub>W</sub> = within-class scatter matrix.</p>
     <ul>
-      <li class="fragment fade-up">Solution: w = S<sub>W</sub><sup>−1</sup>(μ₁ − μ₂) — the same direction as LDA!</li>
+      <li class="fragment fade-up">Solution: w ∝ S<sub>W</sub><sup>−1</sup>(μ₁ − μ₂) — the same direction as LDA.</li>
       <li class="fragment fade-up">Project all points onto w → 1D histogram; classes should separate well.</li>
-      <li class="fragment fade-up">With K classes, p features: min(K−1, p) discriminant axes.</li>
+      <li class="fragment fade-up">With K classes, p features: up to min(K−1, p) discriminant axes.</li>
     </ul>
-<pre><code class="language-python">lda4 = LinearDiscriminantAnalysis().fit(X_4feat, y)
-X_proj = lda4.transform(X_4feat)  # shape: (n, K-1)</code></pre>
+
     <aside class="notes">Figure 4.6 in ISLR shows the 1D projection for LDA on the Default dataset. The two histograms (default vs no-default) have significant overlap, which is why LDA doesn't achieve perfect separation here.</aside>
   </section>
 
+  <!-- NEW: Fisher Iris scatter / LD plot -->
   <section>
-    <h2>Fisher projection on Iris (K=3, p=4)</h2>
-    <ul>
-      <li class="fragment fade-up">4 features → transform to 2 discriminant axes (K−1 = 2).</li>
-      <li class="fragment fade-up">LD1 explains most of between-class variance; LD2 captures the remaining.</li>
-      <li class="fragment fade-up">Scatter on (LD1, LD2): setosa separates perfectly; versicolor/virginica have some overlap.</li>
-    </ul>
-<pre><code class="language-python">X_lda = lda.transform(X_iris_4feat)  # (150, 2)
-plt.scatter(X_lda[:,0], X_lda[:,1], c=y_iris, s=20)
-plt.xlabel('LD1'); plt.ylabel('LD2')</code></pre>
-    <p class="muted">This is exactly Figure 4.6 style from ISLR — the most interpretable 2D view of 4D data.</p>
+    <h2>Fisher projection on Iris — LD1 vs LD2</h2>
+    <div class="two-col-viz">
+      <div>
+        <svg viewBox="0 0 280 260" width="100%" style="background:#fafafa;border-radius:8px;border:1px solid #ddd;">
+          <!-- axes -->
+          <line x1="30" y1="230" x2="260" y2="230" stroke="#888" stroke-width="1.5"/>
+          <line x1="30" y1="10"  x2="30"  y2="230" stroke="#888" stroke-width="1.5"/>
+          <!-- cluster 1: setosa — far left, tight -->
+          <ellipse cx="62" cy="190" rx="20" ry="22" fill="rgba(59,130,246,0.15)" stroke="#3b82f6" stroke-width="1"/>
+          <!-- cluster 2: versicolor — middle -->
+          <ellipse cx="145" cy="120" rx="35" ry="28" fill="rgba(249,115,22,0.15)" stroke="#f97316" stroke-width="1"/>
+          <!-- cluster 3: virginica — right, some overlap with versicolor -->
+          <ellipse cx="210" cy="80" rx="32" ry="26" fill="rgba(34,197,94,0.15)" stroke="#22c55e" stroke-width="1"/>
+          <!-- data points — setosa -->
+          <circle cx="55" cy="185" r="3" fill="#3b82f6" opacity="0.8"/>
+          <circle cx="68" cy="178" r="3" fill="#3b82f6" opacity="0.8"/>
+          <circle cx="58" cy="200" r="3" fill="#3b82f6" opacity="0.8"/>
+          <circle cx="72" cy="192" r="3" fill="#3b82f6" opacity="0.8"/>
+          <circle cx="50" cy="195" r="3" fill="#3b82f6" opacity="0.8"/>
+          <circle cx="62" cy="170" r="3" fill="#3b82f6" opacity="0.8"/>
+          <!-- data points — versicolor -->
+          <circle cx="128" cy="112" r="3" fill="#f97316" opacity="0.8"/>
+          <circle cx="145" cy="118" r="3" fill="#f97316" opacity="0.8"/>
+          <circle cx="158" cy="125" r="3" fill="#f97316" opacity="0.8"/>
+          <circle cx="140" cy="98"  r="3" fill="#f97316" opacity="0.8"/>
+          <circle cx="162" cy="138" r="3" fill="#f97316" opacity="0.8"/>
+          <circle cx="120" cy="130" r="3" fill="#f97316" opacity="0.8"/>
+          <circle cx="175" cy="115" r="3" fill="#f97316" opacity="0.8"/>
+          <!-- data points — virginica -->
+          <circle cx="195" cy="78" r="3" fill="#22c55e" opacity="0.8"/>
+          <circle cx="212" cy="72" r="3" fill="#22c55e" opacity="0.8"/>
+          <circle cx="225" cy="85" r="3" fill="#22c55e" opacity="0.8"/>
+          <circle cx="205" cy="92" r="3" fill="#22c55e" opacity="0.8"/>
+          <circle cx="220" cy="65" r="3" fill="#22c55e" opacity="0.8"/>
+          <circle cx="190" cy="95" r="3" fill="#22c55e" opacity="0.8"/>
+          <!-- axis labels -->
+          <text x="145" y="247" font-size="12" fill="#555" text-anchor="middle">LD1</text>
+          <text x="14" y="120" font-size="12" fill="#555" text-anchor="middle" transform="rotate(-90,14,120)">LD2</text>
+          <!-- class labels -->
+          <text x="62"  y="155" font-size="11" fill="#3b82f6" text-anchor="middle">setosa</text>
+          <text x="145" y="95"  font-size="11" fill="#f97316" text-anchor="middle">versicolor</text>
+          <text x="210" y="55"  font-size="11" fill="#22c55e" text-anchor="middle">virginica</text>
+        </svg>
+        <p class="viz-caption">Iris 4-feature data projected to 2 discriminant axes</p>
+      </div>
+      <div style="font-size:0.84em;">
+        <p><strong>4 features → 2 axes</strong> (K−1 = 2 for K=3 classes). Dimensionality reduction for free.</p>
+        <ul style="margin-top:0.6em;">
+          <li class="fragment fade-up"><strong>LD1</strong> captures most between-class variance — separates setosa from the others.</li>
+          <li class="fragment fade-up"><strong>LD2</strong> captures remaining variance — partially separates versicolor from virginica.</li>
+          <li class="fragment fade-up">Setosa is <em>perfectly</em> separable in this projection.</li>
+          <li class="fragment fade-up">Versicolor and virginica overlap: irreducible error in 2 features.</li>
+        </ul>
+        <p class="callout fragment fade-up" style="margin-top:0.8em;">This is the most compact, class-informative 2D view of 4D data. PCA would not give this — it maximises total variance, not between-class variance.</p>
+      </div>
+    </div>
+    <aside class="notes">This corresponds to ISLR Figure 4.6 (right panel). LDA-based projection is a supervised dimensionality reduction method — it is aware of the class labels when constructing the projection axes. PCA is unsupervised and often gives worse class separation.</aside>
   </section>
 </section>
+
+  <!-- EXAMPLE: Fisher projection on Iris — visualise discriminant axes -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Fisher projection on Iris — visualise discriminant axes</h2>
+    <div class="ex-prompt">Fit LDA on Iris (4 features). Project to 2D discriminant axes with lda.transform(). Print how much between-class variance each axis explains.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.datasets import load_iris
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+
+iris = load_iris()
+X, y = iris.data, iris.target
+
+lda = LinearDiscriminantAnalysis().fit(X, y)
+X_proj = lda.transform(X)   # (150, 2) — 2 discriminant axes
+
+print(f"Original shape : {X.shape}")
+print(f"Projected shape: {X_proj.shape}  (K-1 = 2 axes)")
+print()
+print("Explained variance ratio:", lda.explained_variance_ratio_.round(4))
+print(f"  LD1 explains {lda.explained_variance_ratio_[0]:.1%} of between-class variance")
+print(f"  LD2 explains {lda.explained_variance_ratio_[1]:.1%} of between-class variance")
+print()
+print("Class centroids in the projected space:")
+for k, name in enumerate(iris.target_names):
+    pts = X_proj[y==k]
+    print(f"  {name:12s}: LD1 mean={pts[:,0].mean():>7.3f}  LD2 mean={pts[:,1].mean():>7.3f}")
+print()
+print(f"Overall test accuracy (on all data): {lda.score(X,y):.4f}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">LD1 alone explains ~99% of between-class variance on Iris. Setosa is well-separated on LD1. Versicolor and virginica overlap slightly. The 2D LDA projection is the best 2D view of the 4D data for classification.</script>
+  </section>
 
 <!-- ====================================================
      PART 3 — QDA
@@ -233,10 +737,75 @@ plt.xlabel('LD1'); plt.ylabel('LD2')</code></pre>
       <li class="fragment fade-up"><strong>LDA</strong>: f<sub>k</sub>(x) = N(μ<sub>k</sub>, <span style="text-decoration:underline">Σ</span>) — shared covariance. Linear boundary.</li>
       <li class="fragment fade-up"><strong>QDA</strong>: f<sub>k</sub>(x) = N(μ<sub>k</sub>, <span style="text-decoration:underline">Σ<sub>k</sub></span>) — separate covariance per class. Quadratic boundary.</li>
     </ul>
-    <p style="text-align:center;font-size:1.1em;margin:0.8em 0;">
+    <p style="text-align:center;font-size:1.05em;margin:0.8em 0;">
       δ<sub>k</sub>(x) = −½ log|Σ<sub>k</sub>| − ½(x−μ<sub>k</sub>)<sup>T</sup>Σ<sub>k</sub><sup>−1</sup>(x−μ<sub>k</sub>) + log π<sub>k</sub>
     </p>
     <p class="callout fragment fade-up">The term x<sup>T</sup>Σ<sub>k</sub><sup>−1</sup>x no longer cancels (Σ<sub>k</sub> differs by class). The discriminant score is <strong>quadratic in x</strong> → curved decision boundary.</p>
+  </section>
+
+  <!-- NEW: LDA vs QDA boundary illustration -->
+  <section>
+    <h2>LDA: linear boundary vs QDA: curved boundary</h2>
+    <div class="two-col-viz">
+      <div>
+        <svg viewBox="0 0 270 260" width="100%" style="background:#f8fafc;border-radius:8px;border:1px solid #ddd;">
+          <text x="135" y="18" font-size="13" font-weight="bold" fill="#333" text-anchor="middle">LDA (shared Σ)</text>
+          <!-- class 1: top-left, round-ish ellipse -->
+          <ellipse cx="90" cy="90" rx="58" ry="55" fill="rgba(59,130,246,0.12)" stroke="#3b82f6" stroke-width="1.5"/>
+          <!-- class 2: bottom-right, same shape (shared Σ) -->
+          <ellipse cx="185" cy="175" rx="58" ry="55" fill="rgba(249,115,22,0.12)" stroke="#f97316" stroke-width="1.5"/>
+          <!-- data points class 1 -->
+          <circle cx="80"  cy="80"  r="3" fill="#3b82f6" opacity="0.7"/>
+          <circle cx="100" cy="75"  r="3" fill="#3b82f6" opacity="0.7"/>
+          <circle cx="90"  cy="105" r="3" fill="#3b82f6" opacity="0.7"/>
+          <circle cx="65"  cy="95"  r="3" fill="#3b82f6" opacity="0.7"/>
+          <circle cx="110" cy="95"  r="3" fill="#3b82f6" opacity="0.7"/>
+          <circle cx="75"  cy="115" r="3" fill="#3b82f6" opacity="0.7"/>
+          <!-- data points class 2 -->
+          <circle cx="175" cy="165" r="3" fill="#f97316" opacity="0.7"/>
+          <circle cx="195" cy="170" r="3" fill="#f97316" opacity="0.7"/>
+          <circle cx="185" cy="190" r="3" fill="#f97316" opacity="0.7"/>
+          <circle cx="165" cy="180" r="3" fill="#f97316" opacity="0.7"/>
+          <circle cx="205" cy="185" r="3" fill="#f97316" opacity="0.7"/>
+          <circle cx="180" cy="155" r="3" fill="#f97316" opacity="0.7"/>
+          <!-- LDA: straight boundary -->
+          <line x1="20" y1="245" x2="250" y2="25" stroke="#1d4ed8" stroke-width="2.5"/>
+          <text x="238" y="22" font-size="11" fill="#1d4ed8">boundary</text>
+        </svg>
+        <p class="viz-caption">Same Σ → ellipses have same shape → straight line</p>
+      </div>
+      <div>
+        <svg viewBox="0 0 270 260" width="100%" style="background:#f8fafc;border-radius:8px;border:1px solid #ddd;">
+          <text x="135" y="18" font-size="13" font-weight="bold" fill="#333" text-anchor="middle">QDA (separate Σₖ)</text>
+          <!-- class 1: top-left, tall narrow ellipse -->
+          <ellipse cx="90" cy="90" rx="38" ry="62" fill="rgba(59,130,246,0.12)" stroke="#3b82f6" stroke-width="1.5"/>
+          <!-- class 2: bottom-right, wide flat ellipse — different Σ -->
+          <ellipse cx="185" cy="178" rx="72" ry="38" fill="rgba(249,115,22,0.12)" stroke="#f97316" stroke-width="1.5"/>
+          <!-- data points class 1 -->
+          <circle cx="83"  cy="75"  r="3" fill="#3b82f6" opacity="0.7"/>
+          <circle cx="98"  cy="70"  r="3" fill="#3b82f6" opacity="0.7"/>
+          <circle cx="90"  cy="100" r="3" fill="#3b82f6" opacity="0.7"/>
+          <circle cx="75"  cy="95"  r="3" fill="#3b82f6" opacity="0.7"/>
+          <circle cx="95"  cy="118" r="3" fill="#3b82f6" opacity="0.7"/>
+          <circle cx="80"  cy="125" r="3" fill="#3b82f6" opacity="0.7"/>
+          <!-- data points class 2 -->
+          <circle cx="155" cy="175" r="3" fill="#f97316" opacity="0.7"/>
+          <circle cx="180" cy="168" r="3" fill="#f97316" opacity="0.7"/>
+          <circle cx="210" cy="172" r="3" fill="#f97316" opacity="0.7"/>
+          <circle cx="170" cy="185" r="3" fill="#f97316" opacity="0.7"/>
+          <circle cx="200" cy="190" r="3" fill="#f97316" opacity="0.7"/>
+          <circle cx="225" cy="180" r="3" fill="#f97316" opacity="0.7"/>
+          <!-- QDA: curved boundary (parabolic-ish) -->
+          <path d="M15,50 Q80,90 130,135 Q155,160 165,200 Q170,225 168,250"
+                stroke="#dc2626" stroke-width="2.5" fill="none"/>
+          <text x="168" y="48" font-size="11" fill="#dc2626">curved</text>
+          <text x="168" y="60" font-size="11" fill="#dc2626">boundary</text>
+        </svg>
+        <p class="viz-caption">Different Σₖ → different ellipse shapes → curved boundary</p>
+      </div>
+    </div>
+    <p class="callout fragment fade-up" style="margin-top:0.5em;">The boundary shape mirrors the difference in covariance — if one class is elongated and another is round, the boundary that separates them must curve.</p>
+    <aside class="notes">This is the intuition behind Figure 4.9 in ISLR. When two Gaussians have the same shape (shared Σ), the equal-density contour between them is a straight line. When they have different shapes, it becomes a quadric surface.</aside>
   </section>
 
   <section>
@@ -256,9 +825,7 @@ plt.xlabel('LD1'); plt.ylabel('LD2')</code></pre>
 
   <section>
     <h2>QDA on Iris — curved decision regions</h2>
-<pre><code class="language-python">from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
-qda = QuadraticDiscriminantAnalysis().fit(X_2feat, y_iris)
-# Decision boundary plot with contourf — notice the curves!</code></pre>
+
     <ul>
       <li class="fragment fade-up">LDA on Iris: three straight-line boundaries meeting at a point.</li>
       <li class="fragment fade-up">QDA on Iris: elliptical, curved boundaries — each class has its own shape.</li>
@@ -267,6 +834,76 @@ qda = QuadraticDiscriminantAnalysis().fit(X_2feat, y_iris)
     <aside class="notes">This is Figure 4.10 from ISLR (adapted). The left panel shows LDA boundaries, right shows QDA boundaries. QDA is better here because virginica and versicolor have different covariance structures — versicolor's petal dimensions are more spread out.</aside>
   </section>
 
+  <!-- NEW: bias-variance visualisation -->
+  <section>
+    <h2>Bias-variance intuition: LDA vs QDA</h2>
+    <svg viewBox="0 0 620 200" width="90%" style="display:block;margin:0 auto;background:#fafafa;border-radius:8px;border:1px solid #ddd;">
+      <!-- left panel: LDA high bias scenario -->
+      <rect x="10" y="10" width="290" height="180" fill="#f0f4ff" rx="6"/>
+      <text x="155" y="30" font-size="12" font-weight="bold" fill="#1d4ed8" text-anchor="middle">LDA — low variance, high bias</text>
+      <text x="155" y="46" font-size="10" fill="#555" text-anchor="middle">(when true boundary is curved)</text>
+      <!-- true curved boundary dashed -->
+      <path d="M30,160 Q80,130 110,100 Q140,70 160,50 Q180,70 200,100 Q230,130 280,155"
+            stroke="#888" stroke-width="1.5" stroke-dasharray="5,3" fill="none"/>
+      <!-- LDA estimated straight -->
+      <line x1="30" y1="165" x2="280" y2="50" stroke="#1d4ed8" stroke-width="2.5"/>
+      <text x="155" y="175" font-size="10" fill="#888" text-anchor="middle">- - true    — estimated</text>
+      <!-- right panel: QDA -->
+      <rect x="320" y="10" width="290" height="180" fill="#fff7ed" rx="6"/>
+      <text x="465" y="30" font-size="12" font-weight="bold" fill="#f97316" text-anchor="middle">QDA — higher variance, lower bias</text>
+      <text x="465" y="46" font-size="10" fill="#555" text-anchor="middle">(estimated boundary can match true curve)</text>
+      <!-- true curved boundary -->
+      <path d="M340,160 Q390,130 420,100 Q450,70 470,50 Q490,70 510,100 Q540,130 590,155"
+            stroke="#888" stroke-width="1.5" stroke-dasharray="5,3" fill="none"/>
+      <!-- QDA estimated curved, close to true -->
+      <path d="M340,158 Q395,128 425,98 Q455,68 472,50 Q490,70 512,100 Q542,132 590,157"
+            stroke="#f97316" stroke-width="2.5" fill="none"/>
+      <text x="465" y="175" font-size="10" fill="#888" text-anchor="middle">- - true    — estimated</text>
+    </svg>
+    <p class="viz-caption">Left: LDA forces a straight boundary, introducing bias when the true boundary curves. Right: QDA adapts but needs enough data.</p>
+    <p class="callout fragment fade-up" style="margin-top:0.6em;"><strong>Key rule:</strong> if n/p is small, prefer LDA's constrained form even if it's slightly wrong — the reduced variance more than compensates.</p>
+  </section>
+
+  <!-- EXAMPLE: LDA vs QDA: when QDA wins -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>LDA vs QDA: when QDA wins</h2>
+    <div class="ex-prompt">Compare LDA and QDA on two scenarios: (1) same covariance — LDA wins; (2) different covariances — QDA wins. See the effect directly.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis
+from sklearn.model_selection import cross_val_score
+
+rng = np.random.default_rng(42)
+
+def benchmark(X, y, label):
+    lda_auc = cross_val_score(LinearDiscriminantAnalysis(), X, y, cv=5, scoring="roc_auc").mean()
+    qda_auc = cross_val_score(QuadraticDiscriminantAnalysis(), X, y, cv=5, scoring="roc_auc").mean()
+    print(f"  {label}")
+    print(f"    LDA AUC = {lda_auc:.4f}  |  QDA AUC = {qda_auc:.4f}  ← {'LDA' if lda_auc>qda_auc else 'QDA'} wins")
+
+# Scenario 1: Same covariance
+n = 600
+Sigma = np.array([[2,0.8],[0.8,1]])
+X1 = np.vstack([rng.multivariate_normal([0,0], Sigma, n//2),
+                rng.multivariate_normal([3,2], Sigma, n//2)])
+y1 = np.hstack([np.zeros(n//2), np.ones(n//2)])
+benchmark(X1, y1, "Scenario 1: Same covariance (LDA assumption holds)")
+
+# Scenario 2: Different covariances
+Sigma0 = np.array([[3,0],[0,0.3]])   # elongated horizontally
+Sigma1 = np.array([[0.3,0],[0,3]])   # elongated vertically
+X2 = np.vstack([rng.multivariate_normal([0,0], Sigma0, n//2),
+                rng.multivariate_normal([2,2], Sigma1, n//2)])
+y2 = np.hstack([np.zeros(n//2), np.ones(n//2)])
+benchmark(X2, y2, "Scenario 2: Different covariances (QDA assumption holds)")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">When the true covariances are equal (Scenario 1), LDA wins because QDA wastes degrees of freedom estimating a difference that doesn't exist. When covariances differ (Scenario 2), QDA captures the quadratic boundary and wins.</script>
+  </section>
   <section>
     <h2>LDA vs QDA — when each wins</h2>
     <table style="font-size:0.85em;width:100%;">
@@ -284,25 +921,70 @@ qda = QuadraticDiscriminantAnalysis().fit(X_2feat, y_iris)
     <table style="font-size:0.82em;width:100%;">
       <tr><th></th><th>LDA</th><th>QDA</th><th>Logistic Regression</th></tr>
       <tr><td>Boundary shape</td><td>Linear</td><td>Quadratic</td><td>Linear</td></tr>
-      <tr><td>Assumptions</td><td>Gaussian, shared Σ</td><td>Gaussian, per-class Σ</td><td>None (discriminative)</td></tr>
+      <tr><td>Model type</td><td>Generative</td><td>Generative</td><td>Discriminative</td></tr>
+      <tr><td>Assumptions</td><td>Gaussian, shared Σ</td><td>Gaussian, per-class Σ</td><td>None on P(X|Y)</td></tr>
       <tr><td>Robustness to outliers</td><td>Moderate</td><td>Lower</td><td>High</td></tr>
       <tr><td>Works with small n</td><td>Yes</td><td>No</td><td>Yes</td></tr>
+      <tr><td>Coef. blow-up at separation</td><td>No</td><td>No</td><td>Yes</td></tr>
       <tr><td>sklearn class</td><td>LinearDiscriminantAnalysis</td><td>QuadraticDiscriminantAnalysis</td><td>LogisticRegression</td></tr>
     </table>
+    <p class="callout fragment fade-up" style="margin-top:0.6em;">LR and LDA produce the same boundary form (linear) but arrive at coefficients via different routes: gradient descent on the likelihood of labels (LR) vs Gaussian class densities (LDA).</p>
   </section>
 </section>
+
+  <!-- EXAMPLE: Full benchmark: LR vs LDA vs QDA vs NB -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Full benchmark: LR vs LDA vs QDA vs NB</h2>
+    <div class="ex-prompt">Fit all four classifiers on synthetic Default data. Print AUC for each. They should all be competitive (~0.93–0.95) because the features are approximately Gaussian.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.linear_model import LogisticRegression
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis
+from sklearn.naive_bayes import GaussianNB
+from sklearn.model_selection import cross_val_score
+
+rng = np.random.default_rng(0)
+n = 5000
+balance = rng.normal(1500, 600, n)
+income  = rng.normal(35000, 15000, n)
+p = 1 / (1 + np.exp(-(balance*0.005 - 8.5)))
+y = rng.binomial(1, p)
+X = np.column_stack([balance, income])
+
+models = [
+    ("Logistic Regression", LogisticRegression(max_iter=500, C=1.0)),
+    ("LDA               ", LinearDiscriminantAnalysis()),
+    ("QDA               ", QuadraticDiscriminantAnalysis()),
+    ("Naive Bayes (GNB) ", GaussianNB()),
+]
+
+print(f"{'Method':<22}  AUC (5-fold CV)")
+print("-" * 40)
+for name, m in models:
+    auc = cross_val_score(m, X, y, cv=5, scoring="roc_auc").mean()
+    print(f"  {name}  {auc:.4f}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">On this well-behaved Gaussian data, all four methods achieve similar AUC (~0.93–0.96). The features are approximately Gaussian (by construction), which is the LDA/QDA sweet spot. Differences emerge on non-Gaussian or high-dimensional data.</script>
+  </section>
 
 <!-- RECAP -->
 <section class="title-slide">
   <span class="kicker">Recap</span>
-  <h2>Six ideas to leave with</h2>
-  <ol style="font-size:0.88em;line-height:1.8em;">
+  <h2>Eight ideas to leave with</h2>
+  <ol style="font-size:0.85em;line-height:1.8em;">
     <li class="fragment fade-up"><strong>Generative vs discriminative.</strong> LDA models distributions; LR models the boundary directly.</li>
     <li class="fragment fade-up"><strong>Bayes theorem: posterior ∝ prior × likelihood.</strong> πₖ · fₖ(x).</li>
+    <li class="fragment fade-up"><strong>Prior shifts the boundary.</strong> Rare class → boundary moves toward it.</li>
     <li class="fragment fade-up"><strong>Shared Σ cancels the quadratic term → linear boundary (LDA).</strong></li>
-    <li class="fragment fade-up"><strong>δₖ(x) = xᵀΣ⁻¹μₖ − ½μₖᵀΣ⁻¹μₖ + log πₖ.</strong> This is what LDA computes.</li>
-    <li class="fragment fade-up"><strong>Fisher projection: project to K−1 discriminant axes</strong> for visualization and dimensionality reduction.</li>
-    <li class="fragment fade-up"><strong>QDA: separate Σₖ → quadratic boundary.</strong> More flexible, needs more data.</li>
+    <li class="fragment fade-up"><strong>δₖ(x) = xᵀΣ⁻¹μₖ − ½μₖᵀΣ⁻¹μₖ + log πₖ</strong> — this is what LDA computes.</li>
+    <li class="fragment fade-up"><strong>Threshold choice matters.</strong> Default 0.5 misses 82% of defaulters — tune to cost structure.</li>
+    <li class="fragment fade-up"><strong>Fisher projection: project to K−1 axes</strong> — supervised dimensionality reduction, better than PCA for class separation.</li>
+    <li class="fragment fade-up"><strong>QDA: separate Σₖ → quadratic boundary.</strong> More flexible, needs more data to pay off.</li>
   </ol>
   <p class="callout fragment fade-up">Next: Naive Bayes — what if we assume features are independent within each class?</p>
 </section>
@@ -312,9 +994,10 @@ qda = QuadraticDiscriminantAnalysis().fit(X_2feat, y_iris)
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="../../../../shared/slides-template/interactive.js"></script>
 <script>
   Reveal.initialize({
-    hash: true, slideNumber: 'c/t', transition: 'slide',
+    hash: true, slideNumber: 'c/t', transition: 'slide', center: false,
     transitionSpeed: 'fast', backgroundTransition: 'fade',
     width: 1280, height: 760, margin: 0.06,
     plugins: [ RevealNotes, RevealHighlight ],

@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/interactive.css" />
 </head>
 <body>
 <div class="reveal"><div class="slides">
@@ -74,9 +75,81 @@
       <tr><td>Linear regression</td><td>Negative / above 1</td><td>Yes (slopes)</td><td><strong>No</strong></td></tr>
       <tr><td>Logistic regression</td><td>Always in (0, 1)</td><td>Yes (odds ratios)</td><td><strong>Yes</strong></td></tr>
     </table>
-    <p class="callout fragment fade-up" style="margin-top:1em;">For a binary outcome, always use logistic regression. Linear regression can still be used for multi-class in some edge cases but logistic is the right default.</p>
+    
+  <!-- EXAMPLE: Linear vs logistic: probability bounds -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Linear vs logistic: probability bounds</h2>
+    <div class="ex-prompt">Fit OLS and logistic regression on a synthetic binary outcome. See how OLS produces predictions outside [0,1] while logistic is always valid.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.linear_model import LinearRegression, LogisticRegression
+
+rng = np.random.default_rng(42)
+balance = rng.normal(1500, 600, 500)
+p_true  = 1 / (1 + np.exp(-(balance - 1800) / 300))
+y = rng.binomial(1, p_true)
+X = balance.reshape(-1,1)
+
+ols = LinearRegression().fit(X, y)
+lr  = LogisticRegression(C=1e6, max_iter=500).fit(X, y)
+
+test_bal = np.array([0, 500, 1000, 1500, 2000, 2500, 3000]).reshape(-1,1)
+ols_pred = ols.predict(test_bal)
+lr_pred  = lr.predict_proba(test_bal)[:, 1]
+
+print(f"{'Balance':>8}  {'OLS pred':>10}  {'LR pred':>10}")
+print("-" * 34)
+for b, o, l in zip(test_bal.ravel(), ols_pred, lr_pred):
+    flag = " ← INVALID" if o < 0 or o > 1 else ""
+    print(f"{b:>8.0f}  {o:>10.4f}  {l:>10.4f}{flag}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">OLS predictions at low balance go negative — an invalid probability. Logistic regression always outputs values in (0,1). At balance=0 the OLS prediction is well below zero.</script>
+  </section>
+
+  <section>
+    <p class="callout" style="margin-top:1em;">For a binary outcome, always use logistic regression. Linear regression can still be used for multi-class in some edge cases but logistic is the right default.</p>
   </section>
 </section>
+
+  <!-- EXAMPLE: Linear vs logistic: probability bounds -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Linear vs logistic: probability bounds</h2>
+    <div class="ex-prompt">Fit OLS and logistic regression on a synthetic binary outcome. See how OLS produces predictions outside [0,1] while logistic is always valid.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.linear_model import LinearRegression, LogisticRegression
+
+rng = np.random.default_rng(42)
+balance = rng.normal(1500, 600, 500)
+p_true  = 1 / (1 + np.exp(-(balance - 1800) / 300))
+y = rng.binomial(1, p_true)
+X = balance.reshape(-1,1)
+
+ols = LinearRegression().fit(X, y)
+lr  = LogisticRegression(C=1e6, max_iter=500).fit(X, y)
+
+test_bal = np.array([0, 500, 1000, 1500, 2000, 2500, 3000]).reshape(-1,1)
+ols_pred = ols.predict(test_bal)
+lr_pred  = lr.predict_proba(test_bal)[:, 1]
+
+print(f"{'Balance':>8}  {'OLS pred':>10}  {'LR pred':>10}")
+print("-" * 34)
+for b, o, l in zip(test_bal.ravel(), ols_pred, lr_pred):
+    flag = " ← INVALID" if o < 0 or o > 1 else ""
+    print(f"{b:>8.0f}  {o:>10.4f}  {l:>10.4f}{flag}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">OLS predictions at low balance go negative — an invalid probability. Logistic regression always outputs values in (0,1). At balance=0 the OLS prediction is well below zero.</script>
+  </section>
 
 <!-- ====================================================
      PART 2 — BINARY LR
@@ -164,6 +237,83 @@
   </section>
 </section>
 
+  <!-- EXAMPLE: Fitting logistic regression — coefficients and odds ratios -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Fitting logistic regression — coefficients and odds ratios</h2>
+    <div class="ex-prompt">Generate Default-like data (balance predicts default). Fit logistic regression and interpret the coefficients as odds ratios.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report
+
+rng = np.random.default_rng(0)
+n = 5000
+balance = rng.normal(1500, 600, n)
+income  = rng.normal(35000, 15000, n)
+p = 1 / (1 + np.exp(-(balance*0.005 - 8.5)))
+y = rng.binomial(1, p)
+X = np.column_stack([balance, income])
+
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, stratify=y, random_state=0)
+m = LogisticRegression(C=1e6, max_iter=500).fit(X_tr, y_tr)
+
+print("Coefficient interpretation:")
+print(f"  Intercept : {m.intercept_[0]:.4f}")
+for name, coef in zip(["balance","income"], m.coef_[0]):
+    print(f"  {name:10s}: β={coef:.5f}  e^β={np.exp(coef):.4f}")
+print()
+print(f"e^(100*β_balance) = {np.exp(100*m.coef_[0][0]):.3f}  (×odds per $100 of balance)")
+print()
+print(classification_report(y_te, m.predict(X_te)))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">e^β_balance ≈ 1.005, so each $1 increase in balance multiplies the default odds by 1.005. Per $100: about 1.65×. Income coefficient is near zero (little signal).</script>
+  </section>
+
+  <!-- EXAMPLE: The student paradox — confounding in action -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>The student paradox — confounding in action</h2>
+    <div class="ex-prompt">Reproduce the ISLR confounding example. Fit LR with student only (positive coef), then with balance+student (negative coef). Watch the sign flip.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.linear_model import LogisticRegression
+
+rng = np.random.default_rng(1)
+n = 10000
+student = rng.binomial(1, 0.4, n)                 # 40% students
+balance = rng.normal(1000, 500, n) + 600*student   # students carry more balance
+p_default = 1 / (1 + np.exp(-(balance*0.005 - 8)))
+y = rng.binomial(1, p_default)
+
+# Simple regression: student only
+m1 = LogisticRegression(C=1e6, max_iter=500).fit(student.reshape(-1,1), y)
+# Multiple regression: student + balance
+m2 = LogisticRegression(C=1e6, max_iter=500).fit(
+    np.column_stack([student, balance]), y)
+
+print("=== Simple regression (student only) ===")
+print(f"  β_student = {m1.coef_[0][0]:+.4f}   (positive → students default MORE)")
+print()
+print("=== Multiple regression (student + balance) ===")
+print(f"  β_student  = {m2.coef_[0][0]:+.4f}  (negative → students default LESS, controlling for balance)")
+print(f"  β_balance  = {m2.coef_[0][1]:+.6f}")
+print()
+print("SIGN FLIPS because students carry higher balances.")
+print("Balance drives defaults. Once controlled, students are actually safer.")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">This is Simpson's paradox. Marginally, students default more (because they carry higher balances). But conditional on balance, students default LESS. Confounding reverses the sign.</script>
+  </section>
+
 <!-- ====================================================
      PART 3 — MULTIPLE LR ON SMARKET
      ==================================================== -->
@@ -186,12 +336,7 @@
 
   <section>
     <h2>Fit and results</h2>
-<pre><code class="language-python">X = smarket[['Lag1','Lag2','Lag3','Lag4','Lag5','Volume']]
-y = (smarket['Direction'] == 'Up').astype(int)
-m = LogisticRegression(C=1e6).fit(X, y)
-print(pd.Series(m.coef_[0], index=X.columns).round(4))
-# training accuracy:
-m.score(X, y)  # 0.5216</code></pre>
+<p class="callout" style="font-size:0.85em;">Run the example below to see this yourself.</p>
     <table style="font-size:0.82em;margin-top:0.6em;">
       <tr><th>Predictor</th><th>β̂</th></tr>
       <tr><td>Lag1</td><td>−0.0731</td></tr>
@@ -214,6 +359,42 @@ m.score(X, y)  # 0.5216</code></pre>
     <aside class="notes">The ISLR analysis uses a time-based split (year &lt; 2005 → train). We use random stratified split; result is similar. This is a crucial pedagogical point: a model that can't predict on held-out data is telling you something about the data, not the method.</aside>
   </section>
 </section>
+
+  <!-- EXAMPLE: Smarket-like: classifying market direction -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Smarket-like: classifying market direction</h2>
+    <div class="ex-prompt">Generate 5 lag features with pure noise. Fit logistic regression. Show that train accuracy barely beats 50% and test accuracy is near random.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+rng = np.random.default_rng(42)
+n = 1250
+# Pure noise lags — no real signal
+X = rng.normal(0, 1, (n, 5))
+y = rng.binomial(1, 0.5, n)   # random Up/Down
+
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.2, random_state=0)
+m = LogisticRegression(C=1e6, max_iter=500).fit(X_tr, y_tr)
+
+print(f"Training accuracy : {m.score(X_tr, y_tr):.4f}")
+print(f"Test accuracy     : {m.score(X_te, y_te):.4f}")
+print(f"Baseline (always predict 1): {y_te.mean():.4f}")
+print()
+print("Coefficients (all near zero — no real signal):")
+for i, c in enumerate(m.coef_[0]):
+    print(f"  Lag{i+1}: {c:+.4f}")
+print()
+print("Logistic regression correctly reports no useful signal.")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+  </section>
 
 <!-- ====================================================
      PART 4 — CASE-CONTROL SAMPLING
@@ -279,11 +460,7 @@ m.score(X, y)  # 0.5216</code></pre>
 
   <section>
     <h2>Iris demo — 3-class decision regions</h2>
-<pre><code class="language-python">from sklearn.linear_model import LogisticRegression
-m = LogisticRegression(max_iter=2000).fit(X, y)
-print('coef shape:', m.coef_.shape)  # (3, 2): one row per class
-# training accuracy
-m.score(X, y)  # 0.9667</code></pre>
+<p class="callout" style="font-size:0.85em;">Run the live example below.</p>
     <p class="muted">Decision regions: contourf on petal_length × petal_width. Three linear boundaries meet at a point — the characteristic signature of softmax.</p>
     <aside class="notes">The three classes in Iris are: setosa (easily separated), versicolor, virginica (overlap). Two features (petal dims) are enough for very high accuracy. With 4 features accuracy is ~97%.</aside>
   </section>
@@ -298,6 +475,41 @@ m.score(X, y)  # 0.9667</code></pre>
     </ul>
   </section>
 </section>
+
+  <!-- EXAMPLE: Multinomial logistic regression on Iris -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Multinomial logistic regression on Iris</h2>
+    <div class="ex-prompt">Fit softmax (multinomial) logistic regression on Iris. Observe coef shape (3,4) — one row per class. Verify predictions sum to 1.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.datasets import load_iris
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, classification_report
+
+iris = load_iris()
+X, y = iris.data, iris.target
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, stratify=y, random_state=0)
+
+m = LogisticRegression(max_iter=2000, multi_class="multinomial").fit(X_tr, y_tr)
+
+print(f"Coef shape: {m.coef_.shape}  (K=3 classes × p=4 features)")
+print()
+probas = m.predict_proba(X_te[:5])
+print("Predicted probabilities for first 5 test samples (must sum to 1):")
+print(f"{'setosa':>10} {'versicolor':>12} {'virginica':>10}  {'sum':>6}")
+for row in probas:
+    print(f"{row[0]:>10.4f} {row[1]:>12.4f} {row[2]:>10.4f}  {row.sum():>6.4f}")
+print()
+print(f"Test accuracy: {accuracy_score(y_te, m.predict(X_te)):.4f}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">With 3 classes, softmax uses 3 weight vectors (one per class), though only K-1=2 are identifiable (sklearn solves the identifiability by convention). Probabilities always sum to 1 by construction.</script>
+  </section>
 
 <!-- ====================================================
      PART 6 — ROC, AUC, CONFUSION MATRIX
@@ -326,8 +538,7 @@ m.score(X, y)  # 0.9667</code></pre>
 
   <section>
     <h2>predict_proba vs predict</h2>
-<pre><code class="language-python">proba = m.predict_proba(X_test)[:, 1]   # P(default=Yes)
-pred  = m.predict(X_test)               # threshold = 0.5</code></pre>
+<p class="muted">Use <code>predict_proba(X_test)[:, 1]</code> for scores, <code>predict()</code> for hard labels (threshold=0.5).</p>
     <ul style="margin-top:0.6em;">
       <li class="fragment fade-up"><code>predict_proba</code> returns the continuous score. <code>predict</code> applies a hard 0.5 cutoff.</li>
       <li class="fragment fade-up">On imbalanced data (few defaults), 0.5 is almost never the right threshold.</li>
@@ -343,16 +554,12 @@ pred  = m.predict(X_test)               # threshold = 0.5</code></pre>
       <li class="fragment fade-up">Diagonal = random classifier (AUC = 0.5). Perfect = top-left corner (AUC = 1.0).</li>
       <li class="fragment fade-up"><strong>AUC</strong> = area under the ROC curve = P(score(pos) &gt; score(neg)). Model-selection metric.</li>
     </ul>
-<pre><code class="language-python">from sklearn.metrics import roc_curve, auc
-fpr, tpr, thr = roc_curve(y_test, proba)
-print(f'AUC = {auc(fpr, tpr):.4f}')     # ~0.95 on Default</code></pre>
+
   </section>
 
   <section>
     <h2>Threshold tuning for F1</h2>
-<pre><code class="language-python">ts  = np.linspace(0.02, 0.6, 50)
-f1s = [f1_score(y_test, (proba >= t).astype(int)) for t in ts]
-best_t = ts[np.argmax(f1s)]             # ~0.15 on Default</code></pre>
+
     <p class="callout fragment fade-up">F1 = 2PR/(P+R) balances precision and recall. On Default, the optimal threshold is ≈0.15, not 0.5 — because defaults are rare and missing them is costly.</p>
     <aside class="notes">The right threshold depends on the cost ratio. In fraud detection, you want very high recall at the cost of more false positives. In cancer screening, same. In spam filtering, you'd prefer high precision. Always calibrate to business costs.</aside>
   </section>
@@ -369,6 +576,46 @@ best_t = ts[np.argmax(f1s)]             # ~0.15 on Default</code></pre>
     <aside class="notes">This recreates Table 4.4 from ISLR. The "correctly classified" column maximizes at 0.5, but if missing a default costs 10× more than a false alarm, 0.20 or lower is better.</aside>
   </section>
 </section>
+
+  <!-- EXAMPLE: ROC curve, AUC and optimal threshold -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>ROC curve, AUC and optimal threshold</h2>
+    <div class="ex-prompt">Fit logistic regression on imbalanced data. Compute AUC. Sweep thresholds and find the one that maximises F1. Print the classification report at that threshold.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.datasets import make_classification
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_auc_score, f1_score, classification_report, roc_curve
+
+X, y = make_classification(n_samples=5000, n_features=10, weights=[0.95, 0.05],
+                            n_informative=5, random_state=42)
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, stratify=y, random_state=0)
+
+m = LogisticRegression(max_iter=500).fit(X_tr, y_tr)
+proba = m.predict_proba(X_te)[:, 1]
+
+auc = roc_auc_score(y_te, proba)
+print(f"AUC-ROC: {auc:.4f}")
+print()
+
+thresholds = np.linspace(0.05, 0.7, 40)
+f1s = [f1_score(y_te, (proba >= t).astype(int), zero_division=0) for t in thresholds]
+best_t = thresholds[np.argmax(f1s)]
+print(f"Best threshold by F1: {best_t:.2f}  (default is 0.5)")
+print()
+print("=== Classification report at default threshold (0.5) ===")
+print(classification_report(y_te, (proba >= 0.5).astype(int)))
+print("=== Classification report at optimal threshold ===")
+print(classification_report(y_te, (proba >= best_t).astype(int)))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">On imbalanced data the default threshold of 0.5 misses most positives. The optimal F1 threshold is usually much lower — here around 0.15–0.25. AUC measures model quality independent of threshold choice.</script>
+  </section>
 
 <!-- ====================================================
      PART 7 — L1/L2 REGULARIZATION
@@ -400,7 +647,7 @@ best_t = ts[np.argmax(f1s)]             # ~0.15 on Default</code></pre>
       <li class="fragment fade-up"><strong>L1 paths</strong>: coefficients drop to exactly zero one at a time as C decreases. Sparse.</li>
       <li class="fragment fade-up">Same Lasso geometry from Week 3 — the diamond constraint corner causes exact zeros.</li>
     </ul>
-<pre><code class="language-python">LogisticRegression(C=C, penalty='l1', solver='saga', max_iter=3000)</code></pre>
+
     <aside class="notes">Use 'saga' or 'liblinear' solver for L1. The default 'lbfgs' only supports L2. This is a common gotcha.</aside>
   </section>
 
@@ -415,6 +662,43 @@ best_t = ts[np.argmax(f1s)]             # ~0.15 on Default</code></pre>
   </section>
 </section>
 
+  <!-- EXAMPLE: L1 vs L2: coefficient paths -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>L1 vs L2: coefficient paths</h2>
+    <div class="ex-prompt">Generate data with 10 features (5 informative, 5 pure noise). Vary C from 0.001 to 100. See how L1 zeroes out noise features while L2 only shrinks them.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.datasets import make_classification
+
+X, y = make_classification(n_samples=500, n_features=10, n_informative=5,
+                            n_redundant=0, random_state=0)
+X_sc = StandardScaler().fit_transform(X)
+
+Cs = [0.001, 0.01, 0.05, 0.1, 0.5, 1.0, 10.0, 100.0]
+
+print(f"{'C':>7}  {'L1 non-zero':>12}  {'L2 max |β|':>12}")
+print("-" * 38)
+for C in Cs:
+    m_l1 = LogisticRegression(C=C, penalty="l1", solver="saga", max_iter=3000).fit(X_sc, y)
+    m_l2 = LogisticRegression(C=C, penalty="l2", max_iter=1000).fit(X_sc, y)
+    nonzero_l1 = np.sum(np.abs(m_l1.coef_[0]) > 1e-4)
+    max_l2     = np.max(np.abs(m_l2.coef_[0]))
+    print(f"{C:>7.3f}  {nonzero_l1:>12}  {max_l2:>12.4f}")
+
+print()
+print("L1: as C decreases (more regularization), features drop to exactly zero.")
+print("L2: all coefficients shrink together but never hit zero.")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">L1 enforces sparsity — at C=0.01 it keeps only the truly informative features. L2 shrinks all coefficients uniformly. For feature selection, use L1. For pure regularization, L2 (faster to train with lbfgs).</script>
+  </section>
+
 <!-- ====================================================
      PART 8 — WHEN LINEAR FAILS
      ==================================================== -->
@@ -427,10 +711,7 @@ best_t = ts[np.argmax(f1s)]             # ~0.15 on Default</code></pre>
 
   <section>
     <h2>The make_moons dataset</h2>
-<pre><code class="language-python">from sklearn.datasets import make_moons
-X, y = make_moons(n_samples=400, noise=0.25, random_state=0)
-m = LogisticRegression(max_iter=2000).fit(X, y)
-print(f'accuracy = {m.score(X, y):.4f}')  # ~0.85</code></pre>
+
     <ul>
       <li class="fragment fade-up">Two interleaved half-moons — no straight line can separate them.</li>
       <li class="fragment fade-up">A linear decision boundary is geometrically limited: it cuts the space with a hyperplane.</li>
@@ -458,6 +739,43 @@ print(f'accuracy = {m.score(X, y):.4f}')  # ~0.85</code></pre>
   </section>
 </section>
 
+  <!-- EXAMPLE: The make_moons wall -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>The make_moons wall</h2>
+    <div class="ex-prompt">Fit logistic regression on two interleaved half-moons. See the accuracy cap at ~85% regardless of iterations or regularisation — a linear boundary can't solve this.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.datasets import make_moons
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, classification_report
+
+X, y = make_moons(n_samples=1000, noise=0.25, random_state=0)
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, random_state=0)
+
+for C in [0.01, 0.1, 1.0, 10.0, 1000.0]:
+    m = LogisticRegression(C=C, max_iter=2000).fit(X_tr, y_tr)
+    print(f"C={C:>8.2f}  train={m.score(X_tr,y_tr):.3f}  test={m.score(X_te,y_te):.3f}")
+
+print()
+print("Test accuracy is stuck ~0.85 no matter what C we use.")
+print("The true boundary is curved — no straight line can do better.")
+print()
+print("Solution preview: polynomial features let LR escape the linear wall:")
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.pipeline import Pipeline
+pipe = Pipeline([("poly", PolynomialFeatures(3)), ("lr", LogisticRegression(max_iter=2000))])
+pipe.fit(X_tr, y_tr)
+print(f"  Degree-3 polynomial LR: test = {pipe.score(X_te, y_te):.3f}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">The moons dataset has a non-linear boundary. A linear model can only place a straight line — it's geometrically impossible to do better than ~85%. Adding polynomial features (or using SVM/trees) resolves this.</script>
+  </section>
+
 <!-- RECAP -->
 <section class="title-slide">
   <span class="kicker">Recap</span>
@@ -480,9 +798,10 @@ print(f'accuracy = {m.score(X, y):.4f}')  # ~0.85</code></pre>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="../../../../shared/slides-template/interactive.js"></script>
 <script>
   Reveal.initialize({
-    hash: true, slideNumber: 'c/t', transition: 'slide',
+    hash: true, slideNumber: 'c/t', transition: 'slide', center: false,
     transitionSpeed: 'fast', backgroundTransition: 'fade',
     width: 1280, height: 760, margin: 0.06,
     plugins: [ RevealNotes, RevealHighlight ],

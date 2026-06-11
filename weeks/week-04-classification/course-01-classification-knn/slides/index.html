@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-light.css" />
   <link rel="stylesheet" href="../../../../shared/slides-template/theme.css" />
+  <link rel="stylesheet" href="../../../../shared/slides-template/interactive.css" />
   <style>
     .metric-formula { background:#f0f4ff; border-left:4px solid #3b6ef5; padding:0.6em 1em; border-radius:4px; font-size:1.05em; margin:0.6em 0; }
     .metric-use { background:#f0fff4; border-left:4px solid #2ecc71; padding:0.4em 0.8em; border-radius:4px; font-size:0.9em; }
@@ -315,14 +316,179 @@
     </ul>
   </section>
 
-  <section>
-    <h2>Always scale before KNN</h2>
-    <p>Income (0 to 70 000) versus balance (0 to 2700) — without scaling, KNN distance is dominated by income alone. Wrap in a Pipeline:</p>
-    <pre><code class="language-python">Pipeline([
-    ('scale', StandardScaler()),
-    ('knn', KNeighborsClassifier(k=5)),
-])</code></pre>
+  <!-- EXAMPLE: first KNN fit -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Your first KNN classifier</h2>
+    <div class="ex-prompt">Fit KNN on a synthetic Default-like dataset (income + balance → did they default?). Read the classification report and confusion matrix.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import classification_report, confusion_matrix
+
+rng = np.random.default_rng(42)
+X, y = make_classification(n_samples=2000, n_features=2, n_informative=2,
+                            n_redundant=0, weights=[0.97, 0.03],
+                            random_state=42)
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, stratify=y, random_state=0)
+
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(X_train, y_train)
+y_pred = knn.predict(X_test)
+
+print(confusion_matrix(y_test, y_pred))
+print()
+print(classification_report(y_test, y_pred))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
+
+  <!-- EXAMPLE: always scale before KNN -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Always scale before KNN</h2>
+    <div class="ex-prompt">Income (0–70 000) vs balance (0–2 700) — without scaling, distance is dominated by income. Compare raw KNN vs Pipeline(scaler + KNN) on recall for the minority class.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.metrics import classification_report
+
+rng = np.random.default_rng(0)
+n = 2000
+income  = rng.uniform(0, 70_000, n)
+balance = rng.uniform(0, 2_700, n)
+# default more likely with high balance
+p_default = 1 / (1 + np.exp(-(balance/500 - 3)))
+y = rng.binomial(1, p_default)
+X = np.column_stack([income, balance])
+
+X_tr, X_te, y_tr, y_te = train_test_split(
+    X, y, test_size=0.3, stratify=y, random_state=0)
+
+raw = KNeighborsClassifier(n_neighbors=5)
+raw.fit(X_tr, y_tr)
+
+pipe = Pipeline([
+    ('scale', StandardScaler()),
+    ('knn',   KNeighborsClassifier(n_neighbors=5)),
+])
+pipe.fit(X_tr, y_tr)
+
+print("=== Raw KNN (no scaling) ===")
+print(classification_report(y_te, raw.predict(X_te)))
+
+print("=== Pipeline (scaled) ===")
+print(classification_report(y_te, pipe.predict(X_te)))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">Without scaling, income (range 70 000) swamps balance (range 2 700) in the Euclidean distance — KNN effectively ignores balance. After StandardScaler both features have mean=0 and std=1, so the model can actually use the signal in balance. Recall for the minority class (defaulters) typically jumps significantly.</script>
+  </section>
+
+  <!-- EXAMPLE: choosing k with cross-validation -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Choosing k with cross-validation</h2>
+    <div class="ex-prompt">Sweep k from 1 to 30. For each k, measure 5-fold CV accuracy. Plot and find the sweet spot between bias and variance.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_classification
+from sklearn.model_selection import cross_val_score
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+
+X, y = make_classification(n_samples=1000, n_features=2, n_informative=2,
+                            n_redundant=0, random_state=42)
+
+ks = range(1, 31)
+cv_scores = []
+for k in ks:
+    pipe = Pipeline([('sc', StandardScaler()),
+                     ('knn', KNeighborsClassifier(n_neighbors=k))])
+    scores = cross_val_score(pipe, X, y, cv=5, scoring='accuracy')
+    cv_scores.append(scores.mean())
+
+best_k = ks[np.argmax(cv_scores)]
+print(f"Best k = {best_k}  (CV accuracy = {max(cv_scores):.3f})")
+print()
+for k, s in zip(ks, cv_scores):
+    bar = '█' * int(s * 40)
+    marker = ' ← best' if k == best_k else ''
+    print(f"k={k:2d}  {s:.3f}  {bar}{marker}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">k=1 overfits (high variance — the boundary follows every training point). Large k underfits (high bias — the boundary is too smooth). Cross-validation finds the k that generalises best. The optimum is usually in the range 5–15 and shifts with dataset size and noise.</script>
+  </section>
+
+  <!-- EXAMPLE: decision boundary -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Visualising the decision boundary</h2>
+    <div class="ex-prompt">Plot how the KNN decision boundary changes with k. You should see k=1 creates a jagged, complex boundary while k=25 creates a smooth one.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_classification
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+
+X, y = make_classification(n_samples=300, n_features=2, n_informative=2,
+                            n_redundant=0, random_state=7, cluster_per_class=1)
+
+fig, axes = plt.subplots(1, 3, figsize=(12, 4))
+for ax, k in zip(axes, [1, 7, 25]):
+    pipe = Pipeline([('sc', StandardScaler()),
+                     ('knn', KNeighborsClassifier(n_neighbors=k))])
+    pipe.fit(X, y)
+
+    xx, yy = np.meshgrid(np.linspace(X[:,0].min()-0.5, X[:,0].max()+0.5, 200),
+                         np.linspace(X[:,1].min()-0.5, X[:,1].max()+0.5, 200))
+    Z = pipe.predict(np.c_[xx.ravel(), yy.ravel()]).reshape(xx.shape)
+
+    ax.contourf(xx, yy, Z, alpha=0.25, cmap='RdBu')
+    ax.scatter(X[:,0], X[:,1], c=y, cmap='RdBu', edgecolors='k', s=20)
+    ax.set_title(f'k = {k}')
+    ax.set_xticks([]); ax.set_yticks([])
+
+plt.tight_layout()
+plt.savefig('/tmp/knn_boundary.png', dpi=100)
+plt.close()
+print("Saved to /tmp/knn_boundary.png")
+print()
+print("k=1  → jagged boundary, overfits, high variance")
+print("k=7  → balanced boundary")
+print("k=25 → smooth boundary, more bias, less variance")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">k=1 memorises the training set — every training point becomes its own region. k=25 averages over 25 neighbours — the boundary is smoother but may miss fine structure. Choosing k via CV balances these two extremes.</script>
+  </section>
+
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════════════════
@@ -361,60 +527,223 @@
     </ul>
   </section>
 
-  <!-- Fix 1 — stratify + class_weight -->
-  <section>
-    <h2>Fix 1 — Stratified splits + class_weight</h2>
-    <div class="two-col-50">
-      <div>
-        <p style="font-size:0.9em;"><strong>Stratified splits</strong></p>
-        <pre><code class="language-python">train_test_split(X, y,
-    stratify=y,   # ← key
-    test_size=0.3,
-    random_state=0)</code></pre>
-        <p style="font-size:0.82em;">Ensures both halves have the same class ratio as the full dataset.</p>
-      </div>
-      <div>
-        <p style="font-size:0.9em;"><strong>class_weight</strong></p>
-        <pre><code class="language-python">LogisticRegression(
-    class_weight='balanced'
+  <!-- Fix 1a — stratified splits (runnable) -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Fix 1a — Stratified train/test split</h2>
+    <div class="ex-prompt">Run to see how <code>stratify=y</code> preserves the minority class ratio in both splits. Without it, a small fold can lose all positives.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+
+rng = np.random.default_rng(0)
+X, y = make_classification(
+    n_samples=1000, n_features=10,
+    weights=[0.97, 0.03],   # 3% minority
+    flip_y=0, random_state=0
 )
-# weight = n / (K * n_k)
-# minority gets a higher weight</code></pre>
-        <p style="font-size:0.82em;">Upweights the minority loss without changing the data.</p>
-      </div>
+
+# Without stratify
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, random_state=0)
+print("=== Without stratify ===")
+print(f"  Train minority %: {y_tr.mean()*100:.1f}%")
+print(f"  Test  minority %: {y_te.mean()*100:.1f}%")
+
+# With stratify
+X_tr2, X_te2, y_tr2, y_te2 = train_test_split(
+    X, y, test_size=0.3, stratify=y, random_state=0
+)
+print("\n=== With stratify=y ===")
+print(f"  Train minority %: {y_tr2.mean()*100:.1f}%")
+print(f"  Test  minority %: {y_te2.mean()*100:.1f}%")
+print(f"\n  Full dataset minority %: {y.mean()*100:.1f}%")
+print("\nConclusion: stratify keeps the ratio consistent in both halves.")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
     </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <!-- Fix 2 — threshold tuning -->
-  <section>
+  <!-- Fix 1b — class_weight (runnable) -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Fix 1b — class_weight='balanced'</h2>
+    <div class="ex-prompt">Compare a standard LogisticRegression with a balanced one. Notice how recall on the minority class (label 1) improves dramatically.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report
+
+X, y = make_classification(
+    n_samples=1000, n_features=10,
+    weights=[0.97, 0.03], flip_y=0, random_state=0
+)
+X_tr, X_te, y_tr, y_te = train_test_split(
+    X, y, test_size=0.3, stratify=y, random_state=0
+)
+
+for label, cw in [("default (no weighting)", None),
+                  ("class_weight='balanced'", 'balanced')]:
+    m = LogisticRegression(class_weight=cw, max_iter=500, random_state=0)
+    m.fit(X_tr, y_tr)
+    y_hat = m.predict(X_te)
+    print(f"=== {label} ===")
+    print(classification_report(y_te, y_hat, target_names=["majority","minority"]))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">With default weights recall on the minority class is often 0. With class_weight='balanced' the model is penalised more for missing minority samples, so recall rises — often at the cost of some precision.</script>
+  </section>
+
+  <!-- Fix 2 — threshold tuning (runnable) -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
     <h2>Fix 2 — Threshold tuning</h2>
-    <p style="font-size:0.9em;">The default threshold of 0.5 assumes equal misclassification costs. Lower it to increase recall:</p>
-    <pre><code class="language-python">proba = model.predict_proba(X_test)[:, 1]
-y_hat = (proba > 0.1).astype(int)   # threshold = 0.1
-print(classification_report(y_test, y_hat))</code></pre>
-    <p class="fragment fade-up callout" style="font-size:0.85em; margin-top:0.7em;">
-      Use the <strong>precision-recall curve</strong> or the <strong>ROC curve</strong> to find the threshold that meets your business constraint (e.g. FPR &lt; 5%).
-    </p>
+    <div class="ex-prompt">The default threshold is 0.5. Sweep thresholds and see how precision and recall trade off. We print the threshold that maximises F1.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import precision_score, recall_score, f1_score
+
+X, y = make_classification(
+    n_samples=2000, n_features=10,
+    weights=[0.95, 0.05], flip_y=0, random_state=0
+)
+X_tr, X_te, y_tr, y_te = train_test_split(
+    X, y, test_size=0.3, stratify=y, random_state=0
+)
+model = LogisticRegression(class_weight='balanced', max_iter=500, random_state=0)
+model.fit(X_tr, y_tr)
+proba = model.predict_proba(X_te)[:, 1]
+
+thresholds = np.linspace(0.05, 0.70, 14)
+print(f"{'Threshold':>10}  {'Precision':>10}  {'Recall':>7}  {'F1':>7}")
+print("-" * 42)
+best_t, best_f1 = 0.5, 0.0
+for t in thresholds:
+    y_hat = (proba >= t).astype(int)
+    p = precision_score(y_te, y_hat, zero_division=0)
+    r = recall_score(y_te, y_hat, zero_division=0)
+    f = f1_score(y_te, y_hat, zero_division=0)
+    marker = "  ← default" if abs(t - 0.5) < 0.03 else ""
+    print(f"{t:>10.2f}  {p:>10.3f}  {r:>7.3f}  {f:>7.3f}{marker}")
+    if f > best_f1:
+        best_f1, best_t = f, t
+
+print(f"\nBest F1 = {best_f1:.3f}  at threshold = {best_t:.2f}")
+print("Lower threshold → higher recall, lower precision.")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
-  <!-- Fix 3 — resampling -->
-  <section>
-    <h2>Fix 3 — Resampling</h2>
-    <div class="two-col-50" style="font-size:0.88em;">
-      <div>
-        <p><strong>Oversampling — SMOTE</strong></p>
-        <pre><code class="language-python">from imblearn.over_sampling import SMOTE
-X_res, y_res = SMOTE(random_state=0).fit_resample(X_train, y_train)</code></pre>
-        <p>Synthesises new minority samples by interpolating between existing ones. Use on very rare classes (&lt;5%).</p>
-      </div>
-      <div>
-        <p><strong>Undersampling</strong></p>
-        <pre><code class="language-python">from imblearn.under_sampling import RandomUnderSampler
-X_res, y_res = RandomUnderSampler(random_state=0).fit_resample(X_train, y_train)</code></pre>
-        <p>Randomly drops majority samples. Fast but wastes data. Useful when n is very large.</p>
-      </div>
+  <!-- Fix 3a — SMOTE concept + manual oversampling (runnable) -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Fix 3a — Oversampling (SMOTE concept)</h2>
+    <div class="ex-prompt">imbalanced-learn is not available here, so we implement manual random oversampling with replacement — the conceptual sibling of SMOTE. SMOTE does the same idea but synthesises new points by interpolating between neighbours instead of duplicating.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import f1_score, recall_score
+
+print("SMOTE (Synthetic Minority Over-sampling TEchnique):")
+print("  1. For each minority sample, find its k nearest minority neighbours.")
+print("  2. Create a new synthetic point along the line between them.")
+print("  3. Repeat until the minority class reaches the desired ratio.")
+print("  Here we show random oversampling (with replacement) as a simpler proxy.\n")
+
+X, y = make_classification(
+    n_samples=1000, n_features=6,
+    weights=[0.97, 0.03], flip_y=0, random_state=0
+)
+X_tr, X_te, y_tr, y_te = train_test_split(
+    X, y, test_size=0.3, stratify=y, random_state=0
+)
+
+rng = np.random.default_rng(42)
+X_min = X_tr[y_tr == 1]
+y_min = y_tr[y_tr == 1]
+# Upsample minority to match majority count
+n_maj = (y_tr == 0).sum()
+idx = rng.integers(0, len(X_min), size=n_maj)
+X_over = np.vstack([X_tr, X_min[idx]])
+y_over = np.concatenate([y_tr, y_min[idx]])
+
+print(f"Before oversampling: majority={( y_tr==0).sum()}, minority={(y_tr==1).sum()}")
+print(f"After  oversampling: majority={(y_over==0).sum()}, minority={(y_over==1).sum()}\n")
+
+for label, Xf, yf in [("No oversampling", X_tr, y_tr),
+                       ("With oversampling", X_over, y_over)]:
+    m = LogisticRegression(max_iter=500, random_state=0)
+    m.fit(Xf, yf)
+    y_hat = m.predict(X_te)
+    print(f"{label}: recall={recall_score(y_te,y_hat):.2f}  F1={f1_score(y_te,y_hat):.2f}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
     </div>
-    <p class="fragment fade-up callout" style="font-size:0.82em; margin-top:0.6em;">Always resample <em>inside</em> the cross-validation loop — resampling before splitting leaks information.</p>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">SMOTE generates interpolated points rather than duplicates, reducing overfitting to the exact minority samples. Always resample inside the cross-validation loop — resampling before splitting leaks information.</script>
+  </section>
+
+  <!-- Fix 3b — undersampling (runnable) -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Fix 3b — Random undersampling</h2>
+    <div class="ex-prompt">Randomly drop majority samples until the classes are balanced. Fast, but discards real data — best when the dataset is very large.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import f1_score, recall_score
+
+X, y = make_classification(
+    n_samples=2000, n_features=6,
+    weights=[0.95, 0.05], flip_y=0, random_state=0
+)
+X_tr, X_te, y_tr, y_te = train_test_split(
+    X, y, test_size=0.3, stratify=y, random_state=0
+)
+
+rng = np.random.default_rng(42)
+maj_idx = np.where(y_tr == 0)[0]
+min_idx = np.where(y_tr == 1)[0]
+n_min = len(min_idx)
+chosen = rng.choice(maj_idx, size=n_min, replace=False)
+keep = np.concatenate([chosen, min_idx])
+X_under = X_tr[keep]
+y_under = y_tr[keep]
+
+print(f"Before undersampling: majority={len(maj_idx)}, minority={len(min_idx)}")
+print(f"After  undersampling: majority={(y_under==0).sum()}, minority={(y_under==1).sum()}\n")
+
+for label, Xf, yf in [("No undersampling", X_tr, y_tr),
+                       ("With undersampling", X_under, y_under)]:
+    m = LogisticRegression(max_iter=500, random_state=0)
+    m.fit(Xf, yf)
+    y_hat = m.predict(X_te)
+    print(f"{label}: recall={recall_score(y_te,y_hat):.2f}  F1={f1_score(y_te,y_hat):.2f}")
+
+print("\nNote: undersampling discards majority data — use when n is large enough to afford it.")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
   </section>
 
   <!-- Which metric on imbalanced data -->
@@ -450,11 +779,12 @@ X_res, y_res = RandomUnderSampler(random_state=0).fit_resample(X_train, y_train)
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="../../../../shared/slides-template/interactive.js"></script>
 <script>
   Reveal.initialize({
     hash: true, slideNumber: 'c/t', transition: 'slide',
     transitionSpeed: 'fast', backgroundTransition: 'fade',
-    width: 1280, height: 760, margin: 0.06,
+    width: 1280, height: 760, margin: 0.06, center: false,
     plugins: [ RevealNotes, RevealHighlight ],
   });
 </script>
