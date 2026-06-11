@@ -1,57 +1,85 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 360" width="520" height="360" font-family="sans-serif">
-  <!-- Background -->
-  <rect width="520" height="360" fill="#fafafa"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 370" font-family="'Segoe UI',system-ui,sans-serif">
+  <rect width="540" height="370" fill="#f8f9fa"/>
 
-  <!-- Axes area: x=60..480 (Years 0..24), y=30..310 (Hits 0..240) -->
-  <!-- Region R1: Years < 4.5 (x < 60 + 480*4.5/24 = 60+90=150) -->
-  <rect x="60" y="30" width="90" height="280" fill="#fde8d8" opacity="0.7"/>
-  <!-- Region R2: Years >= 4.5, Hits < 118 (y > 30 + 280*(240-118)/240 = 30+142=172) -->
-  <rect x="150" y="172" width="330" height="138" fill="#ffc288" opacity="0.7"/>
-  <!-- Region R3: Years >= 4.5, Hits >= 118 -->
-  <rect x="150" y="30" width="330" height="142" fill="#e87722" opacity="0.5"/>
+  <!-- region fills (softer palette) -->
+  <!-- R1: Years < 4.5 -->
+  <rect x="65" y="32" width="91" height="279" fill="#fce4ec" opacity="0.75"/>
+  <!-- R2: Years ≥ 4.5, Hits < 118 -->
+  <rect x="156" y="181" width="329" height="130" fill="#fff3e0" opacity="0.85"/>
+  <!-- R3: Years ≥ 4.5, Hits ≥ 118 -->
+  <rect x="156" y="32" width="329" height="149" fill="#e8f5e9" opacity="0.8"/>
 
-  <!-- Axes -->
-  <line x1="60" y1="310" x2="480" y2="310" stroke="#333" stroke-width="1.5"/>
-  <line x1="60" y1="30"  x2="60"  y2="310" stroke="#333" stroke-width="1.5"/>
+  <!-- axes -->
+  <line x1="65" y1="311" x2="485" y2="311" stroke="#555" stroke-width="1.8"/>
+  <line x1="65" y1="32"  x2="65"  y2="311" stroke="#555" stroke-width="1.8"/>
 
-  <!-- Split lines -->
-  <!-- Vertical: Years = 4.5 -->
-  <line x1="150" y1="30" x2="150" y2="310" stroke="#1a237e" stroke-width="2" stroke-dasharray="6,3"/>
-  <!-- Horizontal: Hits = 118 (right of Years split) -->
-  <line x1="150" y1="172" x2="480" y2="172" stroke="#1a237e" stroke-width="2" stroke-dasharray="6,3"/>
+  <!-- split lines -->
+  <line x1="156" y1="32" x2="156" y2="311" stroke="#1565c0" stroke-width="2.5" stroke-dasharray="7,4"/>
+  <line x1="156" y1="181" x2="485" y2="181" stroke="#e65100" stroke-width="2.5" stroke-dasharray="7,4"/>
 
-  <!-- Region labels -->
-  <text x="105" y="175" text-anchor="middle" font-size="13" fill="#7b3f00">R₁</text>
-  <text x="105" y="192" text-anchor="middle" font-size="11" fill="#7b3f00">$166k</text>
-  <text x="315" y="115" text-anchor="middle" font-size="13" fill="#5d1a00">R₃</text>
-  <text x="315" y="132" text-anchor="middle" font-size="11" fill="#5d1a00">$846k</text>
-  <text x="315" y="252" text-anchor="middle" font-size="13" fill="#7b3f00">R₂</text>
-  <text x="315" y="269" text-anchor="middle" font-size="11" fill="#7b3f00">$403k</text>
+  <!-- scatter points (representative, colored by region) -->
+  <!-- R1 – low salary – red -->
+  <circle cx="82"  cy="190" r="4.5" fill="#c62828" opacity="0.7"/>
+  <circle cx="95"  cy="212" r="4.5" fill="#c62828" opacity="0.7"/>
+  <circle cx="108" cy="175" r="4.5" fill="#c62828" opacity="0.7"/>
+  <circle cx="90"  cy="228" r="4.5" fill="#c62828" opacity="0.7"/>
+  <circle cx="115" cy="248" r="4.5" fill="#c62828" opacity="0.7"/>
+  <circle cx="78"  cy="265" r="4.5" fill="#c62828" opacity="0.7"/>
+  <circle cx="102" cy="155" r="4.5" fill="#c62828" opacity="0.7"/>
+  <circle cx="118" cy="200" r="4.5" fill="#c62828" opacity="0.7"/>
+  <!-- R2 – mid salary – orange -->
+  <circle cx="200" cy="220" r="4.5" fill="#e65100" opacity="0.7"/>
+  <circle cx="230" cy="240" r="4.5" fill="#e65100" opacity="0.7"/>
+  <circle cx="265" cy="255" r="4.5" fill="#e65100" opacity="0.7"/>
+  <circle cx="290" cy="225" r="4.5" fill="#e65100" opacity="0.7"/>
+  <circle cx="320" cy="195" r="4.5" fill="#e65100" opacity="0.7"/>
+  <circle cx="355" cy="270" r="4.5" fill="#e65100" opacity="0.7"/>
+  <circle cx="390" cy="235" r="4.5" fill="#e65100" opacity="0.7"/>
+  <circle cx="425" cy="260" r="4.5" fill="#e65100" opacity="0.7"/>
+  <circle cx="455" cy="210" r="4.5" fill="#e65100" opacity="0.7"/>
+  <!-- R3 – high salary – green -->
+  <circle cx="185" cy="90"  r="4.5" fill="#1b5e20" opacity="0.7"/>
+  <circle cx="215" cy="65"  r="4.5" fill="#1b5e20" opacity="0.7"/>
+  <circle cx="250" cy="105" r="4.5" fill="#1b5e20" opacity="0.7"/>
+  <circle cx="285" cy="55"  r="4.5" fill="#1b5e20" opacity="0.7"/>
+  <circle cx="320" cy="80"  r="4.5" fill="#1b5e20" opacity="0.7"/>
+  <circle cx="355" cy="130" r="4.5" fill="#1b5e20" opacity="0.7"/>
+  <circle cx="390" cy="70"  r="4.5" fill="#1b5e20" opacity="0.7"/>
+  <circle cx="430" cy="110" r="4.5" fill="#1b5e20" opacity="0.7"/>
+  <circle cx="460" cy="145" r="4.5" fill="#1b5e20" opacity="0.7"/>
 
-  <!-- Split annotations -->
-  <text x="152" y="325" text-anchor="middle" font-size="11" fill="#1a237e">Years=4.5</text>
-  <text x="490" y="175" text-anchor="start" font-size="11" fill="#1a237e">Hits=118</text>
+  <!-- region labels -->
+  <text x="111" y="128" text-anchor="middle" font-size="15" font-weight="700" fill="#b71c1c">R₁</text>
+  <text x="111" y="147" text-anchor="middle" font-size="12" fill="#b71c1c">$166k</text>
+  <text x="321" y="120" text-anchor="middle" font-size="15" font-weight="700" fill="#1b5e20">R₃</text>
+  <text x="321" y="139" text-anchor="middle" font-size="12" fill="#1b5e20">$846k</text>
+  <text x="321" y="255" text-anchor="middle" font-size="15" font-weight="700" fill="#bf360c">R₂</text>
+  <text x="321" y="274" text-anchor="middle" font-size="12" fill="#bf360c">$403k</text>
 
-  <!-- X-axis ticks and labels -->
-  <text x="60"  y="325" text-anchor="middle" font-size="10" fill="#555">0</text>
-  <text x="150" y="325" text-anchor="middle" font-size="10" fill="#555">5</text>
-  <text x="240" y="325" text-anchor="middle" font-size="10" fill="#555">10</text>
-  <text x="330" y="325" text-anchor="middle" font-size="10" fill="#555">15</text>
-  <text x="420" y="325" text-anchor="middle" font-size="10" fill="#555">20</text>
-  <text x="270" y="345" text-anchor="middle" font-size="12" fill="#333">Years in major league</text>
+  <!-- split annotations with background pill -->
+  <rect x="113" y="318" width="82" height="16" rx="7" fill="#e3f2fd"/>
+  <text x="154" y="330" text-anchor="middle" font-size="11" font-weight="600" fill="#1565c0">Years = 4.5</text>
+  <rect x="490" y="173" width="46" height="16" rx="7" fill="#fff3e0"/>
+  <text x="513" y="185" text-anchor="middle" font-size="11" font-weight="600" fill="#e65100">Hits=118</text>
 
-  <!-- Y-axis ticks and labels -->
-  <text x="55" y="310" text-anchor="end" font-size="10" fill="#555">0</text>
-  <text x="55" y="240" text-anchor="end" font-size="10" fill="#555">70</text>
-  <text x="55" y="172" text-anchor="end" font-size="10" fill="#555">118</text>
-  <text x="55" y="100" text-anchor="end" font-size="10" fill="#555">180</text>
-  <text x="55" y="30"  text-anchor="end" font-size="10" fill="#555">240</text>
-  <!-- Y label rotated -->
-  <text x="18" y="175" text-anchor="middle" font-size="12" fill="#333"
-        transform="rotate(-90,18,175)">Hits</text>
+  <!-- x-axis ticks -->
+  <text x="65"  y="326" text-anchor="middle" font-size="10" fill="#666">0</text>
+  <text x="156" y="326" text-anchor="middle" font-size="10" fill="#666">5</text>
+  <text x="247" y="326" text-anchor="middle" font-size="10" fill="#666">10</text>
+  <text x="338" y="326" text-anchor="middle" font-size="10" fill="#666">15</text>
+  <text x="429" y="326" text-anchor="middle" font-size="10" fill="#666">20</text>
+  <text x="275" y="352" text-anchor="middle" font-size="12" fill="#333">Years in major league</text>
 
-  <!-- Title -->
-  <text x="270" y="20" text-anchor="middle" font-size="13" font-weight="bold" fill="#222">
-    Baseball: log(Salary) partition (depth-2 tree)
+  <!-- y-axis ticks -->
+  <text x="60" y="311" text-anchor="end" font-size="10" fill="#666">0</text>
+  <text x="60" y="241" text-anchor="end" font-size="10" fill="#666">70</text>
+  <text x="60" y="181" text-anchor="end" font-size="10" fill="#666">118</text>
+  <text x="60" y="100" text-anchor="end" font-size="10" fill="#666">180</text>
+  <text x="60" y="32"  text-anchor="end" font-size="10" fill="#666">240</text>
+  <text x="20" y="178" text-anchor="middle" font-size="12" fill="#333" transform="rotate(-90,20,178)">Hits last year</text>
+
+  <!-- title -->
+  <text x="275" y="20" text-anchor="middle" font-size="14" font-weight="700" fill="#222">
+    Baseball: log(Salary) partition — depth-2 tree
   </text>
 </svg>

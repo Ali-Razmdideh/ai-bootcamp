@@ -1,0 +1,177 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 300" font-family="'Segoe UI',system-ui,sans-serif">
+  <rect width="900" height="300" fill="#f8f9fa"/>
+
+  <!-- ─── Shared styles ─────────────────────────────────────── -->
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#555"/>
+    </marker>
+  </defs>
+
+  <!-- ══════════════════════════════════════════════════════════
+       PANEL 1 – raw feature space, no splits
+       x: 30..250, y: 25..240  (Years 0→24, Hits 0→240)
+       ══════════════════════════════════════════════════════════ -->
+  <!-- background -->
+  <rect x="30" y="25" width="220" height="215" fill="#fff" stroke="#ddd" stroke-width="1"/>
+
+  <!-- step badge -->
+  <rect x="30" y="8" width="220" height="16" rx="3" fill="#e3f2fd"/>
+  <text x="140" y="20" text-anchor="middle" font-size="11" font-weight="600" fill="#1565c0">Step 1 · All data, no splits</text>
+
+  <!-- scatter — low salary (< $300k) dim circles -->
+  <circle cx="55"  cy="175" r="4" fill="#78909c" opacity="0.55"/>
+  <circle cx="62"  cy="195" r="4" fill="#78909c" opacity="0.55"/>
+  <circle cx="70"  cy="160" r="4" fill="#78909c" opacity="0.55"/>
+  <circle cx="80"  cy="200" r="4" fill="#78909c" opacity="0.55"/>
+  <circle cx="85"  cy="185" r="4" fill="#78909c" opacity="0.55"/>
+  <circle cx="50"  cy="210" r="4" fill="#78909c" opacity="0.55"/>
+  <circle cx="75"  cy="220" r="4" fill="#78909c" opacity="0.55"/>
+  <circle cx="65"  cy="150" r="4" fill="#78909c" opacity="0.55"/>
+  <!-- mid salary -->
+  <circle cx="155" cy="190" r="4" fill="#78909c" opacity="0.55"/>
+  <circle cx="165" cy="205" r="4" fill="#78909c" opacity="0.55"/>
+  <circle cx="175" cy="215" r="4" fill="#78909c" opacity="0.55"/>
+  <circle cx="185" cy="195" r="4" fill="#78909c" opacity="0.55"/>
+  <circle cx="200" cy="200" r="4" fill="#78909c" opacity="0.55"/>
+  <circle cx="210" cy="185" r="4" fill="#78909c" opacity="0.55"/>
+  <!-- high salary -->
+  <circle cx="140" cy="80"  r="4" fill="#78909c" opacity="0.55"/>
+  <circle cx="155" cy="65"  r="4" fill="#78909c" opacity="0.55"/>
+  <circle cx="170" cy="95"  r="4" fill="#78909c" opacity="0.55"/>
+  <circle cx="185" cy="55"  r="4" fill="#78909c" opacity="0.55"/>
+  <circle cx="200" cy="75"  r="4" fill="#78909c" opacity="0.55"/>
+  <circle cx="215" cy="90"  r="4" fill="#78909c" opacity="0.55"/>
+  <circle cx="230" cy="60"  r="4" fill="#78909c" opacity="0.55"/>
+  <circle cx="225" cy="110" r="4" fill="#78909c" opacity="0.55"/>
+
+  <!-- axes -->
+  <line x1="30" y1="240" x2="250" y2="240" stroke="#555" stroke-width="1.5"/>
+  <line x1="30" y1="25"  x2="30"  y2="240" stroke="#555" stroke-width="1.5"/>
+  <!-- axis labels -->
+  <text x="140" y="258" text-anchor="middle" font-size="10" fill="#555">Years</text>
+  <text x="16"  y="135" text-anchor="middle" font-size="10" fill="#555" transform="rotate(-90,16,135)">Hits</text>
+  <!-- tick labels -->
+  <text x="30"  y="253" text-anchor="middle" font-size="8" fill="#888">0</text>
+  <text x="140" y="253" text-anchor="middle" font-size="8" fill="#888">12</text>
+  <text x="250" y="253" text-anchor="middle" font-size="8" fill="#888">24</text>
+  <text x="27"  y="240" text-anchor="end" font-size="8" fill="#888">0</text>
+  <text x="27"  y="135" text-anchor="end" font-size="8" fill="#888">120</text>
+  <text x="27"  y="28"  text-anchor="end" font-size="8" fill="#888">240</text>
+
+  <!-- ══════════════════════════════════════════════════════════
+       PANEL 2 – first split: Years = 4.5
+       x: 330..550
+       ══════════════════════════════════════════════════════════ -->
+  <rect x="330" y="8" width="220" height="16" rx="3" fill="#e8f5e9"/>
+  <text x="440" y="20" text-anchor="middle" font-size="11" font-weight="600" fill="#2e7d32">Step 2 · Best split: Years &lt; 4.5</text>
+
+  <!-- region fills -->
+  <rect x="330" y="25" width="41" height="215" fill="#fce4ec" opacity="0.8"/>
+  <rect x="371" y="25" width="179" height="215" fill="#e8f5e9" opacity="0.6"/>
+  <rect x="330" y="25" width="220" height="215" fill="none" stroke="#ddd" stroke-width="1"/>
+
+  <!-- scatter — R1 (red/low salary) -->
+  <circle cx="345" cy="175" r="4" fill="#c62828" opacity="0.75"/>
+  <circle cx="352" cy="195" r="4" fill="#c62828" opacity="0.75"/>
+  <circle cx="360" cy="160" r="4" fill="#c62828" opacity="0.75"/>
+  <circle cx="355" cy="210" r="4" fill="#c62828" opacity="0.75"/>
+  <circle cx="340" cy="220" r="4" fill="#c62828" opacity="0.75"/>
+  <circle cx="348" cy="150" r="4" fill="#c62828" opacity="0.75"/>
+  <!-- R2+R3 (teal/higher salary) -->
+  <circle cx="455" cy="190" r="4" fill="#1565c0" opacity="0.65"/>
+  <circle cx="465" cy="205" r="4" fill="#1565c0" opacity="0.65"/>
+  <circle cx="475" cy="215" r="4" fill="#1565c0" opacity="0.65"/>
+  <circle cx="485" cy="195" r="4" fill="#1565c0" opacity="0.65"/>
+  <circle cx="500" cy="200" r="4" fill="#1565c0" opacity="0.65"/>
+  <circle cx="440" cy="80"  r="4" fill="#1565c0" opacity="0.65"/>
+  <circle cx="455" cy="65"  r="4" fill="#1565c0" opacity="0.65"/>
+  <circle cx="470" cy="95"  r="4" fill="#1565c0" opacity="0.65"/>
+  <circle cx="485" cy="55"  r="4" fill="#1565c0" opacity="0.65"/>
+  <circle cx="510" cy="75"  r="4" fill="#1565c0" opacity="0.65"/>
+  <circle cx="525" cy="90"  r="4" fill="#1565c0" opacity="0.65"/>
+  <circle cx="525" cy="110" r="4" fill="#1565c0" opacity="0.65"/>
+
+  <!-- split line -->
+  <line x1="371" y1="25" x2="371" y2="240" stroke="#2e7d32" stroke-width="2.5" stroke-dasharray="6,3"/>
+
+  <!-- region labels -->
+  <text x="350" y="120" text-anchor="middle" font-size="11" font-weight="600" fill="#b71c1c">R₁</text>
+  <text x="350" y="133" text-anchor="middle" font-size="9" fill="#b71c1c">$166k</text>
+  <text x="460" y="135" text-anchor="middle" font-size="11" font-weight="600" fill="#1a237e">R₂₊₃</text>
+  <text x="460" y="148" text-anchor="middle" font-size="9" fill="#1a237e">still mixed</text>
+
+  <!-- split annotation -->
+  <text x="371" y="256" text-anchor="middle" font-size="9" fill="#2e7d32" font-weight="600">Years=4.5</text>
+
+  <!-- axes -->
+  <line x1="330" y1="240" x2="550" y2="240" stroke="#555" stroke-width="1.5"/>
+  <line x1="330" y1="25"  x2="330" y2="240" stroke="#555" stroke-width="1.5"/>
+  <text x="440" y="258" text-anchor="middle" font-size="10" fill="#555">Years</text>
+  <text x="316" y="135" text-anchor="middle" font-size="10" fill="#555" transform="rotate(-90,316,135)">Hits</text>
+  <text x="330" y="253" text-anchor="middle" font-size="8" fill="#888">0</text>
+  <text x="440" y="253" text-anchor="middle" font-size="8" fill="#888">12</text>
+  <text x="550" y="253" text-anchor="middle" font-size="8" fill="#888">24</text>
+
+  <!-- ══════════════════════════════════════════════════════════
+       PANEL 3 – second split: Hits = 118 (right side only)
+       x: 630..850
+       ══════════════════════════════════════════════════════════ -->
+  <rect x="630" y="8" width="220" height="16" rx="3" fill="#fff3e0"/>
+  <text x="740" y="20" text-anchor="middle" font-size="11" font-weight="600" fill="#e65100">Step 3 · Recurse right: Hits &lt; 118</text>
+
+  <!-- region fills — R1, R2, R3 -->
+  <rect x="630" y="25"  width="41"  height="215" fill="#fce4ec" opacity="0.8"/>
+  <rect x="671" y="131" width="179" height="109" fill="#ffe0b2" opacity="0.8"/>
+  <rect x="671" y="25"  width="179" height="106" fill="#fff9c4" opacity="0.85"/>
+  <rect x="630" y="25" width="220" height="215" fill="none" stroke="#ddd" stroke-width="1"/>
+
+  <!-- scatter — R1 -->
+  <circle cx="645" cy="175" r="4" fill="#c62828" opacity="0.75"/>
+  <circle cx="652" cy="195" r="4" fill="#c62828" opacity="0.75"/>
+  <circle cx="660" cy="160" r="4" fill="#c62828" opacity="0.75"/>
+  <circle cx="648" cy="150" r="4" fill="#c62828" opacity="0.75"/>
+  <!-- R2 — mid salary (low hits) -->
+  <circle cx="755" cy="190" r="4" fill="#e65100" opacity="0.75"/>
+  <circle cx="765" cy="205" r="4" fill="#e65100" opacity="0.75"/>
+  <circle cx="775" cy="215" r="4" fill="#e65100" opacity="0.75"/>
+  <circle cx="785" cy="195" r="4" fill="#e65100" opacity="0.75"/>
+  <circle cx="800" cy="200" r="4" fill="#e65100" opacity="0.75"/>
+  <!-- R3 — high salary (high hits) -->
+  <circle cx="740" cy="80"  r="4" fill="#1b5e20" opacity="0.75"/>
+  <circle cx="755" cy="65"  r="4" fill="#1b5e20" opacity="0.75"/>
+  <circle cx="770" cy="95"  r="4" fill="#1b5e20" opacity="0.75"/>
+  <circle cx="785" cy="55"  r="4" fill="#1b5e20" opacity="0.75"/>
+  <circle cx="810" cy="75"  r="4" fill="#1b5e20" opacity="0.75"/>
+  <circle cx="825" cy="90"  r="4" fill="#1b5e20" opacity="0.75"/>
+
+  <!-- vertical split (Years=4.5) -->
+  <line x1="671" y1="25" x2="671" y2="240" stroke="#2e7d32" stroke-width="2" stroke-dasharray="6,3" opacity="0.7"/>
+  <!-- horizontal split (Hits=118, right side only) -->
+  <line x1="671" y1="131" x2="850" y2="131" stroke="#e65100" stroke-width="2.5" stroke-dasharray="6,3"/>
+
+  <!-- region labels -->
+  <text x="650"  y="120" text-anchor="middle" font-size="11" font-weight="600" fill="#b71c1c">R₁</text>
+  <text x="650"  y="132" text-anchor="middle" font-size="9"  fill="#b71c1c">$166k</text>
+  <text x="760" y="80"  text-anchor="middle" font-size="11" font-weight="600" fill="#1b5e20">R₃</text>
+  <text x="760" y="92"  text-anchor="middle" font-size="9"  fill="#1b5e20">$846k</text>
+  <text x="760" y="185" text-anchor="middle" font-size="11" font-weight="600" fill="#bf360c">R₂</text>
+  <text x="760" y="197" text-anchor="middle" font-size="9"  fill="#bf360c">$403k</text>
+
+  <!-- split annotations -->
+  <text x="671" y="256" text-anchor="middle" font-size="9" fill="#2e7d32">Years=4.5</text>
+  <text x="852" y="134" text-anchor="start" font-size="9" fill="#e65100" font-weight="600">Hits=118</text>
+
+  <!-- axes -->
+  <line x1="630" y1="240" x2="850" y2="240" stroke="#555" stroke-width="1.5"/>
+  <line x1="630" y1="25"  x2="630" y2="240" stroke="#555" stroke-width="1.5"/>
+  <text x="740" y="258" text-anchor="middle" font-size="10" fill="#555">Years</text>
+  <text x="616" y="135" text-anchor="middle" font-size="10" fill="#555" transform="rotate(-90,616,135)">Hits</text>
+  <text x="630" y="253" text-anchor="middle" font-size="8" fill="#888">0</text>
+  <text x="740" y="253" text-anchor="middle" font-size="8" fill="#888">12</text>
+  <text x="850" y="253" text-anchor="middle" font-size="8" fill="#888">24</text>
+
+  <!-- ─── Arrow connectors between panels ──────────────────── -->
+  <line x1="264" y1="132" x2="318" y2="132" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="564" y1="132" x2="618" y2="132" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+</svg>

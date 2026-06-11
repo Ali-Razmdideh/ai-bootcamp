@@ -84,15 +84,27 @@
     </ul>
   </section>
 
+  <!-- step-by-step partition building -->
+  <section>
+    <h2>Building the baseball tree — step by step</h2>
+    <img src="img/tree-baseball-steps.svg" style="width:96%; margin:0.3em auto; display:block;"
+         alt="three panels showing how the depth-2 tree partition is built split by split" />
+    <p class="muted" style="font-size:0.82em; text-align:center;">
+      Each step picks the single split that maximises the RSS reduction across the entire remaining region.
+    </p>
+  </section>
+
+  <!-- final partition + tree diagram side by side -->
   <section>
     <h2>Baseball salary example</h2>
-    <p>Predict <strong>log(Salary)</strong> from <em>Years</em> in the majors and <em>Hits</em> last year.</p>
-    <img src="img/tree-baseball-partition.svg" style="width:72%; margin:0 auto; display:block;"
-         alt="partition plot Years vs Hits with 3 regions" />
-    <p class="muted" style="font-size:0.85em; text-align:center;">
-      R₁: Years &lt; 4.5 → mean log-salary ≈ 5.11 ($166k) &nbsp;|&nbsp;
-      R₂: Years ≥ 4.5, Hits &lt; 118 → 6.00 ($403k) &nbsp;|&nbsp;
-      R₃: Years ≥ 4.5, Hits ≥ 118 → 6.74 ($846k)
+    <div style="display:flex; gap:1em; align-items:center; justify-content:center;">
+      <img src="img/tree-baseball-partition.svg" style="width:48%;"
+           alt="partition plot Years vs Hits with 3 regions" />
+      <img src="img/tree-baseball-tree.svg" style="width:48%;"
+           alt="decision tree flowchart for baseball salary" />
+    </div>
+    <p class="muted" style="font-size:0.82em; text-align:center; margin-top:0.4em;">
+      Left: feature-space partition &nbsp;|&nbsp; Right: corresponding tree flowchart
     </p>
   </section>
 

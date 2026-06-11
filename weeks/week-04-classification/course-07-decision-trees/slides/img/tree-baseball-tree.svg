@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 310" font-family="'Segoe UI',system-ui,sans-serif">
+  <rect width="500" height="310" fill="#f8f9fa"/>
+
+  <defs>
+    <marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#555"/>
+    </marker>
+  </defs>
+
+  <!-- title -->
+  <text x="250" y="22" text-anchor="middle" font-size="13" font-weight="700" fill="#222">
+    Depth-2 Regression Tree (Baseball)
+  </text>
+
+  <!-- ─── root node ─── -->
+  <rect x="170" y="35" width="160" height="52" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="2"/>
+  <text x="250" y="57" text-anchor="middle" font-size="12" font-weight="700" fill="#1565c0">Years &lt; 4.5 ?</text>
+  <text x="250" y="75" text-anchor="middle" font-size="10" fill="#555">n = 322 players</text>
+
+  <!-- edges from root -->
+  <line x1="200" y1="87" x2="115" y2="143" stroke="#555" stroke-width="1.5" marker-end="url(#a)"/>
+  <line x1="300" y1="87" x2="385" y2="143" stroke="#555" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <!-- edge labels -->
+  <text x="143" y="120" text-anchor="middle" font-size="11" fill="#2e7d32" font-weight="600">Yes</text>
+  <text x="357" y="120" text-anchor="middle" font-size="11" fill="#b71c1c" font-weight="600">No</text>
+
+  <!-- ─── left leaf: R1 ─── -->
+  <rect x="45" y="148" width="140" height="62" rx="8" fill="#fce4ec" stroke="#c62828" stroke-width="2"/>
+  <text x="115" y="169" text-anchor="middle" font-size="12" font-weight="700" fill="#b71c1c">Leaf R₁</text>
+  <text x="115" y="185" text-anchor="middle" font-size="11" fill="#555">ŷ = 5.11</text>
+  <text x="115" y="200" text-anchor="middle" font-size="10" fill="#888">mean salary ≈ $166k</text>
+
+  <!-- ─── right internal node ─── -->
+  <rect x="315" y="143" width="160" height="52" rx="8" fill="#e8f5e9" stroke="#2e7d32" stroke-width="2"/>
+  <text x="395" y="165" text-anchor="middle" font-size="12" font-weight="700" fill="#2e7d32">Hits &lt; 118 ?</text>
+  <text x="395" y="183" text-anchor="middle" font-size="10" fill="#555">Years ≥ 4.5</text>
+
+  <!-- edges from right node -->
+  <line x1="355" y1="195" x2="290" y2="248" stroke="#555" stroke-width="1.5" marker-end="url(#a)"/>
+  <line x1="435" y1="195" x2="430" y2="248" stroke="#555" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <!-- edge labels -->
+  <text x="307" y="228" text-anchor="middle" font-size="11" fill="#2e7d32" font-weight="600">Yes</text>
+  <text x="448" y="228" text-anchor="middle" font-size="11" fill="#b71c1c" font-weight="600">No</text>
+
+  <!-- ─── leaf R2 ─── -->
+  <rect x="215" y="253" width="140" height="52" rx="8" fill="#fff3e0" stroke="#e65100" stroke-width="2"/>
+  <text x="285" y="274" text-anchor="middle" font-size="12" font-weight="700" fill="#bf360c">Leaf R₂</text>
+  <text x="285" y="290" text-anchor="middle" font-size="11" fill="#555">ŷ = 6.00</text>
+  <text x="285" y="300" text-anchor="middle" font-size="9" fill="#888">≈ $403k</text>
+
+  <!-- ─── leaf R3 ─── -->
+  <rect x="365" y="253" width="120" height="52" rx="8" fill="#f1f8e9" stroke="#33691e" stroke-width="2"/>
+  <text x="425" y="274" text-anchor="middle" font-size="12" font-weight="700" fill="#1b5e20">Leaf R₃</text>
+  <text x="425" y="290" text-anchor="middle" font-size="11" fill="#555">ŷ = 6.74</text>
+  <text x="425" y="300" text-anchor="middle" font-size="9" fill="#888">≈ $846k</text>
+
+  <!-- ─── legend ─── -->
+  <rect x="10" y="265" width="190" height="38" rx="5" fill="#fff" stroke="#ddd" stroke-width="1"/>
+  <text x="18" y="279" font-size="9" fill="#555">Each leaf predicts the mean log(salary)</text>
+  <text x="18" y="292" font-size="9" fill="#555">of all training players reaching that node.</text>
+</svg>

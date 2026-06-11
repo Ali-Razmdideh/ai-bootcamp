@@ -1,76 +1,111 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 280" width="560" height="280" font-family="sans-serif">
-  <rect width="560" height="280" fill="#fafafa"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 300" font-family="'Segoe UI',system-ui,sans-serif">
+  <rect width="600" height="300" fill="#f8f9fa"/>
 
-  <!-- ── Panel A: Linear boundary ────────────── -->
-  <!-- Background halves -->
-  <rect x="20" y="40" width="110" height="220" fill="#bbdefb" opacity="0.5"/>
-  <rect x="130" y="40" width="110" height="220" fill="#ffcdd2" opacity="0.5"/>
-  <!-- Diagonal boundary -->
-  <line x1="20" y1="260" x2="240" y2="40" stroke="#1565c0" stroke-width="2.5"/>
+  <!-- ═══════════════════════════════════════════════════════
+       PANEL A — Linear boundary
+       plot area: x=30..270, y=30..255
+       ═══════════════════════════════════════════════════════ -->
 
-  <!-- Scatter: Class 0 (blue, lower-left) -->
-  <circle cx="40"  cy="220" r="5" fill="#1565c0" opacity="0.7"/>
-  <circle cx="55"  cy="200" r="5" fill="#1565c0" opacity="0.7"/>
-  <circle cx="70"  cy="230" r="5" fill="#1565c0" opacity="0.7"/>
-  <circle cx="80"  cy="195" r="5" fill="#1565c0" opacity="0.7"/>
-  <circle cx="90"  cy="215" r="5" fill="#1565c0" opacity="0.7"/>
-  <circle cx="60"  cy="240" r="5" fill="#1565c0" opacity="0.7"/>
-  <circle cx="100" cy="240" r="5" fill="#1565c0" opacity="0.7"/>
-  <!-- Class 1 (red, upper-right) -->
-  <circle cx="160" cy="80"  r="5" fill="#c62828" opacity="0.7"/>
-  <circle cx="185" cy="65"  r="5" fill="#c62828" opacity="0.7"/>
-  <circle cx="200" cy="90"  r="5" fill="#c62828" opacity="0.7"/>
-  <circle cx="170" cy="110" r="5" fill="#c62828" opacity="0.7"/>
-  <circle cx="220" cy="75"  r="5" fill="#c62828" opacity="0.7"/>
-  <circle cx="195" cy="120" r="5" fill="#c62828" opacity="0.7"/>
-  <circle cx="210" cy="55"  r="5" fill="#c62828" opacity="0.7"/>
+  <!-- class backgrounds -->
+  <clipPath id="ca"><rect x="30" y="30" width="240" height="225"/></clipPath>
+  <polygon points="30,30 270,30 270,255 30,255" fill="#fff" clip-path="url(#ca)"/>
+  <!-- blue half (class 0 below-left of diagonal) -->
+  <polygon points="30,255 270,255 270,115 30,255" fill="#bbdefb" opacity="0.55" clip-path="url(#ca)"/>
+  <!-- red half (class 1 above-right) -->
+  <polygon points="30,255 270,115 270,30 30,30" fill="#ffcdd2" opacity="0.55" clip-path="url(#ca)"/>
 
-  <!-- Tree staircase boundary (worse) -->
-  <polyline points="100,40 100,140 140,140 140,200 240,200"
-            fill="none" stroke="#c62828" stroke-width="1.5" stroke-dasharray="5,3" opacity="0.6"/>
+  <!-- true boundary (linear) -->
+  <line x1="30" y1="255" x2="270" y2="115" stroke="#1565c0" stroke-width="2.5" clip-path="url(#ca)"/>
 
-  <!-- Labels -->
-  <text x="130" y="30" text-anchor="middle" font-size="13" font-weight="bold" fill="#333">A: Linear boundary</text>
-  <text x="40"  y="275" text-anchor="middle" font-size="10" fill="#1565c0">Linear wins ✓</text>
-  <text x="175" y="275" text-anchor="middle" font-size="10" fill="#c62828">Tree staggers ✗</text>
-  <text x="140" y="155" font-size="9" fill="#c62828" opacity="0.8">tree boundary</text>
-  <text x="130" y="185" font-size="9" fill="#1565c0">(dashed)</text>
+  <!-- tree staircase boundary -->
+  <polyline points="30,185 100,185 100,145 155,145 155,80 270,80"
+            fill="none" stroke="#c62828" stroke-width="1.8" stroke-dasharray="6,4" opacity="0.7" clip-path="url(#ca)"/>
 
-  <!-- Divider -->
-  <line x1="280" y1="20" x2="280" y2="275" stroke="#ccc" stroke-width="1"/>
+  <!-- scatter: class 0 (blue, lower region) -->
+  <circle cx="55"  cy="225" r="5" fill="#1565c0" opacity="0.8"/>
+  <circle cx="75"  cy="205" r="5" fill="#1565c0" opacity="0.8"/>
+  <circle cx="95"  cy="240" r="5" fill="#1565c0" opacity="0.8"/>
+  <circle cx="115" cy="215" r="5" fill="#1565c0" opacity="0.8"/>
+  <circle cx="60"  cy="248" r="5" fill="#1565c0" opacity="0.8"/>
+  <circle cx="135" cy="230" r="5" fill="#1565c0" opacity="0.8"/>
+  <circle cx="80"  cy="238" r="5" fill="#1565c0" opacity="0.8"/>
+  <!-- class 1 (red, upper region) -->
+  <circle cx="165" cy="70"  r="5" fill="#c62828" opacity="0.8"/>
+  <circle cx="195" cy="50"  r="5" fill="#c62828" opacity="0.8"/>
+  <circle cx="215" cy="85"  r="5" fill="#c62828" opacity="0.8"/>
+  <circle cx="185" cy="100" r="5" fill="#c62828" opacity="0.8"/>
+  <circle cx="240" cy="55"  r="5" fill="#c62828" opacity="0.8"/>
+  <circle cx="255" cy="90"  r="5" fill="#c62828" opacity="0.8"/>
+  <circle cx="225" cy="115" r="5" fill="#c62828" opacity="0.8"/>
 
-  <!-- ── Panel B: Non-linear boundary ──────────── -->
-  <!-- Checkerboard: 4 regions -->
-  <rect x="300" y="40"  width="110" height="110" fill="#bbdefb" opacity="0.5"/>
-  <rect x="410" y="40"  width="110" height="110" fill="#ffcdd2" opacity="0.5"/>
-  <rect x="300" y="150" width="110" height="110" fill="#ffcdd2" opacity="0.5"/>
-  <rect x="410" y="150" width="110" height="110" fill="#bbdefb" opacity="0.5"/>
+  <!-- axes -->
+  <rect x="30" y="30" width="240" height="225" fill="none" stroke="#bbb" stroke-width="1"/>
+  <line x1="30" y1="255" x2="270" y2="255" stroke="#555" stroke-width="1.5"/>
+  <line x1="30" y1="30"  x2="30"  y2="255" stroke="#555" stroke-width="1.5"/>
+  <text x="150" y="272" text-anchor="middle" font-size="10" fill="#666">X₁</text>
+  <text x="18"  y="143" text-anchor="middle" font-size="10" fill="#666" transform="rotate(-90,18,143)">X₂</text>
 
-  <!-- Tree boundary lines (perfect) -->
-  <line x1="300" y1="150" x2="520" y2="150" stroke="#1565c0" stroke-width="2.5"/>
-  <line x1="410" y1="40"  x2="410" y2="260" stroke="#1565c0" stroke-width="2.5"/>
+  <!-- title and badges -->
+  <text x="150" y="20" text-anchor="middle" font-size="13" font-weight="700" fill="#333">A: Linear boundary</text>
+  <rect x="30"  y="280" width="108" height="14" rx="5" fill="#e3f2fd"/>
+  <text x="84"  y="291" text-anchor="middle" font-size="9" font-weight="600" fill="#1565c0">Linear model wins ✓</text>
+  <rect x="150" y="280" width="118" height="14" rx="5" fill="#ffebee"/>
+  <text x="209" y="291" text-anchor="middle" font-size="9" fill="#c62828">Tree staggers (dashed) ✗</text>
 
-  <!-- Scatter: Class 0 (blue, top-left + bottom-right) -->
-  <circle cx="330" cy="80"  r="5" fill="#1565c0" opacity="0.7"/>
-  <circle cx="355" cy="65"  r="5" fill="#1565c0" opacity="0.7"/>
-  <circle cx="370" cy="95"  r="5" fill="#1565c0" opacity="0.7"/>
-  <circle cx="340" cy="120" r="5" fill="#1565c0" opacity="0.7"/>
-  <circle cx="435" cy="185" r="5" fill="#1565c0" opacity="0.7"/>
-  <circle cx="460" cy="210" r="5" fill="#1565c0" opacity="0.7"/>
-  <circle cx="490" cy="195" r="5" fill="#1565c0" opacity="0.7"/>
-  <circle cx="450" cy="240" r="5" fill="#1565c0" opacity="0.7"/>
-  <!-- Class 1 (red, top-right + bottom-left) -->
-  <circle cx="440" cy="80"  r="5" fill="#c62828" opacity="0.7"/>
-  <circle cx="465" cy="65"  r="5" fill="#c62828" opacity="0.7"/>
-  <circle cx="490" cy="95"  r="5" fill="#c62828" opacity="0.7"/>
-  <circle cx="475" cy="120" r="5" fill="#c62828" opacity="0.7"/>
-  <circle cx="320" cy="185" r="5" fill="#c62828" opacity="0.7"/>
-  <circle cx="345" cy="210" r="5" fill="#c62828" opacity="0.7"/>
-  <circle cx="375" cy="195" r="5" fill="#c62828" opacity="0.7"/>
-  <circle cx="360" cy="240" r="5" fill="#c62828" opacity="0.7"/>
+  <!-- divider -->
+  <line x1="305" y1="20" x2="305" y2="285" stroke="#ccc" stroke-width="1.5"/>
 
-  <!-- Labels -->
-  <text x="410" y="30" text-anchor="middle" font-size="13" font-weight="bold" fill="#333">B: Non-linear (checkerboard)</text>
-  <text x="355" y="275" text-anchor="middle" font-size="10" fill="#1565c0">Tree wins ✓</text>
-  <text x="465" y="275" text-anchor="middle" font-size="10" fill="#c62828">(Linear fails ✗)</text>
+  <!-- ═══════════════════════════════════════════════════════
+       PANEL B — Non-linear (checkerboard)
+       plot area: x=320..560, y=30..255
+       ═══════════════════════════════════════════════════════ -->
+  <clipPath id="cb"><rect x="320" y="30" width="240" height="225"/></clipPath>
+
+  <!-- checkerboard fills -->
+  <rect x="320" y="30"  width="120" height="112" fill="#bbdefb" opacity="0.6"/>
+  <rect x="440" y="30"  width="120" height="112" fill="#ffcdd2" opacity="0.6"/>
+  <rect x="320" y="142" width="120" height="113" fill="#ffcdd2" opacity="0.6"/>
+  <rect x="440" y="142" width="120" height="113" fill="#bbdefb" opacity="0.6"/>
+
+  <!-- tree boundary (perfect for this data) -->
+  <line x1="320" y1="142" x2="560" y2="142" stroke="#1565c0" stroke-width="2.5"/>
+  <line x1="440" y1="30"  x2="440" y2="255" stroke="#1565c0" stroke-width="2.5"/>
+
+  <!-- linear boundary attempt (diagonal, does poorly) -->
+  <line x1="320" y1="255" x2="560" y2="30" stroke="#c62828" stroke-width="1.8" stroke-dasharray="6,4" opacity="0.6" clip-path="url(#cb)"/>
+
+  <!-- scatter: class 0 (blue — top-left + bottom-right) -->
+  <circle cx="345" cy="65"  r="5" fill="#1565c0" opacity="0.8"/>
+  <circle cx="365" cy="88"  r="5" fill="#1565c0" opacity="0.8"/>
+  <circle cx="390" cy="50"  r="5" fill="#1565c0" opacity="0.8"/>
+  <circle cx="410" cy="115" r="5" fill="#1565c0" opacity="0.8"/>
+  <circle cx="350" cy="118" r="5" fill="#1565c0" opacity="0.8"/>
+  <circle cx="465" cy="165" r="5" fill="#1565c0" opacity="0.8"/>
+  <circle cx="495" cy="190" r="5" fill="#1565c0" opacity="0.8"/>
+  <circle cx="535" cy="210" r="5" fill="#1565c0" opacity="0.8"/>
+  <circle cx="510" cy="240" r="5" fill="#1565c0" opacity="0.8"/>
+  <!-- class 1 (red — top-right + bottom-left) -->
+  <circle cx="460" cy="60"  r="5" fill="#c62828" opacity="0.8"/>
+  <circle cx="485" cy="85"  r="5" fill="#c62828" opacity="0.8"/>
+  <circle cx="515" cy="50"  r="5" fill="#c62828" opacity="0.8"/>
+  <circle cx="545" cy="110" r="5" fill="#c62828" opacity="0.8"/>
+  <circle cx="500" cy="115" r="5" fill="#c62828" opacity="0.8"/>
+  <circle cx="340" cy="175" r="5" fill="#c62828" opacity="0.8"/>
+  <circle cx="365" cy="205" r="5" fill="#c62828" opacity="0.8"/>
+  <circle cx="395" cy="240" r="5" fill="#c62828" opacity="0.8"/>
+  <circle cx="420" cy="185" r="5" fill="#c62828" opacity="0.8"/>
+
+  <!-- axes -->
+  <rect x="320" y="30" width="240" height="225" fill="none" stroke="#bbb" stroke-width="1"/>
+  <line x1="320" y1="255" x2="560" y2="255" stroke="#555" stroke-width="1.5"/>
+  <line x1="320" y1="30"  x2="320" y2="255" stroke="#555" stroke-width="1.5"/>
+  <text x="440" y="272" text-anchor="middle" font-size="10" fill="#666">X₁</text>
+  <text x="308" y="143" text-anchor="middle" font-size="10" fill="#666" transform="rotate(-90,308,143)">X₂</text>
+
+  <!-- title and badges -->
+  <text x="440" y="20" text-anchor="middle" font-size="13" font-weight="700" fill="#333">B: Non-linear (checkerboard)</text>
+  <rect x="320" y="280" width="100" height="14" rx="5" fill="#e3f2fd"/>
+  <text x="370" y="291" text-anchor="middle" font-size="9" font-weight="600" fill="#1565c0">Tree wins ✓</text>
+  <rect x="430" y="280" width="130" height="14" rx="5" fill="#ffebee"/>
+  <text x="495" y="291" text-anchor="middle" font-size="9" fill="#c62828">Linear fails (dashed) ✗</text>
 </svg>
