@@ -171,12 +171,61 @@ print(f"Leaves   : {tree.get_n_leaves()}")
     <p class="muted">Gini · cross-entropy · classification error</p>
   </section>
 
+  <!-- Introduce the notation first -->
   <section>
-    <h2>Why not use error rate for splitting?</h2>
-    <p>Node with 99 Yes / 1 No and node with 51 Yes / 49 No both have the same dominant class — but the second is much less pure.</p>
-    <p class="fragment fade-up">Error rate = <strong>1 − max(p̂<sub>k</sub>)</strong> is insensitive to this.</p>
+    <h2>Notation: node class proportions</h2>
+    <p>At node <em>m</em>, let <strong>p̂<sub>mk</sub></strong> = proportion of training observations in region <em>m</em> that belong to class <em>k</em>.</p>
+    <p class="fragment fade-up" style="margin-top:0.6em;">
+      Example — binary classification (k = Yes / No):
+    </p>
+    <div class="fragment fade-up" style="background:#f5f5f5; border-radius:8px; padding:0.6em 1em; margin-top:0.5em; font-size:0.95em;">
+      <strong>Node A</strong>: 99 Yes, 1 No → p̂<sub>m,Yes</sub> = 0.99, p̂<sub>m,No</sub> = 0.01 &nbsp;(very pure)<br/>
+      <strong>Node B</strong>: 51 Yes, 49 No → p̂<sub>m,Yes</sub> = 0.51, p̂<sub>m,No</sub> = 0.49 &nbsp;(almost random)
+    </div>
     <p class="callout fragment fade-up" style="margin-top:0.8em;">
-      Gini and entropy measure the <em>distribution</em>, not just the winner. They reward splits that produce purer children.
+      We predict the <strong>majority class</strong> in each leaf. We need a measure that tells us <em>how good</em> a node is — its <strong>impurity</strong>.
+    </p>
+  </section>
+
+  <!-- Classification error rate: definition + problem -->
+  <section>
+    <h2>Classification error rate</h2>
+    <p style="text-align:center; font-size:1.2em; margin:0.4em 0 0.6em;">
+      E = 1 − max<sub>k</sub>(p̂<sub>mk</sub>)
+    </p>
+    <p class="muted" style="text-align:center; font-size:0.9em;">
+      "fraction of observations that are <em>not</em> the majority class in node m"
+    </p>
+    <ul style="margin-top:0.8em;">
+      <li class="fragment fade-up">Node A (99/1): E = 1 − 0.99 = <strong>0.01</strong> — correctly signals near-perfect purity.</li>
+      <li class="fragment fade-up">Node B (51/49): E = 1 − 0.51 = <strong>0.49</strong> — correctly signals near-random.</li>
+    </ul>
+    <p class="fragment fade-up" style="margin-top:0.6em;">
+      Looks fine so far — so what is the problem?
+    </p>
+  </section>
+
+  <!-- Why error rate fails for SPLITTING -->
+  <section>
+    <h2>Why error rate fails for splitting</h2>
+    <p>Consider a parent node with <strong>400 Yes / 400 No</strong> (E = 0.50). Two candidate splits:</p>
+    <div class="fragment fade-up" style="display:grid; grid-template-columns:1fr 1fr; gap:0.8em; margin-top:0.6em;">
+      <div style="background:#e8f5e9; border-radius:8px; padding:0.6em 0.8em;">
+        <strong>Split A</strong><br/>
+        Left: 300 Yes / 100 No → E = 0.25<br/>
+        Right: 100 Yes / 300 No → E = 0.25<br/>
+        <span class="muted" style="font-size:0.88em;">Weighted E = 0.25 ✗ same as Split B</span>
+      </div>
+      <div style="background:#fff3e0; border-radius:8px; padding:0.6em 0.8em;">
+        <strong>Split B</strong><br/>
+        Left: 400 Yes / 0 No → E = 0.00<br/>
+        Right: 0 Yes / 400 No → E = 0.00<br/>
+        <span class="muted" style="font-size:0.88em;">Weighted E = 0.00 ✓ perfect split!</span>
+      </div>
+    </div>
+    <p class="fragment fade-up" style="margin-top:0.7em;">Error rate gives Split A a weighted score of <strong>0.25</strong> — but Split B achieves <strong>0.00</strong>. Error rate <em>can</em> distinguish these.</p>
+    <p class="callout fragment fade-up" style="margin-top:0.6em;">
+      The real problem: error rate is <strong>not differentiable</strong> at p = 0.5 and is <strong>too coarse</strong> — small probability shifts that improve purity are invisible to it. Gini and entropy are more sensitive.
     </p>
   </section>
 
