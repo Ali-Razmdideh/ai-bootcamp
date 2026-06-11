@@ -26,21 +26,203 @@
   <span class="kicker">Roadmap</span>
   <h2>Where we are heading</h2>
   <div class="three-col">
-    <div class="card"><h4>0:00 · 0:25</h4><strong>Regression Trees</strong>
+    <div class="card" style="background:#e8f4fd;"><h4>0:00 · 0:15</h4><strong>How Splits Are Chosen</strong>
+      <p class="muted" style="margin:0.3em 0 0;">threshold scan · RSS · impurity gain.</p></div>
+    <div class="card"><h4>0:15 · 0:40</h4><strong>Regression Trees</strong>
       <p class="muted" style="margin:0.3em 0 0;">RSS splits, leaf means, baseball salary.</p></div>
-    <div class="card"><h4>0:25 · 0:50</h4><strong>Classification Trees</strong>
+    <div class="card"><h4>0:40 · 1:05</h4><strong>Classification Trees</strong>
       <p class="muted" style="margin:0.3em 0 0;">Gini, entropy, Heart + Carseats.</p></div>
-    <div class="card"><h4>0:50 · 1:10</h4><strong>Pruning</strong>
-      <p class="muted" style="margin:0.3em 0 0;">α penalty · K-fold CV.</p></div>
   </div>
   <div class="three-col" style="margin-top:0.6em;">
-    <div class="card"><h4>1:10 · 1:20</h4><strong>Trees vs Linear</strong>
+    <div class="card"><h4>1:05 · 1:25</h4><strong>Pruning</strong>
+      <p class="muted" style="margin:0.3em 0 0;">α penalty · K-fold CV.</p></div>
+    <div class="card"><h4>1:25 · 1:35</h4><strong>Trees vs Linear</strong>
       <p class="muted" style="margin:0.3em 0 0;">when each wins.</p></div>
-    <div class="card"><h4>1:20 · 1:30</h4><strong>Pros &amp; Cons</strong>
+    <div class="card"><h4>1:35 · 1:45</h4><strong>Pros &amp; Cons</strong>
       <p class="muted" style="margin:0.3em 0 0;">variance → bridge to ensembles.</p></div>
-    <div class="card"></div>
   </div>
   <p class="callout" style="margin-top:1em;">A single tree is the most interpretable model you'll meet. Every prediction is a flowchart. The weakness — variance — sets up Course 8's payoff.</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     PART 0 — HOW SPLITS ARE CHOSEN
+     ═══════════════════════════════════════════════════════════════════════ -->
+<section>
+  <section class="title-slide">
+    <span class="kicker">Part 0 · 0:00 – 0:15</span>
+    <h1>How Splits Are Chosen</h1>
+    <p class="muted">recursive binary splitting · threshold scan · greedy search</p>
+  </section>
+
+  <!-- Slide 2: The search problem -->
+  <section>
+    <h2>The search problem</h2>
+    <p>At each node we have <strong>N observations</strong> and <strong>P features</strong>. We want to find the single (feature <em>j</em>, threshold <em>s</em>) pair that produces the most homogeneous children.</p>
+    <div class="fragment fade-up" style="background:#f5f5f5; border-radius:8px; padding:0.7em 1.1em; margin-top:0.8em; font-size:1.05em;">
+      <strong>R<sub>L</sub>(j, s)</strong> = { <strong>x</strong> | x<sub>j</sub> &lt; s } &nbsp;&nbsp; (left child)<br/>
+      <strong>R<sub>R</sub>(j, s)</strong> = { <strong>x</strong> | x<sub>j</sub> ≥ s } &nbsp;&nbsp; (right child)
+    </div>
+    <ul style="margin-top:0.9em;">
+      <li class="fragment fade-up">We try <em>every</em> feature and <em>every</em> possible threshold value.</li>
+      <li class="fragment fade-up">We pick the (j, s) that scores best according to a <strong>split criterion</strong>.</li>
+      <li class="fragment fade-up">Then we repeat independently on each child — <strong>recursively</strong>.</li>
+    </ul>
+    <p class="callout fragment fade-up" style="margin-top:0.9em;">The split criterion differs for regression vs. classification — but the search loop is identical.</p>
+  </section>
+
+  <!-- Slide 3: Regression RSS criterion (expanded) -->
+  <section>
+    <h2>Regression splits: minimise RSS</h2>
+    <p style="text-align:center; font-size:1.1em; margin:0.3em 0 0.2em;">For a candidate split (j, s), compute the mean in each child:</p>
+    <div style="text-align:center; font-size:1.05em; margin:0.4em 0;">
+      ȳ<sub>L</sub> = mean{ y<sub>i</sub> : x<sub>ij</sub> &lt; s } &nbsp;&nbsp; ȳ<sub>R</sub> = mean{ y<sub>i</sub> : x<sub>ij</sub> ≥ s }
+    </div>
+    <p style="text-align:center; font-size:1.15em; margin:0.3em 0 0.6em;">
+      Cost(j, s) = <em>RSS<sub>L</sub></em> + <em>RSS<sub>R</sub></em> = Σ<sub>i∈R<sub>L</sub></sub>(y<sub>i</sub> − ȳ<sub>L</sub>)² + Σ<sub>i∈R<sub>R</sub></sub>(y<sub>i</sub> − ȳ<sub>R</sub>)²
+    </p>
+    <p class="fragment fade-up" style="margin-bottom:0.4em;"><strong>Worked example</strong> — 6 points, one feature, three candidate thresholds:</p>
+    <table class="fragment fade-up" style="font-size:0.88em; width:90%; margin:0 auto;">
+      <thead><tr><th>s</th><th>Left n</th><th>RSS<sub>L</sub></th><th>Right n</th><th>RSS<sub>R</sub></th><th>Total</th></tr></thead>
+      <tbody>
+        <tr><td>2.0</td><td>1</td><td>0.00</td><td>5</td><td>4.80</td><td>4.80</td></tr>
+        <tr style="background:#e8f4fd;"><td><strong>4.0</strong></td><td><strong>3</strong></td><td><strong>0.67</strong></td><td><strong>3</strong></td><td><strong>0.67</strong></td><td><strong>1.33 ✓</strong></td></tr>
+        <tr><td>6.0</td><td>5</td><td>4.80</td><td>1</td><td>0.00</td><td>4.80</td></tr>
+      </tbody>
+    </table>
+    <p class="callout fragment fade-up" style="margin-top:0.8em;">Choose s = 4.0 — it produces the most equal, tight groups. Pick the (j, s) with the <strong>smallest total RSS across all features</strong>.</p>
+  </section>
+
+  <!-- Slide 4: Visualization — threshold scan regression -->
+  <section>
+    <h2>Scanning thresholds — regression</h2>
+    <svg viewBox="0 0 760 320" style="width:90%; display:block; margin:0 auto; font-family:sans-serif; font-size:13px;">
+      <!-- Top panel: data points on axis -->
+      <text x="10" y="30" font-weight="bold" font-size="14">Feature axis (x)</text>
+      <line x1="40" y1="60" x2="720" y2="60" stroke="#333" stroke-width="2"/>
+      <!-- tick marks and points -->
+      <circle cx="100" cy="60" r="7" fill="#e67e22"/><text x="96" y="85">1</text>
+      <circle cx="200" cy="60" r="7" fill="#e67e22"/><text x="196" y="85">2</text>
+      <circle cx="300" cy="60" r="7" fill="#e67e22"/><text x="296" y="85">3</text>
+      <circle cx="420" cy="60" r="7" fill="#2980b9"/><text x="416" y="85">5</text>
+      <circle cx="560" cy="60" r="7" fill="#2980b9"/><text x="556" y="85">7</text>
+      <circle cx="680" cy="60" r="7" fill="#2980b9"/><text x="676" y="85">9</text>
+      <!-- threshold line -->
+      <line x1="360" y1="40" x2="360" y2="100" stroke="#e74c3c" stroke-width="2" stroke-dasharray="6,3"/>
+      <text x="345" y="35" fill="#e74c3c" font-weight="bold">s</text>
+      <!-- labels -->
+      <text x="180" y="115" fill="#e67e22">← R_L (left child)</text>
+      <text x="430" y="115" fill="#2980b9">R_R (right child) →</text>
+
+      <!-- Bottom panel: RSS total vs threshold curve -->
+      <text x="10" y="155" font-weight="bold" font-size="14">RSS<tspan baseline-shift="sub" font-size="10">total</tspan> vs. threshold s</text>
+      <line x1="40" y1="290" x2="720" y2="290" stroke="#333" stroke-width="1.5"/>
+      <line x1="40" y1="165" x2="40" y2="290" stroke="#333" stroke-width="1.5"/>
+      <text x="5" y="293" font-size="11">0</text>
+      <!-- curve approximation: high at edges, low in middle -->
+      <polyline points="100,270 160,240 220,210 280,180 360,170 400,168 440,178 500,205 580,240 680,270"
+                fill="none" stroke="#2980b9" stroke-width="2.5"/>
+      <!-- minimum marker -->
+      <circle cx="400" cy="168" r="5" fill="#e74c3c"/>
+      <line x1="400" y1="168" x2="400" y2="290" stroke="#e74c3c" stroke-width="1.5" stroke-dasharray="5,3"/>
+      <text x="385" y="160" fill="#e74c3c" font-size="12">min → best s</text>
+      <!-- axis label -->
+      <text x="370" y="308" font-size="12">s →</text>
+      <text x="5" y="230" font-size="11" transform="rotate(-90,15,230)">RSS</text>
+    </svg>
+    <p class="muted" style="font-size:0.82em; text-align:center; margin-top:0.3em;">
+      Repeat for every feature j. The global minimum across all (j, s) pairs gives the decision boundary.
+    </p>
+  </section>
+
+  <!-- Slide 5: Classification — weighted impurity gain -->
+  <section>
+    <h2>Classification splits: maximise impurity gain</h2>
+    <p style="text-align:center; font-size:1.1em; margin:0.3em 0;">
+      ΔG(j, s) = G(parent) − <sup>n<sub>L</sub></sup>/<sub>n</sub> · G(R<sub>L</sub>) − <sup>n<sub>R</sub></sup>/<sub>n</sub> · G(R<sub>R</sub>)
+    </p>
+    <p class="muted" style="text-align:center; font-size:0.9em; margin-bottom:0.7em;">where G = Gini index (or entropy — same structure)</p>
+    <p class="fragment fade-up" style="margin-bottom:0.4em;"><strong>Worked example</strong> — 10 binary-labelled points, two candidate thresholds (Gini):</p>
+    <table class="fragment fade-up" style="font-size:0.86em; width:96%; margin:0 auto;">
+      <thead><tr><th>s</th><th>Left (n, +, −)</th><th>G<sub>L</sub></th><th>Right (n, +, −)</th><th>G<sub>R</sub></th><th>ΔG</th></tr></thead>
+      <tbody>
+        <tr><td>s = 3</td><td>4 · 3+, 1−</td><td>0.375</td><td>6 · 2+, 4−</td><td>0.444</td><td>0.083</td></tr>
+        <tr style="background:#e8f4fd;"><td><strong>s = 7</strong></td><td><strong>7 · 6+, 1−</strong></td><td><strong>0.245</strong></td><td><strong>3 · 0+, 3−</strong></td><td><strong>0.000</strong></td><td><strong>0.253 ✓</strong></td></tr>
+      </tbody>
+    </table>
+    <p class="callout fragment fade-up" style="margin-top:0.8em;">
+      s = 7 wins — the right child is <em>perfectly pure</em> (all negatives). Pick the (j, s) with the <strong>largest ΔG across all features</strong>.
+    </p>
+  </section>
+
+  <!-- Slide 6: Visualization — threshold scan classification -->
+  <section>
+    <h2>Scanning thresholds — classification</h2>
+    <svg viewBox="0 0 760 320" style="width:90%; display:block; margin:0 auto; font-family:sans-serif; font-size:13px;">
+      <!-- Top panel -->
+      <text x="10" y="28" font-weight="bold" font-size="14">Feature axis (x)</text>
+      <line x1="40" y1="58" x2="720" y2="58" stroke="#333" stroke-width="2"/>
+      <!-- positive class (circles) -->
+      <circle cx="90"  cy="58" r="8" fill="none" stroke="#2980b9" stroke-width="2.5"/>
+      <circle cx="160" cy="58" r="8" fill="none" stroke="#2980b9" stroke-width="2.5"/>
+      <circle cx="240" cy="58" r="8" fill="none" stroke="#2980b9" stroke-width="2.5"/>
+      <circle cx="330" cy="58" r="8" fill="none" stroke="#2980b9" stroke-width="2.5"/>
+      <circle cx="410" cy="58" r="8" fill="none" stroke="#2980b9" stroke-width="2.5"/>
+      <circle cx="490" cy="58" r="8" fill="none" stroke="#2980b9" stroke-width="2.5"/>
+      <!-- negative class (filled) -->
+      <circle cx="550" cy="58" r="8" fill="#e74c3c"/>
+      <circle cx="610" cy="58" r="8" fill="#e74c3c"/>
+      <circle cx="670" cy="58" r="8" fill="#e74c3c"/>
+      <!-- threshold line -->
+      <line x1="520" y1="38" x2="520" y2="98" stroke="#27ae60" stroke-width="2.5" stroke-dasharray="6,3"/>
+      <text x="505" y="33" fill="#27ae60" font-weight="bold">s*</text>
+      <text x="200" y="115" fill="#2980b9">← positive (+)</text>
+      <text x="560" y="115" fill="#e74c3c">negative (−) →</text>
+
+      <!-- Bottom panel: Gini gain vs threshold -->
+      <text x="10" y="150" font-weight="bold" font-size="14">Gini gain ΔG vs. threshold s</text>
+      <line x1="40" y1="290" x2="720" y2="290" stroke="#333" stroke-width="1.5"/>
+      <line x1="40" y1="155" x2="40" y2="290" stroke="#333" stroke-width="1.5"/>
+      <text x="5" y="293" font-size="11">0</text>
+      <!-- Feature 1 curve (lower peak, earlier) -->
+      <polyline points="80,285 150,260 220,240 300,235 380,240 450,255 530,270 640,280 700,285"
+                fill="none" stroke="#aaa" stroke-width="2" stroke-dasharray="5,3"/>
+      <text x="310" y="228" fill="#aaa" font-size="11">feature 1</text>
+      <!-- Feature 2 curve (higher peak at s*) -->
+      <polyline points="80,285 150,270 250,250 360,220 450,185 520,168 560,195 620,240 700,275"
+                fill="none" stroke="#2980b9" stroke-width="2.5"/>
+      <text x="460" y="178" fill="#2980b9" font-size="11">feature 2</text>
+      <!-- max marker -->
+      <circle cx="520" cy="168" r="5" fill="#27ae60"/>
+      <line x1="520" y1="168" x2="520" y2="290" stroke="#27ae60" stroke-width="1.5" stroke-dasharray="5,3"/>
+      <text x="525" y="163" fill="#27ae60" font-size="12">max → best (j, s)</text>
+      <text x="370" y="308" font-size="12">s →</text>
+    </svg>
+    <p class="muted" style="font-size:0.82em; text-align:center; margin-top:0.3em;">
+      Feature 2 has a higher Gini gain peak — it wins the split at s*.
+    </p>
+  </section>
+
+  <!-- Slide 7: The full search loop -->
+  <section>
+    <h2>The full search loop</h2>
+    <pre style="font-size:0.82em; background:#f5f5f5; border-radius:8px; padding:0.8em 1em; margin:0.3em 0 0.8em;"><code>for each feature j in 1..P:
+    sort observations by x_j          # O(n log n)
+    for each midpoint s between adjacent values:
+        compute Cost(j, s)            # RSS  or  weighted impurity
+        if Cost(j, s) &lt; best_cost:
+            best_j, best_s = j, s
+
+split node on (best_j, best_s)
+recurse on left and right children</code></pre>
+    <ul>
+      <li class="fragment fade-up"><strong>Complexity:</strong> O(n p log n) per node level.</li>
+      <li class="fragment fade-up"><strong>Greedy:</strong> picks the best local split at each step — no lookahead.</li>
+      <li class="fragment fade-up"><strong>Result:</strong> axis-aligned rectangular regions in feature space.</li>
+    </ul>
+    <p class="callout fragment fade-up" style="margin-top:0.8em;">
+      Greedy search is fast but not globally optimal — each split ignores future consequences. This is why deep trees overfit and need pruning.
+    </p>
+  </section>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════════════════
@@ -48,7 +230,7 @@
      ═══════════════════════════════════════════════════════════════════════ -->
 <section>
   <section class="title-slide">
-    <span class="kicker">Part 1 · 0:00 – 0:25</span>
+    <span class="kicker">Part 1 · 0:15 – 0:40</span>
     <h1>Regression Trees</h1>
     <p class="muted">recursive binary splitting · leaf means · RSS</p>
   </section>
@@ -166,7 +348,7 @@ print(f"Leaves   : {tree.get_n_leaves()}")
      ═══════════════════════════════════════════════════════════════════════ -->
 <section>
   <section class="title-slide">
-    <span class="kicker">Part 2 · 0:25 – 0:50</span>
+    <span class="kicker">Part 2 · 0:40 – 1:05</span>
     <h1>Classification Trees</h1>
     <p class="muted">Gini · cross-entropy · classification error</p>
   </section>
@@ -387,7 +569,7 @@ print(f"Train acc: {tf.score(X_tr,y_tr):.3f}  Test acc: {tf.score(X_te,y_te):.3f
      ═══════════════════════════════════════════════════════════════════════ -->
 <section>
   <section class="title-slide">
-    <span class="kicker">Part 3 · 0:50 – 1:10</span>
+    <span class="kicker">Part 3 · 1:05 – 1:25</span>
     <h1>Cost-Complexity Pruning</h1>
     <p class="muted">grow full · penalise size · CV to pick α</p>
   </section>
@@ -503,7 +685,7 @@ Best alpha={best_alpha:.5f}: test acc = {final.score(X_te,y_te):.4f}, leaves={fi
      ═══════════════════════════════════════════════════════════════════════ -->
 <section>
   <section class="title-slide">
-    <span class="kicker">Part 4 · 1:10 – 1:20</span>
+    <span class="kicker">Part 4 · 1:25 – 1:35</span>
     <h1>Trees vs Linear Models</h1>
     <p class="muted">it depends on the true boundary</p>
   </section>
@@ -597,7 +779,7 @@ print("LR wins on smooth linear patterns (fewer parameters, less variance).")
      ═══════════════════════════════════════════════════════════════════════ -->
 <section>
   <section class="title-slide">
-    <span class="kicker">Part 5 · 1:20 – 1:30</span>
+    <span class="kicker">Part 5 · 1:35 – 1:45</span>
     <h1>Pros, Cons &amp; What's Next</h1>
     <p class="muted">the variance problem → ensembles</p>
   </section>
