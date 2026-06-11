@@ -75,46 +75,11 @@
       <tr><td>Linear regression</td><td>Negative / above 1</td><td>Yes (slopes)</td><td><strong>No</strong></td></tr>
       <tr><td>Logistic regression</td><td>Always in (0, 1)</td><td>Yes (odds ratios)</td><td><strong>Yes</strong></td></tr>
     </table>
-    
-  <!-- EXAMPLE: Linear vs logistic: probability bounds -->
-  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
-    <h2>Linear vs logistic: probability bounds</h2>
-    <div class="ex-prompt">Fit OLS and logistic regression on a synthetic binary outcome. See how OLS produces predictions outside [0,1] while logistic is always valid.</div>
-<textarea class="ex-code">import numpy as np
-from sklearn.linear_model import LinearRegression, LogisticRegression
-
-rng = np.random.default_rng(42)
-balance = rng.normal(1500, 600, 500)
-p_true  = 1 / (1 + np.exp(-(balance - 1800) / 300))
-y = rng.binomial(1, p_true)
-X = balance.reshape(-1,1)
-
-ols = LinearRegression().fit(X, y)
-lr  = LogisticRegression(C=1e6, max_iter=500).fit(X, y)
-
-test_bal = np.array([0, 500, 1000, 1500, 2000, 2500, 3000]).reshape(-1,1)
-ols_pred = ols.predict(test_bal)
-lr_pred  = lr.predict_proba(test_bal)[:, 1]
-
-print(f"{'Balance':>8}  {'OLS pred':>10}  {'LR pred':>10}")
-print("-" * 34)
-for b, o, l in zip(test_bal.ravel(), ols_pred, lr_pred):
-    flag = " ← INVALID" if o < 0 or o > 1 else ""
-    print(f"{b:>8.0f}  {o:>10.4f}  {l:>10.4f}{flag}")
-</textarea>
-    <div class="ex-controls">
-      <button class="ex-run">Run</button>
-      <button class="ex-reset">Reset</button>
-      <span class="ex-status"></span>
-    </div>
-    <pre class="ex-output"></pre>
-<script type="text/x-explain">OLS predictions at low balance go negative — an invalid probability. Logistic regression always outputs values in (0,1). At balance=0 the OLS prediction is well below zero.</script>
   </section>
 
   <section>
     <p class="callout" style="margin-top:1em;">For a binary outcome, always use logistic regression. Linear regression can still be used for multi-class in some edge cases but logistic is the right default.</p>
   </section>
-</section>
 
   <!-- EXAMPLE: Linear vs logistic: probability bounds -->
   <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
@@ -150,6 +115,7 @@ for b, o, l in zip(test_bal.ravel(), ols_pred, lr_pred):
     <pre class="ex-output"></pre>
 <script type="text/x-explain">OLS predictions at low balance go negative — an invalid probability. Logistic regression always outputs values in (0,1). At balance=0 the OLS prediction is well below zero.</script>
   </section>
+</section>
 
 <!-- ====================================================
      PART 2 — BINARY LR
@@ -235,7 +201,6 @@ for b, o, l in zip(test_bal.ravel(), ols_pred, lr_pred):
     <p class="callout fragment fade-up" style="margin-top:1em;">Students carry higher balances on average. Balance drives defaults. Once balance is controlled, being a student is protective. <strong>Confounding reverses the sign.</strong></p>
     <aside class="notes">Figure 4.3 from ISLR. This is one of the most important statistical lessons in the course. Marginal associations can be completely reversed by adding a third variable. This is Simpson's paradox in action.</aside>
   </section>
-</section>
 
   <!-- EXAMPLE: Fitting logistic regression — coefficients and odds ratios -->
   <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
@@ -313,6 +278,7 @@ print("Balance drives defaults. Once controlled, students are actually safer.")
     <pre class="ex-output"></pre>
 <script type="text/x-explain">This is Simpson's paradox. Marginally, students default more (because they carry higher balances). But conditional on balance, students default LESS. Confounding reverses the sign.</script>
   </section>
+</section>
 
 <!-- ====================================================
      PART 3 — MULTIPLE LR ON SMARKET
@@ -358,7 +324,6 @@ print("Balance drives defaults. Once controlled, students are actually safer.")
     <p class="callout fragment fade-up">Markets are hard. This is a good reminder that clean data + a valid model ≠ signal. Logistic regression correctly reports uncertainty when there is none to exploit.</p>
     <aside class="notes">The ISLR analysis uses a time-based split (year &lt; 2005 → train). We use random stratified split; result is similar. This is a crucial pedagogical point: a model that can't predict on held-out data is telling you something about the data, not the method.</aside>
   </section>
-</section>
 
   <!-- EXAMPLE: Smarket-like: classifying market direction -->
   <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
@@ -395,6 +360,7 @@ print("Logistic regression correctly reports no useful signal.")
     </div>
     <pre class="ex-output"></pre>
   </section>
+</section>
 
 <!-- ====================================================
      PART 4 — CASE-CONTROL SAMPLING
@@ -474,7 +440,6 @@ print("Logistic regression correctly reports no useful signal.")
       <li class="fragment fade-up">The full decision space is always a <strong>Voronoi-like polytope</strong> — convex regions.</li>
     </ul>
   </section>
-</section>
 
   <!-- EXAMPLE: Multinomial logistic regression on Iris -->
   <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
@@ -510,6 +475,7 @@ print(f"Test accuracy: {accuracy_score(y_te, m.predict(X_te)):.4f}")
     <pre class="ex-output"></pre>
 <script type="text/x-explain">With 3 classes, softmax uses 3 weight vectors (one per class), though only K-1=2 are identifiable (sklearn solves the identifiability by convention). Probabilities always sum to 1 by construction.</script>
   </section>
+</section>
 
 <!-- ====================================================
      PART 6 — ROC, AUC, CONFUSION MATRIX
@@ -575,7 +541,6 @@ print(f"Test accuracy: {accuracy_score(y_te, m.predict(X_te)):.4f}")
     <p class="fragment fade-up muted">Lower threshold catches more defaulters (FNR drops) at the cost of more false alarms (FPR rises). Overall accuracy drops — but the right metric depends on cost.</p>
     <aside class="notes">This recreates Table 4.4 from ISLR. The "correctly classified" column maximizes at 0.5, but if missing a default costs 10× more than a false alarm, 0.20 or lower is better.</aside>
   </section>
-</section>
 
   <!-- EXAMPLE: ROC curve, AUC and optimal threshold -->
   <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
@@ -616,6 +581,7 @@ print(classification_report(y_te, (proba >= best_t).astype(int)))
     <pre class="ex-output"></pre>
 <script type="text/x-explain">On imbalanced data the default threshold of 0.5 misses most positives. The optimal F1 threshold is usually much lower — here around 0.15–0.25. AUC measures model quality independent of threshold choice.</script>
   </section>
+</section>
 
 <!-- ====================================================
      PART 7 — L1/L2 REGULARIZATION
@@ -660,7 +626,6 @@ print(classification_report(y_te, (proba >= best_t).astype(int)))
       <li class="fragment fade-up">L1 with Lasso: C = 0.05 on Iris reduces 4 features — some classes drop to 1–2 non-zero features.</li>
     </ul>
   </section>
-</section>
 
   <!-- EXAMPLE: L1 vs L2: coefficient paths -->
   <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
@@ -698,6 +663,7 @@ print("L2: all coefficients shrink together but never hit zero.")
     <pre class="ex-output"></pre>
 <script type="text/x-explain">L1 enforces sparsity — at C=0.01 it keeps only the truly informative features. L2 shrinks all coefficients uniformly. For feature selection, use L1. For pure regularization, L2 (faster to train with lbfgs).</script>
   </section>
+</section>
 
 <!-- ====================================================
      PART 8 — WHEN LINEAR FAILS
@@ -737,7 +703,6 @@ print("L2: all coefficients shrink together but never hit zero.")
       <li class="fragment fade-up">This is exactly what Course 3 covers next.</li>
     </ul>
   </section>
-</section>
 
   <!-- EXAMPLE: The make_moons wall -->
   <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
@@ -775,6 +740,7 @@ print(f"  Degree-3 polynomial LR: test = {pipe.score(X_te, y_te):.3f}")
     <pre class="ex-output"></pre>
 <script type="text/x-explain">The moons dataset has a non-linear boundary. A linear model can only place a straight line — it's geometrically impossible to do better than ~85%. Adding polynomial features (or using SVM/trees) resolves this.</script>
   </section>
+</section>
 
 <!-- RECAP -->
 <section class="title-slide">

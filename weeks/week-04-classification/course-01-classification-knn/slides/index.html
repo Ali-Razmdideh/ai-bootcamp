@@ -890,6 +890,356 @@ print(classification_report(y_te, pipe.predict(X_te)))
     <p class="fragment fade-up callout" style="font-size:0.85em; margin-top:0.7em;">Never use accuracy alone on imbalanced data. Report at least recall + AUC.</p>
   </section>
 
+  <!-- EXAMPLE: Extreme imbalance — class 0: 10, class 1: 100 -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Extreme imbalance — 10 vs 100 samples</h2>
+    <div class="ex-prompt">A tiny dataset: class 0 has only 10 samples, class 1 has 100. The model learns to always predict class 1 and still scores 91% accuracy. Watch every metric to see who tells the truth.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.dummy import DummyClassifier
+from sklearn.metrics import (
+    accuracy_score, precision_score, recall_score,
+    f1_score, confusion_matrix, classification_report
+)
+
+rng = np.random.default_rng(0)
+
+# Build the dataset by hand: 10 class-0 points, 100 class-1 points
+X0 = rng.normal(loc=[0, 0], scale=1.0, size=(10, 2))   # minority
+X1 = rng.normal(loc=[3, 3], scale=1.5, size=(100, 2))  # majority
+X  = np.vstack([X0, X1])
+y  = np.hstack([np.zeros(10, int), np.ones(100, int)])
+
+print(f"Dataset: class 0 = {(y==0).sum()} samples, class 1 = {(y==1).sum()} samples")
+print(f"Positive (class 1) rate: {y.mean()*100:.0f}%\n")
+
+X_tr, X_te, y_tr, y_te = train_test_split(
+    X, y, test_size=0.3, stratify=y, random_state=0
+)
+sc = StandardScaler()
+X_tr_s = sc.fit_transform(X_tr)
+X_te_s  = sc.transform(X_te)
+
+# Oversample minority inside training set
+idx_min = np.where(y_tr == 0)[0]
+n_needed = (y_tr == 1).sum() - len(idx_min)
+extra = rng.choice(idx_min, n_needed, replace=True)
+X_bal = np.vstack([X_tr_s, X_tr_s[extra]])
+y_bal = np.hstack([y_tr, y_tr[extra]])
+
+models = {
+    "Always-class-1 dummy": DummyClassifier(strategy="most_frequent").fit(X_tr_s, y_tr),
+    "KNN k=3 (original)  ": KNeighborsClassifier(3).fit(X_tr_s, y_tr),
+    "KNN k=3 (oversampled)": KNeighborsClassifier(3).fit(X_bal, y_bal),
+}
+
+print(f"{'Model':<25}  {'Acc':>5}  {'Prec(0)':>8}  {'Rec(0)':>7}  {'F1(0)':>6}  {'F1(1)':>6}")
+print("-" * 65)
+for name, m in models.items():
+    yhat = m.predict(X_te_s)
+    acc  = accuracy_score(y_te, yhat)
+    p0   = precision_score(y_te, yhat, pos_label=0, zero_division=0)
+    r0   = recall_score(y_te, yhat, pos_label=0, zero_division=0)
+    f0   = f1_score(y_te, yhat, pos_label=0, zero_division=0)
+    f1   = f1_score(y_te, yhat, pos_label=1, zero_division=0)
+    print(f"{name:<25}  {acc:>5.2f}  {p0:>8.2f}  {r0:>7.2f}  {f0:>6.2f}  {f1:>6.2f}")
+
+print("\n--- Full report for KNN oversampled ---")
+m = models["KNN k=3 (oversampled)"]
+print(classification_report(y_te, m.predict(X_te_s), target_names=["class 0", "class 1"]))
+
+print("Confusion matrix (rows=actual, cols=predicted):")
+print(confusion_matrix(y_te, m.predict(X_te_s)))
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">With only 10 minority samples the model has almost nothing to learn from class 0. The dummy hits 91% accuracy by always predicting class 1 — but Recall(0) = 0 and F1(0) = 0 expose it immediately. Oversampling the 10 minority points gives the model enough signal to recognise them. In a real-world setting (rare disease, fraud) missing every class-0 case is catastrophic despite high overall accuracy.</script>
+  </section>
+
+  <!-- EXAMPLE: F1 averaging strategies on 10 vs 100 -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>F1 micro / macro / weighted — which one lies?</h2>
+    <div class="ex-prompt">Same 10 vs 100 dataset, three classifiers. Each F1 averaging strategy tells a different story — run it and see which one is honest about the minority class.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.dummy import DummyClassifier
+from sklearn.metrics import f1_score
+
+rng = np.random.default_rng(0)
+X0 = rng.normal(loc=[0, 0], scale=1.0, size=(10, 2))
+X1 = rng.normal(loc=[3, 3], scale=1.5, size=(100, 2))
+X  = np.vstack([X0, X1])
+y  = np.hstack([np.zeros(10, int), np.ones(100, int)])
+
+X_tr, X_te, y_tr, y_te = train_test_split(
+    X, y, test_size=0.3, stratify=y, random_state=0
+)
+sc = StandardScaler()
+X_tr_s = sc.fit_transform(X_tr)
+X_te_s  = sc.transform(X_te)
+
+# Oversample minority
+idx_min = np.where(y_tr == 0)[0]
+n_needed = (y_tr == 1).sum() - len(idx_min)
+extra = rng.choice(idx_min, n_needed, replace=True)
+X_bal = np.vstack([X_tr_s, X_tr_s[extra]])
+y_bal = np.hstack([y_tr, y_tr[extra]])
+
+models = {
+    "Always-class-1 dummy": DummyClassifier(strategy="most_frequent").fit(X_tr_s, y_tr),
+    "KNN k=3 (original)  ": KNeighborsClassifier(3).fit(X_tr_s, y_tr),
+    "KNN k=3 (oversampled)": KNeighborsClassifier(3).fit(X_bal, y_bal),
+}
+
+averages = ["micro", "macro", "weighted"]
+
+print("What each average means:")
+print("  micro    — pool all TP/FP/FN across classes, then compute F1")
+print("             → dominated by the majority class (class 1 here)")
+print("  macro    — compute F1 per class, then take the unweighted mean")
+print("             → treats every class equally regardless of size")
+print("  weighted — compute F1 per class, then weight by support (sample count)")
+print("             → penalises bad performance on large classes more")
+print()
+
+hdr = f"{'Model':<25}  {'micro':>7}  {'macro':>7}  {'weighted':>9}  {'F1(class 0)':>12}  {'F1(class 1)':>12}"
+print(hdr)
+print("-" * len(hdr))
+for name, m in models.items():
+    yhat = m.predict(X_te_s)
+    scores = {avg: f1_score(y_te, yhat, average=avg, zero_division=0) for avg in averages}
+    f0 = f1_score(y_te, yhat, average=None, zero_division=0)[0]
+    f1 = f1_score(y_te, yhat, average=None, zero_division=0)[1]
+    print(f"{name:<25}  {scores['micro']:>7.3f}  {scores['macro']:>7.3f}"
+          f"  {scores['weighted']:>9.3f}  {f0:>12.3f}  {f1:>12.3f}")
+
+print()
+print("Takeaway:")
+print("  micro ≈ accuracy on balanced data; flatters the majority class here.")
+print("  macro is the honest one — the dummy scores ~0.48 because F1(class 0)=0.")
+print("  weighted is a middle ground — use when class sizes reflect real importance.")
+print("  For rare-event problems always inspect per-class F1 or use macro.")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">micro aggregates TP/FP/FN globally so large classes dominate — the "always class 1" dummy gets a high micro-F1 because it nails 100 easy predictions. macro averages per-class F1 with equal weight, so the dummy's F1(class 0)=0 drags the average down to ~0.48. weighted is between the two: it weights by support, so the 100-sample class still has more pull than the 10-sample one, but not as extreme as micro. When minority class errors are costly, macro or per-class F1 are the right choice.</script>
+  </section>
+
+  <!-- EXAMPLE: Precision, Recall, F1 on imbalanced data -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Precision, Recall &amp; F1 — side by side</h2>
+    <div class="ex-prompt">Compare three classifiers on a 97/3 imbalanced dataset: a "always say No" dummy, a default KNN, and a balanced KNN. Watch how accuracy stays high even when recall collapses.</div>
+<textarea class="ex-code">import numpy as np
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.dummy import DummyClassifier
+from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
+
+X, y = make_classification(
+    n_samples=3000, n_features=6, weights=[0.97, 0.03],
+    n_informative=4, random_state=0
+)
+X_tr, X_te, y_tr, y_te = train_test_split(
+    X, y, test_size=0.3, stratify=y, random_state=0
+)
+
+sc = StandardScaler()
+X_tr_s = sc.fit_transform(X_tr)
+X_te_s  = sc.transform(X_te)
+
+# Oversample minority in training set
+rng = np.random.default_rng(0)
+idx_min = np.where(y_tr == 1)[0]
+n_needed = (y_tr == 0).sum() - len(idx_min)
+extra = rng.choice(idx_min, n_needed, replace=True)
+X_bal = np.vstack([X_tr_s, X_tr_s[extra]])
+y_bal = np.hstack([y_tr, y_tr[extra]])
+
+models = {
+    "Always-No dummy   ": DummyClassifier(strategy="most_frequent").fit(X_tr_s, y_tr),
+    "KNN default       ": KNeighborsClassifier(7).fit(X_tr_s, y_tr),
+    "KNN + oversample  ": KNeighborsClassifier(7).fit(X_bal, y_bal),
+}
+
+print(f"{'Model':<22}  {'Accuracy':>9}  {'Precision':>10}  {'Recall':>7}  {'F1':>7}")
+print("-" * 62)
+for name, m in models.items():
+    yhat = m.predict(X_te_s)
+    acc = accuracy_score(y_te, yhat)
+    p   = precision_score(y_te, yhat, zero_division=0)
+    r   = recall_score(y_te, yhat, zero_division=0)
+    f   = f1_score(y_te, yhat, zero_division=0)
+    print(f"{name:<22}  {acc:>9.3f}  {p:>10.3f}  {r:>7.3f}  {f:>7.3f}")
+
+print("\nKey insight: accuracy stays ~97% for the dummy. F1 = 0 exposes it.")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">Three models, same data, same split. The dummy achieves ~97% accuracy by predicting "No" every time — but recall = 0, F1 = 0. The oversampled KNN sacrifices some accuracy but catches far more true positives. This is the imbalance trap in one table.</script>
+  </section>
+
+  <!-- EXAMPLE: ROC Curve -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>ROC Curve — imbalanced data</h2>
+    <div class="ex-prompt">Plot the ROC curve for a balanced vs unbalanced KNN on a 95/5 dataset. AUC summarises the curve in one number — closer to 1.0 is better. A random classifier sits on the diagonal (AUC = 0.5).</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import roc_curve, roc_auc_score
+
+X, y = make_classification(
+    n_samples=3000, n_features=6, weights=[0.95, 0.05],
+    n_informative=4, random_state=42
+)
+X_tr, X_te, y_tr, y_te = train_test_split(
+    X, y, test_size=0.3, stratify=y, random_state=0
+)
+sc = StandardScaler()
+X_tr_s = sc.fit_transform(X_tr)
+X_te_s  = sc.transform(X_te)
+
+# Oversample minority
+rng = np.random.default_rng(0)
+idx_min = np.where(y_tr == 1)[0]
+n_needed = (y_tr == 0).sum() - len(idx_min)
+extra = rng.choice(idx_min, n_needed, replace=True)
+X_bal = np.vstack([X_tr_s, X_tr_s[extra]])
+y_bal = np.hstack([y_tr, y_tr[extra]])
+
+configs = [
+    ("KNN (imbalanced)", X_tr_s, y_tr, "steelblue"),
+    ("KNN (oversampled)", X_bal, y_bal, "tomato"),
+]
+
+fig, ax = plt.subplots(figsize=(5, 4))
+for label, Xf, yf, color in configs:
+    m = KNeighborsClassifier(7).fit(Xf, yf)
+    proba = m.predict_proba(X_te_s)[:, 1]
+    fpr, tpr, _ = roc_curve(y_te, proba)
+    auc = roc_auc_score(y_te, proba)
+    ax.plot(fpr, tpr, color=color, lw=2, label=f"{label}  AUC={auc:.3f}")
+
+ax.plot([0, 1], [0, 1], 'k--', lw=1, label="Random (AUC=0.5)")
+ax.set_xlabel("False Positive Rate"); ax.set_ylabel("True Positive Rate")
+ax.set_title("ROC Curve — 95/5 imbalanced dataset")
+ax.legend(fontsize=8); ax.grid(alpha=0.3)
+plt.tight_layout()
+plt.savefig('/tmp/roc_curve.png', dpi=100)
+plt.close()
+
+for label, Xf, yf, _ in configs:
+    m = KNeighborsClassifier(7).fit(Xf, yf)
+    auc = roc_auc_score(y_te, m.predict_proba(X_te_s)[:, 1])
+    print(f"{label}: AUC-ROC = {auc:.3f}")
+print("\nSaved ROC plot → /tmp/roc_curve.png")
+print("AUC closer to 1.0 = better ranking of positives above negatives.")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">The ROC curve sweeps every possible threshold and plots TPR vs FPR. AUC = probability that the model ranks a random positive above a random negative. It is threshold-free and class-ratio-agnostic, making it the go-to summary metric for moderately imbalanced data (&gt;5% positive rate).</script>
+  </section>
+
+  <!-- EXAMPLE: Precision-Recall Curve -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Precision-Recall Curve — very imbalanced</h2>
+    <div class="ex-prompt">On extremely imbalanced data (&lt;5% positive) the ROC curve looks deceptively good. The Precision-Recall curve is harder to fool — a random classifier sits near the baseline at y = positive_rate. Average Precision (AP) summarises the area.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import (
+    precision_recall_curve, average_precision_score,
+    roc_auc_score, f1_score
+)
+
+X, y = make_classification(
+    n_samples=5000, n_features=8, weights=[0.98, 0.02],
+    n_informative=5, random_state=7
+)
+X_tr, X_te, y_tr, y_te = train_test_split(
+    X, y, test_size=0.3, stratify=y, random_state=0
+)
+sc = StandardScaler()
+X_tr_s = sc.fit_transform(X_tr)
+X_te_s  = sc.transform(X_te)
+
+configs = [
+    ("KNN k=7",            KNeighborsClassifier(7),                          "steelblue"),
+    ("Logistic (balanced)", LogisticRegression(class_weight="balanced",
+                             max_iter=500, random_state=0),                   "tomato"),
+]
+
+fig, ax = plt.subplots(figsize=(5, 4))
+baseline = y_te.mean()
+ax.axhline(baseline, color='gray', ls='--', lw=1,
+           label=f"Random baseline  (AP={baseline:.3f})")
+
+print(f"Positive rate in test set: {baseline*100:.1f}%\n")
+print(f"{'Model':<26}  {'AUC-ROC':>8}  {'Avg Precision':>14}  {'F1 @ 0.5':>9}")
+print("-" * 65)
+
+for label, m, color in configs:
+    m.fit(X_tr_s, y_tr)
+    proba = m.predict_proba(X_te_s)[:, 1]
+    prec, rec, _ = precision_recall_curve(y_te, proba)
+    ap   = average_precision_score(y_te, proba)
+    auc  = roc_auc_score(y_te, proba)
+    f1   = f1_score(y_te, m.predict(X_te_s), zero_division=0)
+    ax.plot(rec, prec, color=color, lw=2, label=f"{label}  AP={ap:.3f}")
+    print(f"{label:<26}  {auc:>8.3f}  {ap:>14.3f}  {f1:>9.3f}")
+
+ax.set_xlabel("Recall"); ax.set_ylabel("Precision")
+ax.set_title("Precision-Recall Curve — 2% positive rate")
+ax.legend(fontsize=8); ax.grid(alpha=0.3)
+plt.tight_layout()
+plt.savefig('/tmp/pr_curve.png', dpi=100)
+plt.close()
+
+print("\nSaved PR plot → /tmp/pr_curve.png")
+print("Use AUC-PR (Average Precision) when positive rate < 5%.")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">The PR curve ignores true negatives entirely — precision = TP/(TP+FP), recall = TP/(TP+FN). A model that just predicts everything positive gets recall=1 but precision=positive_rate (~2%). The dashed baseline shows that floor. Average Precision (area under the PR curve) rewards models that rank true positives at the top.</script>
+  </section>
+
 </section>
 
 <!-- ─── RECAP ──────────────────────────────────────────────────────────── -->
