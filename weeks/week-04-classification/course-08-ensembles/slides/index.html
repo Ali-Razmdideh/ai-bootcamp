@@ -576,6 +576,75 @@ plt.show()
     </p>
   </section>
 
+  <!-- EXAMPLE: Effect of max_depth on boosting -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>Gradient Boosting — effect of max_depth (d)</h2>
+    <div class="ex-prompt">The third tuning knob: max_depth controls interaction order. d=1 (stumps) uses only additive effects; d=2 captures one pairwise interaction; d≥3 allows complex relationships but risks overfitting. Vary d and see train vs test accuracy.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.datasets import make_classification
+
+# Dataset with genuine interactions (n_clusters_per_class ensures non-linear boundary)
+X, y = make_classification(n_samples=1200, n_features=15, n_informative=8,
+                            n_redundant=3, random_state=0)
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, random_state=0)
+
+depths = [1, 2, 3, 4, 5, 6, 8]
+train_accs, test_accs = [], []
+for d in depths:
+    gb = GradientBoostingClassifier(learning_rate=0.05, n_estimators=200,
+                                     max_depth=d, random_state=0).fit(X_tr, y_tr)
+    train_accs.append(gb.score(X_tr, y_tr))
+    test_accs.append(gb.score(X_te, y_te))
+
+fig, ax = plt.subplots(figsize=(8, 4.5))
+ax.plot(depths, train_accs, 'o--', color='#e53935', linewidth=2, label='Train')
+ax.plot(depths, test_accs,  's-',  color='#1e88e5', linewidth=2, label='Test')
+ax.set_xlabel('max_depth (d)', fontsize=11)
+ax.set_ylabel('Accuracy', fontsize=11)
+ax.set_title('Effect of max_depth on GBM\n(lr=0.05, n_estimators=200)', fontsize=11, fontweight='bold')
+ax.set_xticks(depths)
+ax.set_xticklabels([f'd={d}' for d in depths])
+ax.legend()
+
+best_d = depths[int(np.argmax(test_accs))]
+best_te = max(test_accs)
+ax.scatter([best_d], [best_te], s=140, zorder=5,
+           facecolors='none', edgecolors='#1e88e5', linewidths=2.5)
+ax.annotate(f'best  d={best_d}\nacc={best_te:.3f}', (best_d, best_te),
+            textcoords='offset points', xytext=(8, -18), fontsize=9, color='#1e88e5')
+
+# Annotate stump
+ax.annotate('stump\n(additive only)', xy=(1, test_accs[0]),
+            xytext=(1.3, test_accs[0] - 0.015), fontsize=8, color='#555',
+            arrowprops=dict(arrowstyle='->', color='#aaa', lw=1))
+
+# Shade overfitting zone
+overfit_x = [d for d, tr, te in zip(depths, train_accs, test_accs) if tr - te > 0.05]
+if overfit_x:
+    ax.axvspan(min(overfit_x) - 0.5, max(depths) + 0.5, alpha=0.06, color='#e53935')
+    ax.text(max(depths) - 0.8, min(test_accs) + 0.002, 'overfitting\nzone',
+            fontsize=8, color='#e53935', ha='right')
+
+ax.set_ylim(min(test_accs) - 0.02, 1.01)
+plt.tight_layout()
+plt.show()
+
+for d, tr, te in zip(depths, train_accs, test_accs):
+    gap = tr - te
+    print(f"d={d}  train={tr:.3f}  test={te:.3f}  gap={gap:.3f}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">d=1 (stumps) means each tree is a single split — the model is purely additive, no feature interactions. d=2 allows one level of interactions. Past d=3–4 the train–test gap widens: the trees are powerful enough to memorize the training data, and shrinkage can't fully compensate. ISL recommends d=1–4 for most boosting applications; d=1 works surprisingly well when true interactions are weak.</script>
+  </section>
+
   <!-- EXAMPLE: Ensemble comparison: single tree vs bagging vs RF vs GBM -->
   <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
     <h2>Ensemble comparison: single tree vs bagging vs RF vs GBM</h2>
@@ -722,6 +791,60 @@ plt.show()
       </tbody>
     </table>
   </section>
+
+  <!-- EXAMPLE: BART-style uncertainty via quantile forests -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>BART-style uncertainty: prediction intervals</h2>
+    <div class="ex-prompt">BART's key advantage is a full posterior over predictions. We approximate this here using quantile gradient boosting — fit three models (median, 5th, 95th percentile) to produce a calibrated 90% prediction interval. This is the practical alternative when full MCMC is too slow.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.ensemble import GradientBoostingRegressor
+
+rng = np.random.default_rng(0)
+n = 300
+X = rng.uniform(-3, 3, n).reshape(-1, 1)
+y = np.sin(X.ravel()) + 0.4 * rng.normal(size=n)
+
+X_plot = np.linspace(-3.2, 3.2, 300).reshape(-1, 1)
+
+common = dict(n_estimators=200, max_depth=3, learning_rate=0.1, random_state=0)
+med   = GradientBoostingRegressor(loss='quantile', alpha=0.50, **common).fit(X, y)
+lo    = GradientBoostingRegressor(loss='quantile', alpha=0.05, **common).fit(X, y)
+hi    = GradientBoostingRegressor(loss='quantile', alpha=0.95, **common).fit(X, y)
+
+y_med = med.predict(X_plot)
+y_lo  = lo.predict(X_plot)
+y_hi  = hi.predict(X_plot)
+
+coverage = np.mean((y >= lo.predict(X)) & (y <= hi.predict(X)))
+
+fig, ax = plt.subplots(figsize=(9, 4.5))
+ax.scatter(X.ravel(), y, s=12, alpha=0.35, color='#90a4ae', label='Data')
+ax.plot(X_plot, np.sin(X_plot), '--', color='#555', linewidth=1.5, label='True f(x)')
+ax.plot(X_plot, y_med, color='#e53935', linewidth=2, label='Median (q=0.50)')
+ax.fill_between(X_plot.ravel(), y_lo, y_hi, alpha=0.20, color='#1e88e5',
+                label='90% prediction interval (q=0.05–0.95)')
+ax.plot(X_plot, y_lo, color='#1e88e5', linewidth=1, linestyle=':')
+ax.plot(X_plot, y_hi, color='#1e88e5', linewidth=1, linestyle=':')
+ax.set_xlabel('x', fontsize=11)
+ax.set_ylabel('y', fontsize=11)
+ax.set_title(f'Quantile GBM — empirical coverage of 90% interval: {coverage:.1%}',
+             fontsize=11, fontweight='bold')
+ax.legend(fontsize=9)
+plt.tight_layout()
+plt.show()
+
+print(f"Empirical coverage (train): {coverage:.1%}  (target: 90%)")
+print("True BART uses MCMC — this quantile approach is the fast sklearn alternative.")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">BART outputs a full posterior over ŷ — every prediction comes with a credible interval. We approximate that here using quantile regression with GBM: fit three separate models for the 5th, 50th, and 95th percentiles. The shaded band is the 90% prediction interval. Empirical coverage should be close to 90%. Full pymc-bart gives calibrated Bayesian intervals but requires minutes of MCMC; quantile GBM achieves similar coverage in seconds.</script>
+  </section>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════════════════
@@ -757,6 +880,83 @@ plt.show()
       <li class="fragment fade-up"><strong>Explanation:</strong> fit a single depth-3 tree on the same problem and present to stakeholders.</li>
       <li class="fragment fade-up"><strong>Uncertainty:</strong> BART, or calibrate a GBM with <code>CalibratedClassifierCV</code>.</li>
     </ol>
+  </section>
+
+  <!-- EXAMPLE: HistGBM with early stopping — production-ready boosting -->
+  <section class="example" data-packages="numpy,pandas,matplotlib,scipy,scikit-learn">
+    <h2>HistGBM with early stopping — production-ready boosting</h2>
+    <div class="ex-prompt">HistGradientBoostingClassifier is sklearn's fast GBM (like LightGBM). It handles missing values natively and supports early stopping. Compare its speed and accuracy to the standard GBM on a larger dataset.</div>
+<textarea class="ex-code">import numpy as np
+import time
+import matplotlib.pyplot as plt
+from sklearn.ensemble import GradientBoostingClassifier, HistGradientBoostingClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.datasets import make_classification
+
+X, y = make_classification(n_samples=5000, n_features=25, n_informative=12,
+                            n_redundant=5, random_state=0)
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.25, random_state=0)
+
+# Standard GBM
+t0 = time.time()
+gbm = GradientBoostingClassifier(learning_rate=0.05, n_estimators=200,
+                                  max_depth=3, random_state=0).fit(X_tr, y_tr)
+t_gbm = (time.time() - t0) * 1000
+
+# HistGBM with early stopping (uses internal validation split)
+t0 = time.time()
+hgbm = HistGradientBoostingClassifier(learning_rate=0.05, max_iter=500,
+                                       max_depth=3, early_stopping=True,
+                                       n_iter_no_change=20, validation_fraction=0.15,
+                                       random_state=0).fit(X_tr, y_tr)
+t_hgbm = (time.time() - t0) * 1000
+
+gbm_test  = gbm.score(X_te, y_te)
+hgbm_test = hgbm.score(X_te, y_te)
+
+fig, axes = plt.subplots(1, 2, figsize=(11, 4.2))
+
+# Left: accuracy comparison
+ax = axes[0]
+methods = ['GBM\n(200 trees)', f'HistGBM\n({hgbm.n_iter_} trees\nearly stop)']
+accs = [gbm_test, hgbm_test]
+colors = ['#42a5f5', '#ef5350']
+bars = ax.bar(methods, accs, color=colors, alpha=0.85, width=0.4)
+ax.set_ylim(min(accs) - 0.02, max(accs) + 0.03)
+ax.set_ylabel('Test accuracy')
+ax.set_title('Accuracy: GBM vs HistGBM', fontsize=11, fontweight='bold')
+for bar, acc in zip(bars, accs):
+    ax.text(bar.get_x() + bar.get_width()/2, acc + 0.005,
+            f'{acc:.4f}', ha='center', fontsize=11, fontweight='bold')
+
+# Right: training time
+ax = axes[1]
+times = [t_gbm, t_hgbm]
+bars2 = ax.bar(methods, times, color=colors, alpha=0.85, width=0.4)
+ax.set_ylabel('Training time (ms)')
+ax.set_title('Training time', fontsize=11, fontweight='bold')
+speedup = t_gbm / t_hgbm
+for bar, t in zip(bars2, times):
+    ax.text(bar.get_x() + bar.get_width()/2, t + max(times)*0.01,
+            f'{t:.0f} ms', ha='center', fontsize=10, fontweight='bold')
+ax.text(0.5, max(times) * 0.85, f'HistGBM is {speedup:.1f}× faster',
+        ha='center', fontsize=10, color='#ef5350', fontweight='bold',
+        transform=ax.get_xaxis_transform())
+
+plt.tight_layout()
+plt.show()
+
+print(f"GBM    : 200 trees  test={gbm_test:.4f}  time={t_gbm:.0f} ms")
+print(f"HistGBM: {hgbm.n_iter_} trees (early stop)  test={hgbm_test:.4f}  time={t_hgbm:.0f} ms")
+print(f"Early stopping stopped at {hgbm.n_iter_} of 500 max iterations.")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">HistGradientBoostingClassifier uses histogram-based binning (like LightGBM) — it groups continuous features into bins before splitting, making each tree much faster to build. Early stopping (n_iter_no_change=20) monitors a held-out validation fraction and stops when accuracy stops improving for 20 rounds, preventing overfitting without a manual B search. On n≥5000, HistGBM is typically 5–20× faster than standard GBM with equivalent accuracy.</script>
   </section>
 
   <section>

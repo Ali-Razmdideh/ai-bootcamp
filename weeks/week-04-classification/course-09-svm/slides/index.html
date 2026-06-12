@@ -143,6 +143,7 @@ print(f'# SVs per class: {svc.n_support_}')
       <span class="ex-status"></span>
     </div>
     <pre class="ex-output"></pre>
+<script type="text/x-explain">With C very large the margin shrinks to be as tight as possible — only the closest points become support vectors and small perturbations in training data change the boundary dramatically (high variance). The circled points are the only ones that matter: move any non-support vector and the boundary won't change. The margin width printed below equals 2/‖w‖ — the perpendicular distance between the two dashed lines.</script>
   </section>
 
 </section>
@@ -239,6 +240,7 @@ plt.tight_layout(); plt.show()
       <span class="ex-status"></span>
     </div>
     <pre class="ex-output"></pre>
+<script type="text/x-explain">C controls the total slack budget. Small C (top-left): the classifier tolerates many violations — the margin is wide and many points end up as support vectors. Large C (bottom-right): almost no violations allowed — the margin is narrow, fewer support vectors, but small changes in training data flip the boundary (high variance). In sklearn, C is the inverse of the regularization strength — larger C = less regularization, in contrast to ISLR's convention where larger C = more slack.</script>
   </section>
 
 </section>
@@ -363,6 +365,7 @@ plt.tight_layout(); plt.show()
       <span class="ex-status"></span>
     </div>
     <pre class="ex-output"></pre>
+<script type="text/x-explain">The linear kernel draws a straight boundary — it cannot separate the two interleaved moons. The polynomial kernel (degree 3) can curve the boundary but is still relatively rigid. RBF smoothly wraps the boundary around the two classes — it works because it computes similarity in an infinite-dimensional space, so any smooth curve is reachable. Always StandardScale before SVM: the kernel measures distances, so feature scales matter enormously.</script>
   </section>
 
   <!-- EXAMPLE: gamma effect -->
@@ -401,6 +404,79 @@ plt.tight_layout(); plt.show()
       <span class="ex-status"></span>
     </div>
     <pre class="ex-output"></pre>
+<script type="text/x-explain">γ = 0.05 (top-left): the kernel is very wide — far-apart points still influence each other, producing a smooth gentle boundary. γ = 50 (bottom-right): the kernel is extremely narrow — only immediate neighbors influence each other, so the boundary wraps tightly around each training point and effectively memorises the data. In practice, use GridSearchCV over a log-scale grid of (C, γ) pairs — the next slide shows how.</script>
+  </section>
+
+  <!-- EXAMPLE: C + gamma grid search -->
+  <section class="example" data-packages="numpy,matplotlib,scikit-learn">
+    <h2>Tuning C and γ with GridSearchCV</h2>
+    <div class="ex-prompt">In practice you always tune both C and γ jointly. A 2-D heatmap of CV accuracy over a log-scale grid makes the sweet spot visible. This is the standard workflow before deploying an RBF SVM.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_moons
+from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV
+
+X, y = make_moons(n_samples=300, noise=0.25, random_state=0)
+
+C_vals     = [0.01, 0.1, 1, 10, 100, 1000]
+gamma_vals = [0.001, 0.01, 0.1, 1, 10, 100]
+
+pipe = Pipeline([('sc', StandardScaler()), ('svc', SVC(kernel='rbf'))])
+grid = GridSearchCV(pipe,
+                    {'svc__C': C_vals, 'svc__gamma': gamma_vals},
+                    cv=5, scoring='accuracy', n_jobs=-1).fit(X, y)
+
+scores = grid.cv_results_['mean_test_score'].reshape(len(C_vals), len(gamma_vals))
+
+fig, axes = plt.subplots(1, 2, figsize=(13, 4.5))
+
+# Left: heatmap
+ax = axes[0]
+im = ax.imshow(scores, interpolation='nearest', cmap='viridis', aspect='auto')
+plt.colorbar(im, ax=ax, label='5-fold CV accuracy')
+ax.set_xticks(range(len(gamma_vals)))
+ax.set_xticklabels([str(g) for g in gamma_vals], fontsize=9)
+ax.set_yticks(range(len(C_vals)))
+ax.set_yticklabels([str(c) for c in C_vals], fontsize=9)
+ax.set_xlabel('γ  (svc__gamma)', fontsize=11)
+ax.set_ylabel('C  (svc__C)', fontsize=11)
+ax.set_title('GridSearchCV: mean CV accuracy', fontsize=11, fontweight='bold')
+
+best_C   = grid.best_params_['svc__C']
+best_g   = grid.best_params_['svc__gamma']
+bi = C_vals.index(best_C)
+bj = gamma_vals.index(best_g)
+ax.scatter(bj, bi, s=220, marker='*', color='white', zorder=5, label=f'best: C={best_C}, γ={best_g}')
+ax.legend(fontsize=9, loc='lower right')
+
+# Right: decision boundary with best params
+ax = axes[1]
+best_pipe = grid.best_estimator_
+xx, yy = np.meshgrid(np.linspace(X[:,0].min()-.5, X[:,0].max()+.5, 300),
+                      np.linspace(X[:,1].min()-.5, X[:,1].max()+.5, 300))
+Z = best_pipe.predict(np.c_[xx.ravel(), yy.ravel()]).reshape(xx.shape)
+ax.contourf(xx, yy, Z, alpha=0.2, cmap='bwr')
+ax.scatter(X[y==0,0], X[y==0,1], s=18)
+ax.scatter(X[y==1,0], X[y==1,1], s=18, color='C3')
+ax.set_title(f'Best params: C={best_C}, γ={best_g}\nCV acc={grid.best_score_:.4f}', fontsize=10, fontweight='bold')
+
+plt.tight_layout()
+plt.show()
+
+print(f"Best C={best_C}, γ={best_g}  →  CV accuracy={grid.best_score_:.4f}")
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">Always search C and γ on a log-scale grid — the optimal values can span several orders of magnitude (0.01 to 1000). The heatmap makes the trade-off visible: high γ, high C → sharp overfitting; low γ, low C → too smooth. The star marks the CV winner. In production, combine this with StandardScaler inside a Pipeline so the scaler is re-fit on each fold (leakage-free).</script>
   </section>
 
 </section>
@@ -456,6 +532,65 @@ plt.tight_layout(); plt.show()
     </ul>
   </section>
 
+  <!-- EXAMPLE: ROC curve -->
+  <section class="example" data-packages="numpy,matplotlib,scikit-learn">
+    <h2>ROC curves — varying the decision threshold</h2>
+    <div class="ex-prompt">SVM classifies by sign(f̂(x)). By shifting the threshold we trade TPR vs FPR. Plot ROC curves for a linear and RBF SVM, and compare AUC. More flexible kernels can overfit the training ROC while degrading on test.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_classification
+from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_curve, auc
+
+X, y = make_classification(n_samples=400, n_features=10, n_informative=5,
+                            random_state=0)
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, random_state=0)
+
+configs = [
+    ('Linear SVC', 'linear', {}),
+    ('RBF  γ=0.1', 'rbf',    {'gamma': 0.1}),
+    ('RBF  γ=5',   'rbf',    {'gamma': 5.0}),
+]
+
+fig, axes = plt.subplots(1, 2, figsize=(12, 4.5))
+colors = ['#1e88e5', '#43a047', '#e53935']
+
+for ax_label, (name, kernel, kw) in enumerate(configs):
+    pipe = Pipeline([('sc', StandardScaler()),
+                     ('svc', SVC(kernel=kernel, C=1, probability=True, **kw))])
+    pipe.fit(X_tr, y_tr)
+    for ax, (X_eval, y_eval), split in zip(axes, [(X_tr, y_tr), (X_te, y_te)], ['Train', 'Test']):
+        scores = pipe.predict_proba(X_eval)[:, 1]
+        fpr, tpr, _ = roc_curve(y_eval, scores)
+        roc_auc = auc(fpr, tpr)
+        ax.plot(fpr, tpr, color=colors[ax_label], lw=2,
+                label=f'{name}  AUC={roc_auc:.3f}')
+
+for ax, split in zip(axes, ['Train', 'Test']):
+    ax.plot([0, 1], [0, 1], 'k--', lw=1, alpha=0.4, label='random (AUC=0.5)')
+    ax.set_xlabel('False Positive Rate', fontsize=11)
+    ax.set_ylabel('True Positive Rate', fontsize=11)
+    ax.set_title(f'ROC curves — {split} set', fontsize=11, fontweight='bold')
+    ax.legend(fontsize=8, loc='lower right')
+    ax.set_xlim([-0.01, 1.01]); ax.set_ylim([-0.01, 1.01])
+
+plt.tight_layout()
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">ROC curves sweep through all decision thresholds — a threshold of 0 predicts all positives (TPR=1, FPR=1), a threshold of 1 predicts all negatives (TPR=0, FPR=0). AUC summarizes the whole curve: 1.0 is perfect, 0.5 is random. Notice that RBF with large γ has a near-perfect training AUC but the test AUC drops — classic overfitting. Linear and moderately-tuned RBF generalize similarly. SVM needs `probability=True` to return calibrated scores (uses Platt scaling internally).</script>
+  </section>
+
   <!-- EXAMPLE: Khan p>>n -->
   <section class="example" data-packages="numpy,pandas,matplotlib,scikit-learn">
     <h2>Khan gene-expression SVM</h2>
@@ -494,6 +629,7 @@ print(f'Test acc with best C: {grid.best_estimator_.score(xte,yte):.4f}')
       <span class="ex-status"></span>
     </div>
     <pre class="ex-output"></pre>
+<script type="text/x-explain">With p=2308 features and n=63 samples, the feature space is so high-dimensional that the classes are nearly linearly separable — a linear kernel is ideal and adding non-linearity via RBF would just overfit. The SVM margin constraint acts as implicit regularisation: out of all β that separate the classes, it picks the minimum-norm one, which is numerically stable and generalises well. Unregularised logistic regression fails completely here because there are infinitely many β that fit the training data.</script>
   </section>
 
 </section>
@@ -562,6 +698,68 @@ print('Log-loss  at margin=2 :', round(float(np.log1p(np.exp(-2))), 4))
       <span class="ex-status"></span>
     </div>
     <pre class="ex-output"></pre>
+<script type="text/x-explain">Hinge loss is exactly zero for observations that are correctly classified with margin ≥ 1 (i.e., yf(x) ≥ 1). This sparsity is why only support vectors influence the SVM solution — non-support vectors contribute zero gradient. Log-loss never reaches zero: it keeps shrinking the coefficients even for points the model is very confident about, which is why logistic regression with no regularisation diverges on separable data.</script>
+  </section>
+
+  <!-- EXAMPLE: SVM vs Logistic Regression side-by-side -->
+  <section class="example" data-packages="numpy,matplotlib,scikit-learn">
+    <h2>SVM vs Logistic Regression — side-by-side</h2>
+    <div class="ex-prompt">Compare SVM and logistic regression on three scenarios: nearly separable, heavily overlapping, and imbalanced. See when they agree and when SVM's margin-based approach is better.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_classification, make_blobs
+from sklearn.svm import SVC
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score
+
+rng = np.random.default_rng(0)
+
+scenarios = {
+    'Nearly separable': make_blobs(n_samples=200, centers=2, cluster_std=0.9, random_state=1),
+    'Heavy overlap':    make_blobs(n_samples=200, centers=2, cluster_std=2.5, random_state=1),
+    'Nonlinear (moons)': None,
+}
+
+from sklearn.datasets import make_moons
+scenarios['Nonlinear (moons)'] = make_moons(n_samples=200, noise=0.2, random_state=0)
+
+classifiers = {
+    'SVM (RBF)': Pipeline([('sc', StandardScaler()), ('clf', SVC(kernel='rbf', C=1, gamma='scale'))]),
+    'SVM (linear)': Pipeline([('sc', StandardScaler()), ('clf', SVC(kernel='linear', C=1))]),
+    'Logistic Reg': Pipeline([('sc', StandardScaler()), ('clf', LogisticRegression(max_iter=500))]),
+}
+
+fig, axes = plt.subplots(len(classifiers), len(scenarios), figsize=(13, 9))
+
+for row, (clf_name, clf) in enumerate(classifiers.items()):
+    for col, (scen_name, (X, y)) in enumerate(scenarios.items()):
+        ax = axes[row, col]
+        clf.fit(X, y)
+        xx, yy = np.meshgrid(np.linspace(X[:,0].min()-1, X[:,0].max()+1, 200),
+                              np.linspace(X[:,1].min()-1, X[:,1].max()+1, 200))
+        Z = clf.predict(np.c_[xx.ravel(), yy.ravel()]).reshape(xx.shape)
+        ax.contourf(xx, yy, Z, alpha=0.18, cmap='bwr')
+        ax.scatter(X[y==0,0], X[y==0,1], s=12, alpha=0.7)
+        ax.scatter(X[y==1,0], X[y==1,1], s=12, color='C3', alpha=0.7)
+        cv_acc = cross_val_score(clf, X, y, cv=5).mean()
+        ax.set_title(f'{clf_name}\n{scen_name}  CV={cv_acc:.3f}', fontsize=8)
+        ax.set_xticks([]); ax.set_yticks([])
+
+plt.suptitle('SVM vs Logistic Regression across three scenarios', fontsize=11, fontweight='bold')
+plt.tight_layout()
+plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">Nearly separable (left column): linear SVM's max-margin boundary places the line furthest from both classes, giving better generalisation than logistic regression's MLE line which has no margin concept. Heavy overlap (middle): both methods perform similarly — when classes are thoroughly mixed the hinge and log losses converge in practice. Nonlinear (right): RBF SVM dominates, while linear SVM and logistic regression both fail — this is the kernel trick's home turf. The practical rule: try logistic regression first (fast, calibrated probabilities); switch to SVM if the boundary appears non-linear or if p ≫ n.</script>
   </section>
 
 </section>
