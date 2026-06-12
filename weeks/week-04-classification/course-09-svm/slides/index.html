@@ -50,13 +50,50 @@
 
   <section>
     <h2>What is a hyperplane?</h2>
-    <ul>
-      <li class="fragment fade-up">In <em>p</em> dimensions a hyperplane is a flat affine subspace of dimension <em>p − 1</em>.</li>
-      <li class="fragment fade-up">Equation: <strong>β₀ + β₁X₁ + β₂X₂ + … + βₚXₚ = 0</strong></li>
-      <li class="fragment fade-up">In 2-D this is a line. In 3-D it is a plane.</li>
-      <li class="fragment fade-up">β = (β₁,…,βₚ) is the <strong>normal vector</strong> — perpendicular to the hyperplane surface.</li>
-      <li class="fragment fade-up">Points with f(X) &gt; 0 lie on one side; f(X) &lt; 0 on the other. The signed distance from a point to the hyperplane is proportional to |f(X)|.</li>
-    </ul>
+    <div class="two-col">
+      <div>
+        <ul>
+          <li class="fragment fade-up">In <em>p</em> dimensions a hyperplane is a flat affine subspace of dimension <em>p − 1</em>.</li>
+          <li class="fragment fade-up">Equation: <strong>β₀ + β₁X₁ + β₂X₂ + … + βₚXₚ = 0</strong></li>
+          <li class="fragment fade-up">In 2-D this is a line. In 3-D it is a plane.</li>
+          <li class="fragment fade-up">β = (β₁,…,βₚ) is the <strong>normal vector</strong> — perpendicular to the hyperplane surface.</li>
+          <li class="fragment fade-up">Points with f(X) &gt; 0 lie on one side; f(X) &lt; 0 on the other. The signed distance is proportional to |f(X)|.</li>
+        </ul>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center;">
+        <svg viewBox="0 0 300 240" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:300px;">
+          <!-- hyperplane line -->
+          <line x1="25" y1="195" x2="280" y2="35" stroke="#333" stroke-width="2.5"/>
+          <text x="258" y="31" font-size="11" fill="#333" text-anchor="middle">β₀+β·X=0</text>
+          <!-- normal vector arrow -->
+          <defs>
+            <marker id="arrowN" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+              <path d="M0,0 L7,3.5 L0,7 Z" fill="#7b1fa2"/>
+            </marker>
+          </defs>
+          <line x1="152" y1="115" x2="190" y2="75" stroke="#7b1fa2" stroke-width="2" marker-end="url(#arrowN)"/>
+          <text x="198" y="72" font-size="13" fill="#7b1fa2" font-weight="bold">β</text>
+          <!-- signed distance annotation -->
+          <line x1="220" y1="85" x2="245" y2="115" stroke="#1e88e5" stroke-width="1.2" stroke-dasharray="3,2"/>
+          <text x="248" y="105" font-size="10" fill="#1e88e5">|f(X)|</text>
+          <!-- blue dots f>0 (lower-right of line) -->
+          <circle cx="215" cy="155" r="7" fill="#1e88e5" opacity="0.85"/>
+          <circle cx="245" cy="135" r="7" fill="#1e88e5" opacity="0.85"/>
+          <circle cx="220" cy="180" r="7" fill="#1e88e5" opacity="0.85"/>
+          <circle cx="255" cy="165" r="7" fill="#1e88e5" opacity="0.85"/>
+          <circle cx="235" cy="110" r="7" fill="#1e88e5" opacity="0.85"/>
+          <!-- red dots f<0 (upper-left of line) -->
+          <circle cx="60" cy="75" r="7" fill="#e53935" opacity="0.85"/>
+          <circle cx="90" cy="55" r="7" fill="#e53935" opacity="0.85"/>
+          <circle cx="75" cy="110" r="7" fill="#e53935" opacity="0.85"/>
+          <circle cx="105" cy="85" r="7" fill="#e53935" opacity="0.85"/>
+          <circle cx="50" cy="135" r="7" fill="#e53935" opacity="0.85"/>
+          <!-- region labels -->
+          <text x="255" y="200" font-size="12" fill="#1e88e5" font-weight="bold">f(X) &gt; 0</text>
+          <text x="45" y="45" font-size="12" fill="#e53935" font-weight="bold">f(X) &lt; 0</text>
+        </svg>
+      </div>
+    </div>
     <aside class="notes">The signed value f(x) tells us how far a point is from the hyperplane and on which side. This is the key quantity SVM uses for classification.</aside>
   </section>
 
@@ -71,8 +108,60 @@
           <li class="fragment fade-up">The <strong>maximal-margin</strong> hyperplane is the unique one with the widest gap (right panel, dashed boundary lines).</li>
         </ul>
       </div>
-      <div>
-        <p class="muted" style="font-size:0.82em;">Any hyperplane satisfying yᵢf(xᵢ) &gt; 0 is valid. We want the <em>best</em> one — furthest from both classes simultaneously.</p>
+      <div style="display:flex;align-items:center;justify-content:center;">
+        <!-- Left mini: many possible hyperplanes; Right mini: MMC with margin -->
+        <svg viewBox="0 0 340 230" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:340px;">
+          <!-- left panel background -->
+          <rect x="5" y="5" width="155" height="220" rx="6" fill="#fafafa" stroke="#ddd" stroke-width="1"/>
+          <text x="82" y="22" font-size="10" fill="#888" text-anchor="middle">Many separating lines</text>
+          <!-- faint candidate lines -->
+          <line x1="10" y1="185" x2="155" y2="45" stroke="#bbb" stroke-width="1.2"/>
+          <line x1="10" y1="200" x2="155" y2="85" stroke="#bbb" stroke-width="1.2"/>
+          <line x1="10" y1="165" x2="155" y2="15" stroke="#bbb" stroke-width="1.2"/>
+          <line x1="25" y1="215" x2="155" y2="105" stroke="#bbb" stroke-width="1.2"/>
+          <line x1="10" y1="145" x2="140" y2="10" stroke="#bbb" stroke-width="1.2"/>
+          <!-- dots left panel -->
+          <circle cx="40" cy="80" r="6" fill="#1e88e5" opacity="0.8"/>
+          <circle cx="60" cy="60" r="6" fill="#1e88e5" opacity="0.8"/>
+          <circle cx="55" cy="100" r="6" fill="#1e88e5" opacity="0.8"/>
+          <circle cx="80" cy="75" r="6" fill="#1e88e5" opacity="0.8"/>
+          <circle cx="100" cy="155" r="6" fill="#e53935" opacity="0.8"/>
+          <circle cx="125" cy="140" r="6" fill="#e53935" opacity="0.8"/>
+          <circle cx="115" cy="175" r="6" fill="#e53935" opacity="0.8"/>
+          <circle cx="140" cy="160" r="6" fill="#e53935" opacity="0.8"/>
+
+          <!-- right panel background -->
+          <rect x="180" y="5" width="155" height="220" rx="6" fill="#fafafa" stroke="#ddd" stroke-width="1"/>
+          <text x="257" y="22" font-size="10" fill="#888" text-anchor="middle">Maximal-margin line</text>
+          <!-- MMC decision boundary -->
+          <line x1="185" y1="185" x2="330" y2="50" stroke="#333" stroke-width="2.5"/>
+          <!-- margin dashed lines -->
+          <line x1="185" y1="160" x2="330" y2="25" stroke="#333" stroke-width="1.4" stroke-dasharray="5,3"/>
+          <line x1="185" y1="210" x2="322" y2="77" stroke="#333" stroke-width="1.4" stroke-dasharray="5,3"/>
+          <!-- margin width arrows -->
+          <defs>
+            <marker id="arrM1" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto">
+              <path d="M0,0 L5,2.5 L0,5 Z" fill="#ff8f00"/>
+            </marker>
+            <marker id="arrM2" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto-start-reverse">
+              <path d="M0,0 L5,2.5 L0,5 Z" fill="#ff8f00"/>
+            </marker>
+          </defs>
+          <line x1="234" y1="107" x2="220" y2="125" stroke="#ff8f00" stroke-width="1.3" marker-end="url(#arrM1)" marker-start="url(#arrM2)"/>
+          <text x="245" y="122" font-size="9" fill="#ff8f00">M</text>
+          <!-- dots right panel -->
+          <circle cx="215" cy="80" r="6" fill="#1e88e5" opacity="0.8"/>
+          <circle cx="235" cy="60" r="6" fill="#1e88e5" opacity="0.8"/>
+          <circle cx="230" cy="100" r="6" fill="#1e88e5" opacity="0.8"/>
+          <circle cx="255" cy="75" r="6" fill="#1e88e5" opacity="0.8"/>
+          <circle cx="275" cy="155" r="6" fill="#e53935" opacity="0.8"/>
+          <circle cx="300" cy="140" r="6" fill="#e53935" opacity="0.8"/>
+          <circle cx="290" cy="175" r="6" fill="#e53935" opacity="0.8"/>
+          <circle cx="315" cy="160" r="6" fill="#e53935" opacity="0.8"/>
+          <!-- circled SVs on margin -->
+          <circle cx="255" cy="75" r="11" fill="none" stroke="#333" stroke-width="1.8"/>
+          <circle cx="275" cy="155" r="11" fill="none" stroke="#333" stroke-width="1.8"/>
+        </svg>
       </div>
     </div>
   </section>
@@ -196,8 +285,64 @@ print(f'# SVs per class: {svc.n_support_}')
 
   <section>
     <h2>C is a regularization parameter</h2>
-    <p>Four values of C on the same data: as C decreases the margin widens and more points are allowed to violate it.</p>
-    <p class="muted" style="font-size:0.85em;">Small C (top-left): very wide margin, many violations. Large C (bottom-right): tight margin, fewer violations but higher variance. Tune with CV.</p>
+    <div class="two-col" style="align-items:center;">
+      <div>
+        <p>As C decreases the margin widens and more points are allowed to violate it.</p>
+        <p class="muted" style="font-size:0.85em;">Small C: wide margin, many violations, low variance. Large C: tight margin, few violations, high variance. Tune with CV.</p>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center;">
+        <svg viewBox="0 0 360 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:360px;">
+          <!-- LEFT panel: small C → wide margin -->
+          <rect x="5" y="5" width="165" height="190" rx="6" fill="#fafafa" stroke="#ddd" stroke-width="1"/>
+          <text x="87" y="21" font-size="10" fill="#666" text-anchor="middle" font-weight="bold">Small C  (wide margin)</text>
+          <!-- decision boundary -->
+          <line x1="15" y1="170" x2="165" y2="35" stroke="#333" stroke-width="2"/>
+          <!-- wide margin lines -->
+          <line x1="15" y1="130" x2="155" y2="10" stroke="#333" stroke-width="1.2" stroke-dasharray="5,3"/>
+          <line x1="25" y1="190" x2="165" y2="70" stroke="#333" stroke-width="1.2" stroke-dasharray="5,3"/>
+          <!-- margin width brace -->
+          <text x="28" y="112" font-size="9" fill="#ff8f00">◄── wide M ──►</text>
+          <!-- many SVs / violators inside margin -->
+          <circle cx="55" cy="75" r="5" fill="#1e88e5" opacity="0.8"/>
+          <circle cx="75" cy="58" r="5" fill="#1e88e5" opacity="0.8"/>
+          <circle cx="45" cy="95" r="5" fill="#1e88e5" opacity="0.8"/>
+          <circle cx="65" cy="48" r="5" fill="#1e88e5" opacity="0.8"/>
+          <circle cx="110" cy="145" r="5" fill="#e53935" opacity="0.8"/>
+          <circle cx="135" cy="130" r="5" fill="#e53935" opacity="0.8"/>
+          <circle cx="120" cy="165" r="5" fill="#e53935" opacity="0.8"/>
+          <circle cx="150" cy="155" r="5" fill="#e53935" opacity="0.8"/>
+          <!-- points inside margin (violators) -->
+          <circle cx="92" cy="110" r="5" fill="#1e88e5" opacity="0.5" stroke="#333" stroke-width="1"/>
+          <circle cx="85" cy="125" r="5" fill="#e53935" opacity="0.5" stroke="#333" stroke-width="1"/>
+          <circle cx="100" cy="95" r="5" fill="#1e88e5" opacity="0.5" stroke="#333" stroke-width="1"/>
+
+          <!-- RIGHT panel: large C → narrow margin -->
+          <rect x="190" y="5" width="165" height="190" rx="6" fill="#fafafa" stroke="#ddd" stroke-width="1"/>
+          <text x="272" y="21" font-size="10" fill="#666" text-anchor="middle" font-weight="bold">Large C  (tight margin)</text>
+          <!-- decision boundary -->
+          <line x1="200" y1="170" x2="350" y2="35" stroke="#333" stroke-width="2"/>
+          <!-- narrow margin lines -->
+          <line x1="200" y1="155" x2="344" y2="25" stroke="#333" stroke-width="1.2" stroke-dasharray="5,3"/>
+          <line x1="206" y1="185" x2="350" y2="55" stroke="#333" stroke-width="1.2" stroke-dasharray="5,3"/>
+          <!-- margin width brace -->
+          <text x="215" y="128" font-size="9" fill="#ff8f00">◄ narrow M ►</text>
+          <!-- dots far from boundary -->
+          <circle cx="235" cy="75" r="5" fill="#1e88e5" opacity="0.8"/>
+          <circle cx="255" cy="58" r="5" fill="#1e88e5" opacity="0.8"/>
+          <circle cx="225" cy="95" r="5" fill="#1e88e5" opacity="0.8"/>
+          <circle cx="245" cy="48" r="5" fill="#1e88e5" opacity="0.8"/>
+          <circle cx="300" cy="150" r="5" fill="#e53935" opacity="0.8"/>
+          <circle cx="325" cy="135" r="5" fill="#e53935" opacity="0.8"/>
+          <circle cx="310" cy="168" r="5" fill="#e53935" opacity="0.8"/>
+          <circle cx="340" cy="155" r="5" fill="#e53935" opacity="0.8"/>
+          <!-- only the 2 circled SVs exactly on the margin -->
+          <circle cx="270" cy="100" r="5" fill="#1e88e5" opacity="0.8"/>
+          <circle cx="270" cy="100" r="9" fill="none" stroke="#333" stroke-width="1.5"/>
+          <circle cx="280" cy="140" r="5" fill="#e53935" opacity="0.8"/>
+          <circle cx="280" cy="140" r="9" fill="none" stroke="#333" stroke-width="1.5"/>
+        </svg>
+      </div>
+    </div>
   </section>
 
   <!-- EXAMPLE: C parameter -->
@@ -243,6 +388,59 @@ plt.tight_layout(); plt.show()
 <script type="text/x-explain">C controls the total slack budget. Small C (top-left): the classifier tolerates many violations — the margin is wide and many points end up as support vectors. Large C (bottom-right): almost no violations allowed — the margin is narrow, fewer support vectors, but small changes in training data flip the boundary (high variance). In sklearn, C is the inverse of the regularization strength — larger C = less regularization, in contrast to ISLR's convention where larger C = more slack.</script>
   </section>
 
+  <!-- EXAMPLE: bias-variance tradeoff linear vs RBF -->
+  <section class="example" data-packages="numpy,matplotlib,scikit-learn">
+    <h2>Bias–variance tradeoff: linear vs RBF</h2>
+    <div class="ex-prompt">As C increases the linear SVC narrows its margin and train accuracy rises. The RBF kernel adds another axis of complexity — compare how the CV curves differ from the linear case.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_blobs
+from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import train_test_split, cross_val_score
+
+X, y = make_blobs(n_samples=120, centers=2, cluster_std=1.5, random_state=5)
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, random_state=0)
+
+C_grid = np.logspace(-3, 3, 30)
+results = {}
+for kernel, kw in [('linear', {}), ('rbf', {'gamma': 'scale'})]:
+    train_acc, cv_acc = [], []
+    for C in C_grid:
+        svc = Pipeline([('sc', StandardScaler()),
+                        ('clf', SVC(kernel=kernel, C=C, **kw))])
+        train_acc.append(svc.fit(X_tr, y_tr).score(X_tr, y_tr))
+        cv_acc.append(cross_val_score(svc, X_tr, y_tr, cv=5).mean())
+    results[kernel] = (train_acc, cv_acc)
+
+fig, axes = plt.subplots(1, 2, figsize=(12, 4.5), sharey=True)
+for ax, (kernel, (train_acc, cv_acc)) in zip(axes, results.items()):
+    best_C = C_grid[np.argmax(cv_acc)]
+    ax.semilogx(C_grid, train_acc, lw=2,        label='Train accuracy')
+    ax.semilogx(C_grid, cv_acc,   lw=2, ls='--', label='5-fold CV accuracy')
+    ax.axvline(best_C, color='grey', lw=1, ls=':', alpha=0.9,
+               label=f'best C = {best_C:.3f}')
+    ax.set(xlabel='C (log scale)', ylabel='Accuracy',
+           title=f'{kernel} kernel')
+    ax.legend(fontsize=9); ax.grid(alpha=0.3)
+    print(f'{kernel:<8}  best C={best_C:.4f}  CV={max(cv_acc):.4f}  '
+          f'test={Pipeline([("sc",StandardScaler()),("clf",SVC(kernel=kernel,C=best_C,**({} if kernel=="linear" else {"gamma":"scale"})))]).fit(X_tr,y_tr).score(X_te,y_te):.4f}')
+
+plt.suptitle('Bias–variance tradeoff via C: linear vs RBF', fontsize=12, fontweight='bold')
+plt.tight_layout(); plt.show()
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">For the linear kernel, train accuracy climbs steadily with C (tighter margin = fewer violations allowed) while CV accuracy peaks and then plateaus — there is a sweet spot. For RBF, the same pattern holds but the curve shape differs: with gamma='scale' the RBF already has some implicit regularisation from the kernel width, so the CV peak is often at a different C than linear. The key insight: tune C (and gamma for RBF) with cross-validation, not by looking at training accuracy alone.</script>
+  </section>
+
 </section>
 
 <!-- ═══════════════════════════════════ PART 3 ════════════════════════════════ -->
@@ -280,6 +478,59 @@ plt.tight_layout(); plt.show()
       <li class="fragment fade-up">Problem: high-degree expansions blow up in dimensionality. Degree d with p predictors → C(p+d, d) basis functions.</li>
       <li class="fragment fade-up">Kernel trick avoids building the expanded features explicitly.</li>
     </ul>
+  </section>
+
+  <!-- EXAMPLE: 3D kernel lifting -->
+  <section class="example" data-packages="numpy,matplotlib,scikit-learn">
+    <h2>Kernel lifting: 2-D circles become separable in 3-D</h2>
+    <div class="ex-prompt">Adding the radial feature r² = X₁² + X₂² lifts the data to 3-D where the two rings are linearly separable. A flat plane in 3-D corresponds to a circular boundary in the original 2-D space — exactly what the RBF kernel computes implicitly.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D   # registers 3-D projection
+from sklearn.datasets import make_circles
+
+X, y = make_circles(n_samples=300, noise=0.1, factor=0.4, random_state=0)
+r2 = X[:, 0]**2 + X[:, 1]**2   # radial feature
+
+fig = plt.figure(figsize=(12, 5))
+
+# --- left: original 2-D ---
+ax1 = fig.add_subplot(121)
+for cls, col, lbl in [(0, 'steelblue', 'inner'), (1, 'tomato', 'outer')]:
+    mask = y == cls
+    ax1.scatter(X[mask, 0], X[mask, 1], c=col, s=20, alpha=0.7, label=lbl)
+ax1.set_title('Original 2-D  — not linearly separable')
+ax1.legend(); ax1.set_aspect('equal')
+ax1.set_xlabel('X₁'); ax1.set_ylabel('X₂')
+
+# --- right: lifted 3-D (X1, X2, r²) ---
+ax2 = fig.add_subplot(122, projection='3d')
+for cls, col in [(0, 'steelblue'), (1, 'tomato')]:
+    mask = y == cls
+    ax2.scatter(X[mask, 0], X[mask, 1], r2[mask], c=col, s=15, alpha=0.7)
+
+# separating plane: r² = midpoint threshold
+threshold = (r2[y == 0].max() + r2[y == 1].min()) / 2
+xg = np.linspace(-1.5, 1.5, 30)
+xg1, xg2 = np.meshgrid(xg, xg)
+ax2.plot_surface(xg1, xg2, np.full_like(xg1, threshold),
+                 alpha=0.25, color='gold')
+ax2.set_xlabel('X₁'); ax2.set_ylabel('X₂'); ax2.set_zlabel('r² = X₁²+X₂²')
+ax2.set_title('Lifted 3-D  — linearly separable\n(gold plane = decision boundary)')
+
+plt.tight_layout(); plt.show()
+print(f'Threshold r² = {threshold:.3f}')
+print('In 3-D a flat plane separates the classes — that is what the RBF kernel does implicitly.')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">The inner ring has small r² (points close to the origin) and the outer ring has large r². Once we add r² as a third dimension the two classes are stacked — a horizontal plane separates them perfectly. This is exactly what the RBF kernel achieves implicitly: K(xᵢ, xⱼ) = exp(−γ‖xᵢ − xⱼ‖²) encodes how similar two points are by their distance, which is tightly related to their radial coordinates. The kernel computes this in an infinite-dimensional version of this lifted space without ever building the coordinates explicitly.</script>
   </section>
 
   <section>
@@ -325,6 +576,123 @@ plt.tight_layout(); plt.show()
       </li>
     </ul>
     <aside class="notes">The RBF kernel is local — it gives high similarity only when two points are close together. Large γ makes "close" very strict, so the boundary hugs individual points.</aside>
+  </section>
+
+  <!-- RBF deep-dive: bell curve -->
+  <section>
+    <h2>RBF kernel — similarity decays with distance</h2>
+    <div class="two-col" style="align-items:center;gap:2em;">
+      <div>
+        <p style="font-size:0.88em;">K(x, x′) = exp(−γ ‖x − x′‖²)</p>
+        <ul style="margin-top:0.5em;">
+          <li class="fragment fade-up">When x = x′ the distance is 0 and <strong>K = 1</strong> (perfectly similar).</li>
+          <li class="fragment fade-up">As distance grows K drops toward 0 — the kernel is <em>local</em>.</li>
+          <li class="fragment fade-up"><strong>γ controls how fast similarity falls off</strong>:
+            <ul style="margin-top:0.3em;">
+              <li style="color:#1e88e5;">Small γ — gentle decay, far points still influence each other → smooth boundary.</li>
+              <li style="color:#e53935;">Large γ — steep decay, only immediate neighbors matter → wiggly boundary.</li>
+            </ul>
+          </li>
+          <li class="fragment fade-up">Tune γ jointly with C using cross-validation on a log-scale grid.</li>
+        </ul>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center;">
+        <!-- Bell curves: K(d) = exp(-γ·d²) for γ=0.5, 2, 8 -->
+        <!-- chart: x in [42,272] maps d∈[0,3]; y in [15,168] maps K∈[1,0] -->
+        <svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:300px;">
+          <!-- axes -->
+          <line x1="42" y1="168" x2="280" y2="168" stroke="#999" stroke-width="1.2"/>
+          <line x1="42" y1="10"  x2="42"  y2="168" stroke="#999" stroke-width="1.2"/>
+          <!-- x ticks & labels -->
+          <line x1="119" y1="165" x2="119" y2="171" stroke="#999" stroke-width="1"/>
+          <text x="119" y="180" text-anchor="middle" font-size="10" fill="#666">1</text>
+          <line x1="196" y1="165" x2="196" y2="171" stroke="#999" stroke-width="1"/>
+          <text x="196" y="180" text-anchor="middle" font-size="10" fill="#666">2</text>
+          <line x1="272" y1="165" x2="272" y2="171" stroke="#999" stroke-width="1"/>
+          <text x="272" y="180" text-anchor="middle" font-size="10" fill="#666">3</text>
+          <!-- y ticks & labels -->
+          <line x1="39" y1="91" x2="45" y2="91" stroke="#999" stroke-width="1"/>
+          <text x="36" y="95" text-anchor="end" font-size="10" fill="#666">0.5</text>
+          <line x1="39" y1="15" x2="45" y2="15" stroke="#999" stroke-width="1"/>
+          <text x="36" y="19" text-anchor="end" font-size="10" fill="#666">1</text>
+          <!-- axis labels -->
+          <text x="161" y="196" text-anchor="middle" font-size="10" fill="#555">distance  ‖x − x′‖</text>
+          <text x="12" y="91" text-anchor="middle" font-size="10" fill="#555" transform="rotate(-90 12 91)">K(x, x′)</text>
+          <!-- γ = 0.5 — blue, widest bell -->
+          <polyline points="42,15 65,22 88,40 111,66 134,94 157,118 180,138 203,151 226,159 249,164 272,166"
+                    fill="none" stroke="#1e88e5" stroke-width="2.2"/>
+          <!-- γ = 2 — orange, medium bell -->
+          <polyline points="42,15 65,40 88,93 111,138 134,160 157,166 272,168"
+                    fill="none" stroke="#ff8f00" stroke-width="2.2"/>
+          <!-- γ = 8 — red, narrow bell -->
+          <polyline points="42,15 54,40 65,93 77,138 88,160 100,166 272,168"
+                    fill="none" stroke="#e53935" stroke-width="2.2"/>
+          <!-- legend -->
+          <line x1="148" y1="42" x2="170" y2="42" stroke="#1e88e5" stroke-width="2.2"/>
+          <text x="173" y="46" font-size="10" fill="#1e88e5">γ = 0.5</text>
+          <line x1="148" y1="58" x2="170" y2="58" stroke="#ff8f00" stroke-width="2.2"/>
+          <text x="173" y="62" font-size="10" fill="#ff8f00">γ = 2</text>
+          <line x1="148" y1="74" x2="170" y2="74" stroke="#e53935" stroke-width="2.2"/>
+          <text x="173" y="78" font-size="10" fill="#e53935">γ = 8</text>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- RBF deep-dive: decision function as sum of Gaussians -->
+  <section>
+    <h2>RBF decision function — each SV casts a weighted vote</h2>
+    <p style="font-size:0.85em;margin:0.2em 0 0.6em;">f(x) = β₀ + Σᵢ∈S α̂ᵢ K(x, xᵢ). Each support vector radiates a bell-shaped influence; the sum determines the decision.</p>
+    <!-- 1-D example: SV+ at x=2, SV− at x=5, γ=0.8 -->
+    <!-- chart: x in [55,455] maps [0,7]; y_center=105; y_px = 105 - f*77 -->
+    <svg viewBox="0 0 510 215" xmlns="http://www.w3.org/2000/svg" style="width:92%;max-width:640px;display:block;margin:0 auto;">
+      <!-- shaded regions -->
+      <polygon points="55,105 55,102 83,95 112,70 140,42 169,28 197,42 226,70 255,92 283,102 283,105"
+               fill="#1e88e5" opacity="0.12"/>
+      <polygon points="226,105 226,108 255,118 283,140 312,168 341,182 369,168 398,140 426,118 455,108 455,105"
+               fill="#e53935" opacity="0.12"/>
+      <!-- zero line -->
+      <line x1="55" y1="105" x2="455" y2="105" stroke="#aaa" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="458" y="108" font-size="9" fill="#aaa">f=0</text>
+      <!-- x-axis -->
+      <line x1="55" y1="190" x2="455" y2="190" stroke="#bbb" stroke-width="1"/>
+      <!-- individual SV contributions (thin lines) -->
+      <!-- K+ from SV at x=2 (blue, positive hump) -->
+      <polyline points="55,102 83,95 112,70 140,42 169,28 197,42 226,70 255,92 283,102 312,105 455,105"
+                fill="none" stroke="#1e88e5" stroke-width="1.5" stroke-dasharray="5,3" opacity="0.8"/>
+      <!-- K- from SV at x=5 (red, negative trough) — plotted inverted -->
+      <polyline points="55,105 112,105 169,105 226,108 255,118 283,140 312,168 341,182 369,168 398,140 426,118 455,108"
+                fill="none" stroke="#e53935" stroke-width="1.5" stroke-dasharray="5,3" opacity="0.8"/>
+      <!-- combined f(x) (thick black line) -->
+      <polyline points="55,102 83,95 112,70 140,42 169,28 197,42 226,73 255,105 283,137 312,168 341,182 369,168 398,140 426,118 455,108"
+                fill="none" stroke="#333" stroke-width="2.5"/>
+      <!-- decision boundary vertical line -->
+      <line x1="255" y1="20" x2="255" y2="190" stroke="#555" stroke-width="1.4" stroke-dasharray="6,3"/>
+      <text x="258" y="18" font-size="10" fill="#555">boundary</text>
+      <!-- SV+ marker -->
+      <circle cx="169" cy="28" r="7" fill="#1e88e5"/>
+      <text x="169" y="16" text-anchor="middle" font-size="10" fill="#1e88e5" font-weight="bold">SV₁  α̂ &gt; 0</text>
+      <!-- SV− marker -->
+      <circle cx="341" cy="182" r="7" fill="#e53935"/>
+      <text x="341" y="197" text-anchor="middle" font-size="10" fill="#e53935" font-weight="bold">SV₂  α̂ &lt; 0</text>
+      <!-- x-axis labels -->
+      <text x="55"  y="202" text-anchor="middle" font-size="9" fill="#999">0</text>
+      <text x="169" y="202" text-anchor="middle" font-size="9" fill="#1e88e5">2</text>
+      <text x="255" y="202" text-anchor="middle" font-size="9" fill="#555">3.5</text>
+      <text x="341" y="202" text-anchor="middle" font-size="9" fill="#e53935">5</text>
+      <text x="455" y="202" text-anchor="middle" font-size="9" fill="#999">7</text>
+      <!-- region labels -->
+      <text x="130" y="130" font-size="11" fill="#1e88e5" opacity="0.7">predict +1</text>
+      <text x="340" y="82" font-size="11" fill="#e53935" opacity="0.7">predict −1</text>
+      <!-- legend -->
+      <line x1="60" y1="22" x2="82" y2="22" stroke="#333" stroke-width="2.5"/>
+      <text x="85" y="26" font-size="10" fill="#333">f(x) combined</text>
+      <line x1="60" y1="36" x2="82" y2="36" stroke="#1e88e5" stroke-width="1.5" stroke-dasharray="5,3"/>
+      <text x="85" y="40" font-size="10" fill="#1e88e5">K(x, SV₁) contribution</text>
+      <line x1="60" y1="50" x2="82" y2="50" stroke="#e53935" stroke-width="1.5" stroke-dasharray="5,3"/>
+      <text x="85" y="54" font-size="10" fill="#e53935">−K(x, SV₂) contribution</text>
+    </svg>
+    <p class="muted" style="font-size:0.8em;margin-top:0.4em;text-align:center;">1-D toy (γ=0.8). Prediction = sign(f). Non-support vectors contribute zero — the model is fully determined by the circled SVs.</p>
   </section>
 
   <!-- EXAMPLE: kernel comparison -->
@@ -519,6 +887,127 @@ print(f"Best C={best_C}, γ={best_g}  →  CV accuracy={grid.best_score_:.4f}")
       </div>
     </div>
     <p class="callout fragment fade-up" style="margin-top:0.8em;">When K is small, <strong>OVO</strong> is generally preferred — sklearn's SVC uses OVO by default.</p>
+    <!-- OVA vs OVO diagram -->
+    <div class="fragment fade-up" style="display:flex;justify-content:center;margin-top:0.6em;">
+      <svg viewBox="0 0 640 155" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:640px;">
+        <!-- OVA section -->
+        <text x="10" y="18" font-size="13" font-weight="bold" fill="#333">OVA — 3 classifiers</text>
+        <!-- class nodes -->
+        <circle cx="55"  cy="80" r="18" fill="#1e88e5" opacity="0.9"/>
+        <text   cx="55"  cy="80" dominant-baseline="middle" text-anchor="middle" font-size="11" fill="white" font-weight="bold">A</text>
+        <circle cx="55"  cy="115" r="18" fill="#43a047" opacity="0.9"/>
+        <text   cx="55"  cy="115" dominant-baseline="middle" text-anchor="middle" font-size="11" fill="white" font-weight="bold">B</text>
+        <circle cx="55"  cy="150" r="18" fill="#e53935" opacity="0.9"/>
+        <text   cx="55"  cy="150" dominant-baseline="middle" text-anchor="middle" font-size="11" fill="white" font-weight="bold">C</text>
+        <!-- OVA classifier boxes -->
+        <!-- Classifier 1: A vs rest -->
+        <rect x="100" y="35" width="100" height="28" rx="5" fill="#e3f2fd" stroke="#1e88e5" stroke-width="1.5"/>
+        <text x="150" y="54" text-anchor="middle" font-size="10" fill="#1e88e5">A vs {B,C}</text>
+        <line x1="73" y1="80" x2="100" y2="49" stroke="#1e88e5" stroke-width="1.2" stroke-dasharray="4,2"/>
+        <!-- Classifier 2: B vs rest -->
+        <rect x="100" y="83" width="100" height="28" rx="5" fill="#e8f5e9" stroke="#43a047" stroke-width="1.5"/>
+        <text x="150" y="102" text-anchor="middle" font-size="10" fill="#43a047">B vs {A,C}</text>
+        <line x1="73" y1="115" x2="100" y2="97" stroke="#43a047" stroke-width="1.2" stroke-dasharray="4,2"/>
+        <!-- Classifier 3: C vs rest -->
+        <rect x="100" y="131" width="100" height="28" rx="5" fill="#ffebee" stroke="#e53935" stroke-width="1.5"/>
+        <text x="150" y="150" text-anchor="middle" font-size="10" fill="#e53935">C vs {A,B}</text>
+        <line x1="73" y1="150" x2="100" y2="145" stroke="#e53935" stroke-width="1.2" stroke-dasharray="4,2"/>
+        <!-- arrow to decision: max fk -->
+        <rect x="220" y="83" width="95" height="28" rx="5" fill="#fff8e1" stroke="#ff8f00" stroke-width="1.5"/>
+        <text x="267" y="102" text-anchor="middle" font-size="10" fill="#ff8f00">argmax f̂ₖ(x)</text>
+        <line x1="200" y1="49" x2="220" y2="97" stroke="#aaa" stroke-width="1"/>
+        <line x1="200" y1="97" x2="220" y2="97" stroke="#aaa" stroke-width="1"/>
+        <line x1="200" y1="145" x2="220" y2="97" stroke="#aaa" stroke-width="1"/>
+
+        <!-- divider -->
+        <line x1="330" y1="10" x2="330" y2="155" stroke="#ddd" stroke-width="1.5"/>
+
+        <!-- OVO section -->
+        <text x="345" y="18" font-size="13" font-weight="bold" fill="#333">OVO — K(K−1)/2 = 3 classifiers</text>
+        <!-- class nodes OVO -->
+        <circle cx="380" cy="55"  r="18" fill="#1e88e5" opacity="0.9"/>
+        <text   cx="380" cy="55"  dominant-baseline="middle" text-anchor="middle" font-size="11" fill="white" font-weight="bold">A</text>
+        <circle cx="435" cy="130" r="18" fill="#43a047" opacity="0.9"/>
+        <text   cx="435" cy="130" dominant-baseline="middle" text-anchor="middle" font-size="11" fill="white" font-weight="bold">B</text>
+        <circle cx="490" cy="55"  r="18" fill="#e53935" opacity="0.9"/>
+        <text   cx="490" cy="55"  dominant-baseline="middle" text-anchor="middle" font-size="11" fill="white" font-weight="bold">C</text>
+        <!-- OVO edges (A-B, A-C, B-C) -->
+        <line x1="393" y1="68" x2="422" y2="117" stroke="#777" stroke-width="1.4"/>
+        <text x="395" y="100" font-size="9" fill="#555" transform="rotate(-50 395 100)">A vs B</text>
+        <line x1="398" y1="55" x2="472" y2="55" stroke="#777" stroke-width="1.4"/>
+        <text x="435" y="48"  font-size="9" fill="#555" text-anchor="middle">A vs C</text>
+        <line x1="450" y1="117" x2="479" y2="68" stroke="#777" stroke-width="1.4"/>
+        <text x="475" y="100" font-size="9" fill="#555" transform="rotate(50 475 100)">B vs C</text>
+        <!-- majority vote box -->
+        <rect x="530" y="68" width="100" height="28" rx="5" fill="#fff8e1" stroke="#ff8f00" stroke-width="1.5"/>
+        <text x="580" y="87" text-anchor="middle" font-size="10" fill="#ff8f00">majority vote</text>
+        <line x1="508" y1="55"  x2="530" y2="82" stroke="#aaa" stroke-width="1"/>
+        <line x1="453" y1="130" x2="530" y2="82" stroke="#aaa" stroke-width="1"/>
+        <line x1="508" y1="65"  x2="530" y2="82" stroke="#aaa" stroke-width="1"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- EXAMPLE: decision-function confidence -->
+  <section class="example" data-packages="numpy,matplotlib,scikit-learn">
+    <h2>Decision-function confidence on Iris (OVO)</h2>
+    <div class="ex-prompt">The hard decision boundary tells you which class wins, but not by how much. Plotting the maximum pairwise decision score reveals high-confidence regions (far from any boundary) vs the contested zone where multiple classes compete.</div>
+<textarea class="ex-code">import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_iris
+from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+
+iris = load_iris()
+Xi, yi = iris.data[:, :2], iris.target   # 2 features for visualisation
+
+pipe = Pipeline([('sc', StandardScaler()),
+                 ('svc', SVC(kernel='rbf', C=5, gamma='scale'))]).fit(Xi, yi)
+
+xx, yy = np.meshgrid(
+    np.linspace(Xi[:,0].min()-0.5, Xi[:,0].max()+0.5, 300),
+    np.linspace(Xi[:,1].min()-0.5, Xi[:,1].max()+0.5, 300))
+grid_pts = np.c_[xx.ravel(), yy.ravel()]
+
+Z_hard    = pipe.predict(grid_pts).reshape(xx.shape)
+df_vals   = pipe.decision_function(grid_pts)
+confidence = df_vals.max(axis=1).reshape(xx.shape)
+
+fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+
+# Left: hard regions
+ax = axes[0]
+ax.contourf(xx, yy, Z_hard, alpha=0.3, cmap='Set1')
+for cls, name in enumerate(iris.target_names):
+    ax.scatter(Xi[yi==cls,0], Xi[yi==cls,1], s=30, label=name)
+ax.set_title('Hard decision regions')
+ax.set_xlabel(iris.feature_names[0]); ax.set_ylabel(iris.feature_names[1])
+ax.legend(fontsize=9)
+
+# Right: confidence
+ax2 = axes[1]
+cf = ax2.contourf(xx, yy, confidence, levels=20, cmap='plasma')
+ax2.contour(xx, yy, Z_hard, colors='white', linewidths=0.8, alpha=0.5)
+for cls in range(3):
+    ax2.scatter(Xi[yi==cls,0], Xi[yi==cls,1], s=30, edgecolors='k', linewidths=0.4)
+plt.colorbar(cf, ax=ax2, label='max decision score')
+ax2.set_title('Confidence (bright = high confidence)')
+ax2.set_xlabel(iris.feature_names[0]); ax2.set_ylabel(iris.feature_names[1])
+
+plt.suptitle('OVO SVM on Iris — decision regions vs confidence', fontsize=12, fontweight='bold')
+plt.tight_layout(); plt.show()
+print(f'Train accuracy: {pipe.score(Xi,yi):.4f}')
+</textarea>
+    <div class="ex-controls">
+      <button class="ex-run">Run</button>
+      <button class="ex-reset">Reset</button>
+      <span class="ex-status"></span>
+    </div>
+    <pre class="ex-output"></pre>
+<script type="text/x-explain">The hard boundary (left) shows discrete class regions but hides how confident the model is. The confidence map (right) reveals that the model is very sure deep inside each class region (bright yellow/plasma) and uncertain along the borders (dark). These dark corridors between classes are where you should be skeptical of the SVM's predictions — they correspond to points near multiple decision boundaries in the 3 pairwise OVO classifiers. In deployment, points landing in these low-confidence zones are good candidates for human review or fallback logic.</script>
   </section>
 
   <section>
